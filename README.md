@@ -1,4 +1,4 @@
-# SIFYGSA-PLATFORM
+# SIFYGSA-BUSINESS-SUITE
 
 Plataforma integral de gestión y servicios para **SIFYGSA**.
 
