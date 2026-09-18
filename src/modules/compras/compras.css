@@ -1,0 +1,802 @@
+/* SIFYSUITE Enterprise ERP Portal - Módulo de Compras (Requisición NetSuite #767575 & #2E2E2E) */
+
+.compras-requisicion-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+  max-width: 1850px;
+  margin: 0 auto;
+  min-width: 0;
+}
+
+/* ====================================================================
+   1. Header de Requisición
+   ==================================================================== */
+.req-header-card {
+  background: #2E2E2E;
+  border: 1px solid #3A3A3D;
+  border-radius: 4px;
+  padding: 0.85rem 1.15rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.req-header-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #3A3A3D;
+}
+
+.req-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.req-icon-frame {
+  width: 36px;
+  height: 36px;
+  background: #1E1E1E;
+  border: 1px solid rgba(249, 115, 22, 0.5);
+  color: #F97316;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.req-title-flex {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.req-heading {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.req-folio-highlight {
+  color: #F97316;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  margin-left: 0.35rem;
+}
+
+.req-approval-status-tag {
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #FDE68A;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.req-meta-sub {
+  font-size: 0.72rem;
+  color: #94A3B8;
+  margin-top: 0.2rem;
+}
+
+.text-highlight {
+  color: #E2E8F0;
+  font-weight: 600;
+}
+
+.req-utility-links {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  color: #94A3B8;
+}
+
+.utility-link {
+  color: #94A3B8;
+  text-decoration: underline;
+  transition: color 0.15s;
+}
+
+.utility-link:hover {
+  color: #F97316;
+}
+
+.utility-sep {
+  color: #4B5563;
+}
+
+/* ====================================================================
+   2. Action Buttons Rows (NetSuite Action Bars)
+   ==================================================================== */
+.req-action-buttons-row,
+.req-footer-actions-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.req-action-buttons-row {
+  padding-top: 0.75rem;
+}
+
+.req-footer-actions-card {
+  background: #2E2E2E;
+  border: 1px solid #3A3A3D;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+}
+
+.action-buttons-left {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.split-btn-group {
+  display: inline-flex;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.btn-save-primary {
+  background: #F97316;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.72rem;
+  padding: 0.32rem 0.85rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-right: 1px solid #C2410C;
+}
+
+.btn-save-primary:hover {
+  background: #EA580C;
+}
+
+.btn-save-arrow {
+  background: #F97316;
+  color: #FFFFFF;
+  font-size: 0.6rem;
+  padding: 0.32rem 0.45rem;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-save-arrow:hover {
+  background: #EA580C;
+}
+
+.btn-action-neutral {
+  background: #1E1E1E;
+  border: 1px solid #4B5563;
+  color: #E2E8F0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.32rem 0.75rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-action-neutral:hover {
+  background: #333333;
+}
+
+.btn-action-disabled {
+  background: #171717;
+  border: 1px solid #333333;
+  color: #525252;
+  font-size: 0.72rem;
+  padding: 0.32rem 0.75rem;
+  border-radius: 3px;
+  cursor: not-allowed;
+}
+
+.req-required-hint {
+  font-size: 0.68rem;
+  color: #94A3B8;
+  font-style: italic;
+}
+
+.req-footer-folio-block {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #D1D5DB;
+}
+
+.folio-label {
+  color: #94A3B8;
+}
+
+.folio-value {
+  background: #171717;
+  border: 1px solid #3A3A3D;
+  color: #F97316;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+}
+
+/* ====================================================================
+   3. Middle Grid: Clasificación (9 cols) + Resumen Financiero (3 cols)
+   ==================================================================== */
+.req-middle-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+}
+
+@media (min-width: 1024px) {
+  .req-middle-grid {
+    grid-template-columns: 3fr 1fr;
+  }
+}
+
+.req-accordion-card {
+  background: #2E2E2E;
+  border: 1px solid #3A3A3D;
+  border-radius: 4px;
+  padding: 0.85rem 1rem;
+}
+
+.accordion-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #3A3A3D;
+  padding-bottom: 0.45rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.title-text {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #F97316;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.toggle-arrow {
+  color: #94A3B8;
+  font-size: 0.65rem;
+}
+
+.toggle-hint {
+  font-size: 0.65rem;
+  color: #94A3B8;
+}
+
+.accordion-body-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.75rem;
+}
+
+.field-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.form-group-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.sify-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94A3B8;
+}
+
+.sify-label .req {
+  color: #F97316;
+  margin-left: 2px;
+}
+
+.sify-input {
+  background: #1A1A1A;
+  border: 1px solid #3E3E3E;
+  color: #F1F5F9;
+  font-size: 0.72rem;
+  padding: 0.22rem 0.5rem;
+  border-radius: 2px;
+  height: 27px;
+  outline: none;
+  width: 100%;
+  transition: all 0.15s ease;
+}
+
+.sify-input:focus {
+  border-color: #F97316;
+  box-shadow: 0 0 0 1px #F97316;
+  background: #141414;
+}
+
+.sify-input[readonly] {
+  background: #141414;
+  color: #94A3B8;
+  cursor: default;
+  border-color: #333333;
+}
+
+.sify-select {
+  background: #1A1A1A;
+  border: 1px solid #3E3E3E;
+  color: #F1F5F9;
+  font-size: 0.72rem;
+  padding: 0.18rem 1.5rem 0.18rem 0.5rem;
+  border-radius: 2px;
+  height: 27px;
+  outline: none;
+  width: 100%;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-position: right 6px center;
+  background-repeat: no-repeat;
+  background-size: 11px 11px;
+}
+
+.sify-select:focus {
+  border-color: #F97316;
+  box-shadow: 0 0 0 1px #F97316;
+}
+
+.readonly-link-box {
+  height: 27px;
+  display: flex;
+  align-items: center;
+  padding: 0 0.45rem;
+  background: #1A1A1A;
+  border: 1px solid #3E3E3E;
+  border-radius: 2px;
+}
+
+.link-aprobador {
+  color: #38BDF8;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.status-badge-compact {
+  height: 27px;
+  display: flex;
+  align-items: center;
+  padding: 0 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 2px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.status-badge-compact.amber {
+  background: #1A1A1A;
+  border: 1px solid #3E3E3E;
+  color: #FCD34D;
+}
+
+.text-smaller {
+  font-size: 0.65rem;
+}
+
+.text-brand-orange {
+  color: #F97316 !important;
+}
+
+.text-amber {
+  color: #FBBF24 !important;
+}
+
+.bg-darker {
+  background: #141414 !important;
+}
+
+/* ====================================================================
+   4. Resumen Financiero Card
+   ==================================================================== */
+.req-resumen-financial-card {
+  background: #2E2E2E;
+  border: 1px solid #3A3A3D;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.resumen-card-header {
+  background: #1E2D3D;
+  padding: 0.45rem 0.85rem;
+  border-bottom: 1px solid #3A3A3D;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resumen-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.resumen-currency-pill {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #F97316;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.resumen-card-body {
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.resumen-calc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid #3A3A3D;
+}
+
+.resumen-row-label {
+  color: #94A3B8;
+  font-weight: 600;
+  font-size: 0.68rem;
+}
+
+.resumen-row-value {
+  color: #FFFFFF;
+  font-size: 0.82rem;
+}
+
+.text-muted {
+  color: #D1D5DB;
+}
+
+.total-highlight-row {
+  border-bottom: none;
+  padding-top: 0.35rem;
+  align-items: baseline;
+}
+
+.resumen-total-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 0.05em;
+}
+
+.resumen-total-amount {
+  text-align: right;
+}
+
+.total-digits {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #F97316;
+}
+
+.total-curr-tag {
+  font-size: 0.65rem;
+  color: #94A3B8;
+  margin-left: 0.25rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.resumen-card-footer {
+  background: #1E1E1E;
+  border-top: 1px solid #3A3A3D;
+  padding: 0.55rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.65rem;
+  color: #94A3B8;
+}
+
+.info-circle-i {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(249, 115, 22, 0.2);
+  color: #F97316;
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: bold;
+  font-style: italic;
+  flex-shrink: 0;
+}
+
+/* ====================================================================
+   5. NetSuite Subtabs & Articles Table
+   ==================================================================== */
+.req-articles-section {
+  background: #2E2E2E;
+  border: 1px solid #3A3A3D;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.netsuite-subtabs-header {
+  background: #233876;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.2rem 0.5rem 0;
+  border-bottom: 1px solid #1B2B5A;
+}
+
+.subtabs-scroll-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.netsuite-subtab-btn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #BFDBFE;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+  transition: all 0.15s;
+}
+
+.netsuite-subtab-btn:hover {
+  background: #1E2F60;
+  color: #FFFFFF;
+}
+
+.netsuite-subtab-btn.active {
+  background: #2E2E2E;
+  color: #F97316;
+  border-top: 2px solid #F97316;
+}
+
+.subtabs-table-menu-icon {
+  color: #93C5FD;
+  cursor: pointer;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.75rem;
+}
+
+.articles-sub-bar {
+  background: #1E1E1E;
+  border-bottom: 1px solid #3A3A3D;
+  padding: 0.4rem 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.articles-sub-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.badge-items-count {
+  background: #141414;
+  border: 1px solid #3A3A3D;
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.65rem;
+  border-radius: 2px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.badge-expenses-count {
+  font-size: 0.72rem;
+  color: #94A3B8;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+}
+
+.btn-clear-lines {
+  background: #2E2E2E;
+  border: 1px solid #3A3A3D;
+  color: #D1D5DB;
+  font-size: 0.68rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-clear-lines:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #EF4444;
+  color: #FFFFFF;
+}
+
+/* ====================================================================
+   6. NetSuite Wide Articles Table
+   ==================================================================== */
+.articles-table-overflow-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+  background: #1A1A1A;
+}
+
+.netsuite-articles-table {
+  width: 100%;
+  min-width: 2100px;
+  border-collapse: collapse;
+  font-size: 0.7rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.netsuite-articles-table th {
+  background: #242424;
+  color: #94A3B8;
+  font-weight: 700;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.5rem;
+  border-right: 1px solid #333333;
+  border-bottom: 1px solid #3A3A3D;
+}
+
+.netsuite-articles-table td {
+  padding: 0.2rem 0.4rem;
+  border-right: 1px solid #333333;
+  border-bottom: 1px solid #2B2B2B;
+  vertical-align: middle;
+}
+
+.article-row:hover {
+  background: #252528;
+}
+
+.article-row.selected-row {
+  background: #27272A;
+  border-left: 3px solid #F97316;
+}
+
+.cell-row-num {
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  color: #94A3B8;
+  background: #1E1E1E;
+}
+
+.cell-input {
+  background: #141414;
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  color: #F1F5F9;
+  font-size: 0.72rem;
+  padding: 0.18rem 0.45rem;
+  border-radius: 2px;
+  width: 100%;
+  outline: none;
+  height: 25px;
+}
+
+.cell-input:focus {
+  border-color: #F97316;
+  background: #0F0F10;
+}
+
+.cell-static-text {
+  font-size: 0.7rem;
+  color: #E2E8F0;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-emerald {
+  color: #10B981 !important;
+}
+
+.text-orange {
+  color: #F97316 !important;
+}
+
+.articles-table-actions-strip {
+  background: #202020;
+  border-top: 1px solid #3A3A3D;
+  padding: 0.35rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.btn-table-strip-primary {
+  background: #F97316;
+  color: #FFFFFF;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 2px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-table-strip-neutral {
+  background: #3A3A3D;
+  color: #E2E8F0;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 2px;
+  border: none;
+  cursor: pointer;
+}
+
+.table-strip-separator {
+  color: #4B5563;
+  margin: 0 0.25rem;
+}
+
+.btn-table-strip-ghost {
+  background: #2A2A2A;
+  border: 1px solid #3A3A3D;
+  color: #D1D5DB;
+  font-size: 0.68rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.btn-table-strip-danger {
+  background: #2A2A2A;
+  border: 1px solid #3A3A3D;
+  color: #FCA5A5;
+  font-size: 0.68rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.btn-table-strip-danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #EF4444;
+}
