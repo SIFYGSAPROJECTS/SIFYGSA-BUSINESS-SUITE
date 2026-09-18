@@ -1,0 +1,84 @@
+/* SFG Business Suite - RH Module Styles */
+
+.rh-module-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.rh-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.rh-content-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.rh-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.rh-table th {
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface-hover);
+}
+
+.rh-table td {
+  padding: 0.9rem 1rem;
+  font-size: 0.875rem;
+  color: var(--color-primary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.rh-table tbody tr:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cell-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--color-primary-light);
+  color: #FFFFFF;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cell-sub {
+  font-size: 0.75rem;
+  color: var(--color-secondary);
+}
+
+.status-badge.active {
+  background-color: #DEF7EC;
+  color: #03543F;
+}
+
+.status-badge.vacation {
+  background-color: #FEF3C7;
+  color: #92400E;
+}
