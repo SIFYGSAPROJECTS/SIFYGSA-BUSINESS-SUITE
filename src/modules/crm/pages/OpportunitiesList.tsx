@@ -18,6 +18,75 @@ interface OpportunitiesListProps {
   onNewOpportunity?: () => void;
 }
 
+export const INITIAL_OPPORTUNITIES: OpportunityItem[] = [
+  {
+    folio: 'OPP-2024-041',
+    client: 'Pemex Refinación',
+    contact: 'Ing. Jorge Reyes',
+    engineer: 'Carlos Méndez',
+    zone: 'Istmo',
+    stage: 'Propuesta',
+    amount: '$1,250,000',
+    closingDate: '30 may 2024',
+    approvalStatus: 'Pendiente',
+  },
+  {
+    folio: 'OPP-2024-039',
+    client: 'BBVA México',
+    contact: 'Ing. Eduardo Mares',
+    engineer: 'Laura Vega',
+    zone: 'Istmo',
+    stage: 'Cierre',
+    amount: '$1,120,000',
+    closingDate: '18 may 2024',
+    approvalStatus: 'Aprobada',
+  },
+  {
+    folio: 'OPP-2024-033',
+    client: 'Stellantis México',
+    contact: 'Lic. Martha Soto',
+    engineer: 'Carlos Méndez',
+    zone: 'Istmo',
+    stage: 'HTO',
+    amount: '$2,780,000',
+    closingDate: '21 ago 2024',
+    approvalStatus: 'Pendiente',
+  },
+  {
+    folio: 'OPP-2024-042',
+    client: 'IMSS - Hospital General',
+    contact: 'Lic. Fabiola Hernández',
+    engineer: 'Laura Vega',
+    zone: 'Sur',
+    stage: 'Seguimiento',
+    amount: '$345,000',
+    closingDate: '15 abr 2024',
+    approvalStatus: 'Aprobada',
+  },
+  {
+    folio: 'OPP-2024-043',
+    client: 'DHL México',
+    contact: 'Lic. Roberto Kim',
+    engineer: 'Pedro Ruiz',
+    zone: 'Sur',
+    stage: 'Propuesta',
+    amount: '$450,000',
+    closingDate: '30 jun 2024',
+    approvalStatus: 'Pendiente',
+  },
+  {
+    folio: 'OPP-2024-035',
+    client: 'Fibra Uno',
+    contact: 'Arq. Diana Castro',
+    engineer: 'Pedro Ruiz',
+    zone: 'Istmo',
+    stage: 'Cierre',
+    amount: '$88,500',
+    closingDate: '28 feb 2024',
+    approvalStatus: 'Aprobada',
+  },
+];
+
 export const OpportunitiesList: React.FC<OpportunitiesListProps> = ({
   onSelectOpportunity,
   onNewOpportunity,
@@ -25,74 +94,7 @@ export const OpportunitiesList: React.FC<OpportunitiesListProps> = ({
   const [stageFilter, setStageFilter] = useState<string>('Todas');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
-  const opportunities: OpportunityItem[] = [
-    {
-      folio: 'OPP-2024-041',
-      client: 'Pemex Refinación',
-      contact: 'Ing. Jorge Reyes',
-      engineer: 'Carlos Méndez',
-      zone: 'Istmo',
-      stage: 'Propuesta',
-      amount: '$1,250,000',
-      closingDate: '30 may 2024',
-      approvalStatus: 'Pendiente',
-    },
-    {
-      folio: 'OPP-2024-039',
-      client: 'BBVA México',
-      contact: 'Ing. Eduardo Mares',
-      engineer: 'Laura Vega',
-      zone: 'Istmo',
-      stage: 'Cierre',
-      amount: '$1,120,000',
-      closingDate: '18 may 2024',
-      approvalStatus: 'Aprobada',
-    },
-    {
-      folio: 'OPP-2024-033',
-      client: 'Stellantis México',
-      contact: 'Lic. Martha Soto',
-      engineer: 'Carlos Méndez',
-      zone: 'Istmo',
-      stage: 'HTO',
-      amount: '$2,780,000',
-      closingDate: '21 ago 2024',
-      approvalStatus: 'Pendiente',
-    },
-    {
-      folio: 'OPP-2024-042',
-      client: 'IMSS - Hospital General',
-      contact: 'Lic. Fabiola Hernández',
-      engineer: 'Laura Vega',
-      zone: 'Sur',
-      stage: 'Seguimiento',
-      amount: '$345,000',
-      closingDate: '15 abr 2024',
-      approvalStatus: 'Aprobada',
-    },
-    {
-      folio: 'OPP-2024-043',
-      client: 'DHL México',
-      contact: 'Lic. Roberto Kim',
-      engineer: 'Pedro Ruiz',
-      zone: 'Sur',
-      stage: 'Propuesta',
-      amount: '$450,000',
-      closingDate: '30 jun 2024',
-      approvalStatus: 'Pendiente',
-    },
-    {
-      folio: 'OPP-2024-035',
-      client: 'Fibra Uno',
-      contact: 'Arq. Diana Castro',
-      engineer: 'Pedro Ruiz',
-      zone: 'Istmo',
-      stage: 'Cierre',
-      amount: '$88,500',
-      closingDate: '28 feb 2024',
-      approvalStatus: 'Aprobada',
-    },
-  ];
+  const opportunities = INITIAL_OPPORTUNITIES;
 
   const filteredOpportunities = opportunities.filter((item) => {
     if (stageFilter !== 'Todas' && item.stage !== stageFilter) return false;
@@ -157,7 +159,7 @@ export const OpportunitiesList: React.FC<OpportunitiesListProps> = ({
         <div className="cartera-top-info-row">
           <div className="cartera-title-stats">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <h2 className="cartera-title">Cartera de Oportunidades</h2>
+              <h2 className="cartera-title">Oportunidades</h2>
               <span className="cartera-pill-active">8 Activas</span>
               <span className="cartera-pill-total">Total Cartera: $8,043,500 MXN</span>
             </div>
@@ -231,7 +233,7 @@ export const OpportunitiesList: React.FC<OpportunitiesListProps> = ({
                   </td>
                   <td>{row.engineer}</td>
                   <td>
-                    <span className="zone-tag-mini">{row.zone}</span>
+                    <span className={`zone-tag-mini ${row.zone.toLowerCase()}`}>{row.zone}</span>
                   </td>
                   <td>
                     <span className={`stage-badge-tag ${row.stage.toLowerCase()}`}>

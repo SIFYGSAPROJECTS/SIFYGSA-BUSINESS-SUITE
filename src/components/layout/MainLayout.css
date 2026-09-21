@@ -1178,3 +1178,309 @@
     padding: 1.5rem 1rem 1rem 1rem;
   }
 }
+
+/* ==========================================================================
+   MODO CLARO (LIGHT MODE) - SIFYGSA ENTERPRISE OVERRIDES
+   ========================================================================== */
+[data-theme="light"] .sifygsa-header,
+body.light-mode .sifygsa-header {
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #E2E8F0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .header-toggle-btn:hover,
+body.light-mode .header-toggle-btn:hover,
+[data-theme="light"] .header-tool-btn:hover,
+body.light-mode .header-tool-btn:hover,
+[data-theme="light"] .user-profile-trigger:hover,
+body.light-mode .user-profile-trigger:hover {
+  background-color: #F1F5F9;
+  color: #0F172A;
+}
+
+[data-theme="light"] .sifygsa-search-field,
+body.light-mode .sifygsa-search-field {
+  background-color: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  color: #0F172A;
+}
+
+[data-theme="light"] .sifygsa-search-field:focus,
+body.light-mode .sifygsa-search-field:focus {
+  background-color: #FFFFFF;
+  border-color: #EA580C;
+  box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.15);
+}
+
+[data-theme="light"] .header-separator-line,
+body.light-mode .header-separator-line {
+  background-color: #E2E8F0;
+}
+
+[data-theme="light"] .user-display-name,
+body.light-mode .user-display-name {
+  color: #0F172A;
+}
+
+[data-theme="light"] .user-dropdown-dialog,
+body.light-mode .user-dropdown-dialog {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .dialog-user-title,
+body.light-mode .dialog-user-title {
+  color: #0F172A;
+}
+
+[data-theme="light"] .dialog-menu-item,
+body.light-mode .dialog-menu-item {
+  color: #334155;
+}
+
+[data-theme="light"] .dialog-menu-item:hover,
+body.light-mode .dialog-menu-item:hover {
+  background-color: #F1F5F9;
+  color: #EA580C;
+}
+
+[data-theme="light"] .dialog-divider,
+body.light-mode .dialog-divider {
+  background-color: #E2E8F0;
+}
+
+[data-theme="light"] .layout-content-area,
+body.light-mode .layout-content-area {
+  background-color: #F1F5F9;
+}
+
+[data-theme="light"] .gemini-sidebar,
+body.light-mode .gemini-sidebar {
+  background-color: #FFFFFF;
+  border-right: 1px solid #E2E8F0;
+}
+
+[data-theme="light"] .accordion-head-btn,
+body.light-mode .accordion-head-btn {
+  color: #475569;
+}
+
+[data-theme="light"] .accordion-head-btn:hover,
+body.light-mode .accordion-head-btn:hover {
+  background-color: #F1F5F9;
+  color: #0F172A;
+}
+
+[data-theme="light"] .sub-nav-link,
+body.light-mode .sub-nav-link {
+  color: #64748B;
+}
+
+[data-theme="light"] .sub-nav-link:hover,
+body.light-mode .sub-nav-link:hover {
+  background-color: #F1F5F9;
+  color: #0F172A;
+}
+
+[data-theme="light"] .sub-nav-link.active-pill,
+body.light-mode .sub-nav-link.active-pill {
+  background-color: #E2E8F0;
+  color: #0F172A;
+}
+
+[data-theme="light"] .sidebar-bottom-status-card,
+body.light-mode .sidebar-bottom-status-card {
+  border-top: 1px solid #E2E8F0;
+  background-color: #FFFFFF;
+}
+
+[data-theme="light"] .status-badge-inner,
+body.light-mode .status-badge-inner {
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+}
+
+[data-theme="light"] .status-label-heading,
+body.light-mode .status-label-heading {
+  color: #475569;
+}
+
+[data-theme="light"] .status-live-indicator,
+body.light-mode .status-live-indicator {
+  color: #0F172A;
+  font-weight: 600;
+}
+
+[data-theme="light"] .version-pill-tag,
+body.light-mode .version-pill-tag {
+  background-color: #F1F5F9;
+  color: #475569;
+  border: 1px solid #CBD5E1;
+}
+
+[data-theme="light"] .sidebar-brand-logo-img,
+body.light-mode .sidebar-brand-logo-img,
+[data-theme="light"] .footer-brand-logo-img,
+body.light-mode .footer-brand-logo-img {
+  content: url('/SIFYGSA.png');
+}
+
+[data-theme="light"] .sidebar-quick-tools,
+body.light-mode .sidebar-quick-tools {
+  border-bottom: 1px solid #E2E8F0;
+}
+
+[data-theme="light"] .sidebar-quick-tools .tool-icon-btn,
+body.light-mode .sidebar-quick-tools .tool-icon-btn {
+  color: #64748B;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+}
+
+[data-theme="light"] .sidebar-quick-tools .tool-icon-btn:hover,
+body.light-mode .sidebar-quick-tools .tool-icon-btn:hover {
+  background-color: #F1F5F9;
+  color: #0F172A;
+}
+
+[data-theme="light"] .sidebar-quick-tools .tool-icon-btn.active,
+body.light-mode .sidebar-quick-tools .tool-icon-btn.active {
+  background-color: rgba(234, 88, 12, 0.12);
+  color: #EA580C;
+  border-color: rgba(234, 88, 12, 0.35);
+}
+
+/* ==========================================================================
+   OFFICIAL SIFYGSA FOOTER - LIGHT MODE PALETTE
+   ========================================================================== */
+[data-theme="light"] .official-sifygsa-footer,
+body.light-mode .official-sifygsa-footer {
+  background-color: #FFFFFF;
+  border-top: 3px solid #EA580C;
+  color: #475569;
+}
+
+[data-theme="light"] .brand-mission-paragraph,
+body.light-mode .brand-mission-paragraph {
+  color: #475569;
+}
+
+[data-theme="light"] .social-circle-btn,
+body.light-mode .social-circle-btn {
+  background-color: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  color: #475569;
+}
+
+[data-theme="light"] .social-circle-btn:hover,
+body.light-mode .social-circle-btn:hover {
+  background-color: #EA580C;
+  color: #FFFFFF;
+  border-color: #EA580C;
+}
+
+[data-theme="light"] .column-section-label,
+body.light-mode .column-section-label {
+  color: #EA580C;
+}
+
+[data-theme="light"] .footer-nav-list li a,
+body.light-mode .footer-nav-list li a {
+  color: #475569;
+}
+
+[data-theme="light"] .footer-nav-list li a:hover,
+body.light-mode .footer-nav-list li a:hover {
+  color: #EA580C;
+}
+
+[data-theme="light"] .office-city,
+body.light-mode .office-city {
+  color: #0F172A;
+}
+
+[data-theme="light"] .office-address,
+body.light-mode .office-address {
+  color: #64748B;
+}
+
+[data-theme="light"] .contact-field-caption,
+body.light-mode .contact-field-caption {
+  color: #EA580C;
+}
+
+[data-theme="light"] .contact-field-text,
+body.light-mode .contact-field-text {
+  color: #1E293B;
+}
+
+[data-theme="light"] .footer-bottom-bar,
+body.light-mode .footer-bottom-bar {
+  border-top: 1px solid #E2E8F0;
+  color: #64748B;
+}
+
+[data-theme="light"] .copyright-notice,
+body.light-mode .copyright-notice,
+[data-theme="light"] .f-g-badge,
+body.light-mode .f-g-badge {
+  color: #64748B;
+}
+
+/* ==========================================================================
+   COLLAPSED SIDEBAR RAIL - LIGHT MODE PALETTE
+   ========================================================================== */
+[data-theme="light"] .collapsed-tools-stack .tool-icon-btn,
+body.light-mode .collapsed-tools-stack .tool-icon-btn,
+[data-theme="light"] .collapsed-nav-btn,
+body.light-mode .collapsed-nav-btn,
+[data-theme="light"] .collapsed-status-circle,
+body.light-mode .collapsed-status-circle {
+  background-color: #F8FAFC !important;
+  border-color: #CBD5E1 !important;
+  color: #475569 !important;
+}
+
+[data-theme="light"] .collapsed-tools-stack .tool-icon-btn:hover,
+body.light-mode .collapsed-tools-stack .tool-icon-btn:hover,
+[data-theme="light"] .collapsed-nav-btn:hover,
+body.light-mode .collapsed-nav-btn:hover {
+  background-color: #F1F5F9 !important;
+  border-color: #94A3B8 !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .collapsed-tools-stack .tool-icon-btn.active-glow,
+body.light-mode .collapsed-tools-stack .tool-icon-btn.active-glow {
+  background-color: rgba(234, 88, 12, 0.15) !important;
+  border-color: #EA580C !important;
+  color: #EA580C !important;
+}
+
+[data-theme="light"] .collapsed-nav-btn.active-crm,
+body.light-mode .collapsed-nav-btn.active-crm {
+  background-color: rgba(234, 88, 12, 0.12) !important;
+  border-color: #EA580C !important;
+}
+
+[data-theme="light"] .collapsed-nav-btn.active-ops,
+body.light-mode .collapsed-nav-btn.active-ops {
+  background-color: rgba(6, 182, 212, 0.12) !important;
+  border-color: #0891B2 !important;
+}
+
+[data-theme="light"] .collapsed-nav-btn.active-admin,
+body.light-mode .collapsed-nav-btn.active-admin {
+  background-color: rgba(168, 85, 247, 0.12) !important;
+  border-color: #9333EA !important;
+}
+
+[data-theme="light"] .collapsed-divider-line,
+body.light-mode .collapsed-divider-line {
+  background-color: #E2E8F0 !important;
+}
+
+
+

@@ -209,7 +209,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       className={`sub-nav-link ${activeModuleId === 'crm' && (activeSubItemId === 'crm-opportunities' || !activeSubItemId) ? 'active-pill' : ''}`}
                       onClick={() => onSelectModule('crm', 'crm-opportunities')}
                     >
-                      <span className="bullet-indicator orange" />
+                      <span className={`bullet-indicator ${activeModuleId === 'crm' && (activeSubItemId === 'crm-opportunities' || !activeSubItemId) ? 'orange' : 'gray'}`} />
                       <span>Oportunidades</span>
                     </button>
                     <button
@@ -217,7 +217,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       className={`sub-nav-link ${activeModuleId === 'crm' && activeSubItemId === 'crm-opportunity-detail' ? 'active-pill' : ''}`}
                       onClick={() => onSelectModule('crm', 'crm-opportunity-detail')}
                     >
-                      <span className="bullet-indicator orange" />
+                      <span className={`bullet-indicator ${activeModuleId === 'crm' && activeSubItemId === 'crm-opportunity-detail' ? 'orange' : 'gray'}`} />
                       <span>Detalle Oportunidad</span>
                     </button>
                     <button
@@ -225,24 +225,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       className={`sub-nav-link ${activeModuleId === 'crm' && (activeSubItemId === 'crm-kanban' || activeSubItemId === 'crm-gantt' || activeSubItemId === 'crm-calendar') ? 'active-pill' : ''}`}
                       onClick={() => onSelectModule('crm', 'crm-kanban')}
                     >
-                      <span className="bullet-indicator gray" />
+                      <span className={`bullet-indicator ${activeModuleId === 'crm' && (activeSubItemId === 'crm-kanban' || activeSubItemId === 'crm-gantt' || activeSubItemId === 'crm-calendar') ? 'orange' : 'gray'}`} />
                       <span>Actividades (Kanban &amp; Gantt)</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="sub-nav-link"
-                      onClick={() => onSelectModule('crm', 'crm-opportunities')}
-                    >
-                      <span className="bullet-indicator gray" />
-                      <span>Cartera Clientes</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="sub-nav-link"
-                      onClick={() => onSelectModule('crm', 'crm-opportunities')}
-                    >
-                      <span className="bullet-indicator gray" />
-                      <span>Cotizaciones HTO</span>
                     </button>
                   </div>
                 )}
@@ -268,28 +252,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <div className="accordion-sub-stack">
                     <button
                       type="button"
-                      className={`sub-nav-link ${activeModuleId === 'compras' ? 'active-subnav-bar' : ''}`}
+                      className={`sub-nav-link ${activeModuleId === 'compras' ? 'active-pill' : ''}`}
                       onClick={() => onSelectModule('compras', 'compras-requisicion')}
                     >
-                      <span className="bullet-indicator orange" />
+                      <span className={`bullet-indicator ${activeModuleId === 'compras' ? 'orange' : 'gray'}`} />
                       <span>Requisición</span>
                     </button>
-                    <button
-                      type="button"
-                      className="sub-nav-link"
-                      onClick={() => onSelectModule('compras', 'compras-requisicion')}
-                    >
-                      <span className="bullet-indicator gray" />
-                      <span>Órdenes de Compra</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="sub-nav-link"
-                      onClick={() => onSelectModule('compras', 'compras-requisicion')}
-                    >
-                      <span className="bullet-indicator gray" />
-                      <span>Proveedores SIL</span>
-                    </button>
+
                   </div>
                 )}
               </div>
@@ -315,7 +284,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       className={`sub-nav-link ${activeModuleId === 'settings' ? 'active-pill' : ''}`}
                       onClick={() => onSelectModule('settings')}
                     >
-                      <span className="bullet-indicator gray" />
+                      <span className={`bullet-indicator ${activeModuleId === 'settings' ? 'orange' : 'gray'}`} />
                       <span>Configuración General</span>
                     </button>
                   </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { IconDownload, IconPlus } from '../../../components/ui/Icons';
+import { INITIAL_OPPORTUNITIES } from './OpportunitiesList';
 
 interface OpportunityDetailProps {
   folio?: string;
@@ -14,7 +15,27 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
   onGoToActivities,
   onOpenNewActivityModal,
 }) => {
-  const [currentStep, setCurrentStep] = useState<number>(3); // 1: Detección, 2: HTO, 3: Propuesta, 4: Seguimiento, 5: Cierre
+  const opp = INITIAL_OPPORTUNITIES.find((o) => o.folio === folio) || {
+    folio: folio,
+    client: 'Pemex Refinación',
+    contact: 'Ing. Jorge Reyes',
+    engineer: 'Carlos Méndez',
+    zone: 'Istmo' as const,
+    stage: 'Propuesta' as const,
+    amount: '$1,250,000',
+    closingDate: '30 may 2024',
+    approvalStatus: 'Pendiente' as const,
+  };
+
+  const stageMap: Record<string, number> = {
+    'Detección': 1,
+    'HTO': 2,
+    'Propuesta': 3,
+    'Seguimiento': 4,
+    'Cierre': 5,
+  };
+
+  const [currentStep, setCurrentStep] = useState<number>(stageMap[opp.stage] || 3);
   const [activeTab, setActiveTab] = useState<'resumen' | 'actividades' | 'documentos' | 'historial'>('resumen');
 
   const steps = [
@@ -52,11 +73,11 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
       <div className="detail-header-card">
         <div className="detail-title-block">
           <div className="detail-company-row">
-            <h1 className="detail-company-name">Pemex Refinación</h1>
+            <h1 className="detail-company-name">{opp.client}</h1>
             <span className="detail-status-pill in-review">En revisión</span>
           </div>
           <p className="detail-subtitle">
-            <span className="bullet-orange">●</span> Detección de Gas H2S/CH4 — Complejo Procesador Tula
+            <span className="bullet-orange">●</span> Detección de Gas H2S/CH4 — Zona {opp.zone}
           </p>
         </div>
 
@@ -68,8 +89,8 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
           >
             ✏ Editar
           </button>
-          <div className="pill-approval-pending">
-            ● Aprobación: Pendiente
+          <div className={`pill-approval-${opp.approvalStatus === 'Aprobada' ? 'approved' : 'pending'}`}>
+            ● Aprobación: {opp.approvalStatus}
           </div>
         </div>
       </div>
@@ -150,15 +171,15 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
           <div className="info-data-table">
             <div className="info-row">
               <span className="info-key">Empresa</span>
-              <span className="info-value highlight-white">Pemex Refinación</span>
+              <span className="info-value highlight-white">{opp.client}</span>
             </div>
             <div className="info-row">
               <span className="info-key">Contacto</span>
-              <span className="info-value">Ing. Jorge Reyes</span>
+              <span className="info-value">{opp.contact}</span>
             </div>
             <div className="info-row">
               <span className="info-key">Ingeniero de Ventas</span>
-              <span className="info-value">Carlos Méndez</span>
+              <span className="info-value">{opp.engineer}</span>
             </div>
             <div className="info-row">
               <span className="info-key">Gerente responsable</span>
@@ -166,7 +187,7 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
             </div>
             <div className="info-row">
               <span className="info-key">Zona</span>
-              <span className="info-value badge-zone">Istmo</span>
+              <span className={`badge-zone ${opp.zone.toLowerCase()}`}>{opp.zone}</span>
             </div>
           </div>
         </div>
@@ -177,7 +198,7 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
           <div className="info-data-table">
             <div className="info-row">
               <span className="info-key">Folio</span>
-              <span className="info-value font-mono text-orange">{folio}</span>
+              <span className="info-value font-mono text-orange">{opp.folio}</span>
             </div>
             <div className="info-row">
               <span className="info-key">Tipo de sistema</span>
@@ -185,7 +206,7 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
             </div>
             <div className="info-row">
               <span className="info-key">Monto estimado</span>
-              <span className="info-value font-mono amount-emphasis">$1,250,000 MXN</span>
+              <span className="info-value font-mono amount-emphasis">{opp.amount} MXN</span>
             </div>
             <div className="info-row">
               <span className="info-key">Probabilidad</span>
@@ -202,7 +223,7 @@ export const OpportunityDetail: React.FC<OpportunityDetailProps> = ({
             </div>
             <div className="info-row">
               <span className="info-key">Cierre estimado</span>
-              <span className="info-value font-mono">30 may 2024</span>
+              <span className="info-value font-mono">{opp.closingDate}</span>
             </div>
           </div>
         </div>

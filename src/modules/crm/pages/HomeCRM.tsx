@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   IconKanban,
-  IconTable,
   IconTimeline,
   IconCalendar,
   IconPlus,
   IconPaperclip,
   IconCheckSquare,
   IconClose,
+  IconEye,
 } from '../../../components/ui/Icons';
 import '../crm.css';
 import { CalendarView } from '../components/CalendarView';
 import { NewTaskModal } from '../components/NewTaskModal';
 import type { TaskItem } from '../components/NewTaskModal';
+import { GanttDetailModal, type GanttTask } from '../components/GanttDetailModal';
 import { OpportunitiesList } from './OpportunitiesList';
 import { OpportunityDetail } from './OpportunityDetail';
 
@@ -73,6 +75,20 @@ export const HomeCRM: React.FC<HomeCRMProps> = ({ subItemId }) => {
 
   // Task Details Modal
   const [activeTaskModal, setActiveTaskModal] = useState<TaskItem | null>(null);
+
+  // Gantt Activity Details Modal & Hover Card state
+  const [selectedGanttDetail, setSelectedGanttDetail] = useState<GanttTask | null>(null);
+  const [hoveredTaskInfo, setHoveredTaskInfo] = useState<{
+    item: GanttTask;
+    statusClass: string;
+    coords: {
+      top: number;
+      left: number;
+      arrowOffset: number;
+      placement: 'top' | 'bottom';
+    };
+  } | null>(null);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // New Task Modal
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
@@ -227,52 +243,130 @@ export const HomeCRM: React.FC<HomeCRMProps> = ({ subItemId }) => {
   ]);
 
   // Gantt items
-  const ganttTasks = [
+  const ganttTasks: GanttTask[] = [
     {
       id: 'g-1',
+      folio: 'ACT-SIL3-01',
       name: 'Levantamiento en Planta Coquizadora Tula',
+      description: 'Levantamiento técnico en campo, validación de áreas clasificadas Clase I Div 1 e ingeniería de rutas de canalización para detectores Honeywell XNX.',
       owner: 'Daniel Rosas',
+      ownerRole: 'Ingeniero de Campo SIL-3',
+      team: [
+        { name: 'Daniel Rosas', role: 'Ingeniero Responsable', initials: 'DR' },
+        { name: 'Carlos Méndez', role: 'Especialista F&G', initials: 'CM' },
+        { name: 'Roberto Méndez', role: 'Técnico de Sitio', initials: 'RM' },
+      ],
       start: '01 Abr',
       end: '10 Abr',
       progress: 100,
       status: 'Completado',
-      colWidth: '35%',
-      colOffset: '5%',
+      priority: 'Alta',
+      colWidth: '22%',
+      colOffset: '1%',
+      deliverables: [
+        'Reporte fotográfico de áreas de proceso Tula II',
+        'Planos de distribución validados con superintendencia Pemex',
+        'Cédula de interferencias mecánicas y eléctricas',
+      ],
     },
     {
       id: 'g-2',
+      folio: 'ACT-SIL3-02',
       name: 'Especificación HTO Detectores H2S / CH4',
+      description: 'Elaboración y emisión de Hojas Técnicas de Operación (HTO) para 48 transmisores ópticos e infrarrojos con certificación ATEX/IECEx.',
       owner: 'Carlos Méndez',
+      ownerRole: 'Ingeniero Senior de Instrumentación',
+      team: [
+        { name: 'Carlos Méndez', role: 'Ingeniero Instrumentista', initials: 'CM' },
+        { name: 'Roberto Méndez', role: 'Soporte Técnico', initials: 'RM' },
+      ],
       start: '08 Abr',
       end: '22 Abr',
       progress: 75,
       status: 'En Curso',
-      colWidth: '45%',
-      colOffset: '25%',
       isCritical: true,
+      priority: 'Alta',
+      colWidth: '32%',
+      colOffset: '17%',
+      deliverables: [
+        'Fichas técnicas SIL-3 aprobadas por Pemex Refinación',
+        'Cálculos de lazos 4-20mA y balance de potencia en tableros',
+        'Revisión con departamento de Seguridad Funcional',
+      ],
     },
     {
       id: 'g-3',
+      folio: 'ACT-SIL3-03',
       name: 'Arquitectura SCADA Honeywell Safety Manager SIL-3',
+      description: 'Diseño de arquitectura de comunicaciones tolerante a fallas, configuración de matriz C&E (Cause & Effect) y enlace con el DCS central.',
       owner: 'Ana Torres',
+      ownerRole: 'Gerente de Automatización y Seguridad',
+      team: [
+        { name: 'Ana Torres', role: 'Líder SCADA', initials: 'AT' },
+        { name: 'Pedro Ruiz', role: 'Ingeniero de Sistemas', initials: 'PR' },
+        { name: 'Carlos Méndez', role: 'Integración F&G', initials: 'CM' },
+      ],
       start: '15 Abr',
       end: '02 May',
       progress: 40,
       status: 'En Curso',
-      colWidth: '40%',
-      colOffset: '45%',
       isCritical: true,
+      priority: 'Alta',
+      colWidth: '36%',
+      colOffset: '34%',
+      deliverables: [
+        'Diagrama de topología de red Ethernet redundante con switches Hirschmann',
+        'Matriz C&E aprobada por especialista de procesos Tula',
+        'Borrador de procedimiento de pruebas FAT en fábrica',
+      ],
     },
     {
       id: 'g-4',
+      folio: 'ACT-SIL3-04',
       name: 'Aprobación de Margen Financiero y Cotización Final',
+      description: 'Revisión ejecutiva de costos de suministro, logística arancelaria y fijación de margen comercial para emisión de propuesta formal.',
       owner: 'Dirección General',
+      ownerRole: 'Comité Técnico & Comercial',
+      team: [
+        { name: 'Lic. Martha Soto', role: 'Finanzas & Costos', initials: 'MS' },
+        { name: 'Ing. Eduardo Mares', role: 'Dirección Comercial', initials: 'EM' },
+      ],
       start: '25 Abr',
       end: '10 May',
       progress: 0,
       status: 'Pendiente',
-      colWidth: '35%',
-      colOffset: '65%',
+      priority: 'Media',
+      colWidth: '30%',
+      colOffset: '56%',
+      deliverables: [
+        'Modelo financiero y flujo de caja consolidado',
+        'Carta de fianza y cumplimiento para licitación',
+        'Cotización oficial foliada en NetSuite',
+      ],
+    },
+    {
+      id: 'g-5',
+      folio: 'ACT-SIL3-05',
+      name: 'Suministro y Protocolo de Comisionamiento SAT',
+      description: 'Recepción de detectores en bodega central, verificación metrológica y programación de protocolo de puesta en marcha SAT en sitio.',
+      owner: 'Ing. Jorge Reyes',
+      ownerRole: 'Coordinador de Obra y Comisionamiento',
+      team: [
+        { name: 'Ing. Jorge Reyes', role: 'Coordinador de Obra', initials: 'JR' },
+        { name: 'Daniel Rosas', role: 'Ingeniero de Campo', initials: 'DR' },
+      ],
+      start: '02 May',
+      end: '20 May',
+      progress: 0,
+      status: 'Pendiente',
+      priority: 'Media',
+      colWidth: '32%',
+      colOffset: '68%',
+      deliverables: [
+        'Guía de embarque y acta de inspección visual en almacén',
+        'Certificados individuales de calibración de fábrica Honeywell',
+        'Protocolo SAT firmado por supervisor Pemex',
+      ],
     },
   ];
 
@@ -335,6 +429,65 @@ export const HomeCRM: React.FC<HomeCRMProps> = ({ subItemId }) => {
         return 'priority-low';
     }
   };
+
+  // Gantt Bar Hover and Portal Handlers
+  const handleBarMouseEnter = (
+    item: GanttTask,
+    statusClass: string,
+    e: React.MouseEvent<HTMLDivElement>
+  ) => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const cardWidth = 300;
+    const cardHeight = 230;
+
+    // Smart placement: if close to viewport top, show card downwards; otherwise upwards
+    const placement: 'top' | 'bottom' = rect.top < (cardHeight + 20) ? 'bottom' : 'top';
+    const centerX = rect.left + rect.width / 2;
+    // Keep card horizontally within the viewport
+    const clampedCenter = Math.max(cardWidth / 2 + 16, Math.min(window.innerWidth - cardWidth / 2 - 16, centerX));
+    const arrowOffset = Math.max(20, Math.min(cardWidth - 20, centerX - clampedCenter + cardWidth / 2));
+    const top = placement === 'top' ? rect.top - 8 : rect.bottom + 8;
+
+    setHoveredTaskInfo({
+      item,
+      statusClass,
+      coords: {
+        top,
+        left: clampedCenter,
+        arrowOffset,
+        placement,
+      },
+    });
+  };
+
+  const handleBarMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredTaskInfo(null);
+    }, 140);
+  };
+
+  const handleCardMouseEnter = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+  };
+
+  const handleCardMouseLeave = () => {
+    setHoveredTaskInfo(null);
+  };
+
+  // Dismiss floating hover card on scroll or window resize
+  useEffect(() => {
+    const handleDismiss = () => {
+      setHoveredTaskInfo(null);
+    };
+    window.addEventListener('scroll', handleDismiss, true);
+    window.addEventListener('resize', handleDismiss);
+    return () => {
+      window.removeEventListener('scroll', handleDismiss, true);
+      window.removeEventListener('resize', handleDismiss);
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    };
+  }, []);
 
   // If activeView is 'detail', render Screen 3.1
   if (activeView === 'detail') {
@@ -446,15 +599,6 @@ export const HomeCRM: React.FC<HomeCRMProps> = ({ subItemId }) => {
             >
               <IconCalendar size={16} />
               <span>Calendario de Actividades</span>
-            </button>
-
-            <button
-              type="button"
-              className={`view-tab-btn ${(activeView as string) === 'table' ? 'active' : ''}`}
-              onClick={() => setActiveView('table')}
-            >
-              <IconTable size={16} />
-              <span>Cartera NetSuite</span>
             </button>
           </div>
 
@@ -775,47 +919,178 @@ export const HomeCRM: React.FC<HomeCRMProps> = ({ subItemId }) => {
             </div>
 
             <div className="gantt-timeline-container">
-              <div className="gantt-scale-header">
-                <div className="gantt-task-col">Fase / Actividad Operativa</div>
-                <div className="gantt-owner-col">Responsable</div>
-                <div className="gantt-dates-col">Plazos</div>
-                <div className="gantt-chart-col">
-                  <span>Sem 1 (01-07)</span>
-                  <span>Sem 2 (08-14)</span>
-                  <span>Sem 3 (15-21)</span>
-                  <span>Sem 4 (22-28)</span>
-                  <span>Mayo</span>
+              {/* Header con 3 columnas principales: Actividad, Detalles, Meses */}
+              <div className="gantt-scale-header-3col">
+                <div className="gantt-col-header-activity">
+                  <span>Actividad / Proyecto</span>
+                </div>
+                <div className="gantt-col-header-details">
+                  <span>Detalles</span>
+                </div>
+                <div className="gantt-col-header-months">
+                  <div className="gantt-months-top-row">
+                    <div className="gantt-month-group month-abril">
+                      <span>Abril 2024</span>
+                    </div>
+                    <div className="gantt-month-group month-mayo">
+                      <span>Mayo 2024</span>
+                    </div>
+                  </div>
+                  <div className="gantt-weeks-sub-row">
+                    <span className="gantt-week-cell">Sem 1 (01-07)</span>
+                    <span className="gantt-week-cell">Sem 2 (08-14)</span>
+                    <span className="gantt-week-cell">Sem 3 (15-21)</span>
+                    <span className="gantt-week-cell">Sem 4 (22-28)</span>
+                    <span className="gantt-week-cell week-month-sep">Sem 1 (29-05)</span>
+                    <span className="gantt-week-cell">Sem 2 (06-12)</span>
+                    <span className="gantt-week-cell">Sem 3 (13-19)</span>
+                  </div>
                 </div>
               </div>
 
+              {/* Filas de Actividades */}
               <div className="gantt-rows-stack">
-                {ganttTasks.map((item) => (
-                  <div key={item.id} className="gantt-data-row">
-                    <div className="gantt-task-col">
-                      <span className="gantt-task-name">{item.name}</span>
-                      {item.isCritical && (
-                        <span className="critical-path-pill" style={{ marginLeft: '6px' }}>
-                          ⚡ Ruta Crítica
-                        </span>
-                      )}
-                    </div>
-                    <div className="gantt-owner-col">{item.owner}</div>
-                    <div className="gantt-dates-col font-mono">
-                      {item.start} — {item.end}
-                    </div>
-                    <div className="gantt-chart-col">
-                      <div
-                        className={`gantt-bar-element ${item.status === 'Completado' ? 'done' : 'in-progress'}`}
-                        style={{ width: item.colWidth, left: item.colOffset }}
-                      >
-                        <span className="bar-label-text">{item.progress}%</span>
+                {ganttTasks.map((item) => {
+                  const statusClass = item.status === 'Completado' ? 'done' : item.progress > 0 ? 'in-progress' : 'pending';
+                  const isHovered = hoveredTaskInfo?.item.id === item.id;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className={`gantt-data-row-3col ${isHovered ? 'row-is-hovered' : ''}`}
+                    >
+                      {/* Columna 1: Nombre de la Actividad */}
+                      <div className="gantt-cell-activity">
+                        <div className="activity-title-group">
+                          <span className="activity-name-text">{item.name}</span>
+                          <div className="activity-meta-tags">
+                            <span className="activity-folio-tag font-mono">{item.folio}</span>
+                            {item.isCritical && (
+                              <span className="critical-path-pill">
+                                ⚡ Ruta Crítica
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Columna 2: Detalles (botón para ventana emergente) */}
+                      <div className="gantt-cell-details">
+                        <button
+                          type="button"
+                          className="btn-gantt-details-action"
+                          onClick={() => setSelectedGanttDetail(item)}
+                          title="Ver detalles de la actividad y a quiénes les corresponde"
+                        >
+                          <IconEye size={14} />
+                          <span>Detalles</span>
+                        </button>
+                      </div>
+
+                      {/* Columna 3: Meses (Visualización en barra con líneas guía) */}
+                      <div className="gantt-cell-timeline">
+                        {/* Líneas guía verticales punteadas de semanas */}
+                        <div className="timeline-guideline" style={{ left: '14.28%' }} />
+                        <div className="timeline-guideline" style={{ left: '28.56%' }} />
+                        <div className="timeline-guideline" style={{ left: '42.84%' }} />
+                        <div className="timeline-guideline timeline-month-boundary" style={{ left: '57.12%' }} />
+                        <div className="timeline-guideline" style={{ left: '71.4%' }} />
+                        <div className="timeline-guideline" style={{ left: '85.68%' }} />
+
+                        {/* Barra de la Actividad */}
+                        <div
+                          className={`gantt-bar-box ${statusClass}`}
+                          style={{ width: item.colWidth, left: item.colOffset }}
+                          onMouseEnter={(e) => handleBarMouseEnter(item, statusClass, e)}
+                          onMouseLeave={handleBarMouseLeave}
+                        >
+                          <div className="bar-visible-track">
+                            <span className="bar-date-label font-mono">
+                              {item.start} — {item.end}
+                            </span>
+                            <span className="bar-progress-badge font-mono">
+                              {item.progress}%
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
+
+          {/* Tarjetita Flotante Global vía Portal (Nunca se corta por overflow de tablas o contenedores) */}
+          {hoveredTaskInfo && typeof document !== 'undefined' && createPortal(
+            <div
+              className={`gantt-bar-hover-card-portal placement-${hoveredTaskInfo.coords.placement}`}
+              style={{
+                top: `${hoveredTaskInfo.coords.top}px`,
+                left: `${hoveredTaskInfo.coords.left}px`,
+                ['--arrow-left' as string]: `${hoveredTaskInfo.coords.arrowOffset}px`,
+              }}
+              onMouseEnter={handleCardMouseEnter}
+              onMouseLeave={handleCardMouseLeave}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="hover-card-header">
+                <div className="hover-card-meta-line">
+                  <span className="hover-card-folio-pill font-mono">{hoveredTaskInfo.item.folio}</span>
+                  <span className={`hover-card-status-pill ${hoveredTaskInfo.statusClass}`}>
+                    ● {hoveredTaskInfo.item.status}
+                  </span>
+                </div>
+                <h4 className="hover-card-title">{hoveredTaskInfo.item.name}</h4>
+              </div>
+
+              <div className="hover-card-body">
+                <div className="hover-info-row">
+                  <span className="hover-info-key">A quiénes corresponde:</span>
+                  <div className="hover-team-stack">
+                    <span className="hover-owner-name">{hoveredTaskInfo.item.owner}</span>
+                    <span className="hover-owner-role">{hoveredTaskInfo.item.ownerRole}</span>
+                  </div>
+                </div>
+
+                <div className="hover-info-row">
+                  <span className="hover-info-key">Plazo de ejecución:</span>
+                  <span className="hover-info-val font-mono">
+                    {hoveredTaskInfo.item.start} — {hoveredTaskInfo.item.end}
+                  </span>
+                </div>
+
+                <div className="hover-info-row">
+                  <span className="hover-info-key">Avance del proyecto:</span>
+                  <div className="hover-progress-container">
+                    <span className="hover-progress-number font-mono text-orange">
+                      {hoveredTaskInfo.item.progress}%
+                    </span>
+                    <div className="hover-progress-track">
+                      <div
+                        className={`hover-progress-fill ${hoveredTaskInfo.statusClass}`}
+                        style={{ width: `${hoveredTaskInfo.item.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="hover-card-footer">
+                <button
+                  type="button"
+                  className="btn-hover-card-details"
+                  onClick={() => {
+                    setSelectedGanttDetail(hoveredTaskInfo.item);
+                    setHoveredTaskInfo(null);
+                  }}
+                >
+                  <IconEye size={13} /> Ver Detalles
+                </button>
+              </div>
+            </div>,
+            document.body
+          )}
         </section>
       )}
 
@@ -866,26 +1141,17 @@ export const HomeCRM: React.FC<HomeCRMProps> = ({ subItemId }) => {
               <h2 className="dialog-task-title">{activeTaskModal.title}</h2>
 
               {/* Columna Status Changer */}
-              <div style={{ margin: '0.85rem 0', padding: '0.65rem', background: '#1F1F22', borderRadius: '4px', border: '1px solid #38383B' }}>
-                <span style={{ fontSize: '0.72rem', color: '#9CA3AF', textTransform: 'uppercase', fontWeight: 700 }}>
+              <div className="dialog-status-changer-card">
+                <span className="dialog-status-changer-label">
                   Cambiar Estado de la Actividad:
                 </span>
-                <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem', flexWrap: 'wrap' }}>
+                <div className="dialog-status-chips-wrap">
                   {(['todo', 'in_progress', 'review', 'done'] as const).map((colKey) => (
                     <button
                       key={colKey}
                       type="button"
                       onClick={() => handleMoveTask(activeTaskModal.id, colKey)}
-                      style={{
-                        padding: '0.3rem 0.65rem',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        borderRadius: '3px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        background: activeTaskModal.column === colKey ? '#F97316' : '#2D2D30',
-                        color: '#FFFFFF',
-                      }}
+                      className={`dialog-status-chip-btn ${activeTaskModal.column === colKey ? 'active' : ''}`}
                     >
                       {colKey === 'todo' && 'Por Hacer'}
                       {colKey === 'in_progress' && 'En Curso'}
@@ -988,6 +1254,14 @@ export const HomeCRM: React.FC<HomeCRMProps> = ({ subItemId }) => {
         onClose={() => setIsNewTaskModalOpen(false)}
         onSaveTask={handleSaveNewTask}
         defaultDate={newTaskDefaultDate}
+      />
+
+      {/* ====================================================================
+          MODAL DETALLES DE ACTIVIDAD DEL CRONOGRAMA (GANTT POPUP)
+          ==================================================================== */}
+      <GanttDetailModal
+        task={selectedGanttDetail}
+        onClose={() => setSelectedGanttDetail(null)}
       />
     </div>
   );

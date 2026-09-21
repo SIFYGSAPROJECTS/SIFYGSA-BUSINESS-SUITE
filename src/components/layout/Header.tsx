@@ -22,7 +22,27 @@ export const Header: React.FC<HeaderProps> = ({
   },
 }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    return localStorage.getItem('sfg_theme') !== 'light';
+  });
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Sincronizar tema con el DOM y localStorage
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.body.classList.remove('light-mode');
+      localStorage.setItem('sfg_theme', 'dark');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.body.classList.add('light-mode');
+      localStorage.setItem('sfg_theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleTheme = () => {
+    setIsDarkMode((prev) => !prev);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -51,10 +71,9 @@ export const Header: React.FC<HeaderProps> = ({
         )}
         <div className="brand-suite-identity">
           <picture className="header-brand-picture">
-            <source srcSet="/SFGLogo.svg" type="image/svg+xml" />
             <img
-              src="/SFGLogo.png"
-              onError={(e) => { e.currentTarget.src = '/SFGLogo.png'; }}
+              src={isDarkMode ? '/SFGLogo.png' : '/SIFYGSA.png'}
+              onError={(e) => { e.currentTarget.src = isDarkMode ? '/SFGLogo.png' : '/SIFYGSA.png'; }}
               alt="SIFYGSA"
               className="header-brand-logo-img"
             />
@@ -76,6 +95,60 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right: User Profile & Actions */}
       <div className="header-actions-group">
+        {/* Dark Mode & Light Mode Toggle */}
+        <button
+          type="button"
+          className="header-tool-btn"
+          aria-label={isDarkMode ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
+          title={isDarkMode ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
+          onClick={toggleTheme}
+        >
+          {isDarkMode ? (
+            /* Icono Sol (para pasar a Modo Claro) */
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656" />
+              <path d="M6.343 17.657l-1.414 1.414" />
+              <path d="M6.343 6.343l-1.414 -1.414" />
+              <path d="M17.657 6.343l1.414 -1.414" />
+              <path d="M17.657 17.657l1.414 1.414" />
+              <path d="M4 12h-2" />
+              <path d="M12 4v-2" />
+              <path d="M20 12h2" />
+              <path d="M12 20v2" />
+            </svg>
+          ) : (
+            /* Icono Luna (para pasar a Modo Oscuro) */
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454l0 .008" />
+              <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2" />
+              <path d="M19 11h2m-1 -1v2" />
+            </svg>
+          )}
+        </button>
+
+        {/* Notificaciones */}
         <button
           type="button"
           className="header-tool-btn"

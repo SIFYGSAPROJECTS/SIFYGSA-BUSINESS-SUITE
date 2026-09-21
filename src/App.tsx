@@ -21,7 +21,7 @@ export function App() {
   
   // Estado de módulo activo en la navegación
   const [activeModuleId, setActiveModuleId] = useState<string>('dashboard');
-  const [activeSubItemId, setActiveSubItemId] = useState<string | undefined>('crm-home');
+  const [activeSubItemId, setActiveSubItemId] = useState<string | undefined>('crm-opportunities');
 
   // Función para iniciar sesión
   const handleLoginSuccess = (userData: UserSession) => {

@@ -226,29 +226,28 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
           </div>
 
           {/* Ruta Crítica Checkbox & Progreso */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.85rem', background: '#242426', padding: '0.65rem 0.85rem', borderRadius: '4px', border: '1px solid #3A3A3D' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', color: '#F1F5F9', fontWeight: 600 }}>
+          <div className="new-task-critical-row">
+            <label className="new-task-critical-label">
               <input
                 type="checkbox"
                 checked={isCritical}
                 onChange={(e) => setIsCritical(e.target.checked)}
                 style={{ accentColor: '#F97316', width: '16px', height: '16px' }}
               />
-              <span style={{ color: '#F97316' }}>⚡ Marcar como Ruta Crítica</span>
+              <span className="crit-text-highlight">⚡ Marcar como Ruta Crítica</span>
             </label>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Avance:</span>
+            <div className="new-task-advance-group">
+              <span className="new-task-advance-label">Avance:</span>
               <input
                 type="number"
                 min={0}
                 max={100}
                 value={progress}
                 onChange={(e) => setProgress(Number(e.target.value))}
-                className="crm-form-input font-mono"
-                style={{ width: '60px', height: '28px', padding: '2px 6px', textAlign: 'right' }}
+                className="crm-form-input font-mono new-task-advance-input"
               />
-              <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>%</span>
+              <span className="new-task-advance-label">%</span>
             </div>
           </div>
 
@@ -271,35 +270,24 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
               />
               <button
                 type="button"
-                className="crm-filter-btn"
+                className="new-task-add-checklist-btn"
                 onClick={handleAddChecklistItem}
-                style={{ background: '#3A3A3C', color: '#FFFFFF', padding: '0 0.85rem' }}
               >
                 <IconPlus size={14} /> Añadir
               </button>
             </div>
 
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+            <ul className="new-task-checklist-list">
               {checklistItems.map((item, idx) => (
                 <li
                   key={idx}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    background: '#1F1F22',
-                    padding: '0.35rem 0.65rem',
-                    borderRadius: '4px',
-                    fontSize: '0.8rem',
-                    color: '#E2E8F0',
-                    border: '1px solid #333336',
-                  }}
+                  className="new-task-checklist-item"
                 >
-                  <span>✓ {item}</span>
+                  <span className="new-task-checklist-text">✓ {item}</span>
                   <button
                     type="button"
                     onClick={() => handleRemoveChecklistItem(idx)}
-                    style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '12px' }}
+                    className="new-task-remove-item-btn"
                     title="Eliminar ítem"
                   >
                     ✕

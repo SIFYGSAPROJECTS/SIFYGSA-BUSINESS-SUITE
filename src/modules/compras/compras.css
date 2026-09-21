@@ -800,3 +800,262 @@
   background: rgba(239, 68, 68, 0.2);
   border-color: #EF4444;
 }
+
+/* ==========================================================================
+   COMPRAS / REQUISICIÓN LIGHT MODE OVERRIDES (COMPLETO)
+   ========================================================================== */
+[data-theme="light"] .compras-requisicion-container,
+body.light-mode .compras-requisicion-container {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .req-header-card,
+body.light-mode .req-header-card,
+[data-theme="light"] .req-accordion-card,
+body.light-mode .req-accordion-card,
+[data-theme="light"] .req-articles-section,
+body.light-mode .req-articles-section,
+[data-theme="light"] .req-resumen-financial-card,
+body.light-mode .req-resumen-financial-card,
+[data-theme="light"] .req-footer-actions-card,
+body.light-mode .req-footer-actions-card,
+[data-theme="light"] .requisicion-full-wrapper,
+body.light-mode .requisicion-full-wrapper,
+[data-theme="light"] .req-card-box,
+body.light-mode .req-card-box,
+[data-theme="light"] .netsuite-portlet-box,
+body.light-mode .netsuite-portlet-box {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .req-icon-frame,
+body.light-mode .req-icon-frame {
+  background-color: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #EA580C !important;
+}
+
+[data-theme="light"] .req-heading,
+body.light-mode .req-heading,
+[data-theme="light"] .req-title-primary,
+body.light-mode .req-title-primary,
+[data-theme="light"] .title-text,
+body.light-mode .title-text,
+[data-theme="light"] .resumen-title,
+body.light-mode .resumen-title,
+[data-theme="light"] .resumen-row-value,
+body.light-mode .resumen-row-value,
+[data-theme="light"] .total-digits,
+body.light-mode .total-digits,
+[data-theme="light"] .text-highlight,
+body.light-mode .text-highlight,
+[data-theme="light"] .cell-static-text,
+body.light-mode .cell-static-text,
+[data-theme="light"] .resumen-val,
+body.light-mode .resumen-val,
+[data-theme="light"] .portlet-heading-text,
+body.light-mode .portlet-heading-text {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .req-field-label,
+body.light-mode .req-field-label,
+[data-theme="light"] .req-sub-label,
+body.light-mode .req-sub-label,
+[data-theme="light"] .sify-label,
+body.light-mode .sify-label,
+[data-theme="light"] .toggle-hint,
+body.light-mode .toggle-hint,
+[data-theme="light"] .req-meta-sub,
+body.light-mode .req-meta-sub,
+[data-theme="light"] .utility-link,
+body.light-mode .utility-link,
+[data-theme="light"] .folio-label,
+body.light-mode .folio-label,
+[data-theme="light"] .req-footer-folio-block,
+body.light-mode .req-footer-folio-block,
+[data-theme="light"] .resumen-row-label,
+body.light-mode .resumen-row-label,
+[data-theme="light"] .resumen-total-label,
+body.light-mode .resumen-total-label,
+[data-theme="light"] .total-curr-tag,
+body.light-mode .total-curr-tag,
+[data-theme="light"] .resumen-label,
+body.light-mode .resumen-label,
+[data-theme="light"] .req-required-hint,
+body.light-mode .req-required-hint {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .accordion-title-bar,
+body.light-mode .accordion-title-bar,
+[data-theme="light"] .resumen-card-header,
+body.light-mode .resumen-card-header {
+  background-color: #F8FAFC !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+}
+
+[data-theme="light"] .sify-select,
+body.light-mode .sify-select,
+[data-theme="light"] .sify-input,
+body.light-mode .sify-input,
+[data-theme="light"] .req-input-field,
+body.light-mode .req-input-field,
+[data-theme="light"] .req-select-field,
+body.light-mode .req-select-field,
+[data-theme="light"] .cell-input,
+body.light-mode .cell-input {
+  background-color: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .sify-input:focus,
+body.light-mode .sify-input:focus,
+[data-theme="light"] .sify-select:focus,
+body.light-mode .sify-select:focus,
+[data-theme="light"] .cell-input:focus,
+body.light-mode .cell-input:focus {
+  border-color: #EA580C !important;
+  background-color: #FFFFFF !important;
+}
+
+[data-theme="light"] .sify-input.bg-darker,
+body.light-mode .sify-input.bg-darker {
+  background-color: #F8FAFC !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .req-approval-status-tag,
+body.light-mode .req-approval-status-tag {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  color: #B45309 !important;
+}
+
+[data-theme="light"] .folio-value,
+body.light-mode .folio-value {
+  background: #F1F5F9 !important;
+  border: 1px solid #CBD5E1 !important;
+  color: #EA580C !important;
+}
+
+[data-theme="light"] .btn-action-neutral,
+body.light-mode .btn-action-neutral,
+[data-theme="light"] .btn-clear-lines,
+body.light-mode .btn-clear-lines,
+[data-theme="light"] .btn-table-strip-neutral,
+body.light-mode .btn-table-strip-neutral,
+[data-theme="light"] .btn-table-strip-ghost,
+body.light-mode .btn-table-strip-ghost {
+  background-color: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .btn-action-neutral:hover,
+body.light-mode .btn-action-neutral:hover,
+[data-theme="light"] .btn-table-strip-neutral:hover,
+body.light-mode .btn-table-strip-neutral:hover,
+[data-theme="light"] .btn-table-strip-ghost:hover,
+body.light-mode .btn-table-strip-ghost:hover {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .btn-action-disabled,
+body.light-mode .btn-action-disabled {
+  background-color: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #94A3B8 !important;
+}
+
+/* Articles & Sub-bars */
+[data-theme="light"] .netsuite-subtabs-header,
+body.light-mode .netsuite-subtabs-header {
+  background: #1E3A8A !important;
+  border-bottom: 1px solid #1E40AF !important;
+}
+
+[data-theme="light"] .netsuite-subtab-btn,
+body.light-mode .netsuite-subtab-btn {
+  color: #DBEAFE !important;
+}
+
+[data-theme="light"] .netsuite-subtab-btn.active,
+body.light-mode .netsuite-subtab-btn.active {
+  background-color: #FFFFFF !important;
+  color: #EA580C !important;
+}
+
+[data-theme="light"] .articles-sub-bar,
+body.light-mode .articles-sub-bar,
+[data-theme="light"] .articles-table-actions-strip,
+body.light-mode .articles-table-actions-strip,
+[data-theme="light"] .resumen-card-footer,
+body.light-mode .resumen-card-footer {
+  background-color: #F8FAFC !important;
+  border-top: 1px solid #E2E8F0 !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+  color: #475569 !important;
+}
+
+[data-theme="light"] .badge-items-count,
+body.light-mode .badge-items-count {
+  background: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
+  color: #0F172A !important;
+}
+
+/* Wide Table */
+[data-theme="light"] .articles-table-overflow-wrap,
+body.light-mode .articles-table-overflow-wrap {
+  background-color: #FFFFFF !important;
+}
+
+[data-theme="light"] .netsuite-articles-table th,
+body.light-mode .netsuite-articles-table th {
+  background-color: #F8FAFC !important;
+  color: #475569 !important;
+  border-right: 1px solid #E2E8F0 !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+}
+
+[data-theme="light"] .netsuite-articles-table td,
+body.light-mode .netsuite-articles-table td {
+  border-right: 1px solid #E2E8F0 !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .cell-row-num,
+body.light-mode .cell-row-num {
+  background-color: #F8FAFC !important;
+  color: #64748B !important;
+}
+
+[data-theme="light"] .article-row:hover,
+body.light-mode .article-row:hover {
+  background-color: #F8FAFC !important;
+}
+
+[data-theme="light"] .article-row.selected-row,
+body.light-mode .article-row.selected-row {
+  background-color: #FEF3C7 !important;
+}
+
+[data-theme="light"] .resumen-calc-row,
+body.light-mode .resumen-calc-row {
+  border-bottom: 1px solid #E2E8F0 !important;
+}
+
+[data-theme="light"] .resumen-currency-pill,
+body.light-mode .resumen-currency-pill {
+  background: #F1F5F9 !important;
+  color: #64748B !important;
+}
+
+
+
