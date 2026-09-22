@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { IconChevronDown, IconChevronRight, IconClose, IconSettings } from '../ui/Icons';
+import { SfgLogoSymbol } from '../ui/Logo';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -32,15 +33,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Cabecera Móvil (solo visible en pantallas pequeñas) */}
       <div className="sidebar-mobile-header">
         <div className="mobile-brand-row">
-          <picture className="sidebar-brand-picture">
-            <source srcSet="/SFGLogo.svg" type="image/svg+xml" />
-            <img
-              src="/SFGLogo.png"
-              onError={(e) => { e.currentTarget.src = '/SFGLogo.png'; }}
-              alt="SIFYGSA"
-              className="sidebar-brand-logo-img"
-            />
-          </picture>
+          <div className="sidebar-brand-lockup" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <SfgLogoSymbol size={28} />
+            <span style={{ fontWeight: 800, color: '#F97316', fontSize: '1.05rem', letterSpacing: '0.04em' }}>SIFYGSA</span>
+          </div>
         </div>
         {onCloseMobile && (
           <button
@@ -62,6 +58,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
            ==================================================================== */}
         {isCollapsed ? (
           <div className="sidebar-collapsed-column">
+            <div className="collapsed-brand-flame" style={{ padding: '0.75rem 0', display: 'flex', justifyContent: 'center' }}>
+              <SfgLogoSymbol size={26} title="SIFYGSA Business Suite" />
+            </div>
             {/* Herramientas Rápidas en Columna */}
             <div className="collapsed-tools-stack">
               <button

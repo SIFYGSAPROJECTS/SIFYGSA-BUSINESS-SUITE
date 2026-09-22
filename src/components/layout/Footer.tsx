@@ -1,4 +1,5 @@
 import React from 'react';
+import { SfgLogoSymbol } from '../ui/Logo';
 
 export const Footer: React.FC = () => {
   const scrollToTop = () => {
@@ -12,8 +13,8 @@ export const Footer: React.FC = () => {
         <p className="copyright-notice">© {new Date().getFullYear()} SIFYGSA. Todos los derechos reservados.</p>
 
         <div className="footer-bottom-right">
-          <p className="f-g-badge">
-            <span className="orange-dot-pip" />
+          <p className="f-g-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <SfgLogoSymbol size={18} />
             <span>Soluciones Integrales en Fire &amp; Gas</span>
           </p>
 
