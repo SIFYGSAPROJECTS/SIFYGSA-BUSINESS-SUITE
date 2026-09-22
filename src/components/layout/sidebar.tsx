@@ -58,9 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
            ==================================================================== */}
         {isCollapsed ? (
           <div className="sidebar-collapsed-column">
-            <div className="collapsed-brand-flame" style={{ padding: '0.75rem 0', display: 'flex', justifyContent: 'center' }}>
-              <SfgLogoSymbol size={26} title="SIFYGSA Business Suite" />
-            </div>
+            
             {/* Herramientas Rápidas en Columna */}
             <div className="collapsed-tools-stack">
               <button
@@ -85,17 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </svg>
               </button>
 
-              <button
-                type="button"
-                className={`tool-icon-btn ${activeModuleId === 'compras' ? 'active-glow' : ''}`}
-                title="Operaciones / Compras"
-                onClick={() => onSelectModule('compras', 'compras-requisicion')}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
-                  <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M5.6 5.6l12.8 12.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
+              
             </div>
 
             <div className="collapsed-divider-line" />
@@ -169,17 +157,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
-                <button
-                  type="button"
-                  className={`tool-icon-btn ${activeModuleId === 'compras' ? 'active' : ''}`}
-                  title="Operaciones / Compras"
-                  onClick={() => onSelectModule('compras', 'compras-requisicion')}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
-                    <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M5.6 5.6l12.8 12.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
+                
               </div>
             </div>
 
