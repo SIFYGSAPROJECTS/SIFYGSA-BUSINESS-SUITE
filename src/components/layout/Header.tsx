@@ -24,12 +24,13 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    return localStorage.getItem('sfg_theme') !== 'light';
+    return localStorage.getItem('sfg_theme') === 'dark';
   });
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Sincronizar tema con el DOM y localStorage
   useEffect(() => {
+    document.body.removeAttribute('data-theme');
     if (isDarkMode) {
       document.documentElement.setAttribute('data-theme', 'dark');
       document.body.classList.remove('light-mode');
