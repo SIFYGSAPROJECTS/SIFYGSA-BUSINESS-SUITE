@@ -4,6 +4,8 @@ import { MainLayout } from './components/layout/MainLayout';
 import { HomeCRM } from './modules/crm/pages/HomeCRM';
 import { GeneralDashboard } from './modules/dashboard/pages/GeneralDashboard';
 import { ComprasRequisicion } from './modules/compras/pages/ComprasRequisicion';
+import { SettingsPage } from './modules/settings/pages/SettingsPage';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 
 interface UserSession {
   name: string;
@@ -11,14 +13,16 @@ interface UserSession {
   role: string;
 }
 
-export function App() {
+function AppContent() {
+  const { t } = useLanguage();
+
   // Estado de autenticación - por defecto con Jared S. (Safety Director) para ver el dashboard directo
   const [user, setUser] = useState<UserSession | null>({
     name: 'Jared S.',
     email: 'jared.s@sifygsa.com',
     role: 'Safety Director',
   });
-  
+
   // Estado de módulo activo en la navegación
   const [activeModuleId, setActiveModuleId] = useState<string>('dashboard');
   const [activeSubItemId, setActiveSubItemId] = useState<string | undefined>('crm-opportunities');
@@ -45,18 +49,18 @@ export function App() {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // Título dinámico para el Header según el módulo activo
+  // Título dinámico para el Header según el módulo activo y el idioma
   const getModuleTitle = () => {
     switch (activeModuleId) {
       case 'crm':
-        return 'Módulo CRM & Ventas';
+        return t('app.crm_title');
       case 'compras':
-        return 'Módulo de Compras — Requisición NetSuite';
+        return t('app.compras_title');
       case 'settings':
-        return 'Configuración del Sistema';
+        return t('app.settings_title');
       case 'dashboard':
       default:
-        return 'Panel General Ejecutivo';
+        return t('app.dashboard_title');
     }
   };
 
@@ -68,19 +72,7 @@ export function App() {
       case 'compras':
         return <ComprasRequisicion subItemId={activeSubItemId} />;
       case 'settings':
-        return (
-          <div className="crm-content-card">
-            <div className="card-header-row">
-              <div>
-                <h2 className="card-title">Configuración de la Suite</h2>
-                <p className="card-sub">Gestión de parámetros globales, seguridad y arquitectura modular</p>
-              </div>
-            </div>
-            <p style={{ color: 'var(--color-secondary)', fontSize: '0.9rem', marginTop: '1rem' }}>
-              Módulo listo para conectar con servicios de backend en Node.js y administración de roles.
-            </p>
-          </div>
-        );
+        return <SettingsPage user={user} />;
       case 'dashboard':
       default:
         return <GeneralDashboard onNavigateModule={handleSelectModule} />;
@@ -98,6 +90,14 @@ export function App() {
     >
       {renderModuleContent()}
     </MainLayout>
+  );
+}
+
+export function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }
 

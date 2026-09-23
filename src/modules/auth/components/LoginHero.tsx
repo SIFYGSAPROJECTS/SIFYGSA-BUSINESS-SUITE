@@ -1,7 +1,9 @@
-import React from 'react';
-import { IconShieldCheck, IconChartBar, IconUsers } from '../../../components/ui/Icons';
+﻿import React from 'react';
+import { IconShieldCheck } from '../../../components/ui/Icons';
+import { useLanguage } from '../../../context/LanguageContext';
 
 export const LoginHero: React.FC = () => {
+  const { t } = useLanguage();
   return (
     <aside className="login-hero-container" aria-label="Hero institucional">
       <div className="login-hero-bg-overlay" />
@@ -13,13 +15,12 @@ export const LoginHero: React.FC = () => {
         </div>
 
         <h1 className="hero-title">
-          Control Total & Gestión <br />
-          <span className="hero-title-accent">Industrial F&G NetSuite</span>
+          {t('auth.hero_title')} <br />
+          <span className="hero-title-accent">{t('auth.hero_title_accent')}</span>
         </h1>
 
         <p className="hero-description">
-          Plataforma unificada para operaciones críticas de detección de fuego y gas,
-          gestión comercial CRM, requisiciones y control de proyectos en plantas industriales.
+          {t('auth.hero_description')}
         </p>
 
 
@@ -27,7 +28,7 @@ export const LoginHero: React.FC = () => {
         <br />
         <div className="hero-footer-badge">
           <IconShieldCheck size={18} />
-          <span>Acceso empresarial seguro con encriptación de extremo a extremo</span>
+          <span>{t('auth.hero_security')}</span>
         </div>
       </div>
     </aside>

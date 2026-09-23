@@ -1,24 +1,26 @@
-import React from 'react';
+﻿import React from 'react';
 import { IconUsers, IconShieldCheck, IconChartBar } from '../../../components/ui/Icons';
 import '../rh.css';
+import { useLanguage } from '../../../context/LanguageContext';
 
 export const HomeRH: React.FC = () => {
+  const { t } = useLanguage();
   return (
     <div className="rh-module-page">
       {/* Banner de Encabezado */}
       <div className="module-header-banner">
         <div className="module-header-text">
-          <h1 className="module-title">Módulo Recursos Humanos & Talento</h1>
+          <h1 className="module-title">{t('rh.module_title')}</h1>
           <p className="module-subtitle">
-            Administración de colaboradores, control de asistencia, nómina y expedientes digitales.
+            {t('rh.module_subtitle')}
           </p>
         </div>
         <div className="module-actions">
           <button type="button" className="btn-action-secondary">
-            Incidencias del Día
+            {t('rh.btn_incidents')}
           </button>
           <button type="button" className="btn-action-primary">
-            + Registrar Colaborador
+            {t('rh.btn_register')}
           </button>
         </div>
       </div>
@@ -27,40 +29,40 @@ export const HomeRH: React.FC = () => {
       <div className="rh-metrics-grid">
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-label">Plantilla Activa</span>
+            <span className="metric-label">{t('rh.metric_active_staff')}</span>
             <span className="metric-icon-box">
               <IconUsers size={18} />
             </span>
           </div>
           <div className="metric-value">342</div>
           <div className="metric-footer positive">
-            <span>↑ 8 nuevas altas</span> este trimestre
+            <span>↑ 8 {t('rh.metric_active_staff_footer')}</span> {t('rh.metric_active_staff_quarter')}
           </div>
         </div>
 
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-label">Asistencia Hoy</span>
+            <span className="metric-label">{t('rh.metric_attendance')}</span>
             <span className="metric-icon-box">
               <IconShieldCheck size={18} />
             </span>
           </div>
           <div className="metric-value">97.4%</div>
           <div className="metric-footer positive">
-            <span>• 333 presentes</span> de 342
+            <span>• 333 {t('rh.metric_attendance_footer')}</span> {t('rh.metric_attendance_of')} 342
           </div>
         </div>
 
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-label">Solicitudes Pendientes</span>
+            <span className="metric-label">{t('rh.metric_pending')}</span>
             <span className="metric-icon-box">
               <IconChartBar size={18} />
             </span>
           </div>
           <div className="metric-value">14</div>
           <div className="metric-footer neutral">
-            <span>• 9 vacaciones</span>, 5 permisos
+            <span>• 9 {t('rh.metric_pending_vacations')}</span>, 5 {t('rh.metric_pending_permits')}
           </div>
         </div>
       </div>
@@ -69,22 +71,22 @@ export const HomeRH: React.FC = () => {
       <div className="rh-content-card">
         <div className="card-header-row">
           <div>
-            <h3 className="card-title">Directorio de Colaboradores Clave</h3>
-            <p className="card-sub">Expedientes actualizados y estatus laboral en la suite</p>
+            <h3 className="card-title">{t('rh.directory_title')}</h3>
+            <p className="card-sub">{t('rh.directory_sub')}</p>
           </div>
-          <span className="badge-pill">342 Expedientes Digitales</span>
+          <span className="badge-pill">342 {t('rh.badge_records')}</span>
         </div>
 
         <div className="table-responsive">
           <table className="rh-table">
             <thead>
               <tr>
-                <th>Colaborador</th>
-                <th>Departamento</th>
-                <th>Puesto</th>
-                <th>Tipo de Contrato</th>
-                <th>Estatus</th>
-                <th>Acción</th>
+                <th>{t('rh.col_employee')}</th>
+                <th>{t('rh.col_department')}</th>
+                <th>{t('rh.col_position')}</th>
+                <th>{t('rh.col_contract')}</th>
+                <th>{t('rh.col_status')}</th>
+                <th>{t('rh.col_action')}</th>
               </tr>
             </thead>
             <tbody>
@@ -100,9 +102,9 @@ export const HomeRH: React.FC = () => {
                 </td>
                 <td>Operaciones & Logística</td>
                 <td>Coordinadora de Operaciones</td>
-                <td>Indefinido</td>
-                <td><span className="status-badge active">Activo</span></td>
-                <td><button type="button" className="table-btn">Expediente</button></td>
+                <td>{t('rh.contract_indefinite')}</td>
+                <td><span className="status-badge active">{t('rh.status_active')}</span></td>
+                <td><button type="button" className="table-btn">{t('rh.btn_record')}</button></td>
               </tr>
               <tr>
                 <td>
@@ -116,9 +118,9 @@ export const HomeRH: React.FC = () => {
                 </td>
                 <td>Tecnología & Sistemas</td>
                 <td>Líder de Desarrollo</td>
-                <td>Indefinido</td>
-                <td><span className="status-badge active">Activo</span></td>
-                <td><button type="button" className="table-btn">Expediente</button></td>
+                <td>{t('rh.contract_indefinite')}</td>
+                <td><span className="status-badge active">{t('rh.status_active')}</span></td>
+                <td><button type="button" className="table-btn">{t('rh.btn_record')}</button></td>
               </tr>
               <tr>
                 <td>
@@ -132,9 +134,9 @@ export const HomeRH: React.FC = () => {
                 </td>
                 <td>Administración & Finanzas</td>
                 <td>Analista Contable Senior</td>
-                <td>Indefinido</td>
-                <td><span className="status-badge vacation">Vacaciones</span></td>
-                <td><button type="button" className="table-btn">Expediente</button></td>
+                <td>{t('rh.contract_indefinite')}</td>
+                <td><span className="status-badge vacation">{t('rh.status_vacation')}</span></td>
+                <td><button type="button" className="table-btn">{t('rh.btn_record')}</button></td>
               </tr>
             </tbody>
           </table>

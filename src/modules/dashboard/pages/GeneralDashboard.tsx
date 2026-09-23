@@ -1,11 +1,13 @@
 import React from 'react';
 import '../dashboard.css';
+import { useLanguage } from '../../../context/LanguageContext';
 
 interface GeneralDashboardProps {
   onNavigateModule: (moduleId: string, subItemId?: string) => void;
 }
 
 export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateModule }) => {
+  const { t } = useLanguage();
   return (
     <div className="gemini-dashboard-container">
       {/* SECTION A: 6 KPI METRICS CARDS */}
@@ -15,10 +17,10 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
           className="kpi-card"
           style={{ cursor: 'pointer' }}
           onClick={() => onNavigateModule('crm', 'crm-opportunities')}
-          title="Ver Cartera de Oportunidades CRM"
+          title={t('dashboard.tooltip_crm')}
         >
           <div className="kpi-card-header">
-            <span className="kpi-label">Oportunidades</span>
+            <span className="kpi-label">{t('dashboard.kpi_opportunities')}</span>
             <div className="kpi-icon-container orange">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 14, height: 14 }}>
                 <path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" strokeLinecap="round" strokeLinejoin="round" />
@@ -37,7 +39,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
         {/* KPI 2: Total Users */}
         <div className="kpi-card">
           <div className="kpi-card-header">
-            <span className="kpi-label">Total Users</span>
+            <span className="kpi-label">{t('dashboard.kpi_total_users')}</span>
             <div className="kpi-icon-container cyan">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 14, height: 14 }}>
                 <path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" strokeLinecap="round" strokeLinejoin="round" />
@@ -56,7 +58,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
         {/* KPI 3: New MRR */}
         <div className="kpi-card">
           <div className="kpi-card-header">
-            <span className="kpi-label">New MRR</span>
+            <span className="kpi-label">{t('dashboard.kpi_new_mrr')}</span>
             <div className="kpi-icon-container amber">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 14, height: 14 }}>
                 <path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" strokeLinecap="round" strokeLinejoin="round" />
@@ -75,7 +77,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
         {/* KPI 4: Total */}
         <div className="kpi-card">
           <div className="kpi-card-header">
-            <span className="kpi-label">Total</span>
+            <span className="kpi-label">{t('dashboard.kpi_total')}</span>
             <div className="kpi-icon-container emerald">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 14, height: 14 }}>
                 <path d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.516 0c.85.493 1.508 1.333 1.508 2.316V18" strokeLinecap="round" strokeLinejoin="round" />
@@ -96,10 +98,10 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
           className="kpi-card"
           style={{ cursor: 'pointer' }}
           onClick={() => onNavigateModule('crm', 'crm-kanban')}
-          title="Ver Tablero de Actividades / Kanban"
+          title={t('dashboard.tooltip_kanban')}
         >
           <div className="kpi-card-header">
-            <span className="kpi-label">Active Projects</span>
+            <span className="kpi-label">{t('dashboard.kpi_active_projects')}</span>
             <div className="kpi-icon-container blue">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 14, height: 14 }}>
                 <path d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" strokeLinecap="round" strokeLinejoin="round" />
@@ -118,7 +120,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
         {/* KPI 6: Team Projects */}
         <div className="kpi-card">
           <div className="kpi-card-header">
-            <span className="kpi-label">Team Projects</span>
+            <span className="kpi-label">{t('dashboard.kpi_team_projects')}</span>
             <div className="kpi-icon-container purple">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 14, height: 14 }}>
                 <path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
@@ -140,7 +142,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
         {/* Monthly Revenue Trend */}
         <div className="dashboard-portlet-card span-5">
           <div className="portlet-card-header">
-            <h3 className="portlet-title-text">Monthly Revenue Trend</h3>
+            <h3 className="portlet-title-text">{t('dashboard.revenue_trend_title')}</h3>
             <span className="portlet-tag-mono">2024 (USD)</span>
           </div>
 
@@ -208,7 +210,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
         {/* Completion 73% Donut */}
         <div className="dashboard-portlet-card span-3 align-center">
           <div className="portlet-card-header full-w">
-            <span className="portlet-title-text">Completion</span>
+            <span className="portlet-title-text">{t('dashboard.completion_title')}</span>
             <span className="portlet-tag-mono">ACTIVE</span>
           </div>
 
@@ -226,7 +228,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
             </svg>
             <div className="donut-center-label">
               <span className="donut-percent-num">73%</span>
-              <span className="donut-sub-text">Efficiency</span>
+              <span className="donut-sub-text">{t('dashboard.completion_efficiency')}</span>
             </div>
           </div>
 
@@ -249,18 +251,18 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
         {/* Operational Tasks */}
         <div className="dashboard-portlet-card span-4">
           <div className="portlet-card-header">
-            <h3 className="portlet-title-text">Operational Tasks</h3>
-            <span className="active-tasks-pill">5 Active</span>
+            <h3 className="portlet-title-text">{t('dashboard.tasks_title')}</h3>
+            <span className="active-tasks-pill">5 {t('dashboard.tasks_active')}</span>
           </div>
 
           <div className="operational-tasks-table-wrap">
             <table className="operational-table">
               <thead>
                 <tr>
-                  <th>Tasks</th>
-                  <th style={{ textAlign: 'center' }}>Progress %</th>
-                  <th style={{ textAlign: 'center' }}>Due Date</th>
-                  <th style={{ textAlign: 'right' }}>Status</th>
+                  <th>{t('dashboard.tasks_col_tasks')}</th>
+                  <th style={{ textAlign: 'center' }}>{t('dashboard.tasks_col_progress')}</th>
+                  <th style={{ textAlign: 'center' }}>{t('dashboard.tasks_col_due')}</th>
+                  <th style={{ textAlign: 'right' }}>{t('dashboard.tasks_col_status')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -313,16 +315,16 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
       {/* SECTION C: BOTTOM ROW KANBAN, CATEGORY SPLIT & PODIUM */}
       <section className="bottom-charts-grid">
         {/* Status Board (Sprint Current) */}
-        <div className="dashboard-portlet-card span-5" onClick={() => onNavigateModule('crm', 'crm-kanban')} style={{ cursor: 'pointer' }} title="Clic para ir al módulo completo de CRM & Kanban">
+        <div className="dashboard-portlet-card span-5" onClick={() => onNavigateModule('crm', 'crm-kanban')} style={{ cursor: 'pointer' }} title={t('dashboard.tooltip_kanban')}>
           <div className="portlet-card-header">
-            <h3 className="portlet-title-text">Status Board</h3>
-            <span className="portlet-tag-mono">Sprint Current</span>
+            <h3 className="portlet-title-text">{t('dashboard.status_board_title')}</h3>
+            <span className="portlet-tag-mono">{t('dashboard.status_board_tag')}</span>
           </div>
 
           <div className="status-board-columns">
             {/* TO DO */}
             <div className="mini-column">
-              <span className="mini-col-title">TO DO</span>
+              <span className="mini-col-title">{t('dashboard.kanban_todo')}</span>
               <div className="mini-task-card">
                 <p className="mini-task-name">Devehris a place task</p>
                 <span className="mini-task-tag orange">Task #1</span>
@@ -335,7 +337,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
 
             {/* IN PROGRESS */}
             <div className="mini-column">
-              <span className="mini-col-title cyan">IN PROGRESS</span>
+              <span className="mini-col-title cyan">{t('dashboard.kanban_inprogress')}</span>
               <div className="mini-task-card">
                 <p className="mini-task-name">Task for ncaeting for process</p>
                 <span className="mini-task-tag cyan">Task #2</span>
@@ -348,7 +350,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
 
             {/* REVIEW */}
             <div className="mini-column">
-              <span className="mini-col-title amber">REVIEW</span>
+              <span className="mini-col-title amber">{t('dashboard.kanban_review')}</span>
               <div className="mini-task-card">
                 <p className="mini-task-name">Decourarise a Review</p>
                 <span className="mini-task-tag amber">Task #3</span>
@@ -361,7 +363,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
 
             {/* DONE */}
             <div className="mini-column">
-              <span className="mini-col-title green">DONE</span>
+              <span className="mini-col-title green">{t('dashboard.kanban_done')}</span>
               <div className="mini-task-card">
                 <p className="mini-task-name">Monthly Revenue shrtewn</p>
                 <span className="mini-task-tag green">Task #0</span>
@@ -377,7 +379,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
         {/* Category Split */}
         <div className="dashboard-portlet-card span-3 align-center">
           <div className="portlet-card-header full-w">
-            <h3 className="portlet-title-text">Category Split</h3>
+            <h3 className="portlet-title-text">{t('dashboard.category_split_title')}</h3>
             <span className="portlet-tag-mono">Segmented</span>
           </div>
 
@@ -413,8 +415,8 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
         {/* Team Leaders (Podium) */}
         <div className="dashboard-portlet-card span-4">
           <div className="portlet-card-header">
-            <h3 className="portlet-title-text">Team Leaders</h3>
-            <span className="top-performer-pill">Top 3 Performer</span>
+            <h3 className="portlet-title-text">{t('dashboard.team_leaders_title')}</h3>
+            <span className="top-performer-pill">{t('dashboard.top_performer')}</span>
           </div>
 
           <div className="team-podium-stack">
@@ -449,7 +451,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
           </div>
 
           <div className="podium-footer-note">
-            <span>Leaderboard updated 5 mins ago</span>
+            <span>{t('dashboard.leaderboard_updated')}</span>
           </div>
         </div>
       </section>

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { IconMenu, IconSearch, IconBell, IconLogOut, IconSettings, IconUser } from '../ui/Icons';
 import { SfgLogoSymbol } from '../ui/Logo';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface HeaderProps {
   currentModuleTitle?: string;
@@ -22,6 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
     role: 'Safety Director',
   },
 }) => {
+  const { t } = useLanguage();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('sfg_theme') === 'dark';
@@ -129,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({
           <IconSearch size={16} className="search-icon-symbol" />
           <input
             type="text"
-            placeholder="Type to search sensor telemetry, audits, reports, tickets..."
+            placeholder={t('header.search_placeholder')}
             className="sifygsa-search-field"
           />
         </div>
@@ -141,8 +143,8 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           type="button"
           className="header-tool-btn"
-          aria-label={isDarkMode ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
-          title={isDarkMode ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
+          aria-label={isDarkMode ? t('header.change_to_light') : t('header.change_to_dark')}
+          title={isDarkMode ? t('header.change_to_light') : t('header.change_to_dark')}
           onClick={toggleTheme}
         >
           {isDarkMode ? (
@@ -194,8 +196,8 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           type="button"
           className="header-tool-btn"
-          aria-label="Notifications"
-          title="Notifications"
+          aria-label={t('header.notifications')}
+          title={t('header.notifications')}
         >
           <IconBell size={20} />
           <span className="notification-number-badge">9</span>
@@ -234,7 +236,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={() => setIsUserMenuOpen(false)}
               >
                 <IconUser size={15} />
-                <span>Perfil de Director</span>
+                <span>Perfil</span>
               </button>
 
               <button
@@ -243,7 +245,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={() => setIsUserMenuOpen(false)}
               >
                 <IconSettings size={15} />
-                <span>Configuración de Suite</span>
+                <span>{t('nav.settings')}</span>
               </button>
 
               <div className="dialog-divider" />
@@ -257,7 +259,7 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
               >
                 <IconLogOut size={15} />
-                <span>Cerrar Sesión</span>
+                <span>{t('header.logout')}</span>
               </button>
             </div>
           )}

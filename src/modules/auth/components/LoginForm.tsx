@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { IconLogo, IconUser, IconLock, IconEye, IconEyeOff } from '../../../components/ui/Icons';
+import { useLanguage } from '../../../context/LanguageContext';
 
 interface LoginFormProps {
   onLoginSuccess: (user: { name: string; email: string; role: string }) => void;
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
+  const { t } = useLanguage();
   const [username, setUsername] = useState('admin@sifygsa.com');
   const [password, setPassword] = useState('••••••••••••');
   const [showPassword, setShowPassword] = useState(false);
@@ -16,11 +18,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim()) {
-      setNotification('Por favor ingresa tu usuario o correo corporativo.');
+      setNotification(t('auth.error_no_user'));
       return;
     }
     if (!password.trim()) {
-      setNotification('Por favor ingresa tu contraseña.');
+      setNotification(t('auth.error_no_pass'));
       return;
     }
 
@@ -40,7 +42,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
 
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
-    alert('Se ha enviado un enlace de recuperación a tu correo corporativo registrado.');
+    alert(t('auth.forgot_alert'));
   };
 
   return (
@@ -49,15 +51,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
         <div className="login-brand">
           <IconLogo size={42} />
           <div className="login-brand-text">
-            <span className="brand-title">SIFYGSUITE Enterprise</span>
-            <span className="brand-subtitle">Fire & Gas Suite • ERP NetSuite</span>
+            <span className="brand-title">SIFYGSA Enterprise</span>
+            <span className="brand-subtitle">{t('auth.brand_subtitle')}</span>
           </div>
         </div>
 
-        <h2 className="login-heading">Iniciar Sesión</h2>
-        <p className="login-subheading">
-          Ingresa tus credenciales para acceder a la plataforma modular
-        </p>
+        <h2 className="login-heading">{t('auth.heading')}</h2>
+        <p className="login-subheading">{t('auth.subheading')}</p>
       </div>
 
       {notification && (
@@ -70,7 +70,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
         {/* Campo Usuario */}
         <div className="form-group">
           <label htmlFor="login-username" className="form-label">
-            Usuario o Correo Corporativo
+            {t('auth.username_label')}
           </label>
           <div className="input-group">
             <span className="input-icon">
@@ -80,7 +80,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
               id="login-username"
               type="text"
               className="form-input"
-              placeholder="ejemplo@sifygsa.com"
+              placeholder={t('auth.username_placeholder')}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -93,14 +93,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
         <div className="form-group">
           <div className="form-label-row">
             <label htmlFor="login-password" className="form-label">
-              Contraseña
+              {t('auth.password_label')}
             </label>
             <a
               href="#recuperar"
               onClick={handleForgotPassword}
               className="forgot-password-link"
             >
-              ¿Olvidaste tu contraseña?
+              {t('auth.forgot_password')}
             </a>
           </div>
           <div className="input-group">
@@ -111,7 +111,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
               id="login-password"
               type={showPassword ? 'text' : 'password'}
               className="form-input password-input"
-              placeholder="••••••••••••"
+              placeholder={t('auth.password_placeholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -121,7 +121,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
               type="button"
               className="password-toggle-btn"
               onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+              aria-label={showPassword ? t('auth.hide_password') : t('auth.show_password')}
             >
               {showPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
             </button>
@@ -137,7 +137,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
               onChange={(e) => setRememberMe(e.target.checked)}
             />
             <span className="checkbox-custom" />
-            <span className="checkbox-label">Recordar sesión en este equipo</span>
+            <span className="checkbox-label">{t('auth.remember_session')}</span>
           </label>
         </div>
 
@@ -150,13 +150,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
           {isLoading ? (
             <span className="btn-loading-spinner" />
           ) : (
-            'Iniciar Sesión'
+            t('auth.submit_btn')
           )}
         </button>
 
         {/* Demo Fast Access */}
         <div className="demo-access-container">
-          <span className="divider-text">o entra en modo demostración</span>
+          <span className="divider-text">{t('auth.demo_divider')}</span>
           <button
             type="button"
             className="btn-demo"
@@ -168,14 +168,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
               })
             }
           >
-            Acceder al Dashboard / Suite Demo
+            {t('auth.demo_btn')}
           </button>
         </div>
       </form>
 
       <footer className="login-form-footer">
-        <p>© {new Date().getFullYear()} SFG Business Suite. Todos los derechos reservados.</p>
+        <p>© {new Date().getFullYear()} SFG Business Suite. {t('auth.footer')}</p>
       </footer>
     </div>
   );
-};
+};
