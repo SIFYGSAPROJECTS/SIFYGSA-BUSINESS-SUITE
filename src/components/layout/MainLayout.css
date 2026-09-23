@@ -1484,3 +1484,54 @@ body.light-mode .collapsed-divider-line {
 
 
 
+
+
+/* ==========================================================================
+   Header Brand Identity & Theme Contrast Enhancements (Light & Dark)
+   ========================================================================== */
+.brand-title-text {
+  color: #FFFFFF;
+  transition: color 0.2s ease;
+}
+
+[data-theme="light"] .brand-title-text,
+body.light-mode .brand-title-text {
+  color: #0F172A !important;
+}
+
+.brand-tag-enterprise {
+  background: #EA580C !important;
+  color: #FFFFFF !important;
+}
+
+.brand-subtitle-text {
+  color: #94A3B8;
+  transition: color 0.2s ease;
+}
+
+[data-theme="light"] .brand-subtitle-text,
+body.light-mode .brand-subtitle-text {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .header-toggle-btn,
+body.light-mode .header-toggle-btn {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .header-toggle-btn:hover,
+body.light-mode .header-toggle-btn:hover {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .header-tool-btn,
+body.light-mode .header-tool-btn {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .header-tool-btn:hover,
+body.light-mode .header-tool-btn:hover {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+}

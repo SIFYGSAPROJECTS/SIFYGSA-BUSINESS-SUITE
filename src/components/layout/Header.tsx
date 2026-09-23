@@ -72,18 +72,50 @@ export const Header: React.FC<HeaderProps> = ({
         )}
         <div className="brand-suite-identity" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <div className="flame-logo-wrapper" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-            <SfgLogoSymbol size={36} className="header-flame-logo" />
+            <SfgLogoSymbol size={38} className="header-flame-logo" />
           </div>
           <div className="brand-text-block" style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-            <div className="brand-title-row" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <span className="brand-title-text" style={{ fontSize: '1.1rem', fontWeight: 900, letterSpacing: '0.05em' }}>
+            <div className="brand-title-row" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <span
+                className="brand-title-text"
+                style={{
+                  fontSize: '1.18rem',
+                  fontWeight: 900,
+                  letterSpacing: '0.05em',
+                  color: isDarkMode ? '#FFFFFF' : '#0F172A',
+                  transition: 'color 0.2s ease',
+                }}
+              >
                 SIFYGSA
               </span>
-              <span className="brand-tag-enterprise" style={{ fontSize: '0.7rem', fontWeight: 800, color: '#F97316', textTransform: 'uppercase' }}>
+              <span
+                className="brand-tag-enterprise"
+                style={{
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  color: '#FFFFFF',
+                  backgroundColor: '#EA580C',
+                  padding: '0.15rem 0.45rem',
+                  borderRadius: '4px',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  boxShadow: '0 1px 3px rgba(234, 88, 12, 0.35)',
+                }}
+              >
                 SUITE
               </span>
             </div>
-            <span className="brand-subtitle-text" style={{ fontSize: '0.6rem', fontWeight: 600, color: isDarkMode ? '#94A3B8' : '#64748B', letterSpacing: '0.04em' }}>
+            <span
+              className="brand-subtitle-text"
+              style={{
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                color: isDarkMode ? '#94A3B8' : '#475569',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                transition: 'color 0.2s ease',
+              }}
+            >
               Business Platform
             </span>
           </div>
