@@ -32,6 +32,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  // Estado que determina si el menú está desplegado (abierto) o plegado
+  const isSidebarOpen = typeof window !== 'undefined' && window.innerWidth <= 860
+    ? isMobileOpen
+    : !isCollapsed;
+
   const handleToggleSidebar = () => {
     // En pantallas grandes colapsa/expande; en pantallas móviles abre/cierra drawer
     if (window.innerWidth <= 860) {
@@ -64,6 +69,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       <Header
         currentModuleTitle={currentModuleTitle}
         onToggleSidebar={handleToggleSidebar}
+        isSidebarOpen={isSidebarOpen}
         onLogout={onLogout}
         user={user}
       />

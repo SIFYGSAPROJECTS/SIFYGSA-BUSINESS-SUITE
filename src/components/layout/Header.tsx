@@ -6,6 +6,7 @@ import { useLanguage } from '../../context/LanguageContext';
 interface HeaderProps {
   currentModuleTitle?: string;
   onToggleSidebar?: () => void;
+  isSidebarOpen?: boolean;
   onLogout: () => void;
   user?: {
     name: string;
@@ -16,6 +17,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   onToggleSidebar,
+  isSidebarOpen = false,
   onLogout,
   user = {
     name: 'Jared S.',
@@ -65,12 +67,17 @@ export const Header: React.FC<HeaderProps> = ({
         {onToggleSidebar && (
           <button
             type="button"
-            className="header-toggle-btn"
+            className={`header-toggle-btn ${isSidebarOpen ? 'is-active' : ''}`}
             onClick={onToggleSidebar}
-            aria-label="Abrir o colapsar menú lateral"
-            title="Alternar menú lateral"
+            aria-label={isSidebarOpen ? 'Plegar menú lateral' : 'Desplegar menú lateral'}
+            title={isSidebarOpen ? 'Plegar menú lateral' : 'Desplegar menú lateral'}
+            aria-expanded={isSidebarOpen}
           >
-            <IconMenu size={20} />
+            <span className="hamburger-animated-box" aria-hidden="true">
+              <span className="hamburger-line line-top" />
+              <span className="hamburger-line line-middle" />
+              <span className="hamburger-line line-bottom" />
+            </span>
           </button>
         )}
         <div className="brand-suite-identity" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
