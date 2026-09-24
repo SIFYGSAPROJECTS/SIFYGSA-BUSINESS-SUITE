@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { IconMenu, IconSearch, IconBell, IconLogOut, IconSettings, IconUser } from '../ui/Icons';
+import { IconSearch, IconBell, IconLogOut, IconSettings, IconUser } from '../ui/Icons';
 import { SfgLogoSymbol } from '../ui/Logo';
 import { useLanguage } from '../../context/LanguageContext';
 
