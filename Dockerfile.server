@@ -1,0 +1,58 @@
+# ==========================================
+# Etapa 1: Compilación (Build Stage)
+# ==========================================
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copiar manifiesto de dependencias del servidor
+COPY server/package.json server/package-lock.json* ./
+
+# Instalar todas las dependencias para compilar TypeScript
+RUN npm install
+
+# Copiar configuración de TypeScript y código fuente del servidor
+COPY server/tsconfig.json ./
+COPY server/src ./src
+
+# Compilar TypeScript a JavaScript
+RUN npm run build
+
+# ==========================================
+# Etapa 2: Entorno de Ejecución (Runtime)
+# ==========================================
+FROM node:20-alpine AS runner
+
+# Definir variables de entorno de producción
+ENV NODE_ENV=production \
+    PORT=5000
+
+WORKDIR /app
+
+# Crear un usuario no privilegiado por seguridad
+RUN addgroup -S nodeapp && adduser -S nodeapp -G nodeapp
+
+# Copiar archivos de dependencias
+COPY server/package.json server/package-lock.json* ./
+
+# Instalar exclusivamente dependencias de producción
+RUN npm install --omit=dev && npm cache clean --force
+
+# Copiar el código compilado desde la etapa de construcción
+COPY --from=builder /app/dist ./dist
+
+# Asignar permisos al usuario no root
+RUN chown -R nodeapp:nodeapp /app
+
+# Cambiar al usuario no root
+USER nodeapp
+
+# Exponer el puerto del API
+EXPOSE 5000
+
+# Healthcheck para monitorización de salud del contenedor
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:5000/api/health || exit 1
+
+# Comando de inicio del servidor backend
+CMD ["node", "dist/index.js"]

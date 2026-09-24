@@ -1,0 +1,122 @@
+/* SIFYGSUITE Enterprise ERP Portal - Design Tokens (#2E2E2E, #767575, NetSuite & Industrial Precision) */
+:root {
+  /* Paleta Corporativa SIFYGSA */
+  --color-primary: #2E2E2E;
+  --color-primary-dark: #1E1E1E;
+  --color-primary-darker: #131314;
+  --color-primary-light: #3D3D3D;
+  --color-primary-surface: #262629;
+  
+  /* Lienzo y Fondo Corporativo Solicitado */
+  --color-secondary: #767575;
+  --color-secondary-dark: #5A5959;
+  --color-secondary-light: #9B9A9A;
+  --color-canvas: #767575;
+  --color-canvas-light: #E5E7EB;
+
+  /* Acento Firma F&G (Thermal Combustion Orange / NetSuite Alert) */
+  --color-accent-orange: #F97316;
+  --color-accent-orange-dark: #EA580C;
+  --color-accent-orange-light: #FDBA74;
+  --color-accent-amber: #F59E0B;
+  
+  /* Superficies y Fondos */
+  --color-bg: #2E2E2E;
+  --color-bg-alt: #1F1F22;
+  --color-surface: #2E2E2E;
+  --color-surface-card: #262629;
+  --color-surface-hover: #3D3D3D;
+  --color-surface-elevated: #383838;
+  
+  /* Textos y Contrastes */
+  --color-text-main: #FFFFFF;
+  --color-text-muted: #D1D5DB;
+  --color-text-soft: #9CA3AF;
+  --color-text-dim: #6B7280;
+  
+  /* Bordes */
+  --color-border: #3D3D3D;
+  --color-border-subtle: #2D2D2D;
+  --color-border-strong: #4B5563;
+  --color-border-orange: rgba(249, 115, 22, 0.4);
+  
+  /* Semánticos NetSuite ERP */
+  --color-success: #10B981;
+  --color-success-bg: rgba(16, 185, 129, 0.15);
+  --color-warning: #F59E0B;
+  --color-warning-bg: rgba(245, 158, 11, 0.15);
+  --color-danger: #EF4444;
+  --color-danger-bg: rgba(239, 68, 68, 0.15);
+  --color-info: #3B82F6;
+  --color-info-bg: rgba(59, 130, 246, 0.15);
+  --color-purple: #A855F7;
+  --color-cyan: #06B6D4;
+  
+  /* Sombras */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.45);
+  --shadow-xl: 0 20px 35px rgba(0, 0, 0, 0.55);
+  --shadow-orange: 0 4px 14px rgba(249, 115, 22, 0.3);
+  
+  /* Bordes redondeados */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-full: 9999px;
+  
+  /* Transiciones */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+
+  /* Layout Spacing */
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 70px;
+  --header-height: 58px;
+  --footer-height: 48px;
+}
+
+/* Modo Claro (Light Mode) */
+[data-theme="light"],
+body.light-mode {
+  --color-primary: #FFFFFF;
+  --color-primary-dark: #F3F4F6;
+  --color-primary-darker: #E5E7EB;
+  --color-primary-light: #F9FAFB;
+  --color-primary-surface: #FFFFFF;
+  
+  --color-secondary: #64748B;
+  --color-secondary-dark: #475569;
+  --color-secondary-light: #94A3B8;
+  --color-canvas: #E2E8F0;
+  --color-canvas-light: #F8FAFC;
+
+  --color-accent-orange: #EA580C;
+  --color-accent-orange-dark: #C2410C;
+  --color-accent-orange-light: #FB923C;
+  --color-accent-amber: #D97706;
+  
+  --color-bg: #F1F5F9;
+  --color-bg-alt: #E2E8F0;
+  --color-surface: #FFFFFF;
+  --color-surface-card: #FFFFFF;
+  --color-surface-hover: #F8FAFC;
+  --color-surface-elevated: #FFFFFF;
+  
+  --color-text-main: #0F172A;
+  --color-text-muted: #334155;
+  --color-text-soft: #64748B;
+  --color-text-dim: #94A3B8;
+  
+  --color-border: #E2E8F0;
+  --color-border-subtle: #F1F5F9;
+  --color-border-strong: #CBD5E1;
+  --color-border-orange: rgba(234, 88, 12, 0.4);
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+}
