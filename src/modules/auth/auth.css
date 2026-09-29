@@ -275,6 +275,161 @@
   }
 }
 
+.btn-submit.btn-submit-rh {
+  background: linear-gradient(135deg, #0D9488 0%, #059669 100%);
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+}
+
+.btn-submit.btn-submit-rh:hover {
+  background: linear-gradient(135deg, #0F766E 0%, #047857 100%);
+  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.45);
+}
+
+/* ==========================================================================
+   Selector de Perfiles de Acceso (CRM vs RH)
+   ========================================================================== */
+.account-selector-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.selector-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.account-selector-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.account-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.75rem 0.85rem;
+  background-color: var(--color-bg);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.account-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-border-strong);
+}
+
+.account-card.active-crm {
+  border-color: #F97316;
+  background-color: rgba(249, 115, 22, 0.08);
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.2);
+}
+
+.account-card.active-rh {
+  border-color: #14B8A6;
+  background-color: rgba(20, 184, 166, 0.08);
+  box-shadow: 0 0 12px rgba(20, 184, 166, 0.2);
+}
+
+.account-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.account-card-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.account-card-icon-box.crm-icon {
+  background-color: rgba(249, 115, 22, 0.15);
+  color: #F97316;
+}
+
+.account-card-icon-box.rh-icon {
+  background-color: rgba(20, 184, 166, 0.15);
+  color: #14B8A6;
+}
+
+.account-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.account-badge.crm-badge {
+  background-color: rgba(249, 115, 22, 0.15);
+  color: #FB923C;
+}
+
+.account-badge.rh-badge {
+  background-color: rgba(20, 184, 166, 0.15);
+  color: #2DD4BF;
+}
+
+.account-card-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.account-email {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-role {
+  font-size: 0.7rem;
+  color: var(--color-text-soft);
+}
+
+.input-role-tag {
+  position: absolute;
+  right: 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.input-role-tag.crm-tag {
+  background-color: rgba(249, 115, 22, 0.15);
+  color: #FB923C;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.input-role-tag.rh-tag {
+  background-color: rgba(20, 184, 166, 0.15);
+  color: #2DD4BF;
+  border: 1px solid rgba(20, 184, 166, 0.3);
+}
+
+/* ==========================================================================
+   Acceso Rápido Demo (Doble botón CRM y RH)
+   ========================================================================== */
 .demo-access-container {
   display: flex;
   flex-direction: column;
@@ -298,7 +453,7 @@
   content: '';
   position: absolute;
   top: 50%;
-  width: 26%;
+  width: 22%;
   height: 1px;
   background-color: var(--color-border);
 }
@@ -311,24 +466,45 @@
   right: 0;
 }
 
-.btn-demo {
+.demo-buttons-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
   width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: 0.85rem;
+}
+
+.btn-demo-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0.5rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: var(--color-text-main);
-  background-color: var(--color-surface-hover);
-  border: 1.5px dashed var(--color-border-strong);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--transition-fast);
+  background-color: var(--color-surface-hover);
+  border: 1.5px dashed var(--color-border-strong);
+  color: var(--color-text-main);
+  text-align: center;
 }
 
-.btn-demo:hover {
-  background-color: var(--color-bg);
-  border-color: var(--color-accent-orange);
-  color: var(--color-accent-orange);
+.btn-demo-card:hover {
+  transform: translateY(-2px);
   border-style: solid;
+}
+
+.btn-demo-crm:hover {
+  border-color: #F97316;
+  background-color: rgba(249, 115, 22, 0.1);
+  color: #FB923C;
+}
+
+.btn-demo-rh:hover {
+  border-color: #14B8A6;
+  background-color: rgba(20, 184, 166, 0.1);
+  color: #2DD4BF;
 }
 
 .login-form-footer {

@@ -4,7 +4,7 @@ import { LoginHero } from '../components/LoginHero';
 import '../auth.css';
 
 interface LoginPageProps {
-  onLoginSuccess: (user: { name: string; email: string; role: string }) => void;
+  onLoginSuccess: (user: { name: string; email: string; role: string; portal?: 'crm' | 'rh' }) => void;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {

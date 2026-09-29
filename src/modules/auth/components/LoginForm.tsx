@@ -1,19 +1,73 @@
-﻿import React, { useState } from 'react';
-import { IconLogo, IconUser, IconLock, IconEye, IconEyeOff } from '../../../components/ui/Icons';
+import React, { useState } from 'react';
+import {
+  IconLogo,
+  IconUser,
+  IconLock,
+  IconEye,
+  IconEyeOff,
+  IconBriefcase,
+  IconUsers,
+} from '../../../components/ui/Icons';
 import { useLanguage } from '../../../context/LanguageContext';
 
-interface LoginFormProps {
-  onLoginSuccess: (user: { name: string; email: string; role: string }) => void;
+export interface UserSessionData {
+  name: string;
+  email: string;
+  role: string;
+  portal?: 'crm' | 'rh';
 }
+
+interface LoginFormProps {
+  onLoginSuccess: (user: UserSessionData) => void;
+}
+
+export const PRESET_ACCOUNTS = {
+  crm: {
+    name: 'Carlos Mendoza',
+    email: 'crm@sifygsa.com',
+    role: 'Director Comercial & CRM',
+    portal: 'crm' as const,
+    password: '••••••••••••',
+    label: 'CRM & Ventas',
+    sublabel: 'Comercial & Operaciones',
+  },
+  rh: {
+    name: 'Mariana Garza',
+    email: 'rh@sifygsa.com',
+    role: 'Coordinadora de Recursos Humanos',
+    portal: 'rh' as const,
+    password: '••••••••••••',
+    label: 'Recursos Humanos',
+    sublabel: 'Gestión de Talento Humano',
+  },
+};
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const { t } = useLanguage();
-  const [username, setUsername] = useState('admin@sifygsa.com');
-  const [password, setPassword] = useState('••••••••••••');
+  const [selectedProfile, setSelectedProfile] = useState<'crm' | 'rh'>('crm');
+  const [username, setUsername] = useState(PRESET_ACCOUNTS.crm.email);
+  const [password, setPassword] = useState(PRESET_ACCOUNTS.crm.password);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
+
+  const handleSelectProfile = (profile: 'crm' | 'rh') => {
+    setSelectedProfile(profile);
+    setUsername(PRESET_ACCOUNTS[profile].email);
+    setPassword(PRESET_ACCOUNTS[profile].password);
+    setNotification(null);
+  };
+
+  const handleUsernameChange = (value: string) => {
+    setUsername(value);
+    const lower = value.toLowerCase();
+    if (lower.includes('rh') || lower.includes('recurso') || lower.includes('talento') || lower.includes('mariana')) {
+      setSelectedProfile('rh');
+    } else if (lower.includes('crm') || lower.includes('ventas') || lower.includes('admin') || lower.includes('carlos')) {
+      setSelectedProfile('crm');
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,15 +83,29 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
     setIsLoading(true);
     setNotification(null);
 
-    // Simulación de autenticación
+    const isRH =
+      selectedProfile === 'rh' ||
+      username.toLowerCase().includes('rh') ||
+      username.toLowerCase().includes('recurso');
+
     setTimeout(() => {
       setIsLoading(false);
-      onLoginSuccess({
-        name: 'Carlos Mendoza',
-        email: username.includes('@') ? username : `${username}@sifygsa.com`,
-        role: 'Director General (Admin)',
-      });
-    }, 600);
+      if (isRH) {
+        onLoginSuccess({
+          name: PRESET_ACCOUNTS.rh.name,
+          email: username.includes('@') ? username : `${username}@sifygsa.com`,
+          role: PRESET_ACCOUNTS.rh.role,
+          portal: 'rh',
+        });
+      } else {
+        onLoginSuccess({
+          name: PRESET_ACCOUNTS.crm.name,
+          email: username.includes('@') ? username : `${username}@sifygsa.com`,
+          role: PRESET_ACCOUNTS.crm.role,
+          portal: 'crm',
+        });
+      }
+    }, 500);
   };
 
   const handleForgotPassword = (e: React.MouseEvent) => {
@@ -46,7 +114,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="login-form-wrapper">
+    <div className={`login-form-wrapper ${selectedProfile === 'rh' ? 'login-rh-theme' : 'login-crm-theme'}`}>
       <div className="login-form-header">
         <div className="login-brand">
           <IconLogo size={42} />
@@ -66,6 +134,48 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
         </div>
       )}
 
+      {/* Selector de Perfiles de Acceso (CRM vs RH) */}
+      <div className="account-selector-container">
+        <span className="selector-title">{t('auth.quick_profile_title')}</span>
+        <div className="account-selector-grid">
+          {/* Tarjeta Cuenta 1: CRM */}
+          <button
+            type="button"
+            className={`account-card account-card-crm ${selectedProfile === 'crm' ? 'active-crm' : ''}`}
+            onClick={() => handleSelectProfile('crm')}
+          >
+            <div className="account-card-header">
+              <div className="account-card-icon-box crm-icon">
+                <IconBriefcase size={16} />
+              </div>
+              <span className="account-badge crm-badge">CRM &amp; Ventas</span>
+            </div>
+            <div className="account-card-body">
+              <strong className="account-email">{PRESET_ACCOUNTS.crm.email}</strong>
+              <span className="account-role">{PRESET_ACCOUNTS.crm.sublabel}</span>
+            </div>
+          </button>
+
+          {/* Tarjeta Cuenta 2: RH */}
+          <button
+            type="button"
+            className={`account-card account-card-rh ${selectedProfile === 'rh' ? 'active-rh' : ''}`}
+            onClick={() => handleSelectProfile('rh')}
+          >
+            <div className="account-card-header">
+              <div className="account-card-icon-box rh-icon">
+                <IconUsers size={16} />
+              </div>
+              <span className="account-badge rh-badge">Recursos Humanos</span>
+            </div>
+            <div className="account-card-body">
+              <strong className="account-email">{PRESET_ACCOUNTS.rh.email}</strong>
+              <span className="account-role">{PRESET_ACCOUNTS.rh.sublabel}</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
       <form className="login-form" onSubmit={handleSubmit}>
         {/* Campo Usuario */}
         <div className="form-group">
@@ -82,10 +192,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
               className="form-input"
               placeholder={t('auth.username_placeholder')}
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => handleUsernameChange(e.target.value)}
               required
               autoComplete="username"
             />
+            {selectedProfile === 'rh' ? (
+              <span className="input-role-tag rh-tag">Modo RH</span>
+            ) : (
+              <span className="input-role-tag crm-tag">Modo CRM</span>
+            )}
           </div>
         </div>
 
@@ -141,35 +256,41 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
           </label>
         </div>
 
-        {/* Botón Iniciar Sesión */}
+        {/* Botón Iniciar Sesión dinámico con el color del perfil */}
         <button
           type="submit"
-          className="btn-submit"
+          className={`btn-submit ${selectedProfile === 'rh' ? 'btn-submit-rh' : 'btn-submit-crm'}`}
           disabled={isLoading}
         >
           {isLoading ? (
             <span className="btn-loading-spinner" />
           ) : (
-            t('auth.submit_btn')
+            selectedProfile === 'rh' ? t('auth.login_as_rh') : t('auth.login_as_crm')
           )}
         </button>
 
-        {/* Demo Fast Access */}
+        {/* Acceso Rápido Directo */}
         <div className="demo-access-container">
           <span className="divider-text">{t('auth.demo_divider')}</span>
-          <button
-            type="button"
-            className="btn-demo"
-            onClick={() =>
-              onLoginSuccess({
-                name: 'Carlos Mendoza',
-                email: 'admin@sifygsa.com',
-                role: 'Director General (Admin)',
-              })
-            }
-          >
-            {t('auth.demo_btn')}
-          </button>
+          <div className="demo-buttons-row">
+            <button
+              type="button"
+              className="btn-demo-card btn-demo-crm"
+              onClick={() => onLoginSuccess(PRESET_ACCOUNTS.crm)}
+            >
+              <IconBriefcase size={16} />
+              <span>{t('auth.login_as_crm')}</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn-demo-card btn-demo-rh"
+              onClick={() => onLoginSuccess(PRESET_ACCOUNTS.rh)}
+            >
+              <IconUsers size={16} />
+              <span>{t('auth.login_as_rh')}</span>
+            </button>
+          </div>
         </div>
       </form>
 
@@ -178,4 +299,4 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
       </footer>
     </div>
   );
-};
+};
