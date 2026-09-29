@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Header } from './Header';
 import { Sidebar } from './sidebar';
+import { SidebarRH } from './SidebarRH';
 import { Footer } from './Footer';
 import './MainLayout.css';
 
@@ -8,6 +9,7 @@ interface UserData {
   name: string;
   email: string;
   role: string;
+  portal?: 'crm' | 'rh';
 }
 
 interface MainLayoutProps {
@@ -55,7 +57,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   };
 
   return (
-    <div className={`app-layout ${isCollapsed ? 'sidebar-collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
+    <div
+      className={`app-layout ${user?.portal === 'rh' ? 'portal-rh' : 'portal-crm'} ${
+        isCollapsed ? 'sidebar-collapsed' : ''
+      } ${isMobileOpen ? 'mobile-open' : ''}`}
+    >
       {/* Backdrop overlay para pantallas pequeñas */}
       {isMobileOpen && (
         <div
@@ -76,16 +82,29 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
       {/* Contenedor Central: Menú lateral + Área de Trabajo Canvas */}
       <div className="app-body-container">
-        <Sidebar
-          isCollapsed={isCollapsed}
-          isMobileOpen={isMobileOpen}
-          onToggleCollapse={handleToggleSidebar}
-          onCloseMobile={() => setIsMobileOpen(false)}
-          activeModuleId={activeModuleId}
-          activeSubItemId={activeSubItemId}
-          onSelectModule={handleModuleSelection}
-          onLogout={onLogout}
-        />
+        {user?.portal === 'rh' ? (
+          <SidebarRH
+            isCollapsed={isCollapsed}
+            isMobileOpen={isMobileOpen}
+            onToggleCollapse={handleToggleSidebar}
+            onCloseMobile={() => setIsMobileOpen(false)}
+            activeModuleId={activeModuleId}
+            activeSubItemId={activeSubItemId}
+            onSelectModule={handleModuleSelection}
+            onLogout={onLogout}
+          />
+        ) : (
+          <Sidebar
+            isCollapsed={isCollapsed}
+            isMobileOpen={isMobileOpen}
+            onToggleCollapse={handleToggleSidebar}
+            onCloseMobile={() => setIsMobileOpen(false)}
+            activeModuleId={activeModuleId}
+            activeSubItemId={activeSubItemId}
+            onSelectModule={handleModuleSelection}
+            onLogout={onLogout}
+          />
+        )}
 
         <main className="layout-content-area" id="main-content">
           <div className="content-inner-container">
@@ -94,8 +113,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </main>
       </div>
 
-      {/* Footer Oficial SIFYGSA 100% Ancho con franja naranja continua */}
-      <Footer />
+      {/* Footer Oficial SIFYGSA 100% Ancho */}
+      <Footer portal={user?.portal} />
     </div>
   );
 };

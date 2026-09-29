@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IconChevronDown, IconChevronRight, IconClose, IconSettings } from '../ui/Icons';
+import { IconChevronDown, IconChevronRight, IconClose } from '../ui/Icons';
 import { SfgLogoSymbol } from '../ui/Logo';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -25,7 +25,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { t } = useLanguage();
   const [openSection1, setOpenSection1] = useState(true);
   const [openSection2, setOpenSection2] = useState(true);
-  const [openSection3, setOpenSection3] = useState(false);
+  //const [openSection3, setOpenSection3] = useState(false);
 
   return (
     <aside
@@ -118,16 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {activeModuleId === 'compras' && <span className="collapsed-top-dot cyan" />}
               </button>
 
-              {/* Icono de Grupo 3: Administrador (Cuadro oscuro con borde púrpura y escudo) */}
-              <button
-                type="button"
-                className={`collapsed-nav-btn admin-group-btn ${activeModuleId === 'settings' ? 'active-admin' : ''}`}
-                title="Administración / Configuración"
-                onClick={() => onSelectModule('settings')}
-              >
-                <IconSettings size={18} style={{ color: '#A855F7' }} />
-                {activeModuleId === 'settings' && <span className="collapsed-top-dot purple" />}
-              </button>
+
             </div>
           </div>
         ) : (
@@ -238,34 +229,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <span>{t('nav.requisition')}</span>
                     </button>
 
-                  </div>
-                )}
-              </div>
-
-              {/* Group 3: ADMINISTRADOR */}
-              <div className="accordion-entry">
-                <button
-                  type="button"
-                  className="accordion-head-btn"
-                  onClick={() => setOpenSection3(!openSection3)}
-                >
-                  <div className="head-left-content">
-                    <IconSettings size={16} style={{ color: '#A855F7' }} />
-                    <span className="group-title-label">{t('nav.admin')}</span>
-                  </div>
-                  {openSection3 ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
-                </button>
-
-                {openSection3 && (
-                  <div className="accordion-sub-stack">
-                    <button
-                      type="button"
-                      className={`sub-nav-link ${activeModuleId === 'settings' ? 'active-pill' : ''}`}
-                      onClick={() => onSelectModule('settings')}
-                    >
-                      <span className={`bullet-indicator ${activeModuleId === 'settings' ? 'orange' : 'gray'}`} />
-                      <span>{t('nav.general_config')}</span>
-                    </button>
                   </div>
                 )}
               </div>

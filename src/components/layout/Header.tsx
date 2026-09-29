@@ -12,6 +12,7 @@ interface HeaderProps {
     name: string;
     email: string;
     role: string;
+    portal?: 'crm' | 'rh';
   };
 }
 
@@ -20,9 +21,10 @@ export const Header: React.FC<HeaderProps> = ({
   isSidebarOpen = false,
   onLogout,
   user = {
-    name: 'Jared S.',
-    email: 'jared.s@sifygsa.com',
-    role: 'Safety Director',
+    name: 'Carlos Mendoza',
+    email: 'crm@sifygsa.com',
+    role: 'Director Comercial & CRM',
+    portal: 'crm',
   },
 }) => {
   const { t } = useLanguage();
@@ -48,6 +50,13 @@ export const Header: React.FC<HeaderProps> = ({
 
   const toggleTheme = () => {
     setIsDarkMode((prev) => !prev);
+  };
+
+  const getInitials = (name?: string) => {
+    if (!name) return 'SF';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.slice(0, 2).toUpperCase();
   };
 
   useEffect(() => {
@@ -99,34 +108,37 @@ export const Header: React.FC<HeaderProps> = ({
                 SIFYGSA
               </span>
               <span
-                className="brand-tag-enterprise"
+                className={`brand-tag-enterprise ${user?.portal === 'rh' ? 'brand-tag-rh' : ''}`}
                 style={{
                   fontSize: '0.68rem',
                   fontWeight: 800,
                   color: '#FFFFFF',
-                  backgroundColor: '#EA580C',
+                  backgroundColor: user?.portal === 'rh' ? '#0D9488' : '#EA580C',
                   padding: '0.15rem 0.45rem',
                   borderRadius: '4px',
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  boxShadow: '0 1px 3px rgba(234, 88, 12, 0.35)',
+                  boxShadow:
+                    user?.portal === 'rh'
+                      ? '0 1px 3px rgba(13, 148, 136, 0.45)'
+                      : '0 1px 3px rgba(234, 88, 12, 0.35)',
                 }}
               >
-                SUITE
+                {user?.portal === 'rh' ? 'RH SUITE' : 'SUITE'}
               </span>
             </div>
             <span
-              className="brand-subtitle-text"
+              className={`brand-subtitle-text ${user?.portal === 'rh' ? 'rh-subtitle' : ''}`}
               style={{
                 fontSize: '0.62rem',
                 fontWeight: 700,
-                color: isDarkMode ? '#94A3B8' : '#475569',
+                color: user?.portal === 'rh' ? (isDarkMode ? '#2DD4BF' : '#0D9488') : (isDarkMode ? '#94A3B8' : '#475569'),
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 transition: 'color 0.2s ease',
               }}
             >
-              Business Platform
+              {user?.portal === 'rh' ? 'Talento Humano' : 'Business Platform'}
             </span>
           </div>
         </div>
@@ -219,8 +231,8 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
             aria-expanded={isUserMenuOpen}
           >
-            <div className="user-avatar-podium-ring">
-              <div className="user-avatar-inner">JS</div>
+            <div className={`user-avatar-podium-ring ${user?.portal === 'rh' ? 'rh-podium' : ''}`}>
+              <div className="user-avatar-inner">{getInitials(user?.name)}</div>
             </div>
             <div className="user-meta-info">
               <span className="user-display-name">{user.name}</span>

@@ -392,14 +392,17 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  align-self: stretch;
-  min-height: calc(100vh - 56px);
-  height: auto;
+  align-self: flex-start;
+  position: sticky;
+  top: 56px;
+  height: calc(100vh - 56px);
+  max-height: calc(100vh - 56px);
+  overflow-y: auto;
+  overflow-x: hidden;
   transition: width 0.25s ease, min-width 0.25s ease, transform 0.25s ease;
   z-index: 40;
   user-select: none;
   box-shadow: 2px 0 12px rgba(0, 0, 0, 0.35);
-  overflow-x: hidden;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
   flex-shrink: 0;
@@ -1621,3 +1624,124 @@ body.light-mode .header-toggle-btn:hover {
 body.light-mode .header-toggle-btn.is-active {
   color: #EA580C !important;
 }
+
+/* ==========================================================================
+   PORTAL RECURSOS HUMANOS (RH) - ADAPTACIÓN VISUAL INTEGRAL
+   ========================================================================== */
+.portal-rh {
+  --color-accent-orange: #0D9488;
+  --color-accent-orange-dark: #0F766E;
+  --color-accent-orange-light: #2DD4BF;
+  --color-border-orange: rgba(20, 184, 166, 0.4);
+}
+
+/* Sidebar Exclusivo RH */
+.sidebar-rh {
+  border-right-color: #333338;
+}
+
+.sub-nav-link.active-rh-pill {
+  background: rgba(234, 88, 12, 0.12);
+  border: 1px solid rgba(234, 88, 12, 0.3);
+  color: #FFFFFF;
+}
+
+.bullet-indicator.teal,
+.bullet-indicator.emerald,
+.bullet-indicator.orange {
+  background-color: #EA580C;
+  box-shadow: none;
+}
+
+.tool-icon-btn.active-rh {
+  background-color: rgba(234, 88, 12, 0.15);
+  border-color: rgba(234, 88, 12, 0.35);
+  color: #EA580C;
+}
+
+.tool-icon-btn.active-rh:hover {
+  background-color: rgba(234, 88, 12, 0.25);
+  color: #FFFFFF;
+}
+
+.collapsed-nav-btn.active-rh,
+.collapsed-nav-btn.active-rh-emerald,
+.collapsed-nav-btn.active-rh-cyan {
+  border-color: #EA580C;
+  background-color: rgba(234, 88, 12, 0.12);
+  box-shadow: none;
+}
+
+.collapsed-top-dot.teal,
+.collapsed-top-dot.emerald,
+.collapsed-top-dot.cyan,
+.collapsed-top-dot.orange {
+  background-color: #EA580C;
+  box-shadow: none;
+}
+
+.status-badge-rh {
+  border-color: rgba(234, 88, 12, 0.3);
+}
+
+.version-pill-rh {
+  color: #EA580C !important;
+  background-color: rgba(234, 88, 12, 0.12) !important;
+  border: 1px solid rgba(234, 88, 12, 0.25) !important;
+}
+
+/* Header Adaptado en Modo RH */
+.portal-rh .user-avatar-podium-ring.rh-podium {
+  border: 2px solid #EA580C;
+  box-shadow: none;
+}
+
+.portal-rh .user-avatar-podium-ring.rh-podium .user-avatar-inner {
+  background-color: #EA580C;
+  color: #FFFFFF;
+}
+
+.portal-rh .brand-tag-rh {
+  background: #EA580C !important;
+  box-shadow: none !important;
+}
+
+.portal-rh .brand-subtitle-text.rh-subtitle {
+  color: #EA580C !important;
+}
+
+/* Footer Adaptado en Modo RH */
+.portal-rh .f-g-badge.rh-badge {
+  color: #EA580C !important;
+}
+
+.portal-rh .scroll-top-round-btn:hover {
+  background-color: #C2410C;
+  color: #FFFFFF;
+}
+
+/* Modo Claro en Portal RH */
+[data-theme="light"] .portal-rh,
+body.light-mode .portal-rh {
+  --color-accent-orange: #EA580C;
+  --color-accent-orange-dark: #C2410C;
+  --color-accent-orange-light: #F97316;
+}
+
+[data-theme="light"] .sub-nav-link.active-rh-pill,
+body.light-mode .sub-nav-link.active-rh-pill {
+  background-color: #FFF7ED;
+  border-color: #FDBA74;
+  color: #0F172A;
+}
+
+[data-theme="light"] .portal-rh .brand-subtitle-text.rh-subtitle,
+body.light-mode .portal-rh .brand-subtitle-text.rh-subtitle {
+  color: #EA580C !important;
+}
+
+[data-theme="light"] .portal-rh .f-g-badge.rh-badge,
+body.light-mode .portal-rh .f-g-badge.rh-badge {
+  color: #EA580C !important;
+}
+
