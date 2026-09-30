@@ -11,6 +11,9 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconCheck,
+  IconChartBar,
+  IconBriefcase,
+  IconCheckSquare,
 } from '../../../components/ui/Icons';
 import { CalendarModalRH } from '../components/CalendarModalRH';
 import '../rh.css';
@@ -41,6 +44,9 @@ export const HomeRH: React.FC = () => {
   const [activeDepto, setActiveDepto] = useState<string>('Todos los Deptos');
   const [activeSedeTab, setActiveSedeTab] = useState<string>('Todos');
   const [currentPage, setCurrentPage] = useState<number>(1);
+
+  // Estado del carrusel de KPIs (3 slides)
+  const [kpiSlideIndex, setKpiSlideIndex] = useState<number>(0);
 
   // Estado del carrusel estilo Steam de la Agenda Operativa
   const [agendaSlideIndex, setAgendaSlideIndex] = useState<number>(0);
@@ -182,111 +188,312 @@ export const HomeRH: React.FC = () => {
           <div className="rh-section-title-lockup">
             <h2 className="rh-section-heading">INDICADORES OPERATIVOS CLAVE</h2>
             <span className="rh-updated-tag">Actualizado: Sep 2026</span>
+            <span className="rh-kpi-slide-counter">
+              {kpiSlideIndex === 0 && 'Plantilla & Estatus'}
+              {kpiSlideIndex === 1 && 'Operaciones & Seguridad en Campo'}
+              {kpiSlideIndex === 2 && 'Capacitación & Cumplimiento STPS'}
+              {' '}({kpiSlideIndex + 1}/3)
+            </span>
           </div>
 
           <div className="rh-carousel-arrows">
-            <button type="button" className="carousel-arrow-btn" aria-label="Anterior">
+            <button
+              type="button"
+              className="carousel-arrow-btn"
+              aria-label="Diapositiva anterior"
+              title="Anterior"
+              disabled={kpiSlideIndex === 0}
+              onClick={() => setKpiSlideIndex((prev) => Math.max(0, prev - 1))}
+            >
               <IconChevronLeft size={16} />
             </button>
-            <button type="button" className="carousel-arrow-btn" aria-label="Siguiente">
+            <button
+              type="button"
+              className="carousel-arrow-btn"
+              aria-label="Siguiente diapositiva"
+              title="Siguiente"
+              disabled={kpiSlideIndex === 2}
+              onClick={() => setKpiSlideIndex((prev) => Math.min(2, prev + 1))}
+            >
               <IconChevronRight size={16} />
             </button>
           </div>
         </div>
 
-        {/* Grid de 5 Tarjetas de Indicadores */}
-        <div className="rh-kpis-grid">
-          {/* Tarjeta 1: Total de Empleados */}
-          <div className="rh-kpi-card">
-            <div className="kpi-card-header">
-              <span className="kpi-label">Total de Empleados</span>
-              <div className="kpi-icon-box orange">
-                <IconUsers size={18} />
+        {/* Viewport del Carrusel de KPIs */}
+        <div className="rh-kpis-carousel-viewport">
+          <div
+            className="rh-kpis-carousel-track"
+            style={{ transform: `translateX(-${kpiSlideIndex * 100}%)` }}
+          >
+            {/* Diapositiva 1: Plantilla & Estatus Operativo */}
+            <div className="rh-kpis-slide">
+              {/* Tarjeta 1: Total de Empleados */}
+              <div className="rh-kpi-card">
+                <div className="kpi-card-header">
+                  <span className="kpi-label">Total de Empleados</span>
+                  <div className="kpi-icon-box orange">
+                    <IconUsers size={18} />
+                  </div>
+                </div>
+                <div className="kpi-main-number">128</div>
+                <div className="kpi-footer-row">
+                  <span className="kpi-growth-positive">↗ +12 este mes</span>
+                  <span className="kpi-sub-comparison">+9.5% vs mes ant.</span>
+                </div>
               </div>
-            </div>
-            <div className="kpi-main-number">128</div>
-            <div className="kpi-footer-row">
-              <span className="kpi-growth-positive">↗ +12 este mes</span>
-              <span className="kpi-sub-comparison">+9.5% vs mes ant.</span>
-            </div>
-          </div>
 
-          {/* Tarjeta 2: Eventuales */}
-          <div className="rh-kpi-card">
-            <div className="kpi-card-header">
-              <span className="kpi-label">Eventuales</span>
-              <div className="kpi-icon-box amber">
-                <IconClock size={18} />
+              {/* Tarjeta 2: Eventuales */}
+              <div className="rh-kpi-card">
+                <div className="kpi-card-header">
+                  <span className="kpi-label">Eventuales</span>
+                  <div className="kpi-icon-box amber">
+                    <IconClock size={18} />
+                  </div>
+                </div>
+                <div className="kpi-main-number">6</div>
+                <div className="kpi-footer-row">
+                  <span className="kpi-sub-alert">
+                    <span className="mini-dot amber" /> 3 ingresados esta semana
+                  </span>
+                  <span className="kpi-sub-dim">Eval. Técnica</span>
+                </div>
               </div>
-            </div>
-            <div className="kpi-main-number">6</div>
-            <div className="kpi-footer-row">
-              <span className="kpi-sub-alert">
-                <span className="mini-dot amber" /> 3 ingresados esta semana
-              </span>
-              <span className="kpi-sub-dim">Eval. Técnica</span>
-            </div>
-          </div>
 
-          {/* Tarjeta 3: Cumpleaños del Mes */}
-          <div className="rh-kpi-card">
-            <div className="kpi-card-header">
-              <span className="kpi-label">Cumpleaños del Mes</span>
-              <div className="kpi-icon-box orange-deep">
-                <IconCake size={18} />
+              {/* Tarjeta 3: Cumpleaños del Mes */}
+              <div className="rh-kpi-card">
+                <div className="kpi-card-header">
+                  <span className="kpi-label">Cumpleaños del Mes</span>
+                  <div className="kpi-icon-box orange-deep">
+                    <IconCake size={18} />
+                  </div>
+                </div>
+                <div className="kpi-main-number">8</div>
+                <div className="kpi-footer-row">
+                  <span className="kpi-birthday-text">Próx: Carlos Ruiz (en 4d)</span>
+                  <button
+                    type="button"
+                    className="kpi-link-btn"
+                    onClick={() => setIsCalendarOpen(true)}
+                  >
+                    Ver todos (8)
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className="kpi-main-number">8</div>
-            <div className="kpi-footer-row">
-              <span className="kpi-birthday-text">Próx: Carlos Ruiz (en 4d)</span>
-              <button
-                type="button"
-                className="kpi-link-btn"
-                onClick={() => setIsCalendarOpen(true)}
-              >
-                Ver todos (8)
-              </button>
-            </div>
-          </div>
 
-          {/* Tarjeta 4: Contratos por Vencer */}
-          <div className="rh-kpi-card">
-            <div className="kpi-card-header">
-              <span className="kpi-label">Contratos por Vencer</span>
-              <div className="kpi-icon-box red">
-                <IconAlertTriangle size={18} />
+              {/* Tarjeta 4: Contratos por Vencer */}
+              <div className="rh-kpi-card">
+                <div className="kpi-card-header">
+                  <span className="kpi-label">Contratos por Vencer</span>
+                  <div className="kpi-icon-box red">
+                    <IconAlertTriangle size={18} />
+                  </div>
+                </div>
+                <div className="kpi-main-number text-red">5</div>
+                <div className="kpi-footer-row">
+                  <span className="kpi-urgent-red">2 urgentes en 30 días</span>
+                  <span className="kpi-sub-dim">Minatitlán / Tula</span>
+                </div>
               </div>
-            </div>
-            <div className="kpi-main-number text-red">5</div>
-            <div className="kpi-footer-row">
-              <span className="kpi-urgent-red">2 urgentes en 30 días</span>
-              <span className="kpi-sub-dim">Minatitlán / Tula</span>
-            </div>
-          </div>
 
-          {/* Tarjeta 5: Acreditados SIL-3 / DC-3 */}
-          <div className="rh-kpi-card">
-            <div className="kpi-card-header">
-              <span className="kpi-label">Acreditados SIL-3 / DC-3</span>
-              <div className="kpi-icon-box blue">
-                <IconShieldCheck size={18} />
+              {/* Tarjeta 5: Acreditados SIL-3 / DC-3 */}
+              <div className="rh-kpi-card">
+                <div className="kpi-card-header">
+                  <span className="kpi-label">Acreditados SIL-3 / DC-3</span>
+                  <div className="kpi-icon-box blue">
+                    <IconShieldCheck size={18} />
+                  </div>
+                </div>
+                <div className="kpi-main-number">
+                  42 <span className="kpi-unit-sub">/ 58 Técnicos</span>
+                </div>
+                <div className="kpi-footer-row">
+                  <span className="kpi-sub-blue">100% Cobertura Refinería</span>
+                  <span className="kpi-sub-dim">Vigencia 2026</span>
+                </div>
               </div>
             </div>
-            <div className="kpi-main-number">
-              42 <span className="kpi-unit-sub">/ 58 Técnicos</span>
+
+            {/* Diapositiva 2: Operaciones & Seguridad en Campo */}
+            <div className="rh-kpis-slide">
+              {/* Tarjeta 6: Asistencia Diaria */}
+              <div className="rh-kpi-card">
+                <div className="kpi-card-header">
+                  <span className="kpi-label">Asistencia Hoy</span>
+                  <div className="kpi-icon-box green">
+                    <IconCheck size={18} />
+                  </div>
+                </div>
+                <div className="kpi-main-number">98.4%</div>
+                <div className="kpi-footer-row">
+                  <span className="kpi-growth-positive">126 presentes / 128</span>
+                  <span className="kpi-sub-dim">2 justificados</span>
+                </div>
+              </div>
+
+              {/* Tarjeta 7: Guardias 24/7 Activas */}
+              <div className="rh-kpi-card">
+                <div className="kpi-card-header">
+                  <span className="kpi-label">Guardias Activas 24/7</span>
+                  <div className="kpi-icon-box blue">
+                    <IconShieldCheck size={18} />
+                  </div>
+                </div>
+                <div className="kpi-main-number">14</div>
+                <div className="kpi-footer-row">
+                  <span className="kpi-sub-blue">8 Mina / 6 Comalcalco</span>
+                  <span className="kpi-sub-dim">Turno B Activo</span>
+                </div>
+              </div>
+
+              {/* Tarjeta 8: Horas Sin Accidentes */}
+              <div className="rh-kpi-card">
+                <div className="kpi-card-header">
+                  <span className="kpi-label">Horas Sin Accidentes</span>
+                  <div className="kpi-icon-box green">
+                    <IconClock size={18} />
+                  </div>
+                </div>
+                <div className="kpi-main-number">
+                  148.2k <span className="kpi-unit-sub">hrs</span>
+                </div>
+                <div className="kpi-footer-row">
+                  <span className="kpi-growth-positive">Cero incidentes LTI</span>
+                  <span className="kpi-sub-dim">SIL-3 Activo</span>
+                </div>
+              </div>
+
+              {/* Tarjeta 9: Exámenes Médicos */}
+              <div className="rh-kpi-card">
+                <div className="kpi-card-header">
+                  <span className="kpi-label">Exámenes Médicos</span>
+                  <div className="kpi-icon-box amber">
+                    <IconBriefcase size={18} />
+                  </div>
+                </div>
+                <div className="kpi-main-number">94%</div>
+                <div className="kpi-footer-row">
+                  <span className="kpi-sub-alert">
+                    <span className="mini-dot amber" /> 6 citas pendientes
+                  </span>
+                  <span className="kpi-sub-dim">Base Mapachapa</span>
+                </div>
+              </div>
+
+              {/* Tarjeta 10: Vacaciones en Curso */}
+              <div className="rh-kpi-card">
+                <div className="kpi-card-header">
+                  <span className="kpi-label">Vacaciones en Curso</span>
+                  <div className="kpi-icon-box blue">
+                    <IconCalendar size={18} />
+                  </div>
+                </div>
+                <div className="kpi-main-number">4</div>
+                <div className="kpi-footer-row">
+                  <span className="kpi-sub-blue">Cobertura 100% relevos</span>
+                  <span className="kpi-sub-dim">Retorno próx. lunes</span>
+                </div>
+              </div>
             </div>
-            <div className="kpi-footer-row">
-              <span className="kpi-sub-blue">100% Cobertura Refinería</span>
-              <span className="kpi-sub-dim">Vigencia 2026</span>
+
+            {/* Diapositiva 3: Capacitación & Cumplimiento STPS */}
+            <div className="rh-kpis-slide">
+              {/* Tarjeta 11: Horas de Capacitación */}
+              <div className="rh-kpi-card">
+                <div className="kpi-card-header">
+                  <span className="kpi-label">Horas Capacitación Q3</span>
+                  <div className="kpi-icon-box blue">
+                    <IconChartBar size={18} />
+                  </div>
+                </div>
+                <div className="kpi-main-number">
+                  385 <span className="kpi-unit-sub">hrs</span>
+                </div>
+                <div className="kpi-footer-row">
+                  <span className="kpi-growth-positive">↗ +28h esta quincena</span>
+                  <span className="kpi-sub-dim">Prom. 3.2h/técnico</span>
+                </div>
+              </div>
+
+              {/* Tarjeta 12: Certificaciones STPS */}
+              <div className="rh-kpi-card">
+                <div className="kpi-card-header">
+                  <span className="kpi-label">Certificaciones DC-3</span>
+                  <div className="kpi-icon-box green">
+                    <IconShieldCheck size={18} />
+                  </div>
+                </div>
+                <div className="kpi-main-number">52</div>
+                <div className="kpi-footer-row">
+                  <span className="kpi-growth-positive">Normas NOM-004/029</span>
+                  <span className="kpi-sub-dim">Registradas STPS</span>
+                </div>
+              </div>
+
+              {/* Tarjeta 13: Vacantes Activas */}
+              <div className="rh-kpi-card">
+                <div className="kpi-card-header">
+                  <span className="kpi-label">Vacantes Activas</span>
+                  <div className="kpi-icon-box amber">
+                    <IconBriefcase size={18} />
+                  </div>
+                </div>
+                <div className="kpi-main-number">3</div>
+                <div className="kpi-footer-row">
+                  <span className="kpi-sub-alert">
+                    <span className="mini-dot amber" /> 14 postulantes
+                  </span>
+                  <span className="kpi-sub-dim">En entrevista</span>
+                </div>
+              </div>
+
+              {/* Tarjeta 14: Índice de Rotación */}
+              <div className="rh-kpi-card">
+                <div className="kpi-card-header">
+                  <span className="kpi-label">Índice de Rotación</span>
+                  <div className="kpi-icon-box green">
+                    <IconUsers size={18} />
+                  </div>
+                </div>
+                <div className="kpi-main-number">0.8%</div>
+                <div className="kpi-footer-row">
+                  <span className="kpi-growth-positive">↘ -0.6% vs estándar</span>
+                  <span className="kpi-sub-dim">Retención Alta</span>
+                </div>
+              </div>
+
+              {/* Tarjeta 15: Auditorías Aprobadas */}
+              <div className="rh-kpi-card">
+                <div className="kpi-card-header">
+                  <span className="kpi-label">Auditorías Aprobadas</span>
+                  <div className="kpi-icon-box green">
+                    <IconCheckSquare size={18} />
+                  </div>
+                </div>
+                <div className="kpi-main-number">
+                  4 <span className="kpi-unit-sub">/ 4</span>
+                </div>
+                <div className="kpi-footer-row">
+                  <span className="kpi-growth-positive">0 no conformidades</span>
+                  <span className="kpi-sub-dim">PEMEX / CFE 2026</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Paginador de puntos del carrusel */}
-        <div className="rh-carousel-dots">
-          <span className="carousel-dot active" />
-          <span className="carousel-dot" />
-          <span className="carousel-dot" />
+        {/* Paginador de puntos interactivo del carrusel */}
+        <div className="rh-carousel-dots" role="tablist" aria-label="Navegación de indicadores">
+          {[0, 1, 2].map((idx) => (
+            <button
+              key={idx}
+              type="button"
+              className={`carousel-dot ${kpiSlideIndex === idx ? 'active' : ''}`}
+              onClick={() => setKpiSlideIndex(idx)}
+              aria-label={`Ir a diapositiva ${idx + 1}`}
+              title={`Diapositiva ${idx + 1}`}
+            />
+          ))}
         </div>
       </section>
 

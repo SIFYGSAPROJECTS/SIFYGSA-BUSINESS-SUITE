@@ -264,34 +264,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
         >
           {isLoading ? (
             <span className="btn-loading-spinner" />
+          ) : selectedProfile === 'rh' ? (
+            t('auth.login_as_rh')
           ) : (
-            selectedProfile === 'rh' ? t('auth.login_as_rh') : t('auth.login_as_crm')
+            t('auth.login_as_crm')
           )}
         </button>
-
-        {/* Acceso Rápido Directo */}
-        <div className="demo-access-container">
-          <span className="divider-text">{t('auth.demo_divider')}</span>
-          <div className="demo-buttons-row">
-            <button
-              type="button"
-              className="btn-demo-card btn-demo-crm"
-              onClick={() => onLoginSuccess(PRESET_ACCOUNTS.crm)}
-            >
-              <IconBriefcase size={16} />
-              <span>{t('auth.login_as_crm')}</span>
-            </button>
-
-            <button
-              type="button"
-              className="btn-demo-card btn-demo-rh"
-              onClick={() => onLoginSuccess(PRESET_ACCOUNTS.rh)}
-            >
-              <IconUsers size={16} />
-              <span>{t('auth.login_as_rh')}</span>
-            </button>
-          </div>
-        </div>
       </form>
 
       <footer className="login-form-footer">
