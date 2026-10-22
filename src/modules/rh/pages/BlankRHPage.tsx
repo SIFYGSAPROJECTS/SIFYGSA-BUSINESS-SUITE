@@ -103,12 +103,12 @@ export const BlankRHPage: React.FC<BlankRHPageProps> = ({ subItemId = 'rh-direct
             </div>
 
             <div className="rh-feature-chip">
-              <div className="chip-icon-box chip-cyan">
+              <div className="chip-icon-box chip-blue">
                 <IconBriefcase size={18} />
               </div>
               <div className="chip-content">
                 <strong>Paleta &amp; Identidad RH</strong>
-                <span>Colores esmeralda y teal aplicados en layout global</span>
+                <span>Estándares industriales y corporativos aplicados en layout global</span>
               </div>
             </div>
           </div>

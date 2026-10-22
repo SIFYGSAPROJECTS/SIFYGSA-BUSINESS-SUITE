@@ -37,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="mobile-brand-row">
           <div className="sidebar-brand-lockup" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <SfgLogoSymbol size={28} />
-            <span style={{ fontWeight: 800, color: '#F97316', fontSize: '1.05rem', letterSpacing: '0.04em' }}>SIFYGSA</span>
+            <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '1.05rem', letterSpacing: '0.04em' }}>SIFYGSA</span>
           </div>
         </div>
         {onCloseMobile && (
@@ -65,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="collapsed-tools-stack">
               <button
                 type="button"
-                className={`tool-icon-btn ${activeModuleId === 'dashboard' ? 'active-glow' : ''}`}
+                className={`tool-icon-btn ${activeModuleId === 'dashboard' ? 'active' : ''}`}
                 title={t('nav.home')}
                 onClick={() => onSelectModule('dashboard')}
               >
@@ -76,7 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               <button
                 type="button"
-                className={`tool-icon-btn ${activeModuleId === 'settings' ? 'active-glow orange-solid' : ''}`}
+                className={`tool-icon-btn ${activeModuleId === 'settings' ? 'active orange-solid' : ''}`}
                 title={t('nav.settings')}
                 onClick={() => onSelectModule('settings')}
               >
@@ -92,30 +92,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             {/* Iconos de Grupos de Navegación (Idéntico a Imagen 1) */}
             <div className="collapsed-nav-icons">
-              {/* Icono de Grupo 1: CRM & Ventas (Cuadro oscuro con borde naranja y punto naranja en la esquina) */}
+              {/* Icono de Grupo 1: CRM & Ventas */}
               <button
                 type="button"
                 className={`collapsed-nav-btn crm-group-btn ${activeModuleId === 'crm' ? 'active-crm' : ''}`}
                 title="CRM & Ventas"
                 onClick={() => onSelectModule('crm', 'crm-opportunities')}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18, color: '#F97316' }}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18 }}>
                   <path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span className="collapsed-top-dot orange" />
               </button>
 
-              {/* Icono de Grupo 2: Operaciones (Cuadro oscuro con borde cyan y carpeta) */}
+              {/* Icono de Grupo 2: Operaciones */}
               <button
                 type="button"
                 className={`collapsed-nav-btn ops-group-btn ${activeModuleId === 'compras' ? 'active-ops' : ''}`}
                 title="Operaciones — Requisición NetSuite"
                 onClick={() => onSelectModule('compras', 'compras-requisicion')}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18, color: '#06B6D4' }}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18 }}>
                   <path d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                {activeModuleId === 'compras' && <span className="collapsed-top-dot cyan" />}
               </button>
 
 
@@ -164,7 +162,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => setOpenSection1(!openSection1)}
                 >
                   <div className="head-left-content">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16, color: '#F97316' }}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
                       <path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     <span className="group-title-label">{t('nav.crm')}</span>
@@ -210,7 +208,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => setOpenSection2(!openSection2)}
                 >
                   <div className="head-left-content">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16, color: '#06B6D4' }}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
                       <path d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     <span className="group-title-label">{t('nav.operations')}</span>

@@ -1,0 +1,67 @@
+// ============================================================
+// SFG Business Suite — Datos ficticios: Usuarios / Auth
+// ============================================================
+import type { User } from "../types";
+
+export const MOCK_USERS: (User & { password: string })[] = [
+  {
+    id: "usr_001",
+    name: "Carlos Mendoza",
+    email: "admin@sifygsa.com",
+    role: "ADMIN",
+    portal: "crm",
+    permissions: ["CRM_FULL", "RH_FULL", "COMPRAS_FULL", "SETTINGS_MANAGE", "DASHBOARD_VIEW"],
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=CM",
+    password: "admin123",
+    createdAt: "2024-01-15T08:00:00Z",
+    lastLogin: "2026-10-01T14:30:00Z",
+  },
+  {
+    id: "usr_002",
+    name: "Ana Lucía Torres",
+    email: "ana.torres@sifygsa.com",
+    role: "MANAGER",
+    portal: "crm",
+    permissions: ["CRM_FULL", "COMPRAS_VIEW", "DASHBOARD_VIEW"],
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=AT",
+    password: "manager123",
+    createdAt: "2024-03-20T09:00:00Z",
+    lastLogin: "2026-10-01T10:15:00Z",
+  },
+  {
+    id: "usr_003",
+    name: "Roberto Díaz Herrera",
+    email: "roberto.diaz@sifygsa.com",
+    role: "RH_ADMIN",
+    portal: "rh",
+    permissions: ["RH_FULL", "DASHBOARD_VIEW"],
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=RD",
+    password: "rh123",
+    createdAt: "2024-02-10T08:00:00Z",
+    lastLogin: "2026-10-02T08:45:00Z",
+  },
+  {
+    id: "usr_004",
+    name: "Laura Sánchez",
+    email: "laura.sanchez@sifygsa.com",
+    role: "USER",
+    portal: "crm",
+    permissions: ["CRM_VIEW", "DASHBOARD_VIEW"],
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=LS",
+    password: "user123",
+    createdAt: "2025-06-01T08:00:00Z",
+    lastLogin: "2026-09-30T16:00:00Z",
+  },
+  {
+    id: "usr_005",
+    name: "Miguel Ángel Reyes",
+    email: "miguel.reyes@sifygsa.com",
+    role: "RH_USER",
+    portal: "rh",
+    permissions: ["RH_VIEW"],
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=MR",
+    password: "rh_user123",
+    createdAt: "2025-08-15T08:00:00Z",
+    lastLogin: "2026-10-01T09:00:00Z",
+  },
+];

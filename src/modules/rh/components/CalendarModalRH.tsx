@@ -52,7 +52,7 @@ export const CalendarModalRH: React.FC<CalendarModalRHProps> = ({ isOpen, onClos
       typeLabel: 'Guardia',
       title: 'Guardia Mina',
       location: 'Refinería Minatitlán • Turno 24h',
-      pillColor: '#059669',
+      pillColor: 'var(--success)',
     },
     {
       id: 'e2',
@@ -62,7 +62,7 @@ export const CalendarModalRH: React.FC<CalendarModalRHProps> = ({ isOpen, onClos
       typeLabel: 'Vacaciones',
       title: 'Vacac: R. Ortiz',
       location: 'Roberto Ortiz • 5 días hábiles',
-      pillColor: '#4f46e5',
+      pillColor: 'var(--brand-600)',
     },
     {
       id: 'e3',
@@ -72,7 +72,7 @@ export const CalendarModalRH: React.FC<CalendarModalRHProps> = ({ isOpen, onClos
       typeLabel: 'Cumpleaños',
       title: 'Cumpleaños Carlos Ruiz',
       location: 'Carlos Ruiz • Base Comalcalco, Tabasco',
-      pillColor: '#ea580c',
+      pillColor: 'var(--primary)',
     },
     {
       id: 'e4',
@@ -82,7 +82,7 @@ export const CalendarModalRH: React.FC<CalendarModalRHProps> = ({ isOpen, onClos
       typeLabel: 'Capacitación',
       title: 'Capacitación SIL-3',
       location: 'Equipo Técnico • Base Comalcalco, Tabasco',
-      pillColor: '#0284c7',
+      pillColor: 'var(--info)',
     },
     {
       id: 'e5',
@@ -92,7 +92,7 @@ export const CalendarModalRH: React.FC<CalendarModalRHProps> = ({ isOpen, onClos
       typeLabel: 'Inducción',
       title: 'Inducción Minatitlán',
       location: 'Cuadrilla Alfa • Base Mapachapa',
-      pillColor: '#059669',
+      pillColor: 'var(--success)',
     },
     {
       id: 'e6',
@@ -102,7 +102,7 @@ export const CalendarModalRH: React.FC<CalendarModalRHProps> = ({ isOpen, onClos
       typeLabel: 'Guardia',
       title: 'Guardia Mina',
       location: 'Brigada F&G • Refinería Minatitlán',
-      pillColor: '#059669',
+      pillColor: 'var(--success)',
     },
     {
       id: 'e7',
@@ -113,7 +113,7 @@ export const CalendarModalRH: React.FC<CalendarModalRHProps> = ({ isOpen, onClos
       badgeType: 'critico',
       title: 'Fin Laura Gómez',
       location: 'Laura Gómez • Plataforma Marina Pemex',
-      pillColor: '#dc2626',
+      pillColor: 'var(--danger)',
     },
   ];
 
@@ -180,7 +180,7 @@ export const CalendarModalRH: React.FC<CalendarModalRHProps> = ({ isOpen, onClos
             </button>
 
             <div className="rh-cal-icon-box">
-              <IconCalendar size={22} style={{ color: '#F97316' }} />
+              <IconCalendar size={22} />
             </div>
 
             <div>

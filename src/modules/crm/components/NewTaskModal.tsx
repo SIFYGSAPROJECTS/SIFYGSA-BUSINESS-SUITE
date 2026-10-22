@@ -232,7 +232,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
                 type="checkbox"
                 checked={isCritical}
                 onChange={(e) => setIsCritical(e.target.checked)}
-                style={{ accentColor: '#F97316', width: '16px', height: '16px' }}
+                style={{ accentColor: 'var(--primary)', width: '16px', height: '16px' }}
               />
               <span className="crit-text-highlight">⚡ Marcar como Ruta Crítica</span>
             </label>

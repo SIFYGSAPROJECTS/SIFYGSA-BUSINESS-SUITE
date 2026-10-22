@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage, type Language } from '../../../context/LanguageContext';
+import { useTheme } from '../../../context/ThemeContext';
 import '../settings.css';
 
 interface SettingsPageProps {
@@ -18,13 +19,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   },
 }) => {
   const { language, setLanguage, t } = useLanguage();
+  const { theme: currentTheme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<'language' | 'appearance' | 'profile' | 'system'>('language');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  // Estado del tema sincronizado con localStorage
-  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(() => {
-    return localStorage.getItem('sfg_theme') === 'dark' ? 'dark' : 'light';
-  });
 
   const handleSelectLanguage = (newLang: Language) => {
     if (newLang === language) return;
@@ -33,16 +30,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   };
 
   const handleSelectTheme = (theme: 'light' | 'dark') => {
-    setCurrentTheme(theme);
-    localStorage.setItem('sfg_theme', theme);
-    document.body.removeAttribute('data-theme');
-    if (theme === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      document.body.classList.remove('light-mode');
-    } else {
-      document.documentElement.setAttribute('data-theme', 'light');
-      document.body.classList.add('light-mode');
-    }
+    setTheme(theme);
     showToast(theme === 'dark' ? 'Modo Oscuro activado' : 'Modo Claro activado');
   };
 
@@ -62,7 +50,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           <p className="settings-subtitle">{t('settings.main_subtitle')}</p>
         </div>
         <div className="settings-header-tag">
-          <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#10B981' }} />
+          <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--success)' }} />
           <span>SIFYGSUITE v3.4.1</span>
         </div>
       </div>
@@ -368,7 +356,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       {/* Notificación Toast */}
       {toastMessage && (
         <div className="settings-toast-banner">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="3">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="3">
             <polyline points="20 6 9 17 4 12" />
           </svg>
           <span>{toastMessage}</span>

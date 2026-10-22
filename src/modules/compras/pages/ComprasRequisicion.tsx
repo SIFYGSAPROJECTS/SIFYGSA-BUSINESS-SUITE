@@ -577,7 +577,7 @@ export const ComprasRequisicion: React.FC<ComprasRequisicionProps> = () => {
         <div className="articles-sub-bar">
           <div className="articles-sub-bar-left">
             <span className="badge-items-count">
-              Artículos <span className="text-orange">${formatCurrency(subtotal)}</span>
+              Artículos <span className="text-cifra font-bold font-mono">${formatCurrency(subtotal)}</span>
             </span>
             <span className="badge-expenses-count">Gastos 0,00</span>
           </div>
@@ -643,10 +643,10 @@ export const ComprasRequisicion: React.FC<ComprasRequisicionProps> = () => {
                     <td>
                       <span className="cell-static-text font-mono text-muted">{item.vendorCode}</span>
                     </td>
-                    <td className="text-right text-emerald font-mono font-semibold">
+                    <td className="text-right font-mono font-semibold">
                       {item.available.toFixed(2)}
                     </td>
-                    <td className="text-right text-emerald font-mono font-semibold">
+                    <td className="text-right font-mono font-semibold">
                       {item.availablePhysical.toFixed(2)}
                     </td>
                     <td>
@@ -680,7 +680,7 @@ export const ComprasRequisicion: React.FC<ComprasRequisicionProps> = () => {
                         onChange={(e) => handleUpdateItem(item.id, 'unitPrice', Math.max(0, Number(e.target.value)))}
                       />
                     </td>
-                    <td className="text-right font-mono font-bold text-orange">
+                    <td className="text-right font-mono font-bold text-cifra">
                       ${formatCurrency(lineTotal)}
                     </td>
                     <td className="text-right font-mono text-muted">16%</td>
@@ -698,7 +698,7 @@ export const ComprasRequisicion: React.FC<ComprasRequisicionProps> = () => {
                     </td>
                     <td className="text-center font-mono text-smaller">{item.deliveryDate}</td>
                     <td className="text-center font-mono text-muted">{item.closed ? 'Sí' : 'No'}</td>
-                    <td className="text-center font-mono text-emerald font-bold">
+                    <td className="text-center font-mono font-bold">
                       {item.billable ? 'Sí' : 'No'}
                     </td>
                   </tr>

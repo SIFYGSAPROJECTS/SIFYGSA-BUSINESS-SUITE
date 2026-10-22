@@ -7,6 +7,7 @@ import { ComprasRequisicion } from './modules/compras/pages/ComprasRequisicion';
 import { SettingsPage } from './modules/settings/pages/SettingsPage';
 import { HomeRH } from './modules/rh/pages/HomeRH';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 export interface UserSession {
   name: string;
@@ -63,6 +64,10 @@ function AppContent() {
     setActiveModuleId(moduleId);
     setActiveSubItemId(subItemId);
   };
+
+  if (typeof window !== 'undefined') {
+    (window as unknown as { __navigateModule?: (m: string, s?: string) => void }).__navigateModule = handleSelectModule;
+  }
 
   // Si no hay usuario autenticado, mostramos la pantalla de Login con las 2 cuentas de CRM y RH
   if (!user) {
@@ -124,9 +129,11 @@ function AppContent() {
 
 export function App() {
   return (
-    <LanguageProvider>
-      <AppContent />
-    </LanguageProvider>
+    <ThemeProvider>
+      <LanguageProvider>
+        <AppContent />
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }
 

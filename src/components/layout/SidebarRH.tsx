@@ -53,7 +53,7 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
             <span
               style={{
                 fontWeight: 800,
-                color: '#EA580C',
+                color: 'var(--text-primary)',
                 fontSize: '1.05rem',
                 letterSpacing: '0.04em',
               }}
@@ -86,7 +86,7 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
               <button
                 type="button"
                 className={`tool-icon-btn ${
-                  activeModuleId === 'rh' ? 'active-glow active-rh' : ''
+                  activeModuleId === 'rh' ? 'active-rh' : ''
                 }`}
                 title={t('rh.blank_title')}
                 onClick={() => onSelectModule('rh', 'rh-directorio')}
@@ -104,7 +104,7 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
               <button
                 type="button"
                 className={`tool-icon-btn ${
-                  activeModuleId === 'settings' ? 'active-glow active-rh' : ''
+                  activeModuleId === 'settings' ? 'active-rh' : ''
                 }`}
                 title={t('nav.settings')}
                 onClick={() => onSelectModule('settings')}
@@ -142,8 +142,7 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
                 title={t('nav.rh_group_talent')}
                 onClick={() => onSelectModule('rh', 'rh-directorio')}
               >
-                <IconUsers size={18} style={{ color: '#EA580C' }} />
-                <span className="collapsed-top-dot orange" />
+                <IconUsers size={18} />
               </button>
 
               {/* Grupo 2: Asistencia & Tiempos */}
@@ -158,10 +157,7 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
                 title={t('nav.rh_group_attendance')}
                 onClick={() => onSelectModule('rh', 'rh-asistencia')}
               >
-                <IconShieldCheck size={18} style={{ color: '#059669' }} />
-                {(activeSubItemId === 'rh-asistencia' || activeSubItemId === 'rh-incidencias' || activeSubItemId === 'rh-vacaciones') && (
-                  <span className="collapsed-top-dot green" />
-                )}
+                <IconShieldCheck size={18} />
               </button>
 
               {/* Grupo 3: Administración & Políticas */}
@@ -176,10 +172,7 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
                 title={t('nav.rh_group_admin')}
                 onClick={() => onSelectModule('rh', 'rh-contratos')}
               >
-                <IconBriefcase size={18} style={{ color: '#0284C7' }} />
-                {(activeSubItemId === 'rh-contratos' || activeSubItemId === 'rh-ajustes') && (
-                  <span className="collapsed-top-dot blue" />
-                )}
+                <IconBriefcase size={18} />
               </button>
             </div>
           </div>
@@ -232,12 +225,12 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
               <span
                 style={{
                   fontSize: '0.68rem',
-                  fontWeight: 800,
-                  color: '#EA580C',
-                  backgroundColor: 'rgba(234, 88, 12, 0.12)',
-                  border: '1px solid rgba(234, 88, 12, 0.3)',
+                  fontWeight: 700,
+                  color: 'var(--text-secondary)',
+                  backgroundColor: 'var(--surface-alt)',
+                  border: '1px solid var(--border)',
                   padding: '0.15rem 0.45rem',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--radius-control)',
                   letterSpacing: '0.05em',
                   textTransform: 'uppercase',
                 }}
@@ -256,7 +249,7 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
                   onClick={() => setOpenSection1(!openSection1)}
                 >
                   <div className="head-left-content">
-                    <IconUsers size={16} style={{ color: '#EA580C' }} />
+                    <IconUsers size={16} />
                     <span className="group-title-label">{t('nav.rh_group_talent')}</span>
                   </div>
                   {openSection1 ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
@@ -334,7 +327,7 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
                   onClick={() => setOpenSection2(!openSection2)}
                 >
                   <div className="head-left-content">
-                    <IconShieldCheck size={16} style={{ color: '#059669' }} />
+                    <IconShieldCheck size={16} />
                     <span className="group-title-label">{t('nav.rh_group_attendance')}</span>
                   </div>
                   {openSection2 ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
@@ -410,7 +403,7 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
                   onClick={() => setOpenSection3(!openSection3)}
                 >
                   <div className="head-left-content">
-                    <IconSettings size={16} style={{ color: '#0284C7' }} />
+                    <IconSettings size={16} />
                     <span className="group-title-label">{t('nav.rh_group_admin')}</span>
                   </div>
                   {openSection3 ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}

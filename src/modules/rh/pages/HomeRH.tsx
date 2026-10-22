@@ -74,7 +74,7 @@ export const HomeRH: React.FC = () => {
     {
       id: 'c1',
       initials: 'SM',
-      avatarColor: '#0284C7', // Azul petróleo
+      avatarColor: 'var(--brand-700)',
       name: 'Mtra. Sofía Morales Ruiz',
       email: 'sofia.morales@sifygsa.com',
       position: 'Coordinadora de Seguridad',
@@ -88,7 +88,7 @@ export const HomeRH: React.FC = () => {
     {
       id: 'c2',
       initials: 'CH',
-      avatarColor: '#EA580C', // Naranja
+      avatarColor: 'var(--primary)',
       name: 'Ing. Carlos Hernández',
       email: 'carlos.hernandez@sifygsa.com',
       position: 'Técnico Esp. Detección Gas',
@@ -102,7 +102,7 @@ export const HomeRH: React.FC = () => {
     {
       id: 'c3',
       initials: 'RS',
-      avatarColor: '#4F46E5', // Slate Indigo
+      avatarColor: 'var(--brand-800)',
       name: 'Téc. Roberto Silva Alor',
       email: 'roberto.silva@sifygsa.com',
       position: 'Supervisor de Instrumentación',
@@ -116,7 +116,7 @@ export const HomeRH: React.FC = () => {
     {
       id: 'c4',
       initials: 'AF',
-      avatarColor: '#0284C7', // Azul Corporativo
+      avatarColor: 'var(--brand-600)',
       name: 'Lic. Ana Lucía Fernández',
       email: 'ana.fernandez@sifygsa.com',
       position: 'Especialista Nóminas & Campo',

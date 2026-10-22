@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { IconSearch, IconBell, IconLogOut, IconSettings, IconUser } from '../ui/Icons';
 import { SfgLogoSymbol } from '../ui/Logo';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
 
 interface HeaderProps {
   currentModuleTitle?: string;
@@ -28,29 +29,9 @@ export const Header: React.FC<HeaderProps> = ({
   },
 }) => {
   const { t } = useLanguage();
+  const { isDarkMode, toggleTheme } = useTheme();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    return localStorage.getItem('sfg_theme') === 'dark';
-  });
   const userMenuRef = useRef<HTMLDivElement>(null);
-
-  // Sincronizar tema con el DOM y localStorage
-  useEffect(() => {
-    document.body.removeAttribute('data-theme');
-    if (isDarkMode) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      document.body.classList.remove('light-mode');
-      localStorage.setItem('sfg_theme', 'dark');
-    } else {
-      document.documentElement.setAttribute('data-theme', 'light');
-      document.body.classList.add('light-mode');
-      localStorage.setItem('sfg_theme', 'light');
-    }
-  }, [isDarkMode]);
-
-  const toggleTheme = () => {
-    setIsDarkMode((prev) => !prev);
-  };
 
   const getInitials = (name?: string) => {
     if (!name) return 'SF';
@@ -101,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
                   fontSize: '1.18rem',
                   fontWeight: 900,
                   letterSpacing: '0.05em',
-                  color: isDarkMode ? '#FFFFFF' : '#0F172A',
+                  color: 'var(--text-primary)',
                   transition: 'color 0.2s ease',
                 }}
               >
@@ -112,16 +93,13 @@ export const Header: React.FC<HeaderProps> = ({
                 style={{
                   fontSize: '0.68rem',
                   fontWeight: 800,
-                  color: '#FFFFFF',
-                  backgroundColor: user?.portal === 'rh' ? '#0D9488' : '#EA580C',
+                  color: 'var(--on-primary)',
+                  backgroundColor: 'var(--primary)',
                   padding: '0.15rem 0.45rem',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--radius-control)',
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  boxShadow:
-                    user?.portal === 'rh'
-                      ? '0 1px 3px rgba(13, 148, 136, 0.45)'
-                      : '0 1px 3px rgba(234, 88, 12, 0.35)',
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
                 {user?.portal === 'rh' ? 'RH SUITE' : 'SUITE'}
@@ -132,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
               style={{
                 fontSize: '0.62rem',
                 fontWeight: 700,
-                color: user?.portal === 'rh' ? (isDarkMode ? '#2DD4BF' : '#0D9488') : (isDarkMode ? '#94A3B8' : '#475569'),
+                color: 'var(--text-secondary)',
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 transition: 'color 0.2s ease',
@@ -163,6 +141,7 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           className="header-tool-btn"
           aria-label={isDarkMode ? t('header.change_to_light') : t('header.change_to_dark')}
+          aria-pressed={isDarkMode}
           title={isDarkMode ? t('header.change_to_light') : t('header.change_to_dark')}
           onClick={toggleTheme}
         >

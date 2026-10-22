@@ -20,9 +20,8 @@ export const IconLogo: React.FC<IconProps> = ({ size = 28, className = '', ...pr
       <defs>
         <linearGradient id="sfgIconFlameGradient" x1="0.15" y1="0.05" x2="0.85" y2="0.95">
           <stop offset="0%" stopColor="#DC2626" />
-          <stop offset="25%" stopColor="#EA580C" />
-          <stop offset="50%" stopColor="#F97316" />
-          <stop offset="78%" stopColor="#C2410C" />
+          <stop offset="30%" stopColor="#EA580C" />
+          <stop offset="70%" stopColor="#C2410C" />
           <stop offset="100%" stopColor="#7C2D12" />
         </linearGradient>
       </defs>

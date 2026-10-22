@@ -18,7 +18,7 @@ export const Footer: React.FC<FooterProps> = ({ portal = 'crm' }) => {
 
         <div className="footer-bottom-right">
           {portal === 'rh' ? (
-            <p className="f-g-badge rh-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#2DD4BF' }}>
+            <p className="f-g-badge rh-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary)' }}>
               <SfgLogoSymbol size={18} />
               <span>SIFYGSA • Capital Humano &amp; Talento</span>
             </p>

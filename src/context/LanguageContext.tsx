@@ -93,7 +93,7 @@ export const translations: Translations = {
   'settings.theme_light_title': { es: 'Modo Claro (Default)', en: 'Light Mode (Default)' },
   'settings.theme_light_desc': { es: 'Superficie blanca limpia con acentos y textos nítidos.', en: 'Clean white surface with crisp accents and typography.' },
   'settings.theme_dark_title': { es: 'Modo Oscuro', en: 'Dark Mode' },
-  'settings.theme_dark_desc': { es: 'Tono grafito industrial (#2E2E2E) para entornos con poca luz.', en: 'Industrial graphite tone (#2E2E2E) for low-light environments.' },
+  'settings.theme_dark_desc': { es: 'Modo oscuro corporativo en neutros fríos para entornos con poca luz.', en: 'Corporate dark mode in cool neutrals for low-light environments.' },
 
   'settings.profile_section_title': { es: 'Información del Operador', en: 'Operator Information' },
   'settings.profile_section_desc': { es: 'Datos de tu cuenta corporativa y credenciales asignadas.', en: 'Your corporate account details and assigned credentials.' },

@@ -79,15 +79,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const getStatusColor = (col: TaskItem['column']) => {
     switch (col) {
       case 'todo':
-        return '#6B7280';
+        return 'var(--text-secondary)';
       case 'in_progress':
-        return '#EA580C';
+        return 'var(--primary)';
       case 'review':
-        return '#0284C7';
+        return 'var(--info)';
       case 'done':
-        return '#10B981';
+        return 'var(--success)';
       default:
-        return '#6B7280';
+        return 'var(--text-secondary)';
     }
   };
 
@@ -162,23 +162,23 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       {/* Status Legend */}
       <div className="calendar-legend-bar">
         <div className="legend-item">
-          <span className="legend-pip" style={{ background: '#6B7280' }} />
+          <span className="legend-pip" style={{ background: 'var(--text-secondary)' }} />
           <span>Por Hacer</span>
         </div>
         <div className="legend-item">
-          <span className="legend-pip" style={{ background: '#EA580C' }} />
+          <span className="legend-pip" style={{ background: 'var(--primary)' }} />
           <span>En Curso</span>
         </div>
         <div className="legend-item">
-          <span className="legend-pip" style={{ background: '#0284C7' }} />
+          <span className="legend-pip" style={{ background: 'var(--info)' }} />
           <span>En Revisión</span>
         </div>
         <div className="legend-item">
-          <span className="legend-pip" style={{ background: '#10B981' }} />
+          <span className="legend-pip" style={{ background: 'var(--success)' }} />
           <span>Finalizado</span>
         </div>
         <div className="legend-item">
-          <span className="legend-pip" style={{ background: '#F59E0B' }} />
+          <span className="legend-pip" style={{ background: 'var(--warning)' }} />
           <span>⚡ Ruta Crítica</span>
         </div>
       </div>
