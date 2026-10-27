@@ -1,0 +1,90 @@
+[
+  {
+    "id": "usr_admin",
+    "nombre": "Carlos Mendoza",
+    "usuario": "admin",
+    "email": "admin@sifygsa.com",
+    "passwordHash": "$2b$10$vB71eSEN47wda60r.W663uWQfdVEneKQTM7EYzAwucR5JvjjwR9Je",
+    "rol": "administrador",
+    "zona": "Norte",
+    "departamento": "Dirección General",
+    "estado": "activo",
+    "modulosPermitidos": [
+      "admin",
+      "crm",
+      "requisiciones",
+      "rrhh"
+    ],
+    "fechaCreacion": "2026-01-15T08:00:00.000Z",
+    "ultimoAcceso": "2026-10-27T17:04:44.557Z"
+  },
+  {
+    "id": "usr_gerente",
+    "nombre": "Ana Lucía Torres",
+    "usuario": "gerente",
+    "email": "gerente@sifygsa.com",
+    "passwordHash": "$2b$10$Q9zr2DVRjlszq8OZfUVwpuHvpnNL2ASt5iKYICwRR2sKb.PMl2MrW",
+    "rol": "gerente",
+    "zona": "Norte",
+    "departamento": "Dirección Comercial",
+    "estado": "activo",
+    "modulosPermitidos": [
+      "crm",
+      "requisiciones",
+      "rrhh"
+    ],
+    "fechaCreacion": "2026-02-10T09:00:00.000Z",
+    "ultimoAcceso": "2026-10-27T16:34:52.129Z"
+  },
+  {
+    "id": "usr_vendedor",
+    "nombre": "Diego Ramírez Vega",
+    "usuario": "vendedor",
+    "email": "vendedor@sifygsa.com",
+    "passwordHash": "$2b$10$i0JYX9ueR646WQX1jHj7u.52y3.MfB2gd./GyVo52l351XLcxMQZO",
+    "rol": "vendedor",
+    "zona": "Istmo",
+    "departamento": "Ventas & Comercial",
+    "estado": "activo",
+    "modulosPermitidos": [
+      "crm",
+      "requisiciones"
+    ],
+    "fechaCreacion": "2026-03-05T10:00:00.000Z",
+    "ultimoAcceso": "2026-10-27T16:35:47.051Z"
+  },
+  {
+    "id": "usr_rrhh",
+    "nombre": "Mariana Garza",
+    "usuario": "rrhh",
+    "email": "rrhh@sifygsa.com",
+    "passwordHash": "$2b$10$Pqv8Axeiw/lPb26aDzcG3enon7KfC7fZvHiEaIBbOO.7en58sTnDe",
+    "rol": "rrhh",
+    "zona": "Sur",
+    "departamento": "Capital Humano",
+    "estado": "activo",
+    "modulosPermitidos": [
+      "rrhh",
+      "requisiciones"
+    ],
+    "fechaCreacion": "2026-01-20T08:30:00.000Z",
+    "ultimoAcceso": "2026-10-27T09:20:00.000Z"
+  },
+  {
+    "id": "usr_requisiciones",
+    "nombre": "Pablo Vázquez Culebro",
+    "usuario": "requisiciones",
+    "email": "compras@sifygsa.com",
+    "passwordHash": "$2b$10$aQUsPzu8y04RPAeO8kM0MODf61D2Z.cjSpairQ8p2kuTB59H1Z516",
+    "rol": "requisiciones",
+    "zona": "Istmo",
+    "departamento": "Operaciones & Procura",
+    "estado": "activo",
+    "modulosPermitidos": [
+      "requisiciones",
+      "crm"
+    ],
+    "fechaCreacion": "2026-04-12T08:00:00.000Z",
+    "ultimoAcceso": "2026-10-27T09:05:00.000Z"
+  }
+]

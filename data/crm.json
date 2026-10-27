@@ -1,0 +1,330 @@
+{
+  "oportunidades": [
+    {
+      "id": "opp_001",
+      "folio": "OPP-2026-041",
+      "titulo": "Modernización Sistema Fire & Gas SIL-3 Refinería Minatitlán",
+      "clienteId": "cli_001",
+      "clienteNombre": "Pemex Transformación Industrial",
+      "contactoNombre": "Ing. Jorge Reyes",
+      "contactoEmail": "jorge.reyes@pemex.com",
+      "vendedor": "Diego Ramírez Vega",
+      "zona": "Istmo",
+      "etapa": "negociacion",
+      "montoEstimado": 1850000,
+      "moneda": "MXN",
+      "probabilidad": 80,
+      "fechaCierreEsperada": "2026-11-15",
+      "periodo": "2026-10",
+      "etiquetas": [
+        "SIL-3",
+        "Honeywell",
+        "Prioritario"
+      ],
+      "notas": "Memoria técnica aprobada; pendiente junta de aclaraciones financieras.",
+      "actualizadoEn": "2026-10-26T14:30:00.000Z"
+    },
+    {
+      "id": "opp_002",
+      "folio": "OPP-2026-042",
+      "titulo": "Suministro de Detectores Ultrasónicos e Infrarrojos CH4/H2S",
+      "clienteId": "cli_002",
+      "clienteNombre": "Grupo Industrial Regio",
+      "contactoNombre": "Ing. Ricardo Morales",
+      "contactoEmail": "r.morales@giregion.com",
+      "vendedor": "Ana Lucía Torres",
+      "zona": "Norte",
+      "etapa": "propuesta",
+      "montoEstimado": 920000,
+      "moneda": "MXN",
+      "probabilidad": 60,
+      "fechaCierreEsperada": "2026-11-28",
+      "periodo": "2026-10",
+      "etiquetas": [
+        "Det-Tronics",
+        "Mantenimiento"
+      ],
+      "notas": "Cotización enviada con entrega a 6 semanas.",
+      "actualizadoEn": "2026-10-25T10:00:00.000Z"
+    },
+    {
+      "id": "opp_003",
+      "folio": "OPP-2026-043",
+      "titulo": "Póliza Anual de Calibración Certificada Detectores LEL",
+      "clienteId": "cli_003",
+      "clienteNombre": "Complejo Petroquímico Cangrejera",
+      "contactoNombre": "Ing. Roberto Kim",
+      "contactoEmail": "r.kim@petrocangrejera.mx",
+      "vendedor": "Diego Ramírez Vega",
+      "zona": "Sur",
+      "etapa": "ganado",
+      "montoEstimado": 1340000,
+      "moneda": "MXN",
+      "probabilidad": 100,
+      "fechaCierreEsperada": "2026-10-15",
+      "periodo": "2026-09",
+      "etiquetas": [
+        "Póliza Anual",
+        "Calibración"
+      ],
+      "notas": "Contrato firmado por 12 meses con brigada residente.",
+      "actualizadoEn": "2026-10-15T16:20:00.000Z"
+    },
+    {
+      "id": "opp_004",
+      "folio": "OPP-2026-044",
+      "titulo": "Ingeniería Básica HTO y Matriz Causa-Efecto Coquizadora",
+      "clienteId": "cli_004",
+      "clienteNombre": "Logística y Energía del Bajío",
+      "contactoNombre": "Lic. Claudia Silva",
+      "contactoEmail": "c.silva@logibajio.mx",
+      "vendedor": "Carlos Mendoza",
+      "zona": "Bajío",
+      "etapa": "contacto",
+      "montoEstimado": 680000,
+      "moneda": "MXN",
+      "probabilidad": 35,
+      "fechaCierreEsperada": "2026-12-05",
+      "periodo": "2026-10",
+      "etiquetas": [
+        "Ingeniería",
+        "HTO"
+      ],
+      "notas": "Levantamiento en sitio programado con gerencia de planta.",
+      "actualizadoEn": "2026-10-24T11:10:00.000Z"
+    },
+    {
+      "id": "opp_005",
+      "folio": "OPP-2026-045",
+      "titulo": "Tableros de Control Notifier NFS2-3030 para Terminal Marítima",
+      "clienteId": "cli_005",
+      "clienteNombre": "Constructora Peninsular energética",
+      "contactoNombre": "Arq. Fernando Ruiz",
+      "contactoEmail": "f.ruiz@cupmerida.com",
+      "vendedor": "Laura Sánchez",
+      "zona": "Península",
+      "etapa": "prospecto",
+      "montoEstimado": 540000,
+      "moneda": "MXN",
+      "probabilidad": 15,
+      "fechaCierreEsperada": "2026-12-18",
+      "periodo": "2026-10",
+      "etiquetas": [
+        "Notifier",
+        "Marítimo"
+      ],
+      "notas": "Prospecto captado en congreso industrial petrolero.",
+      "actualizadoEn": "2026-10-27T08:00:00.000Z"
+    },
+    {
+      "id": "opp_006",
+      "folio": "OPP-2026-039",
+      "titulo": "Actualización de Supresión por Agente Limpio FM-200",
+      "clienteId": "cli_002",
+      "clienteNombre": "Grupo Industrial Regio",
+      "contactoNombre": "Ing. Ricardo Morales",
+      "contactoEmail": "r.morales@giregion.com",
+      "vendedor": "Ana Lucía Torres",
+      "zona": "Norte",
+      "etapa": "ganado",
+      "montoEstimado": 790000,
+      "moneda": "MXN",
+      "probabilidad": 100,
+      "fechaCierreEsperada": "2026-08-30",
+      "periodo": "2026-08",
+      "etiquetas": [
+        "Supresión",
+        "FM-200"
+      ],
+      "notas": "Proyecto entregado y facturado al 100%.",
+      "actualizadoEn": "2026-09-01T09:00:00.000Z"
+    },
+    {
+      "id": "opp_007",
+      "folio": "OPP-2026-040",
+      "titulo": "Sensores Electroquímicos Portátiles Brigada Contra Incendio",
+      "clienteId": "cli_004",
+      "clienteNombre": "Logística y Energía del Bajío",
+      "contactoNombre": "Lic. Claudia Silva",
+      "contactoEmail": "c.silva@logibajio.mx",
+      "vendedor": "Laura Sánchez",
+      "zona": "Bajío",
+      "etapa": "perdido",
+      "montoEstimado": 310000,
+      "moneda": "MXN",
+      "probabilidad": 0,
+      "fechaCierreEsperada": "2026-09-20",
+      "periodo": "2026-09",
+      "etiquetas": [
+        "Portátiles",
+        "Precio"
+      ],
+      "notas": "Cliente pospuso presupuesto para el siguiente ejercicio.",
+      "actualizadoEn": "2026-09-21T12:00:00.000Z"
+    }
+  ],
+  "clientes": [
+    {
+      "id": "cli_001",
+      "empresa": "Pemex Transformación Industrial",
+      "rfc": "PTI151101TE5",
+      "contactoPrincipal": "Ing. Jorge Reyes",
+      "cargoContacto": "Superintendente de Instrumentación y Seguridad",
+      "email": "jorge.reyes@pemex.com",
+      "telefono": "+52 922 225 0400",
+      "zona": "Istmo",
+      "industria": "Refinación & Petroquímica",
+      "estatus": "activo",
+      "vendedorAsignado": "Diego Ramírez Vega",
+      "etiquetas": [
+        "Cuenta Clave",
+        "Gobierno",
+        "SIL-3"
+      ],
+      "interacciones": [
+        {
+          "id": "int_001",
+          "fecha": "2026-10-25T11:30:00.000Z",
+          "tipo": "cita",
+          "autor": "Diego Ramírez Vega",
+          "resumen": "Revisión presencial de planos APC y cobertura de penacho H2S en planta."
+        },
+        {
+          "id": "int_002",
+          "fecha": "2026-10-20T16:15:00.000Z",
+          "tipo": "llamada",
+          "autor": "Ana Lucía Torres",
+          "resumen": "Confirmación de vigencia de carta de distribuidor autorizado Honeywell."
+        }
+      ]
+    },
+    {
+      "id": "cli_002",
+      "empresa": "Grupo Industrial Regio",
+      "rfc": "GIR920515A34",
+      "contactoPrincipal": "Ing. Ricardo Morales",
+      "cargoContacto": "Gerente de Planta y EHS",
+      "email": "r.morales@giregion.com",
+      "telefono": "+52 81 8345 6789",
+      "zona": "Norte",
+      "industria": "Manufactura Pesada",
+      "estatus": "activo",
+      "vendedorAsignado": "Ana Lucía Torres",
+      "etiquetas": [
+        "Corporativo",
+        "Monterrey"
+      ],
+      "interacciones": [
+        {
+          "id": "int_003",
+          "fecha": "2026-10-24T09:45:00.000Z",
+          "tipo": "llamada",
+          "autor": "Ana Lucía Torres",
+          "resumen": "Seguimiento a propuesta económica OPP-2026-042; solicitan desglose en USD."
+        }
+      ]
+    },
+    {
+      "id": "cli_003",
+      "empresa": "Complejo Petroquímico Cangrejera",
+      "rfc": "CPC980312AB1",
+      "contactoPrincipal": "Ing. Roberto Kim",
+      "cargoContacto": "Jefe de Mantenimiento de Sistemas F&G",
+      "email": "r.kim@petrocangrejera.mx",
+      "telefono": "+52 921 211 3000",
+      "zona": "Sur",
+      "industria": "Petroquímica",
+      "estatus": "activo",
+      "vendedorAsignado": "Diego Ramírez Vega",
+      "etiquetas": [
+        "Contrato Anual",
+        "Coatzacoalcos"
+      ],
+      "interacciones": [
+        {
+          "id": "int_004",
+          "fecha": "2026-10-15T14:00:00.000Z",
+          "tipo": "cita",
+          "autor": "Diego Ramírez Vega",
+          "resumen": "Firma de orden de servicio anual y entrega de fianza de cumplimiento."
+        }
+      ]
+    },
+    {
+      "id": "cli_004",
+      "empresa": "Logística y Energía del Bajío",
+      "rfc": "LEB180920QR7",
+      "contactoPrincipal": "Lic. Claudia Silva",
+      "cargoContacto": "Directora de Adquisiciones",
+      "email": "c.silva@logibajio.mx",
+      "telefono": "+52 477 712 3456",
+      "zona": "Bajío",
+      "industria": "Almacenamiento de Hidrocarburos",
+      "estatus": "prospecto",
+      "vendedorAsignado": "Carlos Mendoza",
+      "etiquetas": [
+        "Almacenamiento",
+        "NOM-005-ASEA"
+      ],
+      "interacciones": [
+        {
+          "id": "int_005",
+          "fecha": "2026-10-22T10:30:00.000Z",
+          "tipo": "recordatorio",
+          "autor": "Carlos Mendoza",
+          "resumen": "Enviar portafolio de cumplimiento NOM-005-ASEA y referencias técnicas."
+        }
+      ]
+    }
+  ],
+  "actividades": [
+    {
+      "id": "act_001",
+      "tipo": "cita",
+      "titulo": "Defensa técnica de arquitectura SIL-3 ante comité Pemex",
+      "descripcion": "Presentar memoria de cálculo de disponibilidad óptica e integración Modbus TCP.",
+      "oportunidadFolio": "OPP-2026-041",
+      "clienteNombre": "Pemex Transformación Industrial",
+      "responsable": "Diego Ramírez Vega",
+      "fechaLimite": "2026-10-30",
+      "prioridad": "alta",
+      "estado": "pendiente"
+    },
+    {
+      "id": "act_002",
+      "tipo": "llamada",
+      "titulo": "Confirmar dictamen de compras Grupo Industrial Regio",
+      "descripcion": "Revisar condiciones de crédito a 30 días con departamento financiero.",
+      "oportunidadFolio": "OPP-2026-042",
+      "clienteNombre": "Grupo Industrial Regio",
+      "responsable": "Ana Lucía Torres",
+      "fechaLimite": "2026-10-29",
+      "prioridad": "alta",
+      "estado": "pendiente"
+    },
+    {
+      "id": "act_003",
+      "tipo": "tarea",
+      "titulo": "Elaborar matriz Causa-Efecto preliminar Bajío",
+      "descripcion": "Preparar entregable técnico HTO para visita en León.",
+      "oportunidadFolio": "OPP-2026-044",
+      "clienteNombre": "Logística y Energía del Bajío",
+      "responsable": "Carlos Mendoza",
+      "fechaLimite": "2026-11-02",
+      "prioridad": "media",
+      "estado": "pendiente"
+    },
+    {
+      "id": "act_004",
+      "tipo": "recordatorio",
+      "titulo": "Renovar pase de acceso vehicular e industrial Refinería Minatitlán",
+      "descripcion": "Coordinar con Seguridad Industrial los certificados DC-3 vigentes.",
+      "oportunidadFolio": "OPP-2026-041",
+      "clienteNombre": "Pemex Transformación Industrial",
+      "responsable": "Diego Ramírez Vega",
+      "fechaLimite": "2026-10-28",
+      "prioridad": "media",
+      "estado": "completada"
+    }
+  ]
+}
