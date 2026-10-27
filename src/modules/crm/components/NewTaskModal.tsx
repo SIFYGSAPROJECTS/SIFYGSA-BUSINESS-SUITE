@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { IconClose, IconPlus, IconCheckSquare } from '../../../components/ui/Icons';
 
@@ -32,7 +34,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
   defaultDate,
   defaultColumn = 'todo',
 }) => {
-  const [folio, setFolio] = useState(`OPP-T${Math.floor(10 + Math.random() * 90)}`);
+  const [folio, setFolio] = useState(() => `OPP-T${Math.floor(10 + Math.random() * 90)}`);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'Baja' | 'Media' | 'Alta'>('Alta');

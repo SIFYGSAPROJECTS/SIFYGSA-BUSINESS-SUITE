@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -17,58 +19,61 @@ import type { TaskItem } from '../components/NewTaskModal';
 import { GanttDetailModal, type GanttTask } from '../components/GanttDetailModal';
 import { OpportunitiesList } from './OpportunitiesList';
 import { OpportunityDetail } from './OpportunityDetail';
+import type { OportunidadCrm } from '../types';
 
 type CrmView = 'kanban' | 'gantt' | 'calendar' | 'table' | 'detail';
 
 interface HomeCRMProps {
   subItemId?: string;
+  folioInicial?: string;
+  oportunidadesExtra?: OportunidadCrm[];
+  alAbrirDetalle?: (folio: string) => void;
+  alVolverAOportunidades?: () => void;
 }
 
-export const HomeCRM: React.FC<HomeCRMProps> = ({ subItemId }) => {
-  const getInitialView = (): CrmView => {
-    switch (subItemId) {
-      case 'crm-opportunities':
-        return 'table';
-      case 'crm-opportunity-detail':
-        return 'detail';
-      case 'crm-gantt':
-        return 'gantt';
-      case 'crm-calendar':
-        return 'calendar';
-      case 'crm-kanban':
-      default:
-        return 'table'; // Pantalla 3 por defecto al ingresar a CRM
+export const HomeCRM: React.FC<HomeCRMProps> = ({
+  subItemId,
+  folioInicial,
+  oportunidadesExtra = [],
+  alAbrirDetalle,
+  alVolverAOportunidades,
+}) => {
+  const viewFromSubItem: CrmView =
+    subItemId === 'crm-opportunity-detail' && folioInicial
+      ? 'detail'
+      : subItemId === 'crm-gantt'
+      ? 'gantt'
+      : subItemId === 'crm-calendar'
+      ? 'calendar'
+      : subItemId === 'crm-kanban'
+      ? 'kanban'
+      : 'table';
+
+  const [manualView, setManualView] = useState<{ sub?: string; folio?: string; view: CrmView } | null>(null);
+  const activeView: CrmView =
+    manualView && manualView.sub === subItemId && manualView.folio === folioInicial
+      ? manualView.view
+      : viewFromSubItem;
+  const setActiveView = (view: CrmView) => setManualView({ sub: subItemId, folio: folioInicial, view });
+  const [selectedOpportunityFolio, setSelectedOpportunityFolio] = useState<string>('OPP-2024-041');
+  const folioActivo = folioInicial || selectedOpportunityFolio;
+
+  const abrirDetalleOportunidad = (folio: string) => {
+    setSelectedOpportunityFolio(folio);
+    if (alAbrirDetalle) {
+      alAbrirDetalle(folio);
+    } else {
+      setActiveView('detail');
     }
   };
 
-  const [activeView, setActiveView] = useState<CrmView>(getInitialView());
-
-  // Sincronizar reactivamente cuando el usuario hace clic en el menú lateral
-  useEffect(() => {
-    if (subItemId) {
-      switch (subItemId) {
-        case 'crm-opportunities':
-          setActiveView('table');
-          break;
-        case 'crm-opportunity-detail':
-          setActiveView('detail');
-          break;
-        case 'crm-gantt':
-          setActiveView('gantt');
-          break;
-        case 'crm-calendar':
-          setActiveView('calendar');
-          break;
-        case 'crm-kanban':
-          setActiveView('kanban');
-          break;
-        default:
-          setActiveView('table');
-          break;
-      }
+  const volverAOportunidades = () => {
+    if (alVolverAOportunidades) {
+      alVolverAOportunidades();
+    } else {
+      setActiveView('table');
     }
-  }, [subItemId]);
-  const [selectedOpportunityFolio, setSelectedOpportunityFolio] = useState<string>('OPP-2024-041');
+  };
 
   // Search filter
   const [searchTerm, setSearchTerm] = useState('');
@@ -494,8 +499,9 @@ export const HomeCRM: React.FC<HomeCRMProps> = ({ subItemId }) => {
     return (
       <div className="sifygsa-crm-container">
         <OpportunityDetail
-          folio={selectedOpportunityFolio}
-          onBackToOpportunities={() => setActiveView('table')}
+          folio={folioActivo}
+          oportunidadesExtra={oportunidadesExtra}
+          onBackToOpportunities={volverAOportunidades}
           onGoToActivities={() => setActiveView('kanban')}
           onOpenNewActivityModal={() => handleOpenNewTask()}
         />
@@ -517,8 +523,7 @@ export const HomeCRM: React.FC<HomeCRMProps> = ({ subItemId }) => {
       <div className="sifygsa-crm-container">
         <OpportunitiesList
           onSelectOpportunity={(folio) => {
-            setSelectedOpportunityFolio(folio);
-            setActiveView('detail');
+            abrirDetalleOportunidad(folio);
           }}
           onNewOpportunity={() => handleOpenNewTask()}
         />
@@ -541,7 +546,12 @@ export const HomeCRM: React.FC<HomeCRMProps> = ({ subItemId }) => {
           ==================================================================== */}
       <section className="crm-project-hero-card">
         <div className="hero-top-row">
-          <div className="hero-identity-group">
+          <div
+            className="hero-identity-group"
+            onClick={() => abrirDetalleOportunidad(folioActivo)}
+            style={{ cursor: 'pointer' }}
+            title={`Abrir detalle de la oportunidad ${folioActivo}`}
+          >
             <div className="hero-symbol-wrapper">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
@@ -549,7 +559,7 @@ export const HomeCRM: React.FC<HomeCRMProps> = ({ subItemId }) => {
             </div>
             <div>
               <div className="hero-tags-line">
-                <span className="hero-folio-tag font-mono">{selectedOpportunityFolio}</span>
+                <span className="hero-folio-tag font-mono" style={{ textDecoration: 'underline' }}>{folioActivo}</span>
                 <span className="hero-client-name">PEMEX REFINACIÓN — TULA HIDALGO</span>
                 <span className="hero-status-tag">58% Avance General</span>
               </div>
@@ -568,6 +578,14 @@ export const HomeCRM: React.FC<HomeCRMProps> = ({ subItemId }) => {
               <span className="kpi-label">CIERRE ESTIMADO</span>
               <span className="kpi-date font-mono">30 May 2024</span>
             </div>
+            <button
+              type="button"
+              className="btn-secondary-dark"
+              onClick={() => abrirDetalleOportunidad(folioActivo)}
+              style={{ alignSelf: 'center' }}
+            >
+              Ver Detalle →
+            </button>
           </div>
         </div>
 

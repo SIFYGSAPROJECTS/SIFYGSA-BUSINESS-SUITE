@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { IconPlus } from '../../../components/ui/Icons';
 import type { TaskItem } from './NewTaskModal';
