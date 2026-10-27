@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useRef, useEffect } from 'react';
 import { IconSearch, IconBell, IconLogOut, IconSettings, IconUser } from '../ui/Icons';
 import { SfgLogoSymbol } from '../ui/Logo';
@@ -9,6 +11,7 @@ interface HeaderProps {
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
   onLogout: () => void;
+  onSelectModule?: (moduleId: string, subItemId?: string) => void;
   user?: {
     name: string;
     email: string;
@@ -21,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleSidebar,
   isSidebarOpen = false,
   onLogout,
+  onSelectModule,
   user = {
     name: 'Carlos Mendoza',
     email: 'crm@sifygsa.com',
@@ -146,7 +150,6 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={toggleTheme}
         >
           {isDarkMode ? (
-            /* Icono Sol (para pasar a Modo Claro) */
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
@@ -170,7 +173,6 @@ export const Header: React.FC<HeaderProps> = ({
               <path d="M12 20v2" />
             </svg>
           ) : (
-            /* Icono Luna (para pasar a Modo Oscuro) */
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
@@ -231,7 +233,10 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 className="dialog-menu-item"
-                onClick={() => setIsUserMenuOpen(false)}
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  onSelectModule?.('settings');
+                }}
               >
                 <IconUser size={15} />
                 <span>Perfil</span>
@@ -240,7 +245,10 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 className="dialog-menu-item"
-                onClick={() => setIsUserMenuOpen(false)}
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  onSelectModule?.('settings');
+                }}
               >
                 <IconSettings size={15} />
                 <span>{t('nav.settings')}</span>

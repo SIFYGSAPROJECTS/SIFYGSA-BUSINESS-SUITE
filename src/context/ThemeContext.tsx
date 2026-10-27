@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useEffect, useState, useTransition } from 'react';
 
 export type Theme = 'light' | 'dark';
@@ -14,10 +16,12 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const THEME_STORAGE_KEY = 'sfg_theme';
 
 function getInitialTheme(): Theme {
-  if (typeof window === 'undefined') return 'light';
+  if (typeof window === 'undefined' || typeof window.localStorage?.getItem !== 'function') {
+    return 'light';
+  }
 
   try {
-    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
     if (saved === 'light' || saved === 'dark') {
       return saved;
     }

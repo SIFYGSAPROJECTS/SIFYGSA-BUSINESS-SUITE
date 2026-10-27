@@ -1,4 +1,6 @@
-import { useState } from 'react';
+'use client';
+
+import { useState, useEffect } from 'react';
 import { LoginPage } from './modules/auth/pages/LoginPage';
 import { MainLayout } from './components/layout/MainLayout';
 import { HomeCRM } from './modules/crm/pages/HomeCRM';
@@ -65,9 +67,9 @@ function AppContent() {
     setActiveSubItemId(subItemId);
   };
 
-  if (typeof window !== 'undefined') {
+  useEffect(() => {
     (window as unknown as { __navigateModule?: (m: string, s?: string) => void }).__navigateModule = handleSelectModule;
-  }
+  }, []);
 
   // Si no hay usuario autenticado, mostramos la pantalla de Login con las 2 cuentas de CRM y RH
   if (!user) {

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useLanguage, type Language } from '../../../context/LanguageContext';
 import { useTheme } from '../../../context/ThemeContext';

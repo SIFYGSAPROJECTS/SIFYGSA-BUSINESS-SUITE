@@ -1,10 +1,12 @@
+'use client';
+
 import React from 'react';
-import { LoginForm } from '../components/LoginForm';
+import { LoginForm, type UserSessionData } from '../components/LoginForm';
 import { LoginHero } from '../components/LoginHero';
 import '../auth.css';
 
 interface LoginPageProps {
-  onLoginSuccess: (user: { name: string; email: string; role: string; portal?: 'crm' | 'rh' }) => void;
+  onLoginSuccess?: (user: UserSessionData) => void;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {

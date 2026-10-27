@@ -1,13 +1,27 @@
+'use client';
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import '../dashboard.css';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useTheme } from '../../../context/ThemeContext';
 
 interface GeneralDashboardProps {
-  onNavigateModule: (moduleId: string, subItemId?: string) => void;
+  onNavigateModule?: (moduleId: string, subItemId?: string) => void;
 }
 
-export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateModule }) => {
+export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateModule: onNavigateProp }) => {
+  const router = useRouter();
+  const onNavigateModule = (moduleId: string, subItemId?: string) => {
+    if (onNavigateProp) {
+      onNavigateProp(moduleId, subItemId);
+      return;
+    }
+    if (moduleId === 'crm') router.push(subItemId ? `/crm?sub=${subItemId}` : '/crm');
+    else if (moduleId === 'compras') router.push(subItemId ? `/requisiciones?sub=${subItemId}` : '/requisiciones');
+    else if (moduleId === 'rh') router.push(subItemId ? `/rrhh?sub=${subItemId}` : '/rrhh');
+    else if (moduleId === 'settings') router.push('/ajustes');
+  };
   const { t } = useLanguage();
   const { theme } = useTheme();
   return (

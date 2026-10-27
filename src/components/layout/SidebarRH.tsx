@@ -1,4 +1,8 @@
+'use client';
+
 import React, { useState } from 'react';
+import type { RolUsuario } from '@/config/types';
+import { obtenerSubItemsPermitidosModulo } from '@/modules/registry';
 import {
   IconChevronDown,
   IconChevronRight,
@@ -20,6 +24,7 @@ interface SidebarRHProps {
   activeSubItemId?: string;
   onSelectModule: (moduleId: string, subItemId?: string) => void;
   onLogout: () => void;
+  rolUsuario?: RolUsuario;
 }
 
 export const SidebarRH: React.FC<SidebarRHProps> = ({
@@ -29,11 +34,15 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
   activeModuleId,
   activeSubItemId,
   onSelectModule,
+  rolUsuario = 'rrhh',
 }) => {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [openSection1, setOpenSection1] = useState(true);
   const [openSection2, setOpenSection2] = useState(true);
   const [openSection3, setOpenSection3] = useState(false);
+  const [openSectionReq, setOpenSectionReq] = useState(true);
+
+  const subItemsRequisiciones = obtenerSubItemsPermitidosModulo('requisiciones', rolUsuario);
 
   return (
     <aside
@@ -174,6 +183,20 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
               >
                 <IconBriefcase size={18} />
               </button>
+
+              {/* Grupo 4: Requisiciones */}
+              <button
+                type="button"
+                className={`collapsed-nav-btn ops-group-btn ${
+                  activeModuleId === 'compras' ? 'active-rh' : ''
+                }`}
+                title="Requisiciones"
+                onClick={() => onSelectModule('compras', 'compras-mis-requisiciones')}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18 }}>
+                  <path d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
             </div>
           </div>
         ) : (
@@ -239,7 +262,7 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
               </span>
             </div>
 
-            {/* Navigation Links Group (TALENTO HUMANO + ASISTENCIA & TIEMPOS + ADMINISTRACIÓN) */}
+            {/* Navigation Links Group (TALENTO HUMANO + ASISTENCIA & TIEMPOS + ADMINISTRACIÓN + REQUISICIONES) */}
             <nav className="sidebar-accordion-nav">
               {/* Group 1: TALENTO HUMANO */}
               <div className="accordion-entry">
@@ -448,6 +471,44 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
                       />
                       <span>{t('nav.rh_ajustes')}</span>
                     </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Group 4: REQUISICIONES (Abierto para personal de RRHH) */}
+              <div className="accordion-entry">
+                <button
+                  type="button"
+                  className="accordion-head-btn"
+                  onClick={() => setOpenSectionReq(!openSectionReq)}
+                >
+                  <div className="head-left-content">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
+                      <path d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span className="group-title-label">REQUISICIONES</span>
+                  </div>
+                  {openSectionReq ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
+                </button>
+
+                {openSectionReq && (
+                  <div className="accordion-sub-stack">
+                    {subItemsRequisiciones.map((sub) => {
+                      const activo =
+                        activeModuleId === 'compras' &&
+                        (activeSubItemId === sub.id || (!activeSubItemId && sub.id === 'compras-mis-requisiciones'));
+                      return (
+                        <button
+                          key={sub.id}
+                          type="button"
+                          className={`sub-nav-link ${activo ? 'active-pill active-rh-pill' : ''}`}
+                          onClick={() => onSelectModule('compras', sub.vista)}
+                        >
+                          <span className={`bullet-indicator ${activo ? 'orange' : 'gray'}`} />
+                          <span>{language === 'en' ? sub.nombreEn : sub.nombre}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>

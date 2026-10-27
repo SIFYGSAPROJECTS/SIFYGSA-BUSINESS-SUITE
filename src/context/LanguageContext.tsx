@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export type Language = 'es' | 'en';
@@ -15,10 +17,9 @@ export const translations: Translations = {
   'nav.settings': { es: 'Ajustes', en: 'Settings' },
   'nav.crm': { es: 'CRM & VENTAS', en: 'CRM & SALES' },
   'nav.crm_opportunities': { es: 'Oportunidades', en: 'Opportunities' },
-  'nav.crm_opportunity_detail': { es: 'Detalle Oportunidad', en: 'Opportunity Detail' },
   'nav.crm_activities': { es: 'Actividades (Kanban & Gantt)', en: 'Activities (Kanban & Gantt)' },
   'nav.operations': { es: 'OPERACIONES', en: 'OPERATIONS' },
-  'nav.requisition': { es: 'Requisición NetSuite', en: 'NetSuite Requisition' },
+  'nav.requisition': { es: 'Requisición', en: 'Requisition' },
   'nav.rh': { es: 'RECURSOS HUMANOS', en: 'HUMAN RESOURCES' },
   'nav.rh_directory': { es: 'Directorio de Personal', en: 'Staff Directory' },
   'nav.admin': { es: 'ADMINISTRADOR', en: 'ADMINISTRATOR' },
@@ -53,7 +54,7 @@ export const translations: Translations = {
   // --- TITULOS DE MÓDULOS EN APP ---
   'app.dashboard_title': { es: 'Panel General Ejecutivo', en: 'Executive General Dashboard' },
   'app.crm_title': { es: 'Módulo CRM & Ventas Industrial', en: 'Industrial CRM & Sales Module' },
-  'app.compras_title': { es: 'Módulo de Compras — Requisición NetSuite', en: 'Purchasing Module — NetSuite Requisition' },
+  'app.compras_title': { es: 'Módulo de Compras — Requisición', en: 'Purchasing Module — Requisition' },
   'app.settings_title': { es: 'Configuración del Sistema', en: 'System Settings' },
   'app.rh_title': { es: 'Módulo de Recursos Humanos', en: 'Human Resources Module' },
 
@@ -321,13 +322,13 @@ const LanguageContext = createContext<LanguageContextProps | undefined>(undefine
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem('sfg_language');
+    const saved = typeof window !== 'undefined' && typeof window.localStorage?.getItem === 'function' ? window.localStorage.getItem('sfg_language') : null;
     return saved === 'en' ? 'en' : 'es'; // Por defecto Español
   });
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('sfg_language', lang);
+    if (typeof window !== 'undefined' && typeof window.localStorage?.setItem === 'function') window.localStorage.setItem('sfg_language', lang);
     document.documentElement.setAttribute('lang', lang);
   };
 

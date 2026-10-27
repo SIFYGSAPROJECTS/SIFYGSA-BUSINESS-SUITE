@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   IconLogo,
   IconUser,
@@ -18,7 +21,7 @@ export interface UserSessionData {
 }
 
 interface LoginFormProps {
-  onLoginSuccess: (user: UserSessionData) => void;
+  onLoginSuccess?: (user: UserSessionData) => void;
 }
 
 export const PRESET_ACCOUNTS = {
@@ -44,6 +47,7 @@ export const PRESET_ACCOUNTS = {
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const { t } = useLanguage();
+  const router = useRouter();
   const [selectedProfile, setSelectedProfile] = useState<'crm' | 'rh'>('crm');
   const [username, setUsername] = useState(PRESET_ACCOUNTS.crm.email);
   const [password, setPassword] = useState(PRESET_ACCOUNTS.crm.password);
@@ -62,14 +66,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const handleUsernameChange = (value: string) => {
     setUsername(value);
     const lower = value.toLowerCase();
-    if (lower.includes('rh') || lower.includes('recurso') || lower.includes('talento') || lower.includes('mariana')) {
+    if (lower.includes('rh') || lower.includes('rrhh') || lower.includes('recurso') || lower.includes('talento') || lower.includes('mariana')) {
       setSelectedProfile('rh');
     } else if (lower.includes('crm') || lower.includes('ventas') || lower.includes('admin') || lower.includes('carlos')) {
       setSelectedProfile('crm');
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim()) {
       setNotification(t('auth.error_no_user'));
@@ -83,29 +87,81 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
     setIsLoading(true);
     setNotification(null);
 
-    const isRH =
-      selectedProfile === 'rh' ||
-      username.toLowerCase().includes('rh') ||
-      username.toLowerCase().includes('recurso');
+    const lowerUser = username.trim().toLowerCase();
+    const passwordReal =
+      password === '••••••••••••'
+        ? lowerUser.includes('rh') || lowerUser.includes('rrhh')
+          ? 'RrhhSify2026!'
+          : lowerUser.includes('gerente')
+          ? 'GerenteSify2026!'
+          : lowerUser.includes('vendedor') || lowerUser.includes('ventas')
+          ? 'VentasSify2026!'
+          : lowerUser.includes('compra') || lowerUser.includes('requisicion')
+          ? 'ComprasSify2026!'
+          : selectedProfile === 'rh'
+          ? 'RrhhSify2026!'
+          : 'AdminSify2026!'
+        : password;
 
-    setTimeout(() => {
-      setIsLoading(false);
-      if (isRH) {
-        onLoginSuccess({
-          name: PRESET_ACCOUNTS.rh.name,
-          email: username.includes('@') ? username : `${username}@sifygsa.com`,
-          role: PRESET_ACCOUNTS.rh.role,
-          portal: 'rh',
-        });
-      } else {
-        onLoginSuccess({
-          name: PRESET_ACCOUNTS.crm.name,
-          email: username.includes('@') ? username : `${username}@sifygsa.com`,
-          role: PRESET_ACCOUNTS.crm.role,
-          portal: 'crm',
-        });
+    try {
+      const respuesta = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          identificador: username.trim(),
+          password: passwordReal,
+        }),
+      });
+
+      const datos = (await respuesta.json()) as {
+        exito: boolean;
+        error?: string;
+        datos?: {
+          usuario?: {
+            nombre: string;
+            email: string;
+            rol: string;
+          };
+        };
+      };
+
+      if (!respuesta.ok || !datos.exito) {
+        setNotification(datos.error ?? 'Credenciales inválidas.');
+        setIsLoading(false);
+        return;
       }
-    }, 500);
+
+      const isRH =
+        datos.datos?.usuario?.rol === 'rrhh' ||
+        selectedProfile === 'rh' ||
+        username.toLowerCase().includes('rh') ||
+        username.toLowerCase().includes('rrhh');
+
+      const sessionData: UserSessionData = isRH
+        ? {
+            name: datos.datos?.usuario?.nombre ?? PRESET_ACCOUNTS.rh.name,
+            email: datos.datos?.usuario?.email ?? PRESET_ACCOUNTS.rh.email,
+            role: PRESET_ACCOUNTS.rh.role,
+            portal: 'rh',
+          }
+        : {
+            name: datos.datos?.usuario?.nombre ?? PRESET_ACCOUNTS.crm.name,
+            email: datos.datos?.usuario?.email ?? PRESET_ACCOUNTS.crm.email,
+            role: PRESET_ACCOUNTS.crm.role,
+            portal: 'crm',
+          };
+
+      if (onLoginSuccess) {
+        onLoginSuccess(sessionData);
+      } else {
+        router.push(isRH ? '/rrhh' : '/');
+        router.refresh();
+      }
+    } catch {
+      setNotification('Error de comunicación con el servidor.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleForgotPassword = (e: React.MouseEvent) => {
@@ -173,6 +229,40 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
               <span className="account-role">{PRESET_ACCOUNTS.rh.sublabel}</span>
             </div>
           </button>
+        </div>
+
+        {/* Roles adicionales de prueba (Fase 2: Admin, Gerente, Vendedor, Compras, RRHH) */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.65rem' }}>
+          {[
+            { label: 'Admin', email: 'crm@sifygsa.com', profile: 'crm' as const },
+            { label: 'Gerente', email: 'gerente@sifygsa.com', profile: 'crm' as const },
+            { label: 'Vendedor', email: 'vendedor@sifygsa.com', profile: 'crm' as const },
+            { label: 'Requisiciones', email: 'compras@sifygsa.com', profile: 'crm' as const },
+            { label: 'RRHH', email: 'rh@sifygsa.com', profile: 'rh' as const },
+          ].map((rolBtn) => (
+            <button
+              key={rolBtn.email}
+              type="button"
+              onClick={() => {
+                setSelectedProfile(rolBtn.profile);
+                setUsername(rolBtn.email);
+                setPassword('••••••••••••');
+                setNotification(null);
+              }}
+              style={{
+                padding: '0.28rem 0.6rem',
+                fontSize: '0.73rem',
+                fontWeight: 700,
+                borderRadius: 'var(--radius-control)',
+                border: '1px solid var(--border)',
+                backgroundColor: username === rolBtn.email ? 'var(--primary)' : 'var(--surface-alt)',
+                color: username === rolBtn.email ? 'var(--on-primary)' : 'var(--text-secondary)',
+                cursor: 'pointer',
+              }}
+            >
+              {rolBtn.label}
+            </button>
+          ))}
         </div>
       </div>
 
