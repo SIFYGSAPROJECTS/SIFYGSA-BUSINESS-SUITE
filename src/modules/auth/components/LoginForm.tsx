@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   IconLogo,
   IconUser,
@@ -56,7 +55,6 @@ export const PRESET_ACCOUNTS = {
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const { t } = useLanguage();
-  const router = useRouter();
   const [selectedProfile, setSelectedProfile] = useState<'crm' | 'rh' | 'almacen'>('crm');
   const [username, setUsername] = useState(PRESET_ACCOUNTS.crm.email);
   const [password, setPassword] = useState(PRESET_ACCOUNTS.crm.password);
@@ -130,6 +128,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
         exito: boolean;
         error?: string;
         datos?: {
+          rutaDestino?: string;
           usuario?: {
             nombre: string;
             email: string;
@@ -180,8 +179,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
       if (onLoginSuccess) {
         onLoginSuccess(sessionData);
       } else {
-        router.push(isAlmacen ? '/almacen' : isRH ? '/rrhh' : '/');
-        router.refresh();
+        const destino =
+          datos.datos?.rutaDestino ||
+          (isAlmacen ? '/almacen' : isRH ? '/rrhh' : '/');
+        window.location.href = destino;
+        return;
       }
     } catch {
       setNotification('Error de comunicación con el servidor.');

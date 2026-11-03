@@ -43,11 +43,13 @@ function cambiarADirectorioTemporal(): string {
 }
 
 /**
- * Cache en memoria de alta velocidad y fallback de resiliencia
- * en caso de caídas o restricciones severas de filesystem.
+ * Cache en memoria de alta velocidad y fallback de resiliencia.
  */
 const almacenMemoria = new Map<string, unknown>();
 
+/**
+ * Ejecuta una operación atómica serializada por clave.
+ */
 async function ejecutarConBloqueo<T>(clave: string, operacion: () => Promise<T>): Promise<T> {
   const promesaPrevia = bloqueosPorArchivo.get(clave) ?? Promise.resolve();
 
@@ -75,9 +77,10 @@ async function ejecutarConBloqueo<T>(clave: string, operacion: () => Promise<T>)
 
 /**
  * Escribe un archivo atómicamente asegurando soporte para entornos de solo lectura (Vercel).
+ * NOTA: Esta función interna NO adquiere bloqueo por sí misma para permitir ser llamada
+ * dentro de operaciones ya bloqueadas sin generar deadlocks.
  */
-async function escribirArchivoAtomico<T>(nombreArchivo: string, datos: T): Promise<void> {
-  const limpio = path.basename(nombreArchivo);
+async function escribirArchivoAtomico<T>(limpio: string, datos: T): Promise<void> {
   almacenMemoria.set(limpio, datos);
 
   async function intentarGuardar(directorio: string): Promise<void> {
@@ -109,12 +112,59 @@ async function escribirArchivoAtomico<T>(nombreArchivo: string, datos: T): Promi
         return;
       } catch (subErr) {
         console.warn(`[json-storage] Advertencia al escribir en /tmp:`, subErr);
-        // Los datos se mantienen en memoria para evitar colapsar la petición
         return;
       }
     }
 
     console.warn(`[json-storage] No se pudo persistir ${limpio} en disco (${err.message}). Datos retenidos en memoria.`);
+  }
+}
+
+/**
+ * Lee un archivo JSON desde el almacenamiento seguro (sin adquirir bloqueo).
+ */
+async function leerJsonInterno<T>(limpio: string, valorPorDefecto: T): Promise<T> {
+  if (almacenMemoria.has(limpio)) {
+    return structuredClone(almacenMemoria.get(limpio) as T);
+  }
+
+  // 1. Intentar leer del directorio de escritura (ej. /tmp en Vercel o data/ en local)
+  const rutaEscritura = path.join(/*turbopackIgnore: true*/ directorioEscrituraActual, limpio);
+  try {
+    const contenido = await fs.readFile(/*turbopackIgnore: true*/ rutaEscritura, 'utf-8');
+    const datos = JSON.parse(contenido) as T;
+    almacenMemoria.set(limpio, datos);
+    return structuredClone(datos);
+  } catch (errEscritura) {
+    const err = errEscritura as NodeJS.ErrnoException;
+
+    // 2. Si no existe en escritura y estamos en Vercel (/tmp), buscar en el directorio semilla
+    if (err.code === 'ENOENT' && directorioEscrituraActual !== DIRECTORIO_SEMILLA) {
+      const rutaSemilla = path.join(DIRECTORIO_SEMILLA, limpio);
+      try {
+        const contenidoSemilla = await fs.readFile(rutaSemilla, 'utf-8');
+        const datosSemilla = JSON.parse(contenidoSemilla) as T;
+        almacenMemoria.set(limpio, datosSemilla);
+        // Sembrar en /tmp en segundo plano
+        escribirArchivoAtomico(limpio, datosSemilla).catch(() => undefined);
+        return structuredClone(datosSemilla);
+      } catch (errSemilla) {
+        const errS = errSemilla as NodeJS.ErrnoException;
+        if (errS.code === 'ENOENT') {
+          almacenMemoria.set(limpio, valorPorDefecto);
+          return structuredClone(valorPorDefecto);
+        }
+        throw new Error(`Error al leer archivo semilla ${limpio}: ${errS.message}`);
+      }
+    }
+
+    if (err.code === 'ENOENT') {
+      almacenMemoria.set(limpio, valorPorDefecto);
+      escribirArchivoAtomico(limpio, valorPorDefecto).catch(() => undefined);
+      return structuredClone(valorPorDefecto);
+    }
+
+    throw new Error(`Error al leer ${limpio}: ${err.message}`);
   }
 }
 
@@ -125,51 +175,7 @@ async function escribirArchivoAtomico<T>(nombreArchivo: string, datos: T): Promi
  */
 export async function leerJsonSeguro<T>(nombreArchivo: string, valorPorDefecto: T): Promise<T> {
   const limpio = path.basename(nombreArchivo);
-
-  return ejecutarConBloqueo(limpio, async () => {
-    if (almacenMemoria.has(limpio)) {
-      return structuredClone(almacenMemoria.get(limpio) as T);
-    }
-
-    // 1. Intentar leer del directorio de escritura (ej. /tmp en Vercel o data/ en local)
-    const rutaEscritura = path.join(/*turbopackIgnore: true*/ directorioEscrituraActual, limpio);
-    try {
-      const contenido = await fs.readFile(/*turbopackIgnore: true*/ rutaEscritura, 'utf-8');
-      const datos = JSON.parse(contenido) as T;
-      almacenMemoria.set(limpio, datos);
-      return structuredClone(datos);
-    } catch (errEscritura) {
-      const err = errEscritura as NodeJS.ErrnoException;
-
-      // 2. Si no existe en escritura y estamos en Vercel (/tmp), buscar en el directorio semilla
-      if (err.code === 'ENOENT' && directorioEscrituraActual !== DIRECTORIO_SEMILLA) {
-        const rutaSemilla = path.join(DIRECTORIO_SEMILLA, limpio);
-        try {
-          const contenidoSemilla = await fs.readFile(rutaSemilla, 'utf-8');
-          const datosSemilla = JSON.parse(contenidoSemilla) as T;
-          almacenMemoria.set(limpio, datosSemilla);
-          // Sembrar en /tmp en segundo plano
-          escribirArchivoAtomico(limpio, datosSemilla).catch(() => undefined);
-          return structuredClone(datosSemilla);
-        } catch (errSemilla) {
-          const errS = errSemilla as NodeJS.ErrnoException;
-          if (errS.code === 'ENOENT') {
-            almacenMemoria.set(limpio, valorPorDefecto);
-            return structuredClone(valorPorDefecto);
-          }
-          throw new Error(`Error al leer archivo semilla ${limpio}: ${errS.message}`);
-        }
-      }
-
-      if (err.code === 'ENOENT') {
-        almacenMemoria.set(limpio, valorPorDefecto);
-        escribirArchivoAtomico(limpio, valorPorDefecto).catch(() => undefined);
-        return structuredClone(valorPorDefecto);
-      }
-
-      throw new Error(`Error al leer ${limpio}: ${err.message}`);
-    }
-  });
+  return ejecutarConBloqueo(limpio, () => leerJsonInterno<T>(limpio, valorPorDefecto));
 }
 
 /**
@@ -177,15 +183,12 @@ export async function leerJsonSeguro<T>(nombreArchivo: string, valorPorDefecto: 
  */
 export async function escribirJsonSeguro<T>(nombreArchivo: string, datos: T): Promise<void> {
   const limpio = path.basename(nombreArchivo);
-
-  return ejecutarConBloqueo(limpio, async () => {
-    await escribirArchivoAtomico(limpio, datos);
-  });
+  return ejecutarConBloqueo(limpio, () => escribirArchivoAtomico<T>(limpio, datos));
 }
 
 /**
  * Actualiza un archivo JSON de forma transaccional (lectura + transformación + escritura)
- * garantizando persistencia atómica y tolerancia a entornos de solo lectura.
+ * garantizando persistencia atómica, tolerancia a entornos de solo lectura y libre de interbloqueos (deadlocks).
  */
 export async function actualizarJsonSeguro<T>(
   nombreArchivo: string,
@@ -195,13 +198,7 @@ export async function actualizarJsonSeguro<T>(
   const limpio = path.basename(nombreArchivo);
 
   return ejecutarConBloqueo(limpio, async () => {
-    let actual: T;
-    if (almacenMemoria.has(limpio)) {
-      actual = structuredClone(almacenMemoria.get(limpio) as T);
-    } else {
-      actual = await leerJsonSeguro<T>(limpio, valorPorDefecto);
-    }
-
+    const actual = await leerJsonInterno<T>(limpio, valorPorDefecto);
     const actualizado = await transformador(actual);
     await escribirArchivoAtomico(limpio, actualizado);
     return actualizado;
