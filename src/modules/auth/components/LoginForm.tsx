@@ -55,9 +55,9 @@ export const PRESET_ACCOUNTS = {
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const { t } = useLanguage();
-  const [selectedProfile, setSelectedProfile] = useState<'crm' | 'rh' | 'almacen'>('crm');
-  const [username, setUsername] = useState(PRESET_ACCOUNTS.crm.email);
-  const [password, setPassword] = useState(PRESET_ACCOUNTS.crm.password);
+  const [selectedProfile, setSelectedProfile] = useState<'crm' | 'rh' | 'almacen'>('almacen');
+  const [username, setUsername] = useState(PRESET_ACCOUNTS.almacen.email);
+  const [password, setPassword] = useState(PRESET_ACCOUNTS.almacen.password);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
