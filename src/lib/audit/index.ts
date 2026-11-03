@@ -87,11 +87,15 @@ export async function registrarEventoAuditoria(
     fecha: new Date().toISOString(),
   };
 
-  await actualizarJsonSeguro<EventoAuditoria[]>(
-    ARCHIVO_AUDITORIA,
-    AUDITORIA_INICIAL,
-    (registros) => [nuevoEvento, ...registros].slice(0, MAXIMO_REGISTROS_AUDITORIA)
-  );
+  try {
+    await actualizarJsonSeguro<EventoAuditoria[]>(
+      ARCHIVO_AUDITORIA,
+      AUDITORIA_INICIAL,
+      (registros) => [nuevoEvento, ...registros].slice(0, MAXIMO_REGISTROS_AUDITORIA)
+    );
+  } catch (err) {
+    console.warn('[registrarEventoAuditoria] No se pudo persistir auditoría en almacenamiento:', err);
+  }
 
   return nuevoEvento;
 }

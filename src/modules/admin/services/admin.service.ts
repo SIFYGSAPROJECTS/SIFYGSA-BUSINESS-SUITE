@@ -47,15 +47,20 @@ export async function autenticarUsuario(
 
   if (!usuario) {
     const nuevoEstado = registrarIntentoFallido(identificador);
-    await registrarAccionUsuario({
-      usuarioId: 'desconocido',
-      usuarioNombre: identificador,
-      rol: 'vendedor',
-      modulo: 'auth',
-      tipoEvento: 'intento_fallido',
-      entidad: 'Login',
-      detalle: `Intento de acceso fallido con usuario inexistente (${identificador}).`,
-    });
+    try {
+      await registrarAccionUsuario({
+        usuarioId: 'desconocido',
+        usuarioNombre: identificador,
+        rol: 'vendedor',
+        modulo: 'auth',
+        tipoEvento: 'intento_fallido',
+        entidad: 'Login',
+        detalle: `Intento de acceso fallido con usuario inexistente (${identificador}).`,
+      });
+    } catch (err) {
+      console.warn('[autenticarUsuario] Advertencia: No se pudo registrar auditoría de intento fallido:', err);
+    }
+
     return {
       exito: false,
       bloqueado: nuevoEstado.bloqueado,
@@ -76,16 +81,21 @@ export async function autenticarUsuario(
   const passwordCorrecta = await verificarPassword(passwordPlano, usuario.passwordHash);
   if (!passwordCorrecta) {
     const nuevoEstado = registrarIntentoFallido(identificador);
-    await registrarAccionUsuario({
-      usuarioId: usuario.id,
-      usuarioNombre: usuario.nombre,
-      rol: usuario.rol,
-      modulo: 'auth',
-      tipoEvento: 'intento_fallido',
-      entidad: 'Login',
-      entidadId: usuario.id,
-      detalle: `Contraseña incorrecta para la cuenta ${usuario.usuario}.`,
-    });
+    try {
+      await registrarAccionUsuario({
+        usuarioId: usuario.id,
+        usuarioNombre: usuario.nombre,
+        rol: usuario.rol,
+        modulo: 'auth',
+        tipoEvento: 'intento_fallido',
+        entidad: 'Login',
+        entidadId: usuario.id,
+        detalle: `Contraseña incorrecta para la cuenta ${usuario.usuario}.`,
+      });
+    } catch (err) {
+      console.warn('[autenticarUsuario] Advertencia: No se pudo registrar auditoría de contraseña incorrecta:', err);
+    }
+
     return {
       exito: false,
       bloqueado: nuevoEstado.bloqueado,
@@ -98,24 +108,37 @@ export async function autenticarUsuario(
 
   limpiarIntentosFallidos(identificador);
   const ahoraIso = new Date().toISOString();
-  const actualizado = await repositorioUsuarios.actualizar(usuario.id, {
-    ultimoAcceso: ahoraIso,
-  });
+  let usuarioFinal = usuario;
 
-  await registrarAccionUsuario({
-    usuarioId: usuario.id,
-    usuarioNombre: usuario.nombre,
-    rol: usuario.rol,
-    modulo: 'auth',
-    tipoEvento: 'inicio_sesion',
-    entidad: 'Sesión JWT',
-    entidadId: usuario.id,
-    detalle: `Inicio de sesión exitoso (${usuario.rol}).`,
-  });
+  try {
+    const actualizado = await repositorioUsuarios.actualizar(usuario.id, {
+      ultimoAcceso: ahoraIso,
+    });
+    if (actualizado) {
+      usuarioFinal = actualizado;
+    }
+  } catch (err) {
+    console.warn('[autenticarUsuario] Advertencia: No se pudo actualizar ultimoAcceso:', err);
+  }
+
+  try {
+    await registrarAccionUsuario({
+      usuarioId: usuario.id,
+      usuarioNombre: usuario.nombre,
+      rol: usuario.rol,
+      modulo: 'auth',
+      tipoEvento: 'inicio_sesion',
+      entidad: 'Sesión JWT',
+      entidadId: usuario.id,
+      detalle: `Inicio de sesión exitoso (${usuario.rol}).`,
+    });
+  } catch (err) {
+    console.warn('[autenticarUsuario] Advertencia: No se pudo registrar auditoría de login:', err);
+  }
 
   return {
     exito: true,
-    usuario: sanitizarUsuario(actualizado ?? usuario),
+    usuario: sanitizarUsuario(usuarioFinal),
   };
 }
 

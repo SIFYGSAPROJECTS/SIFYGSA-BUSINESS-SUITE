@@ -5,16 +5,20 @@ import { NOMBRE_COOKIE_SESION, obtenerSesionActual } from '@/lib/auth';
 export async function POST() {
   const sesion = await obtenerSesionActual();
   if (sesion) {
-    await registrarAccionUsuario({
-      usuarioId: sesion.sub,
-      usuarioNombre: sesion.nombre,
-      rol: sesion.rol,
-      modulo: 'auth',
-      tipoEvento: 'cierre_sesion',
-      entidad: 'Sesión JWT',
-      entidadId: sesion.sub,
-      detalle: 'Cierre de sesión de usuario.',
-    });
+    try {
+      await registrarAccionUsuario({
+        usuarioId: sesion.sub,
+        usuarioNombre: sesion.nombre,
+        rol: sesion.rol,
+        modulo: 'auth',
+        tipoEvento: 'cierre_sesion',
+        entidad: 'Sesión JWT',
+        entidadId: sesion.sub,
+        detalle: 'Cierre de sesión de usuario.',
+      });
+    } catch (err) {
+      console.warn('[logout] Advertencia: No se pudo registrar auditoría de logout:', err);
+    }
   }
 
   const respuesta = NextResponse.json({
