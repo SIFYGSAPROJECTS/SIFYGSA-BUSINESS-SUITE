@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import type { RolUsuario } from '@/config/types';
 import { obtenerSubItemsPermitidosModulo } from '@/modules/registry';
-import { IconChevronDown, IconChevronRight, IconClose, IconUsers } from '../ui/Icons';
+import { IconChevronDown, IconChevronRight, IconClose, IconUsers, IconAlmacen } from '../ui/Icons';
 import { SfgLogoSymbol } from '../ui/Logo';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -35,10 +35,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [openSection2, setOpenSection2] = useState(true);
   const [openSectionRh, setOpenSectionRh] = useState(true);
   const [openSection3, setOpenSection3] = useState(true);
+  const [openSectionAlmacen, setOpenSectionAlmacen] = useState(true);
 
   const subItemsCrm = obtenerSubItemsPermitidosModulo('crm', rolUsuario);
   const subItemsRequisiciones = obtenerSubItemsPermitidosModulo('requisiciones', rolUsuario);
   const subItemsRrhh = obtenerSubItemsPermitidosModulo('rrhh', rolUsuario);
+  const subItemsAlmacen = obtenerSubItemsPermitidosModulo('almacen', rolUsuario);
   const subItemsAdmin = obtenerSubItemsPermitidosModulo('admin', rolUsuario);
 
   const subItemInicialCompras =
@@ -77,6 +79,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (activeModuleId !== 'rh' && activeModuleId !== 'rrhh') return false;
     if (!activeSubItemId || activeSubItemId === 'rh-directorio') {
       return idSubItem === 'rrhh-panel';
+    }
+    return activeSubItemId === idSubItem;
+  };
+
+  const esSubItemAlmacenActivo = (idSubItem: string): boolean => {
+    if (activeModuleId !== 'almacen') return false;
+    if (!activeSubItemId || activeSubItemId === '') {
+      return idSubItem === 'almacen-dashboard' || idSubItem === '';
     }
     return activeSubItemId === idSubItem;
   };
@@ -176,6 +186,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => onSelectModule('rh', 'rrhh-panel')}
                 >
                   <IconUsers size={18} />
+                </button>
+              )}
+
+              {/* Icono de Grupo: Almacén & SGA */}
+              {subItemsAlmacen.length > 0 && (
+                <button
+                  type="button"
+                  className={`collapsed-nav-btn almacen-group-btn ${activeModuleId === 'almacen' ? 'active-crm' : ''}`}
+                  title="Almacén & SGA"
+                  onClick={() => onSelectModule('almacen', '')}
+                >
+                  <IconAlmacen size={18} />
                 </button>
               )}
 
@@ -327,6 +349,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             type="button"
                             className={`sub-nav-link ${activo ? 'active-pill' : ''}`}
                             onClick={() => onSelectModule('rh', sub.vista)}
+                          >
+                            <span className={`bullet-indicator ${activo ? 'orange' : 'gray'}`} />
+                            <span>{language === 'en' ? sub.nombreEn : sub.nombre}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Group: ALMACÉN & SGA (solo si tiene permiso) */}
+              {subItemsAlmacen.length > 0 && (
+                <div className="accordion-entry">
+                  <button
+                    type="button"
+                    className="accordion-head-btn"
+                    onClick={() => setOpenSectionAlmacen(!openSectionAlmacen)}
+                  >
+                    <div className="head-left-content">
+                      <IconAlmacen size={16} />
+                      <span className="group-title-label">
+                        {language === 'en' ? 'Warehouse & WMS' : 'Almacén & SGA'}
+                      </span>
+                    </div>
+                    {openSectionAlmacen ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
+                  </button>
+
+                  {openSectionAlmacen && (
+                    <div className="accordion-sub-stack">
+                      {subItemsAlmacen.map((sub) => {
+                        const activo = esSubItemAlmacenActivo(sub.id);
+                        return (
+                          <button
+                            key={sub.id}
+                            type="button"
+                            className={`sub-nav-link ${activo ? 'active-pill' : ''}`}
+                            onClick={() => onSelectModule('almacen', sub.vista)}
                           >
                             <span className={`bullet-indicator ${activo ? 'orange' : 'gray'}`} />
                             <span>{language === 'en' ? sub.nombreEn : sub.nombre}</span>

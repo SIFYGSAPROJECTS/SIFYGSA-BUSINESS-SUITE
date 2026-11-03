@@ -13,5 +13,14 @@ export default async function PaginaHomeDashboard() {
     return <HomeRH />;
   }
 
+  if (
+    sesion.departamento === 'Almacén & SGA' ||
+    (sesion.modulosPermitidos.includes('almacen') &&
+      !sesion.modulosPermitidos.includes('crm') &&
+      sesion.rol !== 'administrador')
+  ) {
+    redirect('/almacen');
+  }
+
   return <GeneralDashboard />;
 }

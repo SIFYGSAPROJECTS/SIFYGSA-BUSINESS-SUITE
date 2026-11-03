@@ -187,13 +187,23 @@ export function obtenerSubItemsPermitidosModulo(
 
 export function obtenerRutaInicialParaUsuario(
   rol: RolUsuario,
-  _modulosUsuario?: IdModulo[],
+  modulosUsuario?: IdModulo[],
   _matriz: MatrizPermisos = MATRIZ_PERMISOS_POR_DEFECTO
 ): string {
-  void _modulosUsuario;
   void _matriz;
   if (rol === 'rrhh') {
     return '/rrhh';
+  }
+  if (
+    modulosUsuario &&
+    modulosUsuario.includes('almacen') &&
+    !modulosUsuario.includes('crm') &&
+    rol !== 'administrador'
+  ) {
+    return '/almacen';
+  }
+  if (rol === 'requisiciones' && modulosUsuario?.includes('almacen') && !modulosUsuario?.includes('admin')) {
+    return '/almacen';
   }
   return '/';
 }

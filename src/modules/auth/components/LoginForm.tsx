@@ -179,9 +179,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
       if (onLoginSuccess) {
         onLoginSuccess(sessionData);
       } else {
-        const destino =
-          datos.datos?.rutaDestino ||
-          (isAlmacen ? '/almacen' : isRH ? '/rrhh' : '/');
+        const destino = isAlmacen
+          ? '/almacen'
+          : isRH
+          ? '/rrhh'
+          : (datos.datos?.rutaDestino || '/');
         window.location.href = destino;
         return;
       }

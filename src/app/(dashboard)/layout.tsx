@@ -22,6 +22,7 @@ export default async function LayoutDashboard({
           email: sesion.email,
           rol: sesion.rol,
           zona: sesion.zona,
+          departamento: sesion.departamento,
           modulosPermitidos: sesion.modulosPermitidos,
         }}
       >

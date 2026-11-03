@@ -24,6 +24,7 @@ export interface UsuarioSesionLayout {
   email: string;
   rol: RolUsuario;
   zona?: ZonaComercial;
+  departamento?: string;
   modulosPermitidos: IdModulo[];
 }
 
@@ -59,7 +60,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const esPortalRh =
     userProp?.portal === 'rh' || usuario?.rol === 'rrhh' || pathname.startsWith('/rrhh');
   const esPortalAlmacen =
-    userProp?.portal === 'almacen' || pathname.startsWith('/almacen');
+    userProp?.portal === 'almacen' ||
+    usuario?.departamento === 'Almacén & SGA' ||
+    pathname.startsWith('/almacen');
 
   const portalDeterminado: 'crm' | 'rh' | 'almacen' =
     userProp?.portal ?? (esPortalRh ? 'rh' : esPortalAlmacen ? 'almacen' : 'crm');
@@ -156,7 +159,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           router.push(subItemId ? `/admin?vista=${subItemId}` : '/admin');
           break;
         case 'almacen':
-          router.push(subItemId ? `/almacen/${subItemId}` : '/almacen');
+          if (!subItemId || subItemId === '' || subItemId === 'almacen-dashboard') {
+            router.push('/almacen');
+          } else {
+            router.push(`/almacen/${subItemId}`);
+          }
           break;
         default:
           router.push('/');

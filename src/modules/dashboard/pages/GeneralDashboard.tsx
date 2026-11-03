@@ -20,6 +20,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
     if (moduleId === 'crm') router.push(subItemId ? `/crm?sub=${subItemId}` : '/crm');
     else if (moduleId === 'compras') router.push(subItemId ? `/requisiciones?sub=${subItemId}` : '/requisiciones');
     else if (moduleId === 'rh') router.push(subItemId ? `/rrhh?sub=${subItemId}` : '/rrhh');
+    else if (moduleId === 'almacen') router.push(subItemId ? `/almacen/${subItemId}` : '/almacen');
     else if (moduleId === 'settings') router.push('/ajustes');
   };
   const { t } = useLanguage();
