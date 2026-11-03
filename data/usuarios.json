@@ -13,10 +13,11 @@
       "admin",
       "crm",
       "requisiciones",
-      "rrhh"
+      "rrhh",
+      "almacen"
     ],
     "fechaCreacion": "2026-01-15T08:00:00.000Z",
-    "ultimoAcceso": "2026-10-27T17:04:44.557Z"
+    "ultimoAcceso": "2026-11-03T03:20:56.812Z"
   },
   {
     "id": "usr_gerente",
@@ -31,7 +32,8 @@
     "modulosPermitidos": [
       "crm",
       "requisiciones",
-      "rrhh"
+      "rrhh",
+      "almacen"
     ],
     "fechaCreacion": "2026-02-10T09:00:00.000Z",
     "ultimoAcceso": "2026-10-27T16:34:52.129Z"
@@ -48,7 +50,8 @@
     "estado": "activo",
     "modulosPermitidos": [
       "crm",
-      "requisiciones"
+      "requisiciones",
+      "almacen"
     ],
     "fechaCreacion": "2026-03-05T10:00:00.000Z",
     "ultimoAcceso": "2026-10-27T16:35:47.051Z"
@@ -68,7 +71,7 @@
       "requisiciones"
     ],
     "fechaCreacion": "2026-01-20T08:30:00.000Z",
-    "ultimoAcceso": "2026-10-27T09:20:00.000Z"
+    "ultimoAcceso": "2026-11-03T03:20:25.955Z"
   },
   {
     "id": "usr_requisiciones",
@@ -82,9 +85,27 @@
     "estado": "activo",
     "modulosPermitidos": [
       "requisiciones",
-      "crm"
+      "crm",
+      "almacen"
     ],
     "fechaCreacion": "2026-04-12T08:00:00.000Z",
     "ultimoAcceso": "2026-10-27T09:05:00.000Z"
+  },
+  {
+    "id": "usr_almacen",
+    "nombre": "Roberto Méndez Cruz",
+    "usuario": "almacen",
+    "email": "almacen@sifygsa.com",
+    "passwordHash": "$2b$10$vB71eSEN47wda60r.W663uWQfdVEneKQTM7EYzAwucR5JvjjwR9Je",
+    "rol": "requisiciones",
+    "zona": "Istmo",
+    "departamento": "Almacén & SGA",
+    "estado": "activo",
+    "modulosPermitidos": [
+      "almacen",
+      "requisiciones"
+    ],
+    "fechaCreacion": "2026-05-01T08:00:00.000Z",
+    "ultimoAcceso": "2026-11-03T15:38:37.650Z"
   }
 ]

@@ -34,3 +34,8 @@ build/
 # Environment variables
 .env
 .env*.local
+
+# Nested backups / standalone projects
+SIFYGSA-BUSINESS-SUITE2 almacen/
+.agents/
+*.zip

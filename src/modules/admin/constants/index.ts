@@ -5,6 +5,7 @@ export const ETIQUETAS_MODULOS: Record<IdModulo, string> = {
   crm: 'CRM & Ventas',
   requisiciones: 'Requisiciones',
   rrhh: 'Recursos Humanos',
+  almacen: 'Almacén & SGA',
 };
 
 export const ETIQUETAS_ACCIONES: Record<AccionPermiso, string> = {
@@ -29,3 +30,4 @@ export const ETIQUETAS_EVENTOS_AUDITORIA: Record<TipoEventoAuditoria, string> = 
   exportacion: 'Exportación',
   cambio_permisos: 'Cambio de permisos',
 };
+

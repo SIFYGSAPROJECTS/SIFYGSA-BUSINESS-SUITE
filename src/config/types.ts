@@ -18,7 +18,7 @@ export const NOMBRES_ROLES: Record<RolUsuario, string> = {
   requisiciones: 'Compras y Requisiciones',
 };
 
-export const IDS_MODULOS = ['admin', 'crm', 'requisiciones', 'rrhh'] as const;
+export const IDS_MODULOS = ['admin', 'crm', 'requisiciones', 'rrhh', 'almacen'] as const;
 
 export type IdModulo = (typeof IDS_MODULOS)[number];
 

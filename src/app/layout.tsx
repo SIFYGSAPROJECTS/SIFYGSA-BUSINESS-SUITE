@@ -10,6 +10,7 @@ import '@/modules/settings/settings.css';
 import '@/modules/crm/crm.css';
 import '@/modules/compras/compras.css';
 import '@/modules/rh/rh.css';
+import '@/modules/almacen/almacen.css';
 
 export const metadata: Metadata = {
   title: 'SIFYGSA Enterprise ERP Suite',

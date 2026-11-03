@@ -43,12 +43,21 @@ export const PRESET_ACCOUNTS = {
     label: 'Recursos Humanos',
     sublabel: 'Gestión de Talento Humano',
   },
+  almacen: {
+    name: 'Roberto Méndez Cruz',
+    email: 'almacen@sifygsa.com',
+    role: 'Supervisor de Almacén & SGA',
+    portal: 'almacen' as const,
+    password: '••••••••••••',
+    label: 'Almacén & SGA',
+    sublabel: 'Gestión de Almacén & Suministros',
+  },
 };
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const { t } = useLanguage();
   const router = useRouter();
-  const [selectedProfile, setSelectedProfile] = useState<'crm' | 'rh'>('crm');
+  const [selectedProfile, setSelectedProfile] = useState<'crm' | 'rh' | 'almacen'>('crm');
   const [username, setUsername] = useState(PRESET_ACCOUNTS.crm.email);
   const [password, setPassword] = useState(PRESET_ACCOUNTS.crm.password);
   const [showPassword, setShowPassword] = useState(false);
@@ -56,7 +65,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
 
-  const handleSelectProfile = (profile: 'crm' | 'rh') => {
+  const handleSelectProfile = (profile: 'crm' | 'rh' | 'almacen') => {
     setSelectedProfile(profile);
     setUsername(PRESET_ACCOUNTS[profile].email);
     setPassword(PRESET_ACCOUNTS[profile].password);
@@ -66,7 +75,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const handleUsernameChange = (value: string) => {
     setUsername(value);
     const lower = value.toLowerCase();
-    if (lower.includes('rh') || lower.includes('rrhh') || lower.includes('recurso') || lower.includes('talento') || lower.includes('mariana')) {
+    if (lower.includes('almacen') || lower.includes('inventario') || lower.includes('sga') || lower.includes('roberto')) {
+      setSelectedProfile('almacen');
+    } else if (lower.includes('rh') || lower.includes('rrhh') || lower.includes('recurso') || lower.includes('talento') || lower.includes('mariana')) {
       setSelectedProfile('rh');
     } else if (lower.includes('crm') || lower.includes('ventas') || lower.includes('admin') || lower.includes('carlos')) {
       setSelectedProfile('crm');
@@ -98,6 +109,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
           ? 'VentasSify2026!'
           : lowerUser.includes('compra') || lowerUser.includes('requisicion')
           ? 'ComprasSify2026!'
+          : lowerUser.includes('almacen') || selectedProfile === 'almacen'
+          ? 'AdminSify2026!'
           : selectedProfile === 'rh'
           ? 'RrhhSify2026!'
           : 'AdminSify2026!'
@@ -131,11 +144,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
         return;
       }
 
+      const isAlmacen =
+        selectedProfile === 'almacen' ||
+        username.toLowerCase().includes('almacen') ||
+        datos.datos?.usuario?.email === 'almacen@sifygsa.com';
+
       const isRH =
-        datos.datos?.usuario?.rol === 'rrhh' ||
+        !isAlmacen &&
+        (datos.datos?.usuario?.rol === 'rrhh' ||
         selectedProfile === 'rh' ||
         username.toLowerCase().includes('rh') ||
-        username.toLowerCase().includes('rrhh');
+        username.toLowerCase().includes('rrhh'));
 
       const sessionData: UserSessionData = isRH
         ? {
@@ -143,6 +162,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
             email: datos.datos?.usuario?.email ?? PRESET_ACCOUNTS.rh.email,
             role: PRESET_ACCOUNTS.rh.role,
             portal: 'rh',
+          }
+        : isAlmacen
+        ? {
+            name: datos.datos?.usuario?.nombre ?? PRESET_ACCOUNTS.almacen.name,
+            email: datos.datos?.usuario?.email ?? PRESET_ACCOUNTS.almacen.email,
+            role: PRESET_ACCOUNTS.almacen.role,
+            portal: undefined,
           }
         : {
             name: datos.datos?.usuario?.nombre ?? PRESET_ACCOUNTS.crm.name,
@@ -154,7 +180,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
       if (onLoginSuccess) {
         onLoginSuccess(sessionData);
       } else {
-        router.push(isRH ? '/rrhh' : '/');
+        router.push(isAlmacen ? '/almacen' : isRH ? '/rrhh' : '/');
         router.refresh();
       }
     } catch {
@@ -170,7 +196,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className={`login-form-wrapper ${selectedProfile === 'rh' ? 'login-rh-theme' : 'login-crm-theme'}`}>
+    <div className={`login-form-wrapper ${selectedProfile === 'rh' ? 'login-rh-theme' : selectedProfile === 'almacen' ? 'login-almacen-theme' : 'login-crm-theme'}`}>
       <div className="login-form-header">
         <div className="login-brand">
           <IconLogo size={42} />
@@ -229,6 +255,26 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
               <span className="account-role">{PRESET_ACCOUNTS.rh.sublabel}</span>
             </div>
           </button>
+
+          {/* Tarjeta Cuenta 3: Almacén */}
+          <button
+            type="button"
+            className={`account-card account-card-almacen ${selectedProfile === 'almacen' ? 'active-almacen' : ''}`}
+            onClick={() => handleSelectProfile('almacen')}
+          >
+            <div className="account-card-header">
+              <div className="account-card-icon-box almacen-icon">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
+                  <path d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <span className="account-badge almacen-badge">Almacén &amp; SGA</span>
+            </div>
+            <div className="account-card-body">
+              <strong className="account-email">{PRESET_ACCOUNTS.almacen.email}</strong>
+              <span className="account-role">{PRESET_ACCOUNTS.almacen.sublabel}</span>
+            </div>
+          </button>
         </div>
 
         {/* Roles adicionales de prueba (Fase 2: Admin, Gerente, Vendedor, Compras, RRHH) */}
@@ -239,6 +285,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
             { label: 'Vendedor', email: 'vendedor@sifygsa.com', profile: 'crm' as const },
             { label: 'Requisiciones', email: 'compras@sifygsa.com', profile: 'crm' as const },
             { label: 'RRHH', email: 'rh@sifygsa.com', profile: 'rh' as const },
+            { label: 'Almacén', email: 'almacen@sifygsa.com', profile: 'almacen' as const },
           ].map((rolBtn) => (
             <button
               key={rolBtn.email}
@@ -288,6 +335,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
             />
             {selectedProfile === 'rh' ? (
               <span className="input-role-tag rh-tag">Modo RH</span>
+            ) : selectedProfile === 'almacen' ? (
+              <span className="input-role-tag almacen-tag">Modo Almacén</span>
             ) : (
               <span className="input-role-tag crm-tag">Modo CRM</span>
             )}
@@ -349,13 +398,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
         {/* Botón Iniciar Sesión dinámico con el color del perfil */}
         <button
           type="submit"
-          className={`btn-submit ${selectedProfile === 'rh' ? 'btn-submit-rh' : 'btn-submit-crm'}`}
+          className={`btn-submit ${
+            selectedProfile === 'rh'
+              ? 'btn-submit-rh'
+              : selectedProfile === 'almacen'
+              ? 'btn-submit-almacen'
+              : 'btn-submit-crm'
+          }`}
           disabled={isLoading}
         >
           {isLoading ? (
             <span className="btn-loading-spinner" />
           ) : selectedProfile === 'rh' ? (
             t('auth.login_as_rh')
+          ) : selectedProfile === 'almacen' ? (
+            'Entrar a Almacén & SGA'
           ) : (
             t('auth.login_as_crm')
           )}

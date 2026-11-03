@@ -16,30 +16,35 @@ export const MATRIZ_PERMISOS_POR_DEFECTO: MatrizPermisos = {
     crm: ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
     requisiciones: ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
     rrhh: ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
+    almacen: ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
   },
   gerente: {
     admin: [],
     crm: ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
     requisiciones: ['ver', 'ver_propias', 'crear', 'editar', 'aprobar', 'exportar'],
     rrhh: ['ver'],
+    almacen: ['ver', 'ver_propias', 'crear', 'editar', 'aprobar', 'exportar'],
   },
   vendedor: {
     admin: [],
     crm: ['ver', 'ver_propias', 'crear', 'editar', 'exportar'],
     requisiciones: ['ver_propias', 'crear'],
     rrhh: [],
+    almacen: ['ver'],
   },
   rrhh: {
     admin: [],
     crm: [],
     requisiciones: ['ver_propias', 'crear'],
     rrhh: ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
+    almacen: [],
   },
   requisiciones: {
     admin: [],
     crm: ['ver'],
     requisiciones: ['ver', 'ver_propias', 'crear', 'editar', 'aprobar', 'exportar'],
     rrhh: [],
+    almacen: ['ver', 'ver_propias', 'crear', 'editar', 'aprobar', 'exportar'],
   },
 };
 

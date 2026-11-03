@@ -7,6 +7,7 @@ import { useMonitoreoInactividad } from '@/lib/auth/use-inactividad';
 import { Header } from './Header';
 import { Sidebar } from './sidebar';
 import { SidebarRH } from './SidebarRH';
+import { SidebarAlmacen } from './SidebarAlmacen';
 import { Footer } from './Footer';
 import './MainLayout.css';
 
@@ -14,7 +15,7 @@ export interface UserData {
   name: string;
   email: string;
   role: string;
-  portal?: 'crm' | 'rh';
+  portal?: 'crm' | 'rh' | 'almacen';
 }
 
 export interface UsuarioSesionLayout {
@@ -57,12 +58,21 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   const esPortalRh =
     userProp?.portal === 'rh' || usuario?.rol === 'rrhh' || pathname.startsWith('/rrhh');
+  const esPortalAlmacen =
+    userProp?.portal === 'almacen' || pathname.startsWith('/almacen');
+
+  const portalDeterminado: 'crm' | 'rh' | 'almacen' =
+    userProp?.portal ?? (esPortalRh ? 'rh' : esPortalAlmacen ? 'almacen' : 'crm');
 
   const userData: UserData = userProp ?? {
-    name: usuario?.nombre ?? 'Carlos Mendoza',
-    email: usuario?.email ?? 'crm@sifygsa.com',
-    role: usuario ? NOMBRES_ROLES[usuario.rol] : 'Director Comercial & CRM',
-    portal: esPortalRh ? 'rh' : 'crm',
+    name: usuario?.nombre ?? (esPortalAlmacen ? 'Supervisor Almacén' : 'Carlos Mendoza'),
+    email: usuario?.email ?? (esPortalAlmacen ? 'almacen@sifygsa.com' : 'crm@sifygsa.com'),
+    role: usuario
+      ? NOMBRES_ROLES[usuario.rol]
+      : esPortalAlmacen
+      ? 'Supervisor de Almacén & SGA'
+      : 'Director Comercial & CRM',
+    portal: portalDeterminado,
   };
 
   const activeModuleId =
@@ -77,6 +87,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       ? 'rh'
       : pathname.startsWith('/admin')
       ? 'admin'
+      : pathname.startsWith('/almacen')
+      ? 'almacen'
       : esPortalRh
       ? 'rh'
       : 'dashboard');
@@ -91,6 +103,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       ? 'compras-requisicion'
       : activeModuleId === 'rh'
       ? 'rh-directorio'
+      : activeModuleId === 'almacen'
+      ? (pathname === '/almacen' ? '' : pathname.replace('/almacen/', ''))
       : undefined);
 
   const isSidebarOpen =
@@ -141,6 +155,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         case 'admin':
           router.push(subItemId ? `/admin?vista=${subItemId}` : '/admin');
           break;
+        case 'almacen':
+          router.push(subItemId ? `/almacen/${subItemId}` : '/almacen');
+          break;
         default:
           router.push('/');
           break;
@@ -154,7 +171,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   return (
     <div
-      className={`app-layout ${userData.portal === 'rh' ? 'portal-rh' : 'portal-crm'} ${
+      className={`app-layout ${userData.portal === 'rh' ? 'portal-rh' : userData.portal === 'almacen' ? 'portal-almacen' : 'portal-crm'} ${
         isCollapsed ? 'sidebar-collapsed' : ''
       } ${isMobileOpen ? 'mobile-open' : ''}`}
     >
@@ -194,6 +211,20 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               void handleLogout();
             }}
             rolUsuario={usuario?.rol ?? 'rrhh'}
+          />
+        ) : userData.portal === 'almacen' ? (
+          <SidebarAlmacen
+            isCollapsed={isCollapsed}
+            isMobileOpen={isMobileOpen}
+            onToggleCollapse={handleToggleSidebar}
+            onCloseMobile={() => setIsMobileOpen(false)}
+            activeModuleId={activeModuleId}
+            activeSubItemId={activeSubItemId}
+            onSelectModule={handleModuleSelection}
+            onLogout={() => {
+              void handleLogout();
+            }}
+            rolUsuario={usuario?.rol ?? 'requisiciones'}
           />
         ) : (
           <Sidebar

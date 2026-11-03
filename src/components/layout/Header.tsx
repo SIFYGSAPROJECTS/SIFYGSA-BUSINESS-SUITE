@@ -16,7 +16,7 @@ interface HeaderProps {
     name: string;
     email: string;
     role: string;
-    portal?: 'crm' | 'rh';
+    portal?: 'crm' | 'rh' | 'almacen';
   };
 }
 
@@ -93,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
                 SIFYGSA
               </span>
               <span
-                className={`brand-tag-enterprise ${user?.portal === 'rh' ? 'brand-tag-rh' : ''}`}
+                className={`brand-tag-enterprise ${user?.portal === 'rh' ? 'brand-tag-rh' : user?.portal === 'almacen' ? 'brand-tag-almacen' : ''}`}
                 style={{
                   fontSize: '0.68rem',
                   fontWeight: 800,
@@ -106,11 +106,11 @@ export const Header: React.FC<HeaderProps> = ({
                   boxShadow: 'var(--shadow-sm)',
                 }}
               >
-                {user?.portal === 'rh' ? 'RH SUITE' : 'SUITE'}
+                {user?.portal === 'rh' ? 'RH SUITE' : user?.portal === 'almacen' ? 'ALMACÉN SGA' : 'SUITE'}
               </span>
             </div>
             <span
-              className={`brand-subtitle-text ${user?.portal === 'rh' ? 'rh-subtitle' : ''}`}
+              className={`brand-subtitle-text ${user?.portal === 'rh' ? 'rh-subtitle' : user?.portal === 'almacen' ? 'almacen-subtitle' : ''}`}
               style={{
                 fontSize: '0.62rem',
                 fontWeight: 700,
@@ -120,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({
                 transition: 'color 0.2s ease',
               }}
             >
-              {user?.portal === 'rh' ? 'Talento Humano' : 'Business Platform'}
+              {user?.portal === 'rh' ? 'Talento Humano' : user?.portal === 'almacen' ? 'Gestión de Almacén' : 'Business Platform'}
             </span>
           </div>
         </div>

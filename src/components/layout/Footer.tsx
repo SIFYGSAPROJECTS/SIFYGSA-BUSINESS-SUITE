@@ -2,9 +2,10 @@
 
 import React from 'react';
 import { SfgLogoSymbol } from '../ui/Logo';
+import { IconAlmacen } from '../ui/Icons';
 
 interface FooterProps {
-  portal?: 'crm' | 'rh';
+  portal?: 'crm' | 'rh' | 'almacen';
 }
 
 export const Footer: React.FC<FooterProps> = ({ portal = 'crm' }) => {
@@ -13,7 +14,7 @@ export const Footer: React.FC<FooterProps> = ({ portal = 'crm' }) => {
   };
 
   return (
-    <footer className={`official-sifygsa-footer ${portal === 'rh' ? 'footer-rh' : ''}`}>
+    <footer className={`official-sifygsa-footer ${portal === 'rh' ? 'footer-rh' : portal === 'almacen' ? 'footer-almacen' : ''}`}>
       {/* Bottom Bar */}
       <div className="footer-bottom-bar">
         <p className="copyright-notice">© {new Date().getFullYear()} SIFYGSA. Todos los derechos reservados.</p>
@@ -23,6 +24,11 @@ export const Footer: React.FC<FooterProps> = ({ portal = 'crm' }) => {
             <p className="f-g-badge rh-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary)' }}>
               <SfgLogoSymbol size={18} />
               <span>SIFYGSA • Capital Humano &amp; Talento</span>
+            </p>
+          ) : portal === 'almacen' ? (
+            <p className="f-g-badge almacen-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary)' }}>
+              <IconAlmacen size={18} />
+              <span>SIFYGSA • Sistema de Gestión de Almacén (SGA)</span>
             </p>
           ) : (
             <p className="f-g-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>

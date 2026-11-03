@@ -3,30 +3,35 @@
     "admin": ["ver", "ver_propias", "crear", "editar", "eliminar", "aprobar", "exportar"],
     "crm": ["ver", "ver_propias", "crear", "editar", "eliminar", "aprobar", "exportar"],
     "requisiciones": ["ver", "ver_propias", "crear", "editar", "eliminar", "aprobar", "exportar"],
-    "rrhh": ["ver", "ver_propias", "crear", "editar", "eliminar", "aprobar", "exportar"]
+    "rrhh": ["ver", "ver_propias", "crear", "editar", "eliminar", "aprobar", "exportar"],
+    "almacen": ["ver", "ver_propias", "crear", "editar", "eliminar", "aprobar", "exportar"]
   },
   "gerente": {
     "admin": [],
     "crm": ["ver", "ver_propias", "crear", "editar", "eliminar", "aprobar", "exportar"],
     "requisiciones": ["ver", "ver_propias", "crear", "editar", "aprobar", "exportar"],
-    "rrhh": ["ver"]
+    "rrhh": ["ver"],
+    "almacen": ["ver", "ver_propias", "crear", "editar", "aprobar", "exportar"]
   },
   "vendedor": {
     "admin": [],
     "crm": ["ver", "ver_propias", "crear", "editar", "exportar"],
     "requisiciones": ["ver_propias", "crear"],
-    "rrhh": []
+    "rrhh": [],
+    "almacen": ["ver"]
   },
   "rrhh": {
     "admin": [],
     "crm": [],
     "requisiciones": ["ver_propias", "crear"],
-    "rrhh": ["ver", "ver_propias", "crear", "editar", "eliminar", "aprobar", "exportar"]
+    "rrhh": ["ver", "ver_propias", "crear", "editar", "eliminar", "aprobar", "exportar"],
+    "almacen": []
   },
   "requisiciones": {
     "admin": [],
     "crm": ["ver"],
     "requisiciones": ["ver", "ver_propias", "crear", "editar", "aprobar", "exportar"],
-    "rrhh": []
+    "rrhh": [],
+    "almacen": ["ver", "ver_propias", "crear", "editar", "aprobar", "exportar"]
   }
 }

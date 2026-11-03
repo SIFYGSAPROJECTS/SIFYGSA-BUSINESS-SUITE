@@ -1,7 +1,7 @@
 import type { AccionPermiso, IdModulo, MatrizPermisos, RolUsuario } from '@/config/types';
 import { MATRIZ_PERMISOS_POR_DEFECTO, tienePermiso } from '@/lib/permissions';
 
-export type IconoModulo = 'shield' | 'crm' | 'requisiciones' | 'rrhh' | 'dashboard';
+export type IconoModulo = 'shield' | 'crm' | 'requisiciones' | 'rrhh' | 'dashboard' | 'almacen';
 
 export interface SubItemModulo {
   id: string;
@@ -130,6 +130,24 @@ export const REGISTRO_MODULOS: readonly DefinicionModulo[] = [
       { id: 'rrhh-departamentos', nombre: 'Departamentos', nombreEn: 'Departments', vista: 'rrhh-departamentos', accionRequerida: 'ver' },
       { id: 'rrhh-cumpleanos', nombre: 'Cumpleaños', nombreEn: 'Birthdays', vista: 'rrhh-cumpleanos', accionRequerida: 'ver' },
       { id: 'rrhh-festivos', nombre: 'Días Festivos', nombreEn: 'Holidays', vista: 'rrhh-festivos', accionRequerida: 'ver' },
+    ],
+  },
+  {
+    id: 'almacen',
+    nombre: 'Almacén & SGA',
+    nombreEn: 'Warehouse & SGA',
+    descripcion: 'Gestión integral de almacén: entradas IR03, salidas a obra, inventario físico y catálogo maestro.',
+    ruta: '/almacen',
+    icono: 'almacen',
+    accionMinima: 'ver',
+    colorAcento: 'amber',
+    subItems: [
+      { id: 'almacen-dashboard', nombre: 'Dashboard General', nombreEn: 'Warehouse Dashboard', vista: '', accionRequerida: 'ver' },
+      { id: 'almacen-alta-articulo', nombre: 'Alta de Artículos', nombreEn: 'New Item', vista: 'alta-articulo', accionRequerida: 'crear' },
+      { id: 'almacen-recepcion-ir03', nombre: 'Entradas (IR03)', nombreEn: 'Inbound IR03', vista: 'recepcion-ir03', accionRequerida: 'crear' },
+      { id: 'almacen-salida', nombre: 'Salidas de Almacén (SA)', nombreEn: 'Outbound SA', vista: 'salida', accionRequerida: 'crear' },
+      { id: 'almacen-alta-servicio', nombre: 'Alta de Servicios', nombreEn: 'New Service', vista: 'alta-servicio', accionRequerida: 'crear' },
+      { id: 'almacen-asignaciones', nombre: 'Asignaciones a Proyectos', nombreEn: 'Project Assignments', vista: 'asignaciones', accionRequerida: 'ver' },
     ],
   },
 ] as const;

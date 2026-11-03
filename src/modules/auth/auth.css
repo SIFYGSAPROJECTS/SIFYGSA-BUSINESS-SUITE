@@ -295,8 +295,8 @@
 
 .account-selector-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--space-2);
 }
 
 .account-card {
@@ -320,10 +320,35 @@
 }
 
 .account-card.active-crm,
-.account-card.active-rh {
+.account-card.active-rh,
+.account-card.active-almacen {
   border-color: var(--primary);
   background-color: var(--nav-active-bg);
   box-shadow: var(--shadow-sm);
+}
+
+.account-card-icon-box.almacen-icon {
+  background-color: rgba(217, 119, 6, 0.15);
+  color: #d97706;
+}
+
+.account-badge.almacen-badge {
+  background-color: rgba(217, 119, 6, 0.15);
+  color: #d97706;
+}
+
+.input-role-tag.almacen-tag {
+  background-color: rgba(217, 119, 6, 0.1);
+  color: #b45309;
+  border-color: rgba(217, 119, 6, 0.3);
+}
+
+.btn-submit.btn-submit-almacen {
+  background: #d97706;
+}
+
+.btn-submit.btn-submit-almacen:hover {
+  background: #b45309;
 }
 
 .account-card-header {
