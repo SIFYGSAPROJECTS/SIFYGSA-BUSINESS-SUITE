@@ -8,6 +8,18 @@
     "entidad": "Sesión JWT",
     "entidadId": "usr_almacen",
     "detalle": "Inicio de sesión exitoso (requisiciones).",
+    "id": "aud_1793726504183_vbutc",
+    "fecha": "2026-11-03T17:21:44.183Z"
+  },
+  {
+    "usuarioId": "usr_almacen",
+    "usuarioNombre": "Roberto Méndez Cruz",
+    "rol": "requisiciones",
+    "modulo": "auth",
+    "tipoEvento": "inicio_sesion",
+    "entidad": "Sesión JWT",
+    "entidadId": "usr_almacen",
+    "detalle": "Inicio de sesión exitoso (requisiciones).",
     "id": "aud_1793720317655_knktn",
     "fecha": "2026-11-03T15:38:37.655Z"
   },
