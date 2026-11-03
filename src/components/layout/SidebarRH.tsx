@@ -7,10 +7,7 @@ import {
   IconChevronDown,
   IconChevronRight,
   IconClose,
-  IconSettings,
   IconUsers,
-  IconShieldCheck,
-  IconBriefcase,
 } from '../ui/Icons';
 import { SfgLogoSymbol } from '../ui/Logo';
 import { useLanguage } from '../../context/LanguageContext';
@@ -37,12 +34,19 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
   rolUsuario = 'rrhh',
 }) => {
   const { language, t } = useLanguage();
-  const [openSection1, setOpenSection1] = useState(true);
-  const [openSection2, setOpenSection2] = useState(true);
-  const [openSection3, setOpenSection3] = useState(false);
+  const [openSectionRh, setOpenSectionRh] = useState(true);
   const [openSectionReq, setOpenSectionReq] = useState(true);
 
+  const subItemsRrhh = obtenerSubItemsPermitidosModulo('rrhh', rolUsuario);
   const subItemsRequisiciones = obtenerSubItemsPermitidosModulo('requisiciones', rolUsuario);
+
+  const esSubItemRrhhActivo = (idSubItem: string): boolean => {
+    if (activeModuleId !== 'rh' && activeModuleId !== 'rrhh') return false;
+    if (!activeSubItemId || activeSubItemId === 'rh-directorio') {
+      return idSubItem === 'rrhh-panel';
+    }
+    return activeSubItemId === idSubItem;
+  };
 
   return (
     <aside
@@ -97,8 +101,8 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
                 className={`tool-icon-btn ${
                   activeModuleId === 'rh' ? 'active-rh' : ''
                 }`}
-                title={t('rh.blank_title')}
-                onClick={() => onSelectModule('rh', 'rh-directorio')}
+                title="Menú Principal RH"
+                onClick={() => onSelectModule('rh', 'rrhh-panel')}
               >
                 <svg
                   className="w-4 h-4"
@@ -139,52 +143,19 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
 
             {/* Iconos de Grupos de Navegación RH */}
             <div className="collapsed-nav-icons">
-              {/* Grupo 1: Talento Humano */}
+              {/* Grupo 1: Recursos Humanos */}
               <button
                 type="button"
                 className={`collapsed-nav-btn rh-group-btn ${
-                  activeModuleId === 'rh' &&
-                  (!activeSubItemId || activeSubItemId.startsWith('rh-dir') || activeSubItemId.startsWith('rh-exp') || activeSubItemId.startsWith('rh-org'))
-                    ? 'active-rh'
-                    : ''
+                  activeModuleId === 'rh' ? 'active-rh' : ''
                 }`}
-                title={t('nav.rh_group_talent')}
-                onClick={() => onSelectModule('rh', 'rh-directorio')}
+                title="Recursos Humanos"
+                onClick={() => onSelectModule('rh', 'rrhh-panel')}
               >
                 <IconUsers size={18} />
               </button>
 
-              {/* Grupo 2: Asistencia & Tiempos */}
-              <button
-                type="button"
-                className={`collapsed-nav-btn rh-ops-btn ${
-                  activeModuleId === 'rh' &&
-                  (activeSubItemId === 'rh-asistencia' || activeSubItemId === 'rh-incidencias' || activeSubItemId === 'rh-vacaciones')
-                    ? 'active-rh'
-                    : ''
-                }`}
-                title={t('nav.rh_group_attendance')}
-                onClick={() => onSelectModule('rh', 'rh-asistencia')}
-              >
-                <IconShieldCheck size={18} />
-              </button>
-
-              {/* Grupo 3: Administración & Políticas */}
-              <button
-                type="button"
-                className={`collapsed-nav-btn rh-admin-btn ${
-                  activeModuleId === 'rh' &&
-                  (activeSubItemId === 'rh-contratos' || activeSubItemId === 'rh-ajustes')
-                    ? 'active-rh'
-                    : ''
-                }`}
-                title={t('nav.rh_group_admin')}
-                onClick={() => onSelectModule('rh', 'rh-contratos')}
-              >
-                <IconBriefcase size={18} />
-              </button>
-
-              {/* Grupo 4: Requisiciones */}
+              {/* Grupo 2: Requisiciones */}
               <button
                 type="button"
                 className={`collapsed-nav-btn ops-group-btn ${
@@ -201,7 +172,7 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
           </div>
         ) : (
           /* ====================================================================
-             MODO EXPANDIDO (Vista Completa con Acordeones Exclusivos de RH)
+             MODO EXPANDIDO (Submódulos de Recursos Humanos + Requisiciones)
              ==================================================================== */
           <>
             {/* Top Quick Tools Bar RH */}
@@ -210,8 +181,8 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
                 <button
                   type="button"
                   className={`tool-icon-btn ${activeModuleId === 'rh' ? 'active-rh' : ''}`}
-                  title={t('rh.blank_title')}
-                  onClick={() => onSelectModule('rh', 'rh-directorio')}
+                  title="Menú Principal RH"
+                  onClick={() => onSelectModule('rh', 'rrhh-panel')}
                 >
                   <svg
                     className="w-4 h-4"
@@ -262,220 +233,45 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
               </span>
             </div>
 
-            {/* Navigation Links Group (TALENTO HUMANO + ASISTENCIA & TIEMPOS + ADMINISTRACIÓN + REQUISICIONES) */}
+            {/* Navigation Links Group (RECURSOS HUMANOS + REQUISICIONES) */}
             <nav className="sidebar-accordion-nav">
-              {/* Group 1: TALENTO HUMANO */}
+              {/* Group 1: RECURSOS HUMANOS (8 submódulos) */}
               <div className="accordion-entry">
                 <button
                   type="button"
                   className="accordion-head-btn"
-                  onClick={() => setOpenSection1(!openSection1)}
+                  onClick={() => setOpenSectionRh(!openSectionRh)}
                 >
                   <div className="head-left-content">
                     <IconUsers size={16} />
-                    <span className="group-title-label">{t('nav.rh_group_talent')}</span>
+                    <span className="group-title-label">
+                      {language === 'en' ? 'HUMAN RESOURCES' : 'RECURSOS HUMANOS'}
+                    </span>
                   </div>
-                  {openSection1 ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
+                  {openSectionRh ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
                 </button>
 
-                {openSection1 && (
+                {openSectionRh && (
                   <div className="accordion-sub-stack">
-                    <button
-                      type="button"
-                      className={`sub-nav-link ${
-                        activeModuleId === 'rh' &&
-                        (activeSubItemId === 'rh-directorio' || !activeSubItemId || activeSubItemId === 'rh-blank')
-                          ? 'active-pill active-rh-pill'
-                          : ''
-                      }`}
-                      onClick={() => onSelectModule('rh', 'rh-directorio')}
-                    >
-                      <span
-                        className={`bullet-indicator ${
-                          activeModuleId === 'rh' &&
-                          (activeSubItemId === 'rh-directorio' || !activeSubItemId || activeSubItemId === 'rh-blank')
-                            ? 'orange'
-                            : 'gray'
-                        }`}
-                      />
-                      <span>{t('nav.rh_directorio')}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className={`sub-nav-link ${
-                        activeModuleId === 'rh' && activeSubItemId === 'rh-expedientes'
-                          ? 'active-pill active-rh-pill'
-                          : ''
-                      }`}
-                      onClick={() => onSelectModule('rh', 'rh-expedientes')}
-                    >
-                      <span
-                        className={`bullet-indicator ${
-                          activeModuleId === 'rh' && activeSubItemId === 'rh-expedientes'
-                            ? 'orange'
-                            : 'gray'
-                        }`}
-                      />
-                      <span>{t('nav.rh_expedientes')}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className={`sub-nav-link ${
-                        activeModuleId === 'rh' && activeSubItemId === 'rh-organigrama'
-                          ? 'active-pill active-rh-pill'
-                          : ''
-                      }`}
-                      onClick={() => onSelectModule('rh', 'rh-organigrama')}
-                    >
-                      <span
-                        className={`bullet-indicator ${
-                          activeModuleId === 'rh' && activeSubItemId === 'rh-organigrama'
-                            ? 'orange'
-                            : 'gray'
-                        }`}
-                      />
-                      <span>{t('nav.rh_organigrama')}</span>
-                    </button>
+                    {subItemsRrhh.map((sub) => {
+                      const activo = esSubItemRrhhActivo(sub.id);
+                      return (
+                        <button
+                          key={sub.id}
+                          type="button"
+                          className={`sub-nav-link ${activo ? 'active-pill active-rh-pill' : ''}`}
+                          onClick={() => onSelectModule('rh', sub.vista)}
+                        >
+                          <span className={`bullet-indicator ${activo ? 'orange' : 'gray'}`} />
+                          <span>{language === 'en' ? sub.nombreEn : sub.nombre}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
 
-              {/* Group 2: ASISTENCIA & TIEMPOS */}
-              <div className="accordion-entry">
-                <button
-                  type="button"
-                  className="accordion-head-btn"
-                  onClick={() => setOpenSection2(!openSection2)}
-                >
-                  <div className="head-left-content">
-                    <IconShieldCheck size={16} />
-                    <span className="group-title-label">{t('nav.rh_group_attendance')}</span>
-                  </div>
-                  {openSection2 ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
-                </button>
-
-                {openSection2 && (
-                  <div className="accordion-sub-stack">
-                    <button
-                      type="button"
-                      className={`sub-nav-link ${
-                        activeModuleId === 'rh' && activeSubItemId === 'rh-asistencia'
-                          ? 'active-pill active-rh-pill'
-                          : ''
-                      }`}
-                      onClick={() => onSelectModule('rh', 'rh-asistencia')}
-                    >
-                      <span
-                        className={`bullet-indicator ${
-                          activeModuleId === 'rh' && activeSubItemId === 'rh-asistencia'
-                            ? 'orange'
-                            : 'gray'
-                        }`}
-                      />
-                      <span>{t('nav.rh_asistencia')}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className={`sub-nav-link ${
-                        activeModuleId === 'rh' && activeSubItemId === 'rh-incidencias'
-                          ? 'active-pill active-rh-pill'
-                          : ''
-                      }`}
-                      onClick={() => onSelectModule('rh', 'rh-incidencias')}
-                    >
-                      <span
-                        className={`bullet-indicator ${
-                          activeModuleId === 'rh' && activeSubItemId === 'rh-incidencias'
-                            ? 'orange'
-                            : 'gray'
-                        }`}
-                      />
-                      <span>{t('nav.rh_incidencias')}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className={`sub-nav-link ${
-                        activeModuleId === 'rh' && activeSubItemId === 'rh-vacaciones'
-                          ? 'active-pill active-rh-pill'
-                          : ''
-                      }`}
-                      onClick={() => onSelectModule('rh', 'rh-vacaciones')}
-                    >
-                      <span
-                        className={`bullet-indicator ${
-                          activeModuleId === 'rh' && activeSubItemId === 'rh-vacaciones'
-                            ? 'orange'
-                            : 'gray'
-                        }`}
-                      />
-                      <span>{t('nav.rh_vacaciones')}</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Group 3: ADMINISTRACIÓN RH */}
-              <div className="accordion-entry">
-                <button
-                  type="button"
-                  className="accordion-head-btn"
-                  onClick={() => setOpenSection3(!openSection3)}
-                >
-                  <div className="head-left-content">
-                    <IconSettings size={16} />
-                    <span className="group-title-label">{t('nav.rh_group_admin')}</span>
-                  </div>
-                  {openSection3 ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
-                </button>
-
-                {openSection3 && (
-                  <div className="accordion-sub-stack">
-                    <button
-                      type="button"
-                      className={`sub-nav-link ${
-                        activeModuleId === 'rh' && activeSubItemId === 'rh-contratos'
-                          ? 'active-pill active-rh-pill'
-                          : ''
-                      }`}
-                      onClick={() => onSelectModule('rh', 'rh-contratos')}
-                    >
-                      <span
-                        className={`bullet-indicator ${
-                          activeModuleId === 'rh' && activeSubItemId === 'rh-contratos'
-                            ? 'orange'
-                            : 'gray'
-                        }`}
-                      />
-                      <span>{t('nav.rh_contratos')}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className={`sub-nav-link ${
-                        activeModuleId === 'rh' && activeSubItemId === 'rh-ajustes'
-                          ? 'active-pill active-rh-pill'
-                          : ''
-                      }`}
-                      onClick={() => onSelectModule('rh', 'rh-ajustes')}
-                    >
-                      <span
-                        className={`bullet-indicator ${
-                          activeModuleId === 'rh' && activeSubItemId === 'rh-ajustes'
-                            ? 'orange'
-                            : 'gray'
-                        }`}
-                      />
-                      <span>{t('nav.rh_ajustes')}</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Group 4: REQUISICIONES (Abierto para personal de RRHH) */}
+              {/* Group 2: REQUISICIONES (Abierto para personal de RRHH) */}
               <div className="accordion-entry">
                 <button
                   type="button"

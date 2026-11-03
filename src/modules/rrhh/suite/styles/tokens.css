@@ -1,0 +1,180 @@
+/* ==========================================================================
+   SIFYGSA DESIGN SYSTEM TOKENS
+   Fuente de verdad: documentacion_colores_ui_ux.md (Versión 1.1)
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* --- 1. Paleta de Marca (Primary Blue) --- */
+  --brand-50: #EFF6FF;
+  --brand-100: #DBEAFE;
+  --brand-200: #BFDBFE;
+  --brand-300: #93C5FD;
+  --brand-400: #60A5FA;
+  --brand-500: #3B82F6;
+  --brand-600: #2563EB;
+  --brand-700: #1D4ED8; /* Color de marca oficial */
+  --brand-800: #1E40AF;
+  --brand-900: #1E3A8A;
+
+  /* --- 2. Acento Industrial SIFYGSA (Fire & Gas Flame) --- */
+  --flame-orange: #EA580C;
+  --flame-amber: #D97706;
+  --flame-red: #DC2626;
+  --flame-gradient: linear-gradient(135deg, #D97706 0%, #F97316 50%, #DC2626 100%);
+
+  /* --- 3. Escala Neutral Completa --- */
+  --neutral-50: #F9FAFB;
+  --neutral-100: #F3F4F6;
+  --neutral-200: #E5E7EB;
+  --neutral-300: #D1D5DB;
+  --neutral-400: #9CA3AF;
+  --neutral-500: #6B7280;
+  --neutral-600: #4B5563;
+  --neutral-700: #374151;
+  --neutral-800: #1F2937;
+  --neutral-900: #111827;
+  --neutral-950: #0B1120;
+
+  /* --- 4. Tokens Semánticos Dinámicos (Modo Claro) --- */
+  --app-bg: #F3F4F6;
+  --surface: #FFFFFF;
+  --surface-alt: #F9FAFB;
+  --surface-hover: #F3F4F6;
+  --card: #FFFFFF;
+  --card-hover: #F8FAFC;
+  --border: #D1D5DB;
+  --border-subtle: #E5E7EB;
+  --divider: #E5E7EB;
+
+  --text-primary: #111827;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+  --text-disabled: #9CA3AF;
+  --text-inverted: #FFFFFF;
+
+  --nav-text: #475569;
+  --nav-hover-bg: #F1F5F9;
+  --nav-active-bg: #DBEAFE;
+  --nav-active-text: #1D4ED8;
+
+  --primary: #1D4ED8;
+  --primary-hover: #1E40AF;
+  --primary-pressed: #1E3A8A;
+  --focus: #1D4ED8;
+
+  /* Estados Semánticos (WCAG 2.2 AA) */
+  --success: #16A34A;
+  --success-bg: #DCFCE7;
+  --success-text: #166534;
+  --success-border: #BBF7D0;
+
+  --warning: #D97706;
+  --warning-bg: #FEF3C7;
+  --warning-text: #92400E;
+  --warning-border: #FDE68A;
+
+  --danger: #DC2626;
+  --danger-bg: #FEE2E2;
+  --danger-text: #991B1B;
+  --danger-border: #FECACA;
+
+  --info: #00B7EB;
+  --info-bg: #CFFAFE;
+  --info-text: #155E75;
+  --info-border: #A5F3FC;
+
+  /* --- 5. Espaciado --- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  /* --- 6. Bordes y Radios --- */
+  --radius-control: 6px;
+  --radius-card: 10px;
+  --radius-pill: 9999px;
+
+  /* --- 7. Sombras Corporativas --- */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+
+  /* --- 8. Tipografía --- */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* --- 9. Transiciones --- */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================================================
+   MODO OSCURO ([data-theme="dark"])
+   ========================================================================== */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --app-bg: #0B1120;
+  --surface: #111827;
+  --surface-alt: #151E2E;
+  --surface-hover: #1E293B;
+  --card: #1F2937;
+  --card-hover: #273449;
+  --border: #374151;
+  --border-subtle: #2D3748;
+  --divider: #334155;
+
+  --text-primary: #F9FAFB;
+  --text-secondary: #CBD5E1;
+  --text-muted: #9CA3AF;
+  --text-disabled: #6B7280;
+  --text-inverted: #0B1120;
+
+  --nav-text: #CBD5E1;
+  --nav-hover-bg: #1F2937;
+  --nav-active-bg: #1D4ED8;
+  --nav-active-text: #FFFFFF;
+
+  --primary: #3B82F6;
+  --primary-hover: #60A5FA;
+  --primary-pressed: #2563EB;
+  --focus: #93C5FD;
+
+  /* Brand tints adaptables a modo oscuro (evita bloques blancos o contrastes bruscos) */
+  --brand-50: rgba(59, 130, 246, 0.16);
+  --brand-100: rgba(59, 130, 246, 0.26);
+  --brand-200: rgba(59, 130, 246, 0.38);
+  --brand-300: rgba(96, 165, 250, 0.45);
+
+  /* Estados Semánticos en Oscuro (WCAG 2.2 AA) con fondos translúcidos y textos luminosos */
+  --success: #22C55E;
+  --success-bg: rgba(34, 197, 94, 0.15);
+  --success-text: #4ADE80;
+  --success-border: rgba(34, 197, 94, 0.35);
+
+  --warning: #F59E0B;
+  --warning-bg: rgba(245, 158, 11, 0.15);
+  --warning-text: #FDE68A;
+  --warning-border: rgba(245, 158, 11, 0.35);
+
+  --danger: #EF4444;
+  --danger-bg: rgba(239, 68, 68, 0.15);
+  --danger-text: #FECACA;
+  --danger-border: rgba(239, 68, 68, 0.35);
+
+  --info: #38BDF8;
+  --info-bg: rgba(56, 189, 248, 0.15);
+  --info-text: #BAE6FD;
+  --info-border: rgba(56, 189, 248, 0.35);
+
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.6);
+}

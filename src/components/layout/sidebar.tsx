@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import type { RolUsuario } from '@/config/types';
 import { obtenerSubItemsPermitidosModulo } from '@/modules/registry';
-import { IconChevronDown, IconChevronRight, IconClose } from '../ui/Icons';
+import { IconChevronDown, IconChevronRight, IconClose, IconUsers } from '../ui/Icons';
 import { SfgLogoSymbol } from '../ui/Logo';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -33,10 +33,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { language, t } = useLanguage();
   const [openSection1, setOpenSection1] = useState(true);
   const [openSection2, setOpenSection2] = useState(true);
+  const [openSectionRh, setOpenSectionRh] = useState(true);
   const [openSection3, setOpenSection3] = useState(true);
 
   const subItemsCrm = obtenerSubItemsPermitidosModulo('crm', rolUsuario);
   const subItemsRequisiciones = obtenerSubItemsPermitidosModulo('requisiciones', rolUsuario);
+  const subItemsRrhh = obtenerSubItemsPermitidosModulo('rrhh', rolUsuario);
   const subItemsAdmin = obtenerSubItemsPermitidosModulo('admin', rolUsuario);
 
   const subItemInicialCompras =
@@ -67,6 +69,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (activeModuleId !== 'compras') return false;
     if (!activeSubItemId) {
       return idSubItem === subItemInicialCompras;
+    }
+    return activeSubItemId === idSubItem;
+  };
+
+  const esSubItemRrhhActivo = (idSubItem: string): boolean => {
+    if (activeModuleId !== 'rh' && activeModuleId !== 'rrhh') return false;
+    if (!activeSubItemId || activeSubItemId === 'rh-directorio') {
+      return idSubItem === 'rrhh-panel';
     }
     return activeSubItemId === idSubItem;
   };
@@ -157,6 +167,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </svg>
               </button>
 
+              {/* Icono de Grupo 3: Recursos Humanos */}
+              {subItemsRrhh.length > 0 && (
+                <button
+                  type="button"
+                  className={`collapsed-nav-btn rh-group-btn ${activeModuleId === 'rh' || activeModuleId === 'rrhh' ? 'active-crm' : ''}`}
+                  title="Recursos Humanos"
+                  onClick={() => onSelectModule('rh', 'rrhh-panel')}
+                >
+                  <IconUsers size={18} />
+                </button>
+              )}
+
               {showAdmin && subItemsAdmin.length > 0 && (
                 <button
                   type="button"
@@ -202,7 +224,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </div>
 
-            {/* Navigation Links Group (CRM & VENTAS + OPERACIONES + ADMINISTRADOR) */}
+            {/* Navigation Links Group (CRM & VENTAS + OPERACIONES + RECURSOS HUMANOS + ADMINISTRADOR) */}
             <nav className="sidebar-accordion-nav">
               {/* Group 1: CRM & VENTAS */}
               {subItemsCrm.length > 0 && (
@@ -278,7 +300,45 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 )}
               </div>
 
-              {/* Group 3: ADMINISTRACIÓN (solo si tiene permiso) */}
+              {/* Group 3: RECURSOS HUMANOS (solo si tiene permiso) */}
+              {subItemsRrhh.length > 0 && (
+                <div className="accordion-entry">
+                  <button
+                    type="button"
+                    className="accordion-head-btn"
+                    onClick={() => setOpenSectionRh(!openSectionRh)}
+                  >
+                    <div className="head-left-content">
+                      <IconUsers size={16} />
+                      <span className="group-title-label">
+                        {language === 'en' ? 'Human Resources' : 'Recursos Humanos'}
+                      </span>
+                    </div>
+                    {openSectionRh ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
+                  </button>
+
+                  {openSectionRh && (
+                    <div className="accordion-sub-stack">
+                      {subItemsRrhh.map((sub) => {
+                        const activo = esSubItemRrhhActivo(sub.id);
+                        return (
+                          <button
+                            key={sub.id}
+                            type="button"
+                            className={`sub-nav-link ${activo ? 'active-pill' : ''}`}
+                            onClick={() => onSelectModule('rh', sub.vista)}
+                          >
+                            <span className={`bullet-indicator ${activo ? 'orange' : 'gray'}`} />
+                            <span>{language === 'en' ? sub.nombreEn : sub.nombre}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Group 4: ADMINISTRACIÓN (solo si tiene permiso) */}
               {showAdmin && subItemsAdmin.length > 0 && (
                 <div className="accordion-entry">
                   <button
