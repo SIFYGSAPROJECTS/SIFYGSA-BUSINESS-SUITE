@@ -15,6 +15,7 @@ export const translations: Translations = {
   // --- NAVEGACIÓN & SIDEBAR ---
   'nav.home': { es: 'Home', en: 'Home' },
   'nav.settings': { es: 'Ajustes', en: 'Settings' },
+  'nav.favorites': { es: 'Favoritos', en: 'Favorites' },
   'nav.crm': { es: 'CRM & VENTAS', en: 'CRM & SALES' },
   'nav.crm_opportunities': { es: 'Oportunidades', en: 'Opportunities' },
   'nav.crm_activities': { es: 'Actividades (Kanban & Gantt)', en: 'Activities (Kanban & Gantt)' },

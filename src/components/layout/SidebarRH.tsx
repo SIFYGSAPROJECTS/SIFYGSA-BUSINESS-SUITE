@@ -11,6 +11,7 @@ import {
 } from '../ui/Icons';
 import { SfgLogoSymbol } from '../ui/Logo';
 import { useLanguage } from '../../context/LanguageContext';
+import { SubsidebarFavoritos } from './subsidebarFavoritos';
 
 interface SidebarRHProps {
   isCollapsed: boolean;
@@ -137,6 +138,16 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
                   />
                 </svg>
               </button>
+
+              {/* Combobox de Favoritos estilo NetSuite (Exclusivo RRHH) */}
+              <SubsidebarFavoritos
+                portal="rh"
+                rolUsuario={rolUsuario}
+                activeModuleId={activeModuleId}
+                activeSubItemId={activeSubItemId}
+                onSelectModule={onSelectModule}
+                isCollapsed={isCollapsed}
+              />
             </div>
 
             <div className="collapsed-divider-line" />
@@ -214,6 +225,16 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
                     />
                   </svg>
                 </button>
+
+                {/* Combobox de Favoritos estilo NetSuite (Exclusivo RRHH) */}
+                <SubsidebarFavoritos
+                  portal="rh"
+                  rolUsuario={rolUsuario}
+                  activeModuleId={activeModuleId}
+                  activeSubItemId={activeSubItemId}
+                  onSelectModule={onSelectModule}
+                  isCollapsed={isCollapsed}
+                />
               </div>
 
               <span
@@ -292,7 +313,8 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
                     {subItemsRequisiciones.map((sub) => {
                       const activo =
                         activeModuleId === 'compras' &&
-                        (activeSubItemId === sub.id || (!activeSubItemId && sub.id === 'compras-mis-requisiciones'));
+                        (activeSubItemId === sub.id ||
+                          (!activeSubItemId && sub.id === 'compras-mis-requisiciones'));
                       return (
                         <button
                           key={sub.id}

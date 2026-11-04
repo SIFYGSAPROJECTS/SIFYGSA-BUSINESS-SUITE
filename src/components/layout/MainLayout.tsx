@@ -80,7 +80,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   const activeModuleId =
     activeModuleProp ??
-    (pathname.startsWith('/ajustes')
+    (pathname.startsWith('/favoritos')
+      ? 'favorites'
+      : pathname.startsWith('/ajustes')
       ? 'settings'
       : pathname.startsWith('/crm')
       ? 'crm'
@@ -140,6 +142,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       switch (moduleId) {
         case 'dashboard':
           router.push('/');
+          break;
+        case 'favorites':
+        case 'favoritos':
+          router.push('/favoritos');
           break;
         case 'settings':
           router.push('/ajustes');

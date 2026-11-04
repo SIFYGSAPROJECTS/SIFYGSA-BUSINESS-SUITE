@@ -9,6 +9,7 @@ import {
   IconAlmacen,
 } from '../ui/Icons';
 import { useLanguage } from '../../context/LanguageContext';
+import { SubsidebarFavoritos } from './subsidebarFavoritos';
 
 interface SidebarAlmacenProps {
   isCollapsed: boolean;
@@ -29,6 +30,7 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
   activeModuleId,
   activeSubItemId,
   onSelectModule,
+  rolUsuario = 'requisiciones',
 }) => {
   const { t } = useLanguage();
   const [openSectionOperaciones, setOpenSectionOperaciones] = useState(true);
@@ -92,7 +94,11 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
             <div className="collapsed-tools-stack">
               <button
                 type="button"
-                className={`tool-icon-btn ${activeModuleId === 'almacen' && (!activeSubItemId || activeSubItemId === '') ? 'active' : ''}`}
+                className={`tool-icon-btn ${
+                  activeModuleId === 'almacen' && (!activeSubItemId || activeSubItemId === '')
+                    ? 'active'
+                    : ''
+                }`}
                 title="Dashboard Almacén"
                 onClick={() => onSelectModule('almacen', '')}
               >
@@ -122,6 +128,16 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
                   />
                 </svg>
               </button>
+
+              {/* Combobox de Favoritos estilo NetSuite (Exclusivo Almacén) */}
+              <SubsidebarFavoritos
+                portal="almacen"
+                rolUsuario={rolUsuario}
+                activeModuleId={activeModuleId}
+                activeSubItemId={activeSubItemId}
+                onSelectModule={onSelectModule}
+                isCollapsed={isCollapsed}
+              />
             </div>
 
             <div className="collapsed-divider-line" />
@@ -133,7 +149,11 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
                 type="button"
                 className={`collapsed-nav-btn almacen-group-btn ${
                   activeModuleId === 'almacen' &&
-                  (!activeSubItemId || activeSubItemId === '' || activeSubItemId === 'recepcion-ir03' || activeSubItemId === 'salida' || activeSubItemId === 'asignaciones')
+                  (!activeSubItemId ||
+                    activeSubItemId === '' ||
+                    activeSubItemId === 'recepcion-ir03' ||
+                    activeSubItemId === 'salida' ||
+                    activeSubItemId === 'asignaciones')
                     ? 'active-ops'
                     : ''
                 }`}
@@ -152,7 +172,7 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
                     ? 'active-ops'
                     : ''
                 }`}
-                title="Catálogo &amp; Suministros"
+                title="Catálogo & Suministros"
                 onClick={() => onSelectModule('almacen', 'alta-articulo')}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18 }}>
@@ -163,7 +183,9 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
               {/* Grupo 4: Requisiciones */}
               <button
                 type="button"
-                className={`collapsed-nav-btn ops-group-btn ${activeModuleId === 'compras' ? 'active-ops' : ''}`}
+                className={`collapsed-nav-btn ops-group-btn ${
+                  activeModuleId === 'compras' ? 'active-ops' : ''
+                }`}
                 title="Requisiciones de Compra"
                 onClick={() => onSelectModule('compras', 'compras-mis-requisiciones')}
               >
@@ -183,7 +205,11 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
               <div className="quick-tools-left">
                 <button
                   type="button"
-                  className={`tool-icon-btn ${activeModuleId === 'almacen' && (!activeSubItemId || activeSubItemId === '') ? 'active' : ''}`}
+                  className={`tool-icon-btn ${
+                    activeModuleId === 'almacen' && (!activeSubItemId || activeSubItemId === '')
+                      ? 'active'
+                      : ''
+                  }`}
                   title="Dashboard Almacén"
                   onClick={() => onSelectModule('almacen', '')}
                 >
@@ -201,6 +227,16 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
                     <path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
+
+                {/* Combobox de Favoritos estilo NetSuite (Exclusivo Almacén) */}
+                <SubsidebarFavoritos
+                  portal="almacen"
+                  rolUsuario={rolUsuario}
+                  activeModuleId={activeModuleId}
+                  activeSubItemId={activeSubItemId}
+                  onSelectModule={onSelectModule}
+                  isCollapsed={isCollapsed}
+                />
               </div>
 
               <span
@@ -210,17 +246,16 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
                   gap: '0.35rem',
                   fontSize: '0.68rem',
                   fontWeight: 700,
-                  color: 'var(--primary)',
-                  backgroundColor: 'var(--nav-active-bg)',
-                  border: '1px solid var(--border)',
+                  color: 'var(--brand-tonal-text)',
+                  backgroundColor: 'var(--brand-tonal-bg)',
+                  border: '1px solid var(--brand-tonal-border)',
                   padding: '0.15rem 0.45rem',
                   borderRadius: 'var(--radius-control)',
                   letterSpacing: '0.05em',
                   textTransform: 'uppercase',
                 }}
               >
-                <IconAlmacen size={14} />
-                <span>MÓDULO ALMACÉN</span>
+                SGA ALMACÉN
               </span>
             </div>
 
@@ -246,10 +281,20 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
                   <div className="accordion-sub-stack">
                     <button
                       type="button"
-                      className={`sub-nav-link ${esSubItemActivo('') || esSubItemActivo('almacen-dashboard') ? 'active-pill' : ''}`}
+                      className={`sub-nav-link ${
+                        esSubItemActivo('') || esSubItemActivo('almacen-dashboard')
+                          ? 'active-pill'
+                          : ''
+                      }`}
                       onClick={() => onSelectModule('almacen', '')}
                     >
-                      <span className={`bullet-indicator ${esSubItemActivo('') || esSubItemActivo('almacen-dashboard') ? 'orange' : 'gray'}`} />
+                      <span
+                        className={`bullet-indicator ${
+                          esSubItemActivo('') || esSubItemActivo('almacen-dashboard')
+                            ? 'orange'
+                            : 'gray'
+                        }`}
+                      />
                       <span>Dashboard General</span>
                     </button>
 

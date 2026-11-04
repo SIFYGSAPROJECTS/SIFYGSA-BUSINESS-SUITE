@@ -6,6 +6,7 @@ import { obtenerSubItemsPermitidosModulo } from '@/modules/registry';
 import { IconChevronDown, IconChevronRight, IconClose, IconUsers, IconAlmacen } from '../ui/Icons';
 import { SfgLogoSymbol } from '../ui/Logo';
 import { useLanguage } from '../../context/LanguageContext';
+import { SubsidebarFavoritos } from './subsidebarFavoritos';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -146,6 +147,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
+
+              {/* Combobox de Favoritos estilo NetSuite (Exclusivo CRM) */}
+              <SubsidebarFavoritos
+                portal="crm"
+                rolUsuario={rolUsuario}
+                showAdmin={showAdmin}
+                activeModuleId={activeModuleId}
+                activeSubItemId={activeSubItemId}
+                onSelectModule={onSelectModule}
+                isCollapsed={isCollapsed}
+              />
             </div>
 
             <div className="collapsed-divider-line" />
@@ -220,7 +232,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
              MODO EXPANDIDO (Generado desde el registro central de módulos)
              ==================================================================== */
           <>
-            {/* Top Quick Tools Bar (Home y Ajustes) */}
+            {/* Top Quick Tools Bar (Home, Ajustes y Favoritos Combobox) */}
             <div className="sidebar-quick-tools">
               <div className="quick-tools-left">
                 <button
@@ -243,6 +255,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
+
+                {/* Combobox de Favoritos estilo NetSuite (Exclusivo CRM) */}
+                <SubsidebarFavoritos
+                  portal="crm"
+                  rolUsuario={rolUsuario}
+                  showAdmin={showAdmin}
+                  activeModuleId={activeModuleId}
+                  activeSubItemId={activeSubItemId}
+                  onSelectModule={onSelectModule}
+                  isCollapsed={isCollapsed}
+                />
               </div>
             </div>
 

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
+import { FavoritesProvider } from '@/context/FavoritesContext';
 import '@/index.css';
 import '@/App.css';
 import '@/components/layout/MainLayout.css';
@@ -27,7 +28,9 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body>
         <ThemeProvider>
-          <LanguageProvider>{children}</LanguageProvider>
+          <LanguageProvider>
+            <FavoritesProvider>{children}</FavoritesProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>
