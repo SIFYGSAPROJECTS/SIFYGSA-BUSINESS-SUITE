@@ -46,9 +46,8 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
 
   return (
     <aside
-      className={`gemini-sidebar sidebar-almacen ${isCollapsed ? 'collapsed' : ''} ${
-        isMobileOpen ? 'mobile-visible' : ''
-      }`}
+      className={`gemini-sidebar sidebar-almacen ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-visible' : ''
+        }`}
       aria-label="Navegación Almacén y SGA SIFYGSA"
     >
       {/* Cabecera Móvil */}
@@ -94,11 +93,10 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
             <div className="collapsed-tools-stack">
               <button
                 type="button"
-                className={`tool-icon-btn ${
-                  activeModuleId === 'almacen' && (!activeSubItemId || activeSubItemId === '')
+                className={`tool-icon-btn ${activeModuleId === 'almacen' && (!activeSubItemId || activeSubItemId === '')
                     ? 'active'
                     : ''
-                }`}
+                  }`}
                 title="Dashboard Almacén"
                 onClick={() => onSelectModule('almacen', '')}
               >
@@ -147,16 +145,15 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
               {/* Grupo 1: Operaciones de Almacén */}
               <button
                 type="button"
-                className={`collapsed-nav-btn almacen-group-btn ${
-                  activeModuleId === 'almacen' &&
-                  (!activeSubItemId ||
-                    activeSubItemId === '' ||
-                    activeSubItemId === 'recepcion-ir03' ||
-                    activeSubItemId === 'salida' ||
-                    activeSubItemId === 'asignaciones')
+                className={`collapsed-nav-btn almacen-group-btn ${activeModuleId === 'almacen' &&
+                    (!activeSubItemId ||
+                      activeSubItemId === '' ||
+                      activeSubItemId === 'recepcion-ir03' ||
+                      activeSubItemId === 'salida' ||
+                      activeSubItemId === 'asignaciones')
                     ? 'active-ops'
                     : ''
-                }`}
+                  }`}
                 title="Operaciones de Almacén (IR03 / SA / Asignaciones)"
                 onClick={() => onSelectModule('almacen', '')}
               >
@@ -166,12 +163,11 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
               {/* Grupo 2: Catálogo & Suministros */}
               <button
                 type="button"
-                className={`collapsed-nav-btn almacen-ops-btn ${
-                  activeModuleId === 'almacen' &&
-                  (activeSubItemId === 'alta-articulo' || activeSubItemId === 'alta-servicio')
+                className={`collapsed-nav-btn almacen-ops-btn ${activeModuleId === 'almacen' &&
+                    (activeSubItemId === 'alta-articulo' || activeSubItemId === 'alta-servicio')
                     ? 'active-ops'
                     : ''
-                }`}
+                  }`}
                 title="Catálogo & Suministros"
                 onClick={() => onSelectModule('almacen', 'alta-articulo')}
               >
@@ -183,9 +179,8 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
               {/* Grupo 4: Requisiciones */}
               <button
                 type="button"
-                className={`collapsed-nav-btn ops-group-btn ${
-                  activeModuleId === 'compras' ? 'active-ops' : ''
-                }`}
+                className={`collapsed-nav-btn ops-group-btn ${activeModuleId === 'compras' ? 'active-ops' : ''
+                  }`}
                 title="Requisiciones de Compra"
                 onClick={() => onSelectModule('compras', 'compras-mis-requisiciones')}
               >
@@ -205,11 +200,10 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
               <div className="quick-tools-left">
                 <button
                   type="button"
-                  className={`tool-icon-btn ${
-                    activeModuleId === 'almacen' && (!activeSubItemId || activeSubItemId === '')
+                  className={`tool-icon-btn ${activeModuleId === 'almacen' && (!activeSubItemId || activeSubItemId === '')
                       ? 'active'
                       : ''
-                  }`}
+                    }`}
                   title="Dashboard Almacén"
                   onClick={() => onSelectModule('almacen', '')}
                 >
@@ -238,25 +232,6 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
                   isCollapsed={isCollapsed}
                 />
               </div>
-
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  color: 'var(--brand-tonal-text)',
-                  backgroundColor: 'var(--brand-tonal-bg)',
-                  border: '1px solid var(--brand-tonal-border)',
-                  padding: '0.15rem 0.45rem',
-                  borderRadius: 'var(--radius-control)',
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                SGA ALMACÉN
-              </span>
             </div>
 
             {/* Navigation Accordion Groups */}
@@ -281,19 +256,17 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
                   <div className="accordion-sub-stack">
                     <button
                       type="button"
-                      className={`sub-nav-link ${
-                        esSubItemActivo('') || esSubItemActivo('almacen-dashboard')
+                      className={`sub-nav-link ${esSubItemActivo('') || esSubItemActivo('almacen-dashboard')
                           ? 'active-pill'
                           : ''
-                      }`}
+                        }`}
                       onClick={() => onSelectModule('almacen', '')}
                     >
                       <span
-                        className={`bullet-indicator ${
-                          esSubItemActivo('') || esSubItemActivo('almacen-dashboard')
+                        className={`bullet-indicator ${esSubItemActivo('') || esSubItemActivo('almacen-dashboard')
                             ? 'orange'
                             : 'gray'
-                        }`}
+                          }`}
                       />
                       <span>Dashboard General</span>
                     </button>

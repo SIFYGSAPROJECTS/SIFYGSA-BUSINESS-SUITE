@@ -1,5 +1,41 @@
 [
   {
+    "usuarioId": "usr_almacen",
+    "usuarioNombre": "Roberto Méndez Cruz",
+    "rol": "requisiciones",
+    "modulo": "auth",
+    "tipoEvento": "inicio_sesion",
+    "entidad": "Sesión JWT",
+    "entidadId": "usr_almacen",
+    "detalle": "Inicio de sesión exitoso (requisiciones).",
+    "id": "aud_1793813845276_rciwa",
+    "fecha": "2026-11-04T17:37:25.276Z"
+  },
+  {
+    "usuarioId": "usr_almacen",
+    "usuarioNombre": "Roberto Méndez Cruz",
+    "rol": "requisiciones",
+    "modulo": "auth",
+    "tipoEvento": "cierre_sesion",
+    "entidad": "Sesión JWT",
+    "entidadId": "usr_almacen",
+    "detalle": "Cierre de sesión de usuario.",
+    "id": "aud_1793813842753_b0ne5",
+    "fecha": "2026-11-04T17:37:22.753Z"
+  },
+  {
+    "usuarioId": "usr_almacen",
+    "usuarioNombre": "Roberto Méndez Cruz",
+    "rol": "requisiciones",
+    "modulo": "auth",
+    "tipoEvento": "inicio_sesion",
+    "entidad": "Sesión JWT",
+    "entidadId": "usr_almacen",
+    "detalle": "Inicio de sesión exitoso (requisiciones).",
+    "id": "aud_1793813765455_h67gn",
+    "fecha": "2026-11-04T17:36:05.455Z"
+  },
+  {
     "usuarioId": "usr_gerente",
     "usuarioNombre": "Ana Lucía Torres",
     "rol": "gerente",

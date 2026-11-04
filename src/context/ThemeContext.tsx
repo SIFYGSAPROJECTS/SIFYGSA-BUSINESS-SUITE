@@ -7,6 +7,7 @@ export type Theme = 'light' | 'dark';
 interface ThemeContextType {
   theme: Theme;
   isDarkMode: boolean;
+  mounted: boolean;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
 }
@@ -14,28 +15,6 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const THEME_STORAGE_KEY = 'sfg_theme';
-
-function getInitialTheme(): Theme {
-  if (typeof window === 'undefined' || typeof window.localStorage?.getItem !== 'function') {
-    return 'light';
-  }
-
-  try {
-    const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
-    if (saved === 'light' || saved === 'dark') {
-      return saved;
-    }
-  } catch (e) {
-    console.warn('No se pudo acceder a localStorage para el tema:', e);
-  }
-
-  // Respetar prefers-color-scheme del sistema operativo
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    return 'dark';
-  }
-
-  return 'light';
-}
 
 function applyThemeToDOM(theme: Theme) {
   if (typeof document === 'undefined') return;
@@ -51,8 +30,30 @@ function applyThemeToDOM(theme: Theme) {
 }
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+  // Inicializamos siempre en 'light' tanto en el servidor como en el primer render del cliente
+  // para evitar diferencias de renderizado (Hydration Mismatch) con localStorage.
+  const [theme, setThemeState] = useState<Theme>('light');
+  const [mounted, setMounted] = useState(false);
   const [, startTransition] = useTransition();
+
+  // Al montar en el cliente, sincronizamos con localStorage o con el esquema del sistema operativo
+  useEffect(() => {
+    let initialTheme: Theme = 'light';
+    try {
+      const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
+      if (saved === 'light' || saved === 'dark') {
+        initialTheme = saved;
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        initialTheme = 'dark';
+      }
+    } catch {
+      // Ignorar restricciones de acceso en navegadores
+    }
+
+    setThemeState(initialTheme);
+    applyThemeToDOM(initialTheme);
+    setMounted(true);
+  }, []);
 
   // Aplicar tema y persistir
   const setTheme = (newTheme: Theme) => {
@@ -71,13 +72,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  // Sincronizar en el montaje inicial
+  // Escuchar cambios del sistema operativo si el usuario no ha guardado una preferencia explícita
   useEffect(() => {
-    applyThemeToDOM(theme);
-  }, [theme]);
-
-  // Escuchar cambios del sistema si el usuario no ha guardado una preferencia manual explícita
-  useEffect(() => {
+    if (!mounted) return;
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleSystemChange = (e: MediaQueryListEvent) => {
       try {
@@ -96,11 +93,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       mediaQuery.addEventListener('change', handleSystemChange);
       return () => mediaQuery.removeEventListener('change', handleSystemChange);
     }
-  }, []);
+  }, [mounted]);
 
   const value: ThemeContextType = {
     theme,
-    isDarkMode: theme === 'dark',
+    isDarkMode: mounted && theme === 'dark',
+    mounted,
     toggleTheme,
     setTheme,
   };

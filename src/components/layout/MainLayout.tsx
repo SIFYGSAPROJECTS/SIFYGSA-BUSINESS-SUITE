@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { NOMBRES_ROLES, type IdModulo, type RolUsuario, type ZonaComercial } from '@/config/types';
 import { useMonitoreoInactividad } from '@/lib/auth/use-inactividad';
@@ -54,6 +54,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detección de dispositivo móvil montado de manera segura para SSR/Hydration
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 860);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useMonitoreoInactividad(Boolean(usuario));
 
@@ -80,9 +91,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   const activeModuleId =
     activeModuleProp ??
-    (pathname.startsWith('/favoritos')
-      ? 'favorites'
-      : pathname.startsWith('/ajustes')
+    (pathname.startsWith('/ajustes')
       ? 'settings'
       : pathname.startsWith('/crm')
       ? 'crm'
@@ -112,16 +121,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       ? (pathname === '/almacen' ? '' : pathname.replace('/almacen/', ''))
       : undefined);
 
-  const isSidebarOpen =
-    typeof window !== 'undefined' && window.innerWidth <= 860
-      ? isMobileOpen
-      : !isCollapsed;
+  const isSidebarOpen = isMobile ? isMobileOpen : !isCollapsed;
 
   const handleToggleSidebar = () => {
-    if (window.innerWidth <= 860) {
-      setIsMobileOpen(!isMobileOpen);
+    if (isMobile) {
+      setIsMobileOpen((prev) => !prev);
     } else {
-      setIsCollapsed(!isCollapsed);
+      setIsCollapsed((prev) => !prev);
     }
   };
 
@@ -142,10 +148,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       switch (moduleId) {
         case 'dashboard':
           router.push('/');
-          break;
-        case 'favorites':
-        case 'favoritos':
-          router.push('/favoritos');
           break;
         case 'settings':
           router.push('/ajustes');
@@ -177,7 +179,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       }
     }
 
-    if (typeof window !== 'undefined' && window.innerWidth <= 860) {
+    if (isMobile) {
       setIsMobileOpen(false);
     }
   };

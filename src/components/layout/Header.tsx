@@ -148,6 +148,7 @@ export const Header: React.FC<HeaderProps> = ({
           aria-pressed={isDarkMode}
           title={isDarkMode ? t('header.change_to_light') : t('header.change_to_dark')}
           onClick={toggleTheme}
+          suppressHydrationWarning
         >
           {isDarkMode ? (
             <svg
