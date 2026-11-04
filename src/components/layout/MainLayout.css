@@ -1340,6 +1340,8 @@
 }
 
 .netsuite-favorites-combobox {
+  position: fixed;
+  z-index: 9999;
   width: 310px;
   max-width: calc(100vw - 24px);
   background-color: var(--surface);

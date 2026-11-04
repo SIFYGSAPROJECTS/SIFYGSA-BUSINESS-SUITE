@@ -37,10 +37,14 @@ export const SubsidebarFavoritos: React.FC<SubsidebarFavoritosProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [showCatalogPicker, setShowCatalogPicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({
+    position: 'fixed',
+    zIndex: 9999,
+  });
 
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Calcula la posición fija del combobox flotante para que nunca sea recortado por el overflow del sidebar
   const updatePosition = () => {
@@ -53,6 +57,31 @@ export const SubsidebarFavoritos: React.FC<SubsidebarFavoritosProps> = ({
       zIndex: 9999,
     });
   };
+
+  const handleToggleOpen = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        position: 'fixed',
+        top: `${rect.bottom + 6}px`,
+        left: `${Math.max(8, rect.left)}px`,
+        zIndex: 9999,
+      });
+    }
+    setIsOpen((prev) => !prev);
+  };
+
+  // Focus preventScroll para que el navegador jamás haga scroll hacia abajo
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus({ preventScroll: true });
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, showCatalogPicker]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -163,7 +192,7 @@ export const SubsidebarFavoritos: React.FC<SubsidebarFavoritosProps> = ({
         aria-label={t('nav.favorites')}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={handleToggleOpen}
       >
         <IconStar size={16} filled={isOpen || isCurrentPinned} />
       </button>
@@ -232,6 +261,7 @@ export const SubsidebarFavoritos: React.FC<SubsidebarFavoritosProps> = ({
             {/* Barra de Búsqueda / Combobox Input */}
             <div className="ns-fav-search-box">
               <input
+                ref={searchInputRef}
                 type="search"
                 className="ns-fav-combobox-input"
                 placeholder={
@@ -245,7 +275,6 @@ export const SubsidebarFavoritos: React.FC<SubsidebarFavoritosProps> = ({
                 }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus
               />
             </div>
 
