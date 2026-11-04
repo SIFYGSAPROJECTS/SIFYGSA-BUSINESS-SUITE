@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlmacenModal as ModalUniversal } from '../components/ui/AlmacenModal';
@@ -380,7 +380,8 @@ export default function SalidaArticuloPage() {
           {/* No. Solicitud de Material */}
           <div className="salida-field-group">
             <label className="salida-field-label">
-              No. de Solicitud de Material <span className="text-required">*</span>
+              <span className="material-symbols-outlined salida-label-icon">assignment_turned_in</span>
+              <span>No. de Solicitud de Material <span className="text-required">*</span></span>
             </label>
             <div className="salida-input-addon-group">
               <input
@@ -405,7 +406,8 @@ export default function SalidaArticuloPage() {
           {/* Proyecto Asignado */}
           <div className="salida-field-group">
             <label className="salida-field-label">
-              Proyecto Asignado <span className="text-required">*</span>
+              <span className="material-symbols-outlined salida-label-icon">business_center</span>
+              <span>Proyecto Asignado <span className="text-required">*</span></span>
             </label>
             <div className="salida-select-wrapper">
               <select
@@ -427,7 +429,8 @@ export default function SalidaArticuloPage() {
           {/* Fecha de Salida */}
           <div className="salida-field-group">
             <label className="salida-field-label">
-              Fecha de Salida <span className="text-required">*</span>
+              <span className="material-symbols-outlined salida-label-icon">calendar_today</span>
+              <span>Fecha de Salida <span className="text-required">*</span></span>
             </label>
             <div className="salida-input-icon-group">
               <input
@@ -443,7 +446,8 @@ export default function SalidaArticuloPage() {
           {/* Almacén de Origen */}
           <div className="salida-field-group">
             <label className="salida-field-label">
-              Almacén de Origen <span className="text-required">*</span>
+              <span className="material-symbols-outlined salida-label-icon">warehouse</span>
+              <span>Almacén de Origen <span className="text-required">*</span></span>
             </label>
             <div className="salida-select-wrapper">
               <select
@@ -463,7 +467,10 @@ export default function SalidaArticuloPage() {
 
           {/* Folio de Vale / Remisión de Salida */}
           <div className="salida-field-group">
-            <label className="salida-field-label">Folio de Vale / Remisión de Salida</label>
+            <label className="salida-field-label">
+              <span className="material-symbols-outlined salida-label-icon">receipt</span>
+              <span>Folio de Vale / Remisión de Salida</span>
+            </label>
             <input
               className="salida-input-text font-mono"
               type="text"
@@ -476,7 +483,10 @@ export default function SalidaArticuloPage() {
         {/* Fila 2: 2 Columnas de Solo Lectura */}
         <div className="salida-grid-row-2">
           <div className="salida-field-group">
-            <label className="salida-field-label">Subsidiaria Legal</label>
+            <label className="salida-field-label">
+              <span className="material-symbols-outlined salida-label-icon">corporate_fare</span>
+              <span>Subsidiaria Legal</span>
+            </label>
             <input
               className="salida-input-text readonly-field"
               type="text"
@@ -486,7 +496,10 @@ export default function SalidaArticuloPage() {
           </div>
 
           <div className="salida-field-group">
-            <label className="salida-field-label">Centro de Costo Asignado</label>
+            <label className="salida-field-label">
+              <span className="material-symbols-outlined salida-label-icon">domain</span>
+              <span>Centro de Costo Asignado</span>
+            </label>
             <input
               className="salida-input-text readonly-field"
               type="text"
@@ -520,7 +533,8 @@ export default function SalidaArticuloPage() {
           {/* Selector de Responsable */}
           <div className="salida-field-group">
             <label className="salida-field-label">
-              Responsable del Proyecto <span className="text-required">*</span>
+              <span className="material-symbols-outlined salida-label-icon">person</span>
+              <span>Responsable del Proyecto <span className="text-required">*</span></span>
             </label>
             <div className="salida-select-wrapper">
               <select
@@ -540,7 +554,10 @@ export default function SalidaArticuloPage() {
 
           {/* Cargo / Área Técnica (Solo Lectura Dinámico) */}
           <div className="salida-field-group">
-            <label className="salida-field-label">Cargo / Área Técnica</label>
+            <label className="salida-field-label">
+              <span className="material-symbols-outlined salida-label-icon">badge</span>
+              <span>Cargo / Área Técnica</span>
+            </label>
             <input
               className="salida-input-text readonly-field"
               type="text"
@@ -551,7 +568,10 @@ export default function SalidaArticuloPage() {
 
           {/* No. de Empleado / Credencial (Solo Lectura Dinámico) */}
           <div className="salida-field-group">
-            <label className="salida-field-label">No. de Empleado / Credencial SIFYGSA</label>
+            <label className="salida-field-label">
+              <span className="material-symbols-outlined salida-label-icon">id_card</span>
+              <span>No. de Empleado / Credencial SIFYGSA</span>
+            </label>
             <input
               className="salida-input-text readonly-field font-mono"
               type="text"
@@ -563,7 +583,8 @@ export default function SalidaArticuloPage() {
           {/* Almacenista Custodio Responsable */}
           <div className="salida-field-group col-span-full">
             <label className="salida-field-label">
-              Almacenista Responsable de Despacho (Custodio)
+              <span className="material-symbols-outlined salida-label-icon">shield_person</span>
+              <span>Almacenista Responsable de Despacho (Custodio)</span>
             </label>
             <input
               className="salida-input-text readonly-field font-medium text-slate-custom"

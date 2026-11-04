@@ -267,7 +267,8 @@ export default function AltaArticuloCatalogoPage() {
             <div className="alta-articulo-grid-2">
               <div className="alta-articulo-field">
                 <label className="alta-articulo-label" htmlFor="codigoArticulo">
-                  <span>
+                  <span className="alta-articulo-label-text">
+                    <span className="material-symbols-outlined alta-articulo-label-icon">qr_code_2</span>
                     CÓDIGO DEL ARTÍCULO <span className="alta-articulo-req">*</span>
                   </span>
                   <button
@@ -319,7 +320,8 @@ export default function AltaArticuloCatalogoPage() {
 
               <div className="alta-articulo-field">
                 <label className="alta-articulo-label" htmlFor="nombreArticulo">
-                  <span>
+                  <span className="alta-articulo-label-text">
+                    <span className="material-symbols-outlined alta-articulo-label-icon">inventory_2</span>
                     NOMBRE DEL ARTÍCULO <span className="alta-articulo-req">*</span>
                   </span>
                 </label>
@@ -338,7 +340,8 @@ export default function AltaArticuloCatalogoPage() {
             {/* Descripción Detallada */}
             <div className="alta-articulo-field">
               <label className="alta-articulo-label" htmlFor="descArticulo">
-                <span>
+                <span className="alta-articulo-label-text">
+                  <span className="material-symbols-outlined alta-articulo-label-icon">description</span>
                   DESCRIPCIÓN DETALLADA <span className="alta-articulo-req">*</span>
                 </span>
               </label>
@@ -357,8 +360,9 @@ export default function AltaArticuloCatalogoPage() {
             <div className="alta-articulo-field" ref={comboboxRef} style={{ position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label className="alta-articulo-label">
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                    TIPO DE ARTÍCULO <span className="alta-articulo-req">*</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span className="material-symbols-outlined alta-articulo-label-icon">category</span>
+                    <span>TIPO DE ARTÍCULO <span className="alta-articulo-req">*</span></span>
                     <span
                       style={{
                         padding: '0.125rem 0.5rem',
@@ -481,7 +485,8 @@ export default function AltaArticuloCatalogoPage() {
             <div className="alta-articulo-grid-2">
               <div className="alta-articulo-field">
                 <label className="alta-articulo-label" htmlFor="marcaFabricante">
-                  <span>
+                  <span className="alta-articulo-label-text">
+                    <span className="material-symbols-outlined alta-articulo-label-icon">factory</span>
                     MARCA / FABRICANTE <span className="alta-articulo-req">*</span>
                   </span>
                 </label>
@@ -498,7 +503,8 @@ export default function AltaArticuloCatalogoPage() {
 
               <div className="alta-articulo-field">
                 <label className="alta-articulo-label" htmlFor="controlOperativo">
-                  <span>
+                  <span className="alta-articulo-label-text">
+                    <span className="material-symbols-outlined alta-articulo-label-icon">verified_user</span>
                     CONTROL OPERATIVO, SERIE Y CALIBRACIÓN <span className="alta-articulo-req">*</span>
                   </span>
                 </label>
@@ -524,7 +530,8 @@ export default function AltaArticuloCatalogoPage() {
             <div className="alta-articulo-grid-3">
               <div className="alta-articulo-field">
                 <label className="alta-articulo-label" htmlFor="unidadBase">
-                  <span>
+                  <span className="alta-articulo-label-text">
+                    <span className="material-symbols-outlined alta-articulo-label-icon">straighten</span>
                     UNIDAD BASE <span className="alta-articulo-req">*</span>
                   </span>
                 </label>
@@ -547,7 +554,8 @@ export default function AltaArticuloCatalogoPage() {
 
               <div className="alta-articulo-field">
                 <label className="alta-articulo-label" htmlFor="unidadCompra">
-                  <span>
+                  <span className="alta-articulo-label-text">
+                    <span className="material-symbols-outlined alta-articulo-label-icon">shopping_cart</span>
                     UNIDAD DE COMPRA <span className="alta-articulo-req">*</span>
                   </span>
                 </label>
@@ -570,7 +578,8 @@ export default function AltaArticuloCatalogoPage() {
 
               <div className="alta-articulo-field">
                 <label className="alta-articulo-label" htmlFor="unidadVentas">
-                  <span>
+                  <span className="alta-articulo-label-text">
+                    <span className="material-symbols-outlined alta-articulo-label-icon">point_of_sale</span>
                     UNIDAD DE VENTAS <span className="alta-articulo-req">*</span>
                   </span>
                 </label>
@@ -595,7 +604,8 @@ export default function AltaArticuloCatalogoPage() {
             {/* SAT CFDI 4.0 */}
             <div className="alta-articulo-field">
               <label className="alta-articulo-label" htmlFor="claveSat">
-                <span>
+                <span className="alta-articulo-label-text">
+                  <span className="material-symbols-outlined alta-articulo-label-icon">receipt_long</span>
                   CFDI 4.0 : SAT CLAVE PROD SERVICIO <span className="alta-articulo-req">*</span>
                 </span>
               </label>
@@ -632,7 +642,8 @@ export default function AltaArticuloCatalogoPage() {
             <div className="alta-articulo-grid-3">
               <div className="alta-articulo-field">
                 <label className="alta-articulo-label" htmlFor="subsidiaria">
-                  <span>
+                  <span className="alta-articulo-label-text">
+                    <span className="material-symbols-outlined alta-articulo-label-icon">corporate_fare</span>
                     SUBSIDIARIA <span className="alta-articulo-req">*</span>
                   </span>
                 </label>
@@ -655,7 +666,8 @@ export default function AltaArticuloCatalogoPage() {
 
               <div className="alta-articulo-field">
                 <label className="alta-articulo-label" htmlFor="departamento">
-                  <span>
+                  <span className="alta-articulo-label-text">
+                    <span className="material-symbols-outlined alta-articulo-label-icon">domain</span>
                     DEPARTAMENTO <span className="alta-articulo-req">*</span>
                   </span>
                 </label>
@@ -678,7 +690,8 @@ export default function AltaArticuloCatalogoPage() {
 
               <div className="alta-articulo-field">
                 <label className="alta-articulo-label" htmlFor="ubicacionSugerida">
-                  <span>
+                  <span className="alta-articulo-label-text">
+                    <span className="material-symbols-outlined alta-articulo-label-icon">warehouse</span>
                     UBICACIÓN SUGERIDA <span className="alta-articulo-req">*</span>
                   </span>
                 </label>

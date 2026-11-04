@@ -954,14 +954,9 @@ export default function DashboardAlmacenPage() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               <div>
-                <label
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  Artículo a Despachar:
+                <label className="sga-field-label">
+                  <span className="material-symbols-outlined sga-field-label-icon">inventory_2</span>
+                  <span>Artículo a Despachar:</span>
                 </label>
                 <select
                   className="dashboard-select"
@@ -984,14 +979,9 @@ export default function DashboardAlmacenPage() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                 <div>
-                  <label
-                    style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    Cantidad a Entregar:
+                  <label className="sga-field-label">
+                    <span className="material-symbols-outlined sga-field-label-icon">numbers</span>
+                    <span>Cantidad a Entregar:</span>
                   </label>
                   <input
                     type="number"
@@ -1004,14 +994,9 @@ export default function DashboardAlmacenPage() {
                   />
                 </div>
                 <div>
-                  <label
-                    style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    Responsable del Despacho:
+                  <label className="sga-field-label">
+                    <span className="material-symbols-outlined sga-field-label-icon">person</span>
+                    <span>Responsable del Despacho:</span>
                   </label>
                   <input
                     type="text"
@@ -1024,14 +1009,9 @@ export default function DashboardAlmacenPage() {
               </div>
 
               <div>
-                <label
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  Frente de Trabajo / Proyecto Destino:
+                <label className="sga-field-label">
+                  <span className="material-symbols-outlined sga-field-label-icon">pin_drop</span>
+                  <span>Frente de Trabajo / Proyecto Destino:</span>
                 </label>
                 <select
                   className="dashboard-select"

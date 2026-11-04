@@ -3201,3 +3201,66 @@ html.dark .alta-articulo-bottom-bar,
     transform: translateY(0);
   }
 }
+
+
+/* ==========================================================================
+   Iconos contextuales para etiquetas de campo en el Módulo de Almacén (SGA)
+   ========================================================================== */
+.alta-articulo-label-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.alta-articulo-label-icon {
+  font-size: 16px !important;
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme="dark"] .alta-articulo-label-icon {
+  color: var(--link);
+}
+
+.sga-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-family-label);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.sga-field-label-icon {
+  font-size: 15px !important;
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme="dark"] .sga-field-label-icon {
+  color: var(--link);
+}
+
+.salida-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.salida-label-icon {
+  font-size: 14px !important;
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme="dark"] .salida-label-icon {
+  color: var(--link);
+}

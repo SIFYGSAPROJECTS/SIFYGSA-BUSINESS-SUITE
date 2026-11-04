@@ -181,8 +181,9 @@ export default function RecepcionMercanciaIR03Page() {
       >
         {/* Folio OC */}
         <div>
-          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-            No. Orden de Compra <span style={{ color: 'var(--danger)' }}>*</span>
+          <label className="sga-field-label">
+            <span className="material-symbols-outlined sga-field-label-icon">shopping_bag</span>
+            <span>No. Orden de Compra <span style={{ color: 'var(--danger)' }}>*</span></span>
           </label>
           <div style={{ marginTop: '0.25rem' }}>
             <input
@@ -197,8 +198,9 @@ export default function RecepcionMercanciaIR03Page() {
 
         {/* Proveedor */}
         <div>
-          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-            Proveedor Asignado <span style={{ color: 'var(--danger)' }}>*</span>
+          <label className="sga-field-label">
+            <span className="material-symbols-outlined sga-field-label-icon">storefront</span>
+            <span>Proveedor Asignado <span style={{ color: 'var(--danger)' }}>*</span></span>
           </label>
           <input
             type="text"
@@ -211,8 +213,9 @@ export default function RecepcionMercanciaIR03Page() {
 
         {/* Fecha de Entrada */}
         <div>
-          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-            Fecha de Recepción <span style={{ color: 'var(--danger)' }}>*</span>
+          <label className="sga-field-label">
+            <span className="material-symbols-outlined sga-field-label-icon">calendar_today</span>
+            <span>Fecha de Recepción <span style={{ color: 'var(--danger)' }}>*</span></span>
           </label>
           <input
             type="date"
@@ -225,8 +228,9 @@ export default function RecepcionMercanciaIR03Page() {
 
         {/* Almacén Destino */}
         <div>
-          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-            Almacén de Ingreso <span style={{ color: 'var(--danger)' }}>*</span>
+          <label className="sga-field-label">
+            <span className="material-symbols-outlined sga-field-label-icon">warehouse</span>
+            <span>Almacén de Ingreso <span style={{ color: 'var(--danger)' }}>*</span></span>
           </label>
           <select
             className="sga-select"
@@ -244,8 +248,9 @@ export default function RecepcionMercanciaIR03Page() {
 
         {/* Folio Factura / Remisión */}
         <div>
-          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-            Factura / Remisión de Entrega
+          <label className="sga-field-label">
+            <span className="material-symbols-outlined sga-field-label-icon">receipt</span>
+            <span>Factura / Remisión de Entrega</span>
           </label>
           <input
             type="text"
@@ -258,8 +263,9 @@ export default function RecepcionMercanciaIR03Page() {
 
         {/* Subsidiaria */}
         <div>
-          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-            Subsidiaria Legal
+          <label className="sga-field-label">
+            <span className="material-symbols-outlined sga-field-label-icon">corporate_fare</span>
+            <span>Subsidiaria Legal</span>
           </label>
           <input
             type="text"

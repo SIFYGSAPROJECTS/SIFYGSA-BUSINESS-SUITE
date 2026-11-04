@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
@@ -122,8 +122,9 @@ export default function AltaServicioNoInventariablePage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Código de Servicio <span style={{ color: 'var(--danger)' }}>*</span>
+              <label className="sga-field-label">
+                <span className="material-symbols-outlined sga-field-label-icon">qr_code_2</span>
+                <span>Código de Servicio <span style={{ color: 'var(--danger)' }}>*</span></span>
               </label>
               <input
                 type="text"
@@ -136,8 +137,9 @@ export default function AltaServicioNoInventariablePage() {
             </div>
 
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Tipo de Servicio <span style={{ color: 'var(--danger)' }}>*</span>
+              <label className="sga-field-label">
+                <span className="material-symbols-outlined sga-field-label-icon">category</span>
+                <span>Tipo de Servicio <span style={{ color: 'var(--danger)' }}>*</span></span>
               </label>
               <select
                 className="sga-select"
@@ -154,8 +156,9 @@ export default function AltaServicioNoInventariablePage() {
             </div>
 
             <div style={{ gridColumn: 'span 2' }}>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Nombre Oficial del Servicio <span style={{ color: 'var(--danger)' }}>*</span>
+              <label className="sga-field-label">
+                <span className="material-symbols-outlined sga-field-label-icon">assignment</span>
+                <span>Nombre Oficial del Servicio <span style={{ color: 'var(--danger)' }}>*</span></span>
               </label>
               <input
                 type="text"
@@ -191,8 +194,9 @@ export default function AltaServicioNoInventariablePage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Proveedor Contratado
+              <label className="sga-field-label">
+                <span className="material-symbols-outlined sga-field-label-icon">storefront</span>
+                <span>Proveedor Contratado</span>
               </label>
               <input
                 type="text"
@@ -204,8 +208,9 @@ export default function AltaServicioNoInventariablePage() {
             </div>
 
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Contrato / Requisición Asociada
+              <label className="sga-field-label">
+                <span className="material-symbols-outlined sga-field-label-icon">request_quote</span>
+                <span>Contrato / Requisición Asociada</span>
               </label>
               <input
                 type="text"
@@ -217,8 +222,9 @@ export default function AltaServicioNoInventariablePage() {
             </div>
 
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Centro de Costos Operativo
+              <label className="sga-field-label">
+                <span className="material-symbols-outlined sga-field-label-icon">domain</span>
+                <span>Centro de Costos Operativo</span>
               </label>
               <select
                 className="sga-select"
@@ -234,8 +240,9 @@ export default function AltaServicioNoInventariablePage() {
             </div>
 
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Importe Estimado (Sin IVA)
+              <label className="sga-field-label">
+                <span className="material-symbols-outlined sga-field-label-icon">payments</span>
+                <span>Importe Estimado (Sin IVA)</span>
               </label>
               <div style={{ display: 'flex', gap: '0.375rem', marginTop: '0.25rem' }}>
                 <select
@@ -280,8 +287,9 @@ export default function AltaServicioNoInventariablePage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Clave de Servicio SAT
+              <label className="sga-field-label">
+                <span className="material-symbols-outlined sga-field-label-icon">receipt_long</span>
+                <span>Clave de Servicio SAT</span>
               </label>
               <input
                 type="text"
@@ -293,8 +301,9 @@ export default function AltaServicioNoInventariablePage() {
             </div>
 
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Clave Unidad SAT
+              <label className="sga-field-label">
+                <span className="material-symbols-outlined sga-field-label-icon">straighten</span>
+                <span>Clave Unidad SAT</span>
               </label>
               <input
                 type="text"
@@ -320,8 +329,9 @@ export default function AltaServicioNoInventariablePage() {
           </div>
 
           <div>
-            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-              Alcance y Justificación Técnica del Servicio:
+            <label className="sga-field-label">
+              <span className="material-symbols-outlined sga-field-label-icon">description</span>
+              <span>Alcance y Justificación Técnica del Servicio:</span>
             </label>
             <textarea
               className="sga-textarea"

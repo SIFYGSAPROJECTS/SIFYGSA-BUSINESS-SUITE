@@ -264,8 +264,9 @@ export default function AsignacionesProyectosPage() {
         ) : (
           <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Equipo / Herramienta a Prestar:
+              <label className="sga-field-label">
+                <span className="material-symbols-outlined sga-field-label-icon">handyman</span>
+                <span>Equipo / Herramienta a Prestar:</span>
               </label>
               <select
                 className="sga-select"
@@ -282,8 +283,9 @@ export default function AsignacionesProyectosPage() {
             </div>
 
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                Frente de Trabajo Destino:
+              <label className="sga-field-label">
+                <span className="material-symbols-outlined sga-field-label-icon">pin_drop</span>
+                <span>Frente de Trabajo Destino:</span>
               </label>
               <select
                 className="sga-select"
@@ -300,8 +302,9 @@ export default function AsignacionesProyectosPage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                  Ingeniero Residente:
+                <label className="sga-field-label">
+                  <span className="material-symbols-outlined sga-field-label-icon">engineering</span>
+                  <span>Ingeniero Residente:</span>
                 </label>
                 <input
                   type="text"
@@ -313,8 +316,9 @@ export default function AsignacionesProyectosPage() {
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                  Días de Préstamo Estimados:
+                <label className="sga-field-label">
+                  <span className="material-symbols-outlined sga-field-label-icon">date_range</span>
+                  <span>Días de Préstamo Estimados:</span>
                 </label>
                 <input
                   type="number"
