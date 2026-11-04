@@ -230,7 +230,7 @@ export default function AltaArticuloCatalogoPage() {
             <span>/</span>
             <span className="alta-articulo-breadcrumb-current">Nuevo Artículo</span>
           </nav>
-          <h1 className="alta-articulo-title">Alta de Artículo en Catálogo Maestro</h1>
+          <h1 className="alta-articulo-title">Alta de Artículo en Catálogo</h1>
           <p className="alta-articulo-subtitle">
             Definición técnica y parámetros maestros para control de existencias y trazabilidad.
           </p>

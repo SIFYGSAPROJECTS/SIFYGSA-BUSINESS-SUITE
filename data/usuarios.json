@@ -36,7 +36,7 @@
       "almacen"
     ],
     "fechaCreacion": "2026-02-10T09:00:00.000Z",
-    "ultimoAcceso": "2026-10-27T16:34:52.129Z"
+    "ultimoAcceso": "2026-11-04T16:35:21.045Z"
   },
   {
     "id": "usr_vendedor",
@@ -71,7 +71,7 @@
       "requisiciones"
     ],
     "fechaCreacion": "2026-01-20T08:30:00.000Z",
-    "ultimoAcceso": "2026-11-03T03:20:25.955Z"
+    "ultimoAcceso": "2026-11-04T16:34:31.611Z"
   },
   {
     "id": "usr_requisiciones",
@@ -106,6 +106,6 @@
       "requisiciones"
     ],
     "fechaCreacion": "2026-05-01T08:00:00.000Z",
-    "ultimoAcceso": "2026-11-03T19:26:20.068Z"
+    "ultimoAcceso": "2026-11-04T15:40:59.647Z"
   }
 ]
