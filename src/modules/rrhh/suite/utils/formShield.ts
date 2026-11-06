@@ -470,7 +470,7 @@ export interface HrAuditLogEntry {
 const INITIAL_HR_AUDIT_LOGS: HrAuditLogEntry[] = [
   {
     id: 'AUD-2026-104',
-    timestamp: '02/11/2026 · 18:15 hrs',
+    timestamp: '02/11/2026 · 18:15:32 hrs',
     operatorName: 'Alejandra Sujias Ricardez',
     operatorRole: 'Coordinadora de Nóminas',
     operatorInitials: 'AS',
@@ -485,7 +485,7 @@ const INITIAL_HR_AUDIT_LOGS: HrAuditLogEntry[] = [
   },
   {
     id: 'AUD-2026-103',
-    timestamp: '02/11/2026 · 16:40 hrs',
+    timestamp: '02/11/2026 · 16:40:19 hrs',
     operatorName: 'Carlos Alberto Tun Culebro',
     operatorRole: 'Generalista de Recursos Humanos',
     operatorInitials: 'CT',
@@ -500,7 +500,7 @@ const INITIAL_HR_AUDIT_LOGS: HrAuditLogEntry[] = [
   },
   {
     id: 'AUD-2026-102',
-    timestamp: '02/11/2026 · 13:10 hrs',
+    timestamp: '02/11/2026 · 13:10:45 hrs',
     operatorName: 'Sheyla Irais Troncoso Vidal',
     operatorRole: 'Auxiliar de RRHH & Asistencia',
     operatorInitials: 'ST',
@@ -515,7 +515,7 @@ const INITIAL_HR_AUDIT_LOGS: HrAuditLogEntry[] = [
   },
   {
     id: 'AUD-2026-101',
-    timestamp: '01/11/2026 · 17:05 hrs',
+    timestamp: '01/11/2026 · 17:05:08 hrs',
     operatorName: 'Carlos Alberto Tun Culebro',
     operatorRole: 'Generalista de Recursos Humanos',
     operatorInitials: 'CT',
@@ -595,6 +595,7 @@ export const logHrAuditAction = (params: {
   const timeStr = now.toLocaleTimeString('es-MX', {
     hour: '2-digit',
     minute: '2-digit',
+    second: '2-digit',
     hour12: false
   });
 
