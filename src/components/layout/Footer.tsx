@@ -1,22 +1,41 @@
+'use client';
+
 import React from 'react';
 import { SfgLogoSymbol } from '../ui/Logo';
+import { IconAlmacen } from '../ui/Icons';
 
-export const Footer: React.FC = () => {
+interface FooterProps {
+  portal?: 'crm' | 'rh' | 'almacen';
+}
+
+export const Footer: React.FC<FooterProps> = ({ portal = 'crm' }) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <footer className="official-sifygsa-footer">
+    <footer className={`official-sifygsa-footer ${portal === 'rh' ? 'footer-rh' : portal === 'almacen' ? 'footer-almacen' : ''}`}>
       {/* Bottom Bar */}
       <div className="footer-bottom-bar">
         <p className="copyright-notice">© {new Date().getFullYear()} SIFYGSA. Todos los derechos reservados.</p>
 
         <div className="footer-bottom-right">
-          <p className="f-g-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <SfgLogoSymbol size={18} />
-            <span>Soluciones Integrales en Fire &amp; Gas</span>
-          </p>
+          {portal === 'rh' ? (
+            <p className="f-g-badge rh-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary)' }}>
+              <SfgLogoSymbol size={18} />
+              <span>SIFYGSA • Capital Humano &amp; Talento</span>
+            </p>
+          ) : portal === 'almacen' ? (
+            <p className="f-g-badge almacen-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary)' }}>
+              <IconAlmacen size={18} />
+              <span>SIFYGSA • Sistema de Gestión de Almacén (SGA)</span>
+            </p>
+          ) : (
+            <p className="f-g-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <SfgLogoSymbol size={18} />
+              <span>Soluciones Integrales en Fire &amp; Gas</span>
+            </p>
+          )}
 
           <button
             type="button"

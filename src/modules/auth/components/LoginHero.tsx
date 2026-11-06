@@ -1,4 +1,6 @@
-﻿import React from 'react';
+'use client';
+
+import React from 'react';
 import { IconShieldCheck } from '../../../components/ui/Icons';
 import { useLanguage } from '../../../context/LanguageContext';
 
@@ -22,7 +24,6 @@ export const LoginHero: React.FC = () => {
         <p className="hero-description">
           {t('auth.hero_description')}
         </p>
-
 
         {/* Security Indicator */}
         <br />

@@ -1,7 +1,12 @@
+'use client';
+
 import React, { useState } from 'react';
-import { IconChevronDown, IconChevronRight, IconClose, IconSettings } from '../ui/Icons';
+import type { RolUsuario } from '@/config/types';
+import { obtenerSubItemsPermitidosModulo } from '@/modules/registry';
+import { IconChevronDown, IconChevronRight, IconClose, IconUsers, IconAlmacen } from '../ui/Icons';
 import { SfgLogoSymbol } from '../ui/Logo';
 import { useLanguage } from '../../context/LanguageContext';
+import { SubsidebarFavoritos } from './subsidebarFavoritos';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -12,6 +17,8 @@ interface SidebarProps {
   activeSubItemId?: string;
   onSelectModule: (moduleId: string, subItemId?: string) => void;
   onLogout: () => void;
+  showAdmin?: boolean;
+  rolUsuario?: RolUsuario;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -21,11 +28,69 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeModuleId,
   activeSubItemId,
   onSelectModule,
+  showAdmin = false,
+  rolUsuario = 'administrador',
 }) => {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [openSection1, setOpenSection1] = useState(true);
   const [openSection2, setOpenSection2] = useState(true);
-  const [openSection3, setOpenSection3] = useState(false);
+  const [openSectionRh, setOpenSectionRh] = useState(true);
+  const [openSection3, setOpenSection3] = useState(true);
+  const [openSectionAlmacen, setOpenSectionAlmacen] = useState(true);
+
+  const subItemsCrm = obtenerSubItemsPermitidosModulo('crm', rolUsuario);
+  const subItemsRequisiciones = obtenerSubItemsPermitidosModulo('requisiciones', rolUsuario);
+  const subItemsRrhh = obtenerSubItemsPermitidosModulo('rrhh', rolUsuario);
+  const subItemsAlmacen = obtenerSubItemsPermitidosModulo('almacen', rolUsuario);
+  const subItemsAdmin = obtenerSubItemsPermitidosModulo('admin', rolUsuario);
+
+  const subItemInicialCompras =
+    subItemsRequisiciones.find((s) => s.id === 'compras-requisicion')?.id ??
+    subItemsRequisiciones[0]?.id ??
+    'compras-mis-requisiciones';
+
+  const esSubItemCrmActivo = (idSubItem: string): boolean => {
+    if (activeModuleId !== 'crm') return false;
+    if (idSubItem === 'crm-opportunities') {
+      return (
+        !activeSubItemId ||
+        activeSubItemId === 'crm-opportunities' ||
+        activeSubItemId === 'crm-opportunity-detail'
+      );
+    }
+    if (idSubItem === 'crm-kanban') {
+      return (
+        activeSubItemId === 'crm-kanban' ||
+        activeSubItemId === 'crm-gantt' ||
+        activeSubItemId === 'crm-calendar'
+      );
+    }
+    return activeSubItemId === idSubItem;
+  };
+
+  const esSubItemComprasActivo = (idSubItem: string): boolean => {
+    if (activeModuleId !== 'compras') return false;
+    if (!activeSubItemId) {
+      return idSubItem === subItemInicialCompras;
+    }
+    return activeSubItemId === idSubItem;
+  };
+
+  const esSubItemRrhhActivo = (idSubItem: string): boolean => {
+    if (activeModuleId !== 'rh' && activeModuleId !== 'rrhh') return false;
+    if (!activeSubItemId || activeSubItemId === 'rh-directorio') {
+      return idSubItem === 'rrhh-panel';
+    }
+    return activeSubItemId === idSubItem;
+  };
+
+  const esSubItemAlmacenActivo = (idSubItem: string): boolean => {
+    if (activeModuleId !== 'almacen') return false;
+    if (!activeSubItemId || activeSubItemId === '') {
+      return idSubItem === 'almacen-dashboard' || idSubItem === '';
+    }
+    return activeSubItemId === idSubItem;
+  };
 
   return (
     <aside
@@ -37,7 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="mobile-brand-row">
           <div className="sidebar-brand-lockup" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <SfgLogoSymbol size={28} />
-            <span style={{ fontWeight: 800, color: '#F97316', fontSize: '1.05rem', letterSpacing: '0.04em' }}>SIFYGSA</span>
+            <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '1.05rem', letterSpacing: '0.04em' }}>SIFYGSA</span>
           </div>
         </div>
         {onCloseMobile && (
@@ -55,17 +120,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <div className="sidebar-top-container">
         {/* ====================================================================
-           MODO COLAPSADO / MINIMIZADO (Icon Rail Centrado - como en Imagen 1)
-           Sin botón de expandir superior (tachado con X roja en Imagen 1)
+           MODO COLAPSADO / MINIMIZADO (Icon Rail Centrado)
            ==================================================================== */}
         {isCollapsed ? (
           <div className="sidebar-collapsed-column">
-
             {/* Herramientas Rápidas en Columna */}
             <div className="collapsed-tools-stack">
               <button
                 type="button"
-                className={`tool-icon-btn ${activeModuleId === 'dashboard' ? 'active-glow' : ''}`}
+                className={`tool-icon-btn ${activeModuleId === 'dashboard' ? 'active' : ''}`}
                 title={t('nav.home')}
                 onClick={() => onSelectModule('dashboard')}
               >
@@ -76,7 +139,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               <button
                 type="button"
-                className={`tool-icon-btn ${activeModuleId === 'settings' ? 'active-glow orange-solid' : ''}`}
+                className={`tool-icon-btn ${activeModuleId === 'settings' ? 'active orange-solid' : ''}`}
                 title={t('nav.settings')}
                 onClick={() => onSelectModule('settings')}
               >
@@ -85,58 +148,91 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </svg>
               </button>
 
-
+              {/* Combobox de Favoritos estilo NetSuite (Exclusivo CRM) */}
+              <SubsidebarFavoritos
+                portal="crm"
+                rolUsuario={rolUsuario}
+                showAdmin={showAdmin}
+                activeModuleId={activeModuleId}
+                activeSubItemId={activeSubItemId}
+                onSelectModule={onSelectModule}
+                isCollapsed={isCollapsed}
+              />
             </div>
 
             <div className="collapsed-divider-line" />
 
-            {/* Iconos de Grupos de Navegación (Idéntico a Imagen 1) */}
+            {/* Iconos de Grupos de Navegación */}
             <div className="collapsed-nav-icons">
-              {/* Icono de Grupo 1: CRM & Ventas (Cuadro oscuro con borde naranja y punto naranja en la esquina) */}
-              <button
-                type="button"
-                className={`collapsed-nav-btn crm-group-btn ${activeModuleId === 'crm' ? 'active-crm' : ''}`}
-                title="CRM & Ventas"
-                onClick={() => onSelectModule('crm', 'crm-opportunities')}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18, color: '#F97316' }}>
-                  <path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <span className="collapsed-top-dot orange" />
-              </button>
+              {subItemsCrm.length > 0 && (
+                <button
+                  type="button"
+                  className={`collapsed-nav-btn crm-group-btn ${activeModuleId === 'crm' ? 'active-crm' : ''}`}
+                  title="CRM & Ventas"
+                  onClick={() => onSelectModule('crm', 'crm-opportunities')}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18 }}>
+                    <path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              )}
 
-              {/* Icono de Grupo 2: Operaciones (Cuadro oscuro con borde cyan y carpeta) */}
+              {/* Icono de Grupo 2: Operaciones — Requisición */}
               <button
                 type="button"
                 className={`collapsed-nav-btn ops-group-btn ${activeModuleId === 'compras' ? 'active-ops' : ''}`}
-                title="Operaciones — Requisición NetSuite"
-                onClick={() => onSelectModule('compras', 'compras-requisicion')}
+                title="Operaciones — Requisición"
+                onClick={() => onSelectModule('compras', subItemInicialCompras)}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18, color: '#06B6D4' }}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18 }}>
                   <path d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                {activeModuleId === 'compras' && <span className="collapsed-top-dot cyan" />}
               </button>
 
-              {/* Icono de Grupo 3: Administrador (Cuadro oscuro con borde púrpura y escudo) */}
-              <button
-                type="button"
-                className={`collapsed-nav-btn admin-group-btn ${activeModuleId === 'settings' ? 'active-admin' : ''}`}
-                title="Administración / Configuración"
-                onClick={() => onSelectModule('settings')}
-              >
-                <IconSettings size={18} style={{ color: '#A855F7' }} />
-                {activeModuleId === 'settings' && <span className="collapsed-top-dot purple" />}
-              </button>
+              {/* Icono de Grupo 3: Recursos Humanos */}
+              {subItemsRrhh.length > 0 && (
+                <button
+                  type="button"
+                  className={`collapsed-nav-btn rh-group-btn ${activeModuleId === 'rh' || activeModuleId === 'rrhh' ? 'active-crm' : ''}`}
+                  title="Recursos Humanos"
+                  onClick={() => onSelectModule('rh', 'rrhh-panel')}
+                >
+                  <IconUsers size={18} />
+                </button>
+              )}
+
+              {/* Icono de Grupo: Almacén & SGA */}
+              {subItemsAlmacen.length > 0 && (
+                <button
+                  type="button"
+                  className={`collapsed-nav-btn almacen-group-btn ${activeModuleId === 'almacen' ? 'active-crm' : ''}`}
+                  title="Almacén & SGA"
+                  onClick={() => onSelectModule('almacen', '')}
+                >
+                  <IconAlmacen size={18} />
+                </button>
+              )}
+
+              {showAdmin && subItemsAdmin.length > 0 && (
+                <button
+                  type="button"
+                  className={`collapsed-nav-btn ${activeModuleId === 'admin' ? 'active-crm' : ''}`}
+                  title="Administración General"
+                  onClick={() => onSelectModule('admin', 'resumen')}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18 }}>
+                    <path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         ) : (
           /* ====================================================================
-             MODO EXPANDIDO (Vista Completa con Acordeones - Idéntico a Imágenes 3 y 4)
-             Sin botón << en la barra superior de herramientas
+             MODO EXPANDIDO (Generado desde el registro central de módulos)
              ==================================================================== */
           <>
-            {/* Top Quick Tools Bar (Home, Sliders, Slash-circle - sin <<) */}
+            {/* Top Quick Tools Bar (Home, Ajustes y Favoritos Combobox) */}
             <div className="sidebar-quick-tools">
               <div className="quick-tools-left">
                 <button
@@ -160,58 +256,60 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </svg>
                 </button>
 
+                {/* Combobox de Favoritos estilo NetSuite (Exclusivo CRM) */}
+                <SubsidebarFavoritos
+                  portal="crm"
+                  rolUsuario={rolUsuario}
+                  showAdmin={showAdmin}
+                  activeModuleId={activeModuleId}
+                  activeSubItemId={activeSubItemId}
+                  onSelectModule={onSelectModule}
+                  isCollapsed={isCollapsed}
+                />
               </div>
             </div>
 
-            {/* Navigation Links Group (CRM & VENTAS + OPERACIONES + ADMINISTRADOR) */}
+            {/* Navigation Links Group (CRM & VENTAS + OPERACIONES + RECURSOS HUMANOS + ADMINISTRADOR) */}
             <nav className="sidebar-accordion-nav">
               {/* Group 1: CRM & VENTAS */}
-              <div className="accordion-entry">
-                <button
-                  type="button"
-                  className="accordion-head-btn"
-                  onClick={() => setOpenSection1(!openSection1)}
-                >
-                  <div className="head-left-content">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16, color: '#F97316' }}>
-                      <path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <span className="group-title-label">{t('nav.crm')}</span>
-                  </div>
-                  {openSection1 ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
-                </button>
+              {subItemsCrm.length > 0 && (
+                <div className="accordion-entry">
+                  <button
+                    type="button"
+                    className="accordion-head-btn"
+                    onClick={() => setOpenSection1(!openSection1)}
+                  >
+                    <div className="head-left-content">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
+                        <path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span className="group-title-label">{t('nav.crm')}</span>
+                    </div>
+                    {openSection1 ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
+                  </button>
 
-                {openSection1 && (
-                  <div className="accordion-sub-stack">
-                    <button
-                      type="button"
-                      className={`sub-nav-link ${activeModuleId === 'crm' && (activeSubItemId === 'crm-opportunities' || !activeSubItemId) ? 'active-pill' : ''}`}
-                      onClick={() => onSelectModule('crm', 'crm-opportunities')}
-                    >
-                      <span className={`bullet-indicator ${activeModuleId === 'crm' && (activeSubItemId === 'crm-opportunities' || !activeSubItemId) ? 'orange' : 'gray'}`} />
-                      <span>{t('nav.crm_opportunities')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`sub-nav-link ${activeModuleId === 'crm' && activeSubItemId === 'crm-opportunity-detail' ? 'active-pill' : ''}`}
-                      onClick={() => onSelectModule('crm', 'crm-opportunity-detail')}
-                    >
-                      <span className={`bullet-indicator ${activeModuleId === 'crm' && activeSubItemId === 'crm-opportunity-detail' ? 'orange' : 'gray'}`} />
-                      <span>{t('nav.crm_opportunity_detail')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`sub-nav-link ${activeModuleId === 'crm' && (activeSubItemId === 'crm-kanban' || activeSubItemId === 'crm-gantt' || activeSubItemId === 'crm-calendar') ? 'active-pill' : ''}`}
-                      onClick={() => onSelectModule('crm', 'crm-kanban')}
-                    >
-                      <span className={`bullet-indicator ${activeModuleId === 'crm' && (activeSubItemId === 'crm-kanban' || activeSubItemId === 'crm-gantt' || activeSubItemId === 'crm-calendar') ? 'orange' : 'gray'}`} />
-                      <span>{t('nav.crm_activities')}</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+                  {openSection1 && (
+                    <div className="accordion-sub-stack">
+                      {subItemsCrm.map((sub) => {
+                        const activo = esSubItemCrmActivo(sub.id);
+                        return (
+                          <button
+                            key={sub.id}
+                            type="button"
+                            className={`sub-nav-link ${activo ? 'active-pill' : ''}`}
+                            onClick={() => onSelectModule('crm', sub.vista)}
+                          >
+                            <span className={`bullet-indicator ${activo ? 'orange' : 'gray'}`} />
+                            <span>{language === 'en' ? sub.nombreEn : sub.nombre}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
-              {/* Group 2: OPERACIONES */}
+              {/* Group 2: OPERACIONES / REQUISICIONES (Abierto a todos los roles) */}
               <div className="accordion-entry">
                 <button
                   type="button"
@@ -219,7 +317,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => setOpenSection2(!openSection2)}
                 >
                   <div className="head-left-content">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16, color: '#06B6D4' }}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
                       <path d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     <span className="group-title-label">{t('nav.operations')}</span>
@@ -229,46 +327,139 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 {openSection2 && (
                   <div className="accordion-sub-stack">
-                    <button
-                      type="button"
-                      className={`sub-nav-link ${activeModuleId === 'compras' ? 'active-pill' : ''}`}
-                      onClick={() => onSelectModule('compras', 'compras-requisicion')}
-                    >
-                      <span className={`bullet-indicator ${activeModuleId === 'compras' ? 'orange' : 'gray'}`} />
-                      <span>{t('nav.requisition')}</span>
-                    </button>
-
+                    {subItemsRequisiciones.map((sub) => {
+                      const activo = esSubItemComprasActivo(sub.id);
+                      return (
+                        <button
+                          key={sub.id}
+                          type="button"
+                          className={`sub-nav-link ${activo ? 'active-pill' : ''}`}
+                          onClick={() => onSelectModule('compras', sub.vista)}
+                        >
+                          <span className={`bullet-indicator ${activo ? 'orange' : 'gray'}`} />
+                          <span>{language === 'en' ? sub.nombreEn : sub.nombre}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
 
-              {/* Group 3: ADMINISTRADOR */}
-              <div className="accordion-entry">
-                <button
-                  type="button"
-                  className="accordion-head-btn"
-                  onClick={() => setOpenSection3(!openSection3)}
-                >
-                  <div className="head-left-content">
-                    <IconSettings size={16} style={{ color: '#A855F7' }} />
-                    <span className="group-title-label">{t('nav.admin')}</span>
-                  </div>
-                  {openSection3 ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
-                </button>
+              {/* Group 3: RECURSOS HUMANOS (solo si tiene permiso) */}
+              {subItemsRrhh.length > 0 && (
+                <div className="accordion-entry">
+                  <button
+                    type="button"
+                    className="accordion-head-btn"
+                    onClick={() => setOpenSectionRh(!openSectionRh)}
+                  >
+                    <div className="head-left-content">
+                      <IconUsers size={16} />
+                      <span className="group-title-label">
+                        {language === 'en' ? 'Human Resources' : 'Recursos Humanos'}
+                      </span>
+                    </div>
+                    {openSectionRh ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
+                  </button>
 
-                {openSection3 && (
-                  <div className="accordion-sub-stack">
-                    <button
-                      type="button"
-                      className={`sub-nav-link ${activeModuleId === 'settings' ? 'active-pill' : ''}`}
-                      onClick={() => onSelectModule('settings')}
-                    >
-                      <span className={`bullet-indicator ${activeModuleId === 'settings' ? 'orange' : 'gray'}`} />
-                      <span>{t('nav.general_config')}</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+                  {openSectionRh && (
+                    <div className="accordion-sub-stack">
+                      {subItemsRrhh.map((sub) => {
+                        const activo = esSubItemRrhhActivo(sub.id);
+                        return (
+                          <button
+                            key={sub.id}
+                            type="button"
+                            className={`sub-nav-link ${activo ? 'active-pill' : ''}`}
+                            onClick={() => onSelectModule('rh', sub.vista)}
+                          >
+                            <span className={`bullet-indicator ${activo ? 'orange' : 'gray'}`} />
+                            <span>{language === 'en' ? sub.nombreEn : sub.nombre}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Group: ALMACÉN & SGA (solo si tiene permiso) */}
+              {subItemsAlmacen.length > 0 && (
+                <div className="accordion-entry">
+                  <button
+                    type="button"
+                    className="accordion-head-btn"
+                    onClick={() => setOpenSectionAlmacen(!openSectionAlmacen)}
+                  >
+                    <div className="head-left-content">
+                      <IconAlmacen size={16} />
+                      <span className="group-title-label">
+                        {language === 'en' ? 'Warehouse & WMS' : 'Almacén & SGA'}
+                      </span>
+                    </div>
+                    {openSectionAlmacen ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
+                  </button>
+
+                  {openSectionAlmacen && (
+                    <div className="accordion-sub-stack">
+                      {subItemsAlmacen.map((sub) => {
+                        const activo = esSubItemAlmacenActivo(sub.id);
+                        return (
+                          <button
+                            key={sub.id}
+                            type="button"
+                            className={`sub-nav-link ${activo ? 'active-pill' : ''}`}
+                            onClick={() => onSelectModule('almacen', sub.vista)}
+                          >
+                            <span className={`bullet-indicator ${activo ? 'orange' : 'gray'}`} />
+                            <span>{language === 'en' ? sub.nombreEn : sub.nombre}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Group 4: ADMINISTRACIÓN (solo si tiene permiso) */}
+              {showAdmin && subItemsAdmin.length > 0 && (
+                <div className="accordion-entry">
+                  <button
+                    type="button"
+                    className="accordion-head-btn"
+                    onClick={() => setOpenSection3(!openSection3)}
+                  >
+                    <div className="head-left-content">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
+                        <path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span className="group-title-label">Administración</span>
+                    </div>
+                    {openSection3 ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
+                  </button>
+
+                  {openSection3 && (
+                    <div className="accordion-sub-stack">
+                      {subItemsAdmin.map((sub) => {
+                        const activo =
+                          activeModuleId === 'admin' &&
+                          ((!activeSubItemId && sub.id === 'resumen') || activeSubItemId === sub.id);
+                        return (
+                          <button
+                            key={sub.id}
+                            type="button"
+                            className={`sub-nav-link ${activo ? 'active-pill' : ''}`}
+                            onClick={() => onSelectModule('admin', sub.vista)}
+                          >
+                            <span className={`bullet-indicator ${activo ? 'orange' : 'gray'}`} />
+                            <span>{language === 'en' ? sub.nombreEn : sub.nombre}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </nav>
           </>
         )}

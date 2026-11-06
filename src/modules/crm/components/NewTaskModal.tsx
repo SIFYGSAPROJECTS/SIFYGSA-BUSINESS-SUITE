@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { IconClose, IconPlus, IconCheckSquare } from '../../../components/ui/Icons';
 
@@ -32,7 +34,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
   defaultDate,
   defaultColumn = 'todo',
 }) => {
-  const [folio, setFolio] = useState(`OPP-T${Math.floor(10 + Math.random() * 90)}`);
+  const [folio, setFolio] = useState(() => `OPP-T${Math.floor(10 + Math.random() * 90)}`);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'Baja' | 'Media' | 'Alta'>('Alta');
@@ -232,7 +234,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({
                 type="checkbox"
                 checked={isCritical}
                 onChange={(e) => setIsCritical(e.target.checked)}
-                style={{ accentColor: '#F97316', width: '16px', height: '16px' }}
+                style={{ accentColor: 'var(--primary)', width: '16px', height: '16px' }}
               />
               <span className="crit-text-highlight">⚡ Marcar como Ruta Crítica</span>
             </label>

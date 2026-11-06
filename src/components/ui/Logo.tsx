@@ -34,13 +34,12 @@ export const SfgLogoSymbol: React.FC<{ size?: number; className?: string }> = ({
       <defs>
         <linearGradient id="sfgCorporateFlame" x1="0.15" y1="0.05" x2="0.85" y2="0.95">
           <stop offset="0%" stopColor="#DC2626" />
-          <stop offset="25%" stopColor="#EA580C" />
-          <stop offset="50%" stopColor="#F97316" />
-          <stop offset="78%" stopColor="#C2410C" />
+          <stop offset="30%" stopColor="#EA580C" />
+          <stop offset="70%" stopColor="#C2410C" />
           <stop offset="100%" stopColor="#7C2D12" />
         </linearGradient>
         <linearGradient id="sfgFlameHighlight" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#FB923C" stopOpacity="0.8" />
+          <stop offset="0%" stopColor="#EA580C" stopOpacity="0.8" />
           <stop offset="100%" stopColor="#B91C1C" stopOpacity="0.2" />
         </linearGradient>
       </defs>
@@ -70,7 +69,7 @@ export const SfgLogoSymbol: React.FC<{ size?: number; className?: string }> = ({
 export const SfgLogo: React.FC<SfgLogoProps> = ({
   size = 32,
   showText = true,
-  textColor = '#FFFFFF',
+  textColor = 'var(--text-primary)',
   className = '',
 }) => {
   return (
@@ -97,7 +96,7 @@ export const SfgLogo: React.FC<SfgLogoProps> = ({
               fontSize: `${Math.max(9, Math.round(size * 0.32))}px`,
               fontWeight: 700,
               letterSpacing: '0.08em',
-              color: '#F97316',
+              color: 'var(--primary)',
               textTransform: 'none',
               fontStyle: 'italic',
               fontFamily: "'Inter', sans-serif",

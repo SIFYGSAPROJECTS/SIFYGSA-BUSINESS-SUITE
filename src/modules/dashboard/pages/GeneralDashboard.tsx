@@ -1,15 +1,32 @@
+'use client';
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import '../dashboard.css';
 import { useLanguage } from '../../../context/LanguageContext';
+import { useTheme } from '../../../context/ThemeContext';
 
 interface GeneralDashboardProps {
-  onNavigateModule: (moduleId: string, subItemId?: string) => void;
+  onNavigateModule?: (moduleId: string, subItemId?: string) => void;
 }
 
-export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateModule }) => {
+export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateModule: onNavigateProp }) => {
+  const router = useRouter();
+  const onNavigateModule = (moduleId: string, subItemId?: string) => {
+    if (onNavigateProp) {
+      onNavigateProp(moduleId, subItemId);
+      return;
+    }
+    if (moduleId === 'crm') router.push(subItemId ? `/crm?sub=${subItemId}` : '/crm');
+    else if (moduleId === 'compras') router.push(subItemId ? `/requisiciones?sub=${subItemId}` : '/requisiciones');
+    else if (moduleId === 'rh') router.push(subItemId ? `/rrhh?sub=${subItemId}` : '/rrhh');
+    else if (moduleId === 'almacen') router.push(subItemId ? `/almacen/${subItemId}` : '/almacen');
+    else if (moduleId === 'settings') router.push('/ajustes');
+  };
   const { t } = useLanguage();
+  const { theme } = useTheme();
   return (
-    <div className="gemini-dashboard-container">
+    <div className="gemini-dashboard-container" data-theme={theme} key={theme}>
       {/* SECTION A: 6 KPI METRICS CARDS */}
       <section className="kpi-metrics-grid">
         {/* KPI 1: KPIS */}
@@ -235,15 +252,15 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
           <div className="donut-legend-bar">
             <span className="legend-entry">
               <span className="legend-dot orange" />
-              <span>Donuts</span>
-            </span>
-            <span className="legend-entry">
-              <span className="legend-dot gray" />
-              <span>Donut Thart</span>
+              <span>F&amp;G</span>
             </span>
             <span className="legend-entry">
               <span className="legend-dot cyan" />
-              <span>Legend</span>
+              <span>Safety</span>
+            </span>
+            <span className="legend-entry">
+              <span className="legend-dot gray" />
+              <span>Audits</span>
             </span>
           </div>
         </div>
@@ -385,11 +402,11 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
 
           <div className="donut-gauge-wrapper">
             <svg className="pie-multi-svg" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" fill="transparent" r="25" stroke="#F97316" strokeDasharray="39 118" strokeDashoffset="0" strokeWidth="24" />
-              <circle cx="50" cy="50" fill="transparent" r="25" stroke="#06B6D4" strokeDasharray="31 126" strokeDashoffset="-39" strokeWidth="24" />
-              <circle cx="50" cy="50" fill="transparent" r="25" stroke="#4B5563" strokeDasharray="28 129" strokeDashoffset="-70" strokeWidth="24" />
-              <circle cx="50" cy="50" fill="transparent" r="25" stroke="#9CA3AF" strokeDasharray="35 122" strokeDashoffset="-98" strokeWidth="24" />
-              <circle cx="50" cy="50" fill="transparent" r="25" stroke="#F59E0B" strokeDasharray="24 133" strokeDashoffset="-133" strokeWidth="24" />
+              <circle cx="50" cy="50" fill="transparent" r="25" stroke="var(--brand-700)" strokeDasharray="39 118" strokeDashoffset="0" strokeWidth="24" />
+              <circle cx="50" cy="50" fill="transparent" r="25" stroke="var(--brand-500)" strokeDasharray="31 126" strokeDashoffset="-39" strokeWidth="24" />
+              <circle cx="50" cy="50" fill="transparent" r="25" stroke="var(--brand-400)" strokeDasharray="28 129" strokeDashoffset="-70" strokeWidth="24" />
+              <circle cx="50" cy="50" fill="transparent" r="25" stroke="var(--brand-300)" strokeDasharray="35 122" strokeDashoffset="-98" strokeWidth="24" />
+              <circle cx="50" cy="50" fill="transparent" r="25" stroke="var(--brand-200)" strokeDasharray="24 133" strokeDashoffset="-133" strokeWidth="24" />
             </svg>
             <div className="pie-center-hole">
               <span className="pie-percent-text">100%</span>
@@ -398,15 +415,15 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
 
           <div className="donut-legend-bar">
             <span className="legend-entry">
-              <span className="legend-dot orange" />
+              <span className="legend-dot" style={{ backgroundColor: 'var(--brand-700)' }} />
               <span>F&amp;G</span>
             </span>
             <span className="legend-entry">
-              <span className="legend-dot cyan" />
+              <span className="legend-dot" style={{ backgroundColor: 'var(--brand-500)' }} />
               <span>Safety</span>
             </span>
             <span className="legend-entry">
-              <span className="legend-dot gray" />
+              <span className="legend-dot" style={{ backgroundColor: 'var(--brand-300)' }} />
               <span>Audits</span>
             </span>
           </div>

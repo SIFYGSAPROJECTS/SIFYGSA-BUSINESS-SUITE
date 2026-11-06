@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export type Language = 'es' | 'en';
@@ -13,18 +15,31 @@ export const translations: Translations = {
   // --- NAVEGACIÓN & SIDEBAR ---
   'nav.home': { es: 'Home', en: 'Home' },
   'nav.settings': { es: 'Ajustes', en: 'Settings' },
+  'nav.favorites': { es: 'Favoritos', en: 'Favorites' },
   'nav.crm': { es: 'CRM & VENTAS', en: 'CRM & SALES' },
   'nav.crm_opportunities': { es: 'Oportunidades', en: 'Opportunities' },
-  'nav.crm_opportunity_detail': { es: 'Detalle Oportunidad', en: 'Opportunity Detail' },
   'nav.crm_activities': { es: 'Actividades (Kanban & Gantt)', en: 'Activities (Kanban & Gantt)' },
   'nav.operations': { es: 'OPERACIONES', en: 'OPERATIONS' },
-  'nav.requisition': { es: 'Requisición NetSuite', en: 'NetSuite Requisition' },
+  'nav.requisition': { es: 'Requisición', en: 'Requisition' },
   'nav.rh': { es: 'RECURSOS HUMANOS', en: 'HUMAN RESOURCES' },
   'nav.rh_directory': { es: 'Directorio de Personal', en: 'Staff Directory' },
   'nav.admin': { es: 'ADMINISTRADOR', en: 'ADMINISTRATOR' },
   'nav.general_config': { es: 'Configuración General', en: 'General Settings' },
   'nav.system_status': { es: 'System Status', en: 'System Status' },
   'nav.optimal_online': { es: 'Operativo en Línea', en: 'Optimal Online' },
+  
+  // --- NAVEGACIÓN DEDICADA RH ---
+  'nav.rh_group_talent': { es: 'TALENTO HUMANO', en: 'HUMAN TALENT' },
+  'nav.rh_group_attendance': { es: 'ASISTENCIA & TIEMPOS', en: 'ATTENDANCE & TIME' },
+  'nav.rh_group_admin': { es: 'ADMINISTRACIÓN RH', en: 'HR ADMINISTRATION' },
+  'nav.rh_directorio': { es: 'Directorio de Personal', en: 'Staff Directory' },
+  'nav.rh_expedientes': { es: 'Expedientes Digitales', en: 'Digital Records' },
+  'nav.rh_organigrama': { es: 'Organigrama y Puestos', en: 'Org Chart & Positions' },
+  'nav.rh_asistencia': { es: 'Control de Asistencias', en: 'Attendance Tracking' },
+  'nav.rh_incidencias': { es: 'Incidencias & Faltas', en: 'Incidents & Absences' },
+  'nav.rh_vacaciones': { es: 'Vacaciones y Permisos', en: 'Vacations & Leaves' },
+  'nav.rh_contratos': { es: 'Políticas y Contratos', en: 'Policies & Contracts' },
+  'nav.rh_ajustes': { es: 'Configuración RH', en: 'HR Settings' },
 
   // --- HEADER & GLOBAL ---
   'header.search_placeholder': {
@@ -40,8 +55,9 @@ export const translations: Translations = {
   // --- TITULOS DE MÓDULOS EN APP ---
   'app.dashboard_title': { es: 'Panel General Ejecutivo', en: 'Executive General Dashboard' },
   'app.crm_title': { es: 'Módulo CRM & Ventas Industrial', en: 'Industrial CRM & Sales Module' },
-  'app.compras_title': { es: 'Módulo de Compras — Requisición NetSuite', en: 'Purchasing Module — NetSuite Requisition' },
+  'app.compras_title': { es: 'Módulo de Compras — Requisición', en: 'Purchasing Module — Requisition' },
   'app.settings_title': { es: 'Configuración del Sistema', en: 'System Settings' },
+  'app.rh_title': { es: 'Módulo de Recursos Humanos', en: 'Human Resources Module' },
 
   // --- VENTANA DE AJUSTES ---
   'settings.main_title': { es: 'Configuración de la Suite', en: 'Suite Settings' },
@@ -79,7 +95,7 @@ export const translations: Translations = {
   'settings.theme_light_title': { es: 'Modo Claro (Default)', en: 'Light Mode (Default)' },
   'settings.theme_light_desc': { es: 'Superficie blanca limpia con acentos y textos nítidos.', en: 'Clean white surface with crisp accents and typography.' },
   'settings.theme_dark_title': { es: 'Modo Oscuro', en: 'Dark Mode' },
-  'settings.theme_dark_desc': { es: 'Tono grafito industrial (#2E2E2E) para entornos con poca luz.', en: 'Industrial graphite tone (#2E2E2E) for low-light environments.' },
+  'settings.theme_dark_desc': { es: 'Modo oscuro corporativo en neutros fríos para entornos con poca luz.', en: 'Corporate dark mode in cool neutrals for low-light environments.' },
 
   'settings.profile_section_title': { es: 'Información del Operador', en: 'Operator Information' },
   'settings.profile_section_desc': { es: 'Datos de tu cuenta corporativa y credenciales asignadas.', en: 'Your corporate account details and assigned credentials.' },
@@ -104,7 +120,14 @@ export const translations: Translations = {
   'auth.hide_password': { es: 'Ocultar contraseña', en: 'Hide password' },
   'auth.remember_session': { es: 'Recordar sesión en este equipo', en: 'Remember session on this device' },
   'auth.submit_btn': { es: 'Iniciar Sesión', en: 'Sign In' },
-  'auth.demo_divider': { es: 'o entra en modo demostración', en: 'or enter demo mode' },
+  'auth.quick_profile_title': { es: 'Perfiles de Acceso Rápido', en: 'Fast Access Profiles' },
+  'auth.profile_crm': { es: 'CRM & Ventas', en: 'CRM & Sales' },
+  'auth.profile_rh': { es: 'Recursos Humanos', en: 'Human Resources' },
+  'auth.profile_crm_desc': { es: 'crm@sifygsa.com • Director Comercial', en: 'crm@sifygsa.com • Commercial Director' },
+  'auth.profile_rh_desc': { es: 'rh@sifygsa.com • Coordinadora de RH', en: 'rh@sifygsa.com • HR Coordinator' },
+  'auth.login_as_crm': { es: 'Entrar a CRM (crm@sifygsa.com)', en: 'Sign in to CRM (crm@sifygsa.com)' },
+  'auth.login_as_rh': { es: 'Entrar a Recursos Humanos (rh@sifygsa.com)', en: 'Sign in to HR (rh@sifygsa.com)' },
+  'auth.demo_divider': { es: 'o entra con acceso directo', en: 'or enter with fast access' },
   'auth.demo_btn': { es: 'Acceder al Dashboard / Suite Demo', en: 'Access Dashboard / Suite Demo' },
   'auth.footer': { es: 'Todos los derechos reservados.', en: 'All rights reserved.' },
   'auth.error_no_user': { es: 'Por favor ingresa tu usuario o correo corporativo.', en: 'Please enter your username or corporate email.' },
@@ -279,8 +302,15 @@ export const translations: Translations = {
   'rh.contract_indefinite': { es: 'Indefinido', en: 'Indefinite' },
   'rh.status_active': { es: 'Activo', en: 'Active' },
   'rh.status_vacation': { es: 'Vacaciones', en: 'On Vacation' },
-  'rh.status_leave': { es: 'Permiso', en: 'On Leave' },
   'rh.btn_record': { es: 'Expediente', en: 'Record' },
+  'rh.blank_badge': { es: 'Página en Blanco • En preparación', en: 'Blank Page • Under Preparation' },
+  'rh.blank_title': { es: 'Módulo de Recursos Humanos', en: 'Human Resources Module' },
+  'rh.blank_subtitle': { es: 'Lienzo de trabajo inicial para la gestión de colaboradores y talento', en: 'Initial workspace canvas for employee and talent management' },
+  'rh.blank_canvas_title': { es: 'Lienzo de Trabajo — Módulo RH', en: 'Workspace Canvas — HR Module' },
+  'rh.blank_canvas_desc': { es: 'Este espacio de trabajo está preparado para la integración de los nuevos componentes y vistas de Recursos Humanos.', en: 'This workspace is ready for the integration of new Human Resources components and views.' },
+  'rh.blank_access_info': { es: 'Acceso Activo: Coordinación de RH (rh@sifygsa.com)', en: 'Active Access: HR Coordination (rh@sifygsa.com)' },
+  'rh.blank_sidebar_info': { es: 'Barra lateral exclusiva para Recursos Humanos habilitada', en: 'Exclusive Human Resources sidebar enabled' },
+  'rh.blank_palette_info': { es: 'Paleta corporativa RH adaptada en Header, Sidebar y Footer', en: 'Corporate HR palette adapted in Header, Sidebar and Footer' },
 };
 
 interface LanguageContextProps {
@@ -293,13 +323,13 @@ const LanguageContext = createContext<LanguageContextProps | undefined>(undefine
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem('sfg_language');
+    const saved = typeof window !== 'undefined' && typeof window.localStorage?.getItem === 'function' ? window.localStorage.getItem('sfg_language') : null;
     return saved === 'en' ? 'en' : 'es'; // Por defecto Español
   });
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('sfg_language', lang);
+    if (typeof window !== 'undefined' && typeof window.localStorage?.setItem === 'function') window.localStorage.setItem('sfg_language', lang);
     document.documentElement.setAttribute('lang', lang);
   };
 

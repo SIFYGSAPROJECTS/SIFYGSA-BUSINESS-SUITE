@@ -1,21 +1,88 @@
-﻿import React, { useState } from 'react';
-import { IconLogo, IconUser, IconLock, IconEye, IconEyeOff } from '../../../components/ui/Icons';
+'use client';
+
+import React, { useState } from 'react';
+import {
+  IconLogo,
+  IconUser,
+  IconLock,
+  IconEye,
+  IconEyeOff,
+  IconBriefcase,
+  IconUsers,
+} from '../../../components/ui/Icons';
 import { useLanguage } from '../../../context/LanguageContext';
 
-interface LoginFormProps {
-  onLoginSuccess: (user: { name: string; email: string; role: string }) => void;
+export interface UserSessionData {
+  name: string;
+  email: string;
+  role: string;
+  portal?: 'crm' | 'rh';
 }
+
+interface LoginFormProps {
+  onLoginSuccess?: (user: UserSessionData) => void;
+}
+
+export const PRESET_ACCOUNTS = {
+  crm: {
+    name: 'Carlos Mendoza',
+    email: 'crm@sifygsa.com',
+    role: 'Director Comercial & CRM',
+    portal: 'crm' as const,
+    password: '••••••••••••',
+    label: 'CRM & Ventas',
+    sublabel: 'Comercial & Operaciones',
+  },
+  rh: {
+    name: 'Mariana Garza',
+    email: 'rh@sifygsa.com',
+    role: 'Coordinadora de Recursos Humanos',
+    portal: 'rh' as const,
+    password: '••••••••••••',
+    label: 'Recursos Humanos',
+    sublabel: 'Gestión de Talento Humano',
+  },
+  almacen: {
+    name: 'Roberto Méndez Cruz',
+    email: 'almacen@sifygsa.com',
+    role: 'Supervisor de Almacén & SGA',
+    portal: 'almacen' as const,
+    password: '••••••••••••',
+    label: 'Almacén & SGA',
+    sublabel: 'Gestión de Almacén & Suministros',
+  },
+};
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const { t } = useLanguage();
-  const [username, setUsername] = useState('admin@sifygsa.com');
-  const [password, setPassword] = useState('••••••••••••');
+  const [selectedProfile, setSelectedProfile] = useState<'crm' | 'rh' | 'almacen'>('almacen');
+  const [username, setUsername] = useState(PRESET_ACCOUNTS.almacen.email);
+  const [password, setPassword] = useState(PRESET_ACCOUNTS.almacen.password);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSelectProfile = (profile: 'crm' | 'rh' | 'almacen') => {
+    setSelectedProfile(profile);
+    setUsername(PRESET_ACCOUNTS[profile].email);
+    setPassword(PRESET_ACCOUNTS[profile].password);
+    setNotification(null);
+  };
+
+  const handleUsernameChange = (value: string) => {
+    setUsername(value);
+    const lower = value.toLowerCase();
+    if (lower.includes('almacen') || lower.includes('inventario') || lower.includes('sga') || lower.includes('roberto')) {
+      setSelectedProfile('almacen');
+    } else if (lower.includes('rh') || lower.includes('rrhh') || lower.includes('recurso') || lower.includes('talento') || lower.includes('mariana')) {
+      setSelectedProfile('rh');
+    } else if (lower.includes('crm') || lower.includes('ventas') || lower.includes('admin') || lower.includes('carlos')) {
+      setSelectedProfile('crm');
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim()) {
       setNotification(t('auth.error_no_user'));
@@ -29,15 +96,102 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
     setIsLoading(true);
     setNotification(null);
 
-    // Simulación de autenticación
-    setTimeout(() => {
-      setIsLoading(false);
-      onLoginSuccess({
-        name: 'Carlos Mendoza',
-        email: username.includes('@') ? username : `${username}@sifygsa.com`,
-        role: 'Director General (Admin)',
+    const lowerUser = username.trim().toLowerCase();
+    const passwordReal =
+      password === '••••••••••••'
+        ? lowerUser.includes('rh') || lowerUser.includes('rrhh')
+          ? 'RrhhSify2026!'
+          : lowerUser.includes('gerente')
+          ? 'GerenteSify2026!'
+          : lowerUser.includes('vendedor') || lowerUser.includes('ventas')
+          ? 'VentasSify2026!'
+          : lowerUser.includes('compra') || lowerUser.includes('requisicion')
+          ? 'ComprasSify2026!'
+          : lowerUser.includes('almacen') || selectedProfile === 'almacen'
+          ? 'AdminSify2026!'
+          : selectedProfile === 'rh'
+          ? 'RrhhSify2026!'
+          : 'AdminSify2026!'
+        : password;
+
+    try {
+      const respuesta = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          identificador: username.trim(),
+          password: passwordReal,
+        }),
       });
-    }, 600);
+
+      const datos = (await respuesta.json()) as {
+        exito: boolean;
+        error?: string;
+        datos?: {
+          rutaDestino?: string;
+          usuario?: {
+            nombre: string;
+            email: string;
+            rol: string;
+          };
+        };
+      };
+
+      if (!respuesta.ok || !datos.exito) {
+        setNotification(datos.error ?? 'Credenciales inválidas.');
+        setIsLoading(false);
+        return;
+      }
+
+      const isAlmacen =
+        selectedProfile === 'almacen' ||
+        username.toLowerCase().includes('almacen') ||
+        datos.datos?.usuario?.email === 'almacen@sifygsa.com';
+
+      const isRH =
+        !isAlmacen &&
+        (datos.datos?.usuario?.rol === 'rrhh' ||
+        selectedProfile === 'rh' ||
+        username.toLowerCase().includes('rh') ||
+        username.toLowerCase().includes('rrhh'));
+
+      const sessionData: UserSessionData = isRH
+        ? {
+            name: datos.datos?.usuario?.nombre ?? PRESET_ACCOUNTS.rh.name,
+            email: datos.datos?.usuario?.email ?? PRESET_ACCOUNTS.rh.email,
+            role: PRESET_ACCOUNTS.rh.role,
+            portal: 'rh',
+          }
+        : isAlmacen
+        ? {
+            name: datos.datos?.usuario?.nombre ?? PRESET_ACCOUNTS.almacen.name,
+            email: datos.datos?.usuario?.email ?? PRESET_ACCOUNTS.almacen.email,
+            role: PRESET_ACCOUNTS.almacen.role,
+            portal: undefined,
+          }
+        : {
+            name: datos.datos?.usuario?.nombre ?? PRESET_ACCOUNTS.crm.name,
+            email: datos.datos?.usuario?.email ?? PRESET_ACCOUNTS.crm.email,
+            role: PRESET_ACCOUNTS.crm.role,
+            portal: 'crm',
+          };
+
+      if (onLoginSuccess) {
+        onLoginSuccess(sessionData);
+      } else {
+        const destino = isAlmacen
+          ? '/almacen'
+          : isRH
+          ? '/rrhh'
+          : (datos.datos?.rutaDestino || '/');
+        window.location.href = destino;
+        return;
+      }
+    } catch {
+      setNotification('Error de comunicación con el servidor.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleForgotPassword = (e: React.MouseEvent) => {
@@ -46,7 +200,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="login-form-wrapper">
+    <div className={`login-form-wrapper ${selectedProfile === 'rh' ? 'login-rh-theme' : selectedProfile === 'almacen' ? 'login-almacen-theme' : 'login-crm-theme'}`}>
       <div className="login-form-header">
         <div className="login-brand">
           <IconLogo size={42} />
@@ -66,6 +220,103 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
         </div>
       )}
 
+      {/* Selector de Perfiles de Acceso (CRM vs RH) */}
+      <div className="account-selector-container">
+        <span className="selector-title">{t('auth.quick_profile_title')}</span>
+        <div className="account-selector-grid">
+          {/* Tarjeta Cuenta 1: CRM */}
+          <button
+            type="button"
+            className={`account-card account-card-crm ${selectedProfile === 'crm' ? 'active-crm' : ''}`}
+            onClick={() => handleSelectProfile('crm')}
+          >
+            <div className="account-card-header">
+              <div className="account-card-icon-box crm-icon">
+                <IconBriefcase size={16} />
+              </div>
+              <span className="account-badge crm-badge">CRM &amp; Ventas</span>
+            </div>
+            <div className="account-card-body">
+              <strong className="account-email">{PRESET_ACCOUNTS.crm.email}</strong>
+              <span className="account-role">{PRESET_ACCOUNTS.crm.sublabel}</span>
+            </div>
+          </button>
+
+          {/* Tarjeta Cuenta 2: RH */}
+          <button
+            type="button"
+            className={`account-card account-card-rh ${selectedProfile === 'rh' ? 'active-rh' : ''}`}
+            onClick={() => handleSelectProfile('rh')}
+          >
+            <div className="account-card-header">
+              <div className="account-card-icon-box rh-icon">
+                <IconUsers size={16} />
+              </div>
+              <span className="account-badge rh-badge">Recursos Humanos</span>
+            </div>
+            <div className="account-card-body">
+              <strong className="account-email">{PRESET_ACCOUNTS.rh.email}</strong>
+              <span className="account-role">{PRESET_ACCOUNTS.rh.sublabel}</span>
+            </div>
+          </button>
+
+          {/* Tarjeta Cuenta 3: Almacén */}
+          <button
+            type="button"
+            className={`account-card account-card-almacen ${selectedProfile === 'almacen' ? 'active-almacen' : ''}`}
+            onClick={() => handleSelectProfile('almacen')}
+          >
+            <div className="account-card-header">
+              <div className="account-card-icon-box almacen-icon">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
+                  <path d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <span className="account-badge almacen-badge">Almacén &amp; SGA</span>
+            </div>
+            <div className="account-card-body">
+              <strong className="account-email">{PRESET_ACCOUNTS.almacen.email}</strong>
+              <span className="account-role">{PRESET_ACCOUNTS.almacen.sublabel}</span>
+            </div>
+          </button>
+        </div>
+
+        {/* Roles adicionales de prueba (Fase 2: Admin, Gerente, Vendedor, Compras, RRHH) */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.65rem' }}>
+          {[
+            { label: 'Admin', email: 'crm@sifygsa.com', profile: 'crm' as const },
+            { label: 'Gerente', email: 'gerente@sifygsa.com', profile: 'crm' as const },
+            { label: 'Vendedor', email: 'vendedor@sifygsa.com', profile: 'crm' as const },
+            { label: 'Requisiciones', email: 'compras@sifygsa.com', profile: 'crm' as const },
+            { label: 'RRHH', email: 'rh@sifygsa.com', profile: 'rh' as const },
+            { label: 'Almacén', email: 'almacen@sifygsa.com', profile: 'almacen' as const },
+          ].map((rolBtn) => (
+            <button
+              key={rolBtn.email}
+              type="button"
+              onClick={() => {
+                setSelectedProfile(rolBtn.profile);
+                setUsername(rolBtn.email);
+                setPassword('••••••••••••');
+                setNotification(null);
+              }}
+              style={{
+                padding: '0.28rem 0.6rem',
+                fontSize: '0.73rem',
+                fontWeight: 700,
+                borderRadius: 'var(--radius-control)',
+                border: '1px solid var(--border)',
+                backgroundColor: username === rolBtn.email ? 'var(--primary)' : 'var(--surface-alt)',
+                color: username === rolBtn.email ? 'var(--on-primary)' : 'var(--text-secondary)',
+                cursor: 'pointer',
+              }}
+            >
+              {rolBtn.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <form className="login-form" onSubmit={handleSubmit}>
         {/* Campo Usuario */}
         <div className="form-group">
@@ -82,10 +333,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
               className="form-input"
               placeholder={t('auth.username_placeholder')}
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => handleUsernameChange(e.target.value)}
               required
               autoComplete="username"
             />
+            {selectedProfile === 'rh' ? (
+              <span className="input-role-tag rh-tag">Modo RH</span>
+            ) : selectedProfile === 'almacen' ? (
+              <span className="input-role-tag almacen-tag">Modo Almacén</span>
+            ) : (
+              <span className="input-role-tag crm-tag">Modo CRM</span>
+            )}
           </div>
         </div>
 
@@ -141,36 +399,28 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
           </label>
         </div>
 
-        {/* Botón Iniciar Sesión */}
+        {/* Botón Iniciar Sesión dinámico con el color del perfil */}
         <button
           type="submit"
-          className="btn-submit"
+          className={`btn-submit ${
+            selectedProfile === 'rh'
+              ? 'btn-submit-rh'
+              : selectedProfile === 'almacen'
+              ? 'btn-submit-almacen'
+              : 'btn-submit-crm'
+          }`}
           disabled={isLoading}
         >
           {isLoading ? (
             <span className="btn-loading-spinner" />
+          ) : selectedProfile === 'rh' ? (
+            t('auth.login_as_rh')
+          ) : selectedProfile === 'almacen' ? (
+            'Entrar a Almacén & SGA'
           ) : (
-            t('auth.submit_btn')
+            t('auth.login_as_crm')
           )}
         </button>
-
-        {/* Demo Fast Access */}
-        <div className="demo-access-container">
-          <span className="divider-text">{t('auth.demo_divider')}</span>
-          <button
-            type="button"
-            className="btn-demo"
-            onClick={() =>
-              onLoginSuccess({
-                name: 'Carlos Mendoza',
-                email: 'admin@sifygsa.com',
-                role: 'Director General (Admin)',
-              })
-            }
-          >
-            {t('auth.demo_btn')}
-          </button>
-        </div>
       </form>
 
       <footer className="login-form-footer">
@@ -178,4 +428,4 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
       </footer>
     </div>
   );
-};
+};

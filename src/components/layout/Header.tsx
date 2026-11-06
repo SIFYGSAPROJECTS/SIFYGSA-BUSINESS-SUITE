@@ -1,17 +1,22 @@
+'use client';
+
 import React, { useState, useRef, useEffect } from 'react';
-import { IconMenu, IconSearch, IconBell, IconLogOut, IconSettings, IconUser } from '../ui/Icons';
+import { IconSearch, IconBell, IconLogOut, IconSettings, IconUser } from '../ui/Icons';
 import { SfgLogoSymbol } from '../ui/Logo';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
 
 interface HeaderProps {
   currentModuleTitle?: string;
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
   onLogout: () => void;
+  onSelectModule?: (moduleId: string, subItemId?: string) => void;
   user?: {
     name: string;
     email: string;
     role: string;
+    portal?: 'crm' | 'rh' | 'almacen';
   };
 }
 
@@ -19,35 +24,24 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleSidebar,
   isSidebarOpen = false,
   onLogout,
+  onSelectModule,
   user = {
-    name: 'Jared S.',
-    email: 'jared.s@sifygsa.com',
-    role: 'Safety Director',
+    name: 'Carlos Mendoza',
+    email: 'crm@sifygsa.com',
+    role: 'Director Comercial & CRM',
+    portal: 'crm',
   },
 }) => {
   const { t } = useLanguage();
+  const { isDarkMode, toggleTheme } = useTheme();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    return localStorage.getItem('sfg_theme') === 'dark';
-  });
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Sincronizar tema con el DOM y localStorage
-  useEffect(() => {
-    document.body.removeAttribute('data-theme');
-    if (isDarkMode) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      document.body.classList.remove('light-mode');
-      localStorage.setItem('sfg_theme', 'dark');
-    } else {
-      document.documentElement.setAttribute('data-theme', 'light');
-      document.body.classList.add('light-mode');
-      localStorage.setItem('sfg_theme', 'light');
-    }
-  }, [isDarkMode]);
-
-  const toggleTheme = () => {
-    setIsDarkMode((prev) => !prev);
+  const getInitials = (name?: string) => {
+    if (!name) return 'SF';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.slice(0, 2).toUpperCase();
   };
 
   useEffect(() => {
@@ -92,41 +86,41 @@ export const Header: React.FC<HeaderProps> = ({
                   fontSize: '1.18rem',
                   fontWeight: 900,
                   letterSpacing: '0.05em',
-                  color: isDarkMode ? '#FFFFFF' : '#0F172A',
+                  color: 'var(--text-primary)',
                   transition: 'color 0.2s ease',
                 }}
               >
                 SIFYGSA
               </span>
               <span
-                className="brand-tag-enterprise"
+                className={`brand-tag-enterprise ${user?.portal === 'rh' ? 'brand-tag-rh' : user?.portal === 'almacen' ? 'brand-tag-almacen' : ''}`}
                 style={{
                   fontSize: '0.68rem',
                   fontWeight: 800,
-                  color: '#FFFFFF',
-                  backgroundColor: '#EA580C',
+                  color: 'var(--on-primary)',
+                  backgroundColor: 'var(--primary)',
                   padding: '0.15rem 0.45rem',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--radius-control)',
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  boxShadow: '0 1px 3px rgba(234, 88, 12, 0.35)',
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
-                SUITE
+                {user?.portal === 'rh' ? 'RH SUITE' : user?.portal === 'almacen' ? 'ALMACÉN SGA' : 'SUITE'}
               </span>
             </div>
             <span
-              className="brand-subtitle-text"
+              className={`brand-subtitle-text ${user?.portal === 'rh' ? 'rh-subtitle' : user?.portal === 'almacen' ? 'almacen-subtitle' : ''}`}
               style={{
                 fontSize: '0.62rem',
                 fontWeight: 700,
-                color: isDarkMode ? '#94A3B8' : '#475569',
+                color: 'var(--text-secondary)',
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 transition: 'color 0.2s ease',
               }}
             >
-              Business Platform
+              {user?.portal === 'rh' ? 'Talento Humano' : user?.portal === 'almacen' ? 'Gestión de Almacén' : 'Business Platform'}
             </span>
           </div>
         </div>
@@ -151,11 +145,12 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           className="header-tool-btn"
           aria-label={isDarkMode ? t('header.change_to_light') : t('header.change_to_dark')}
+          aria-pressed={isDarkMode}
           title={isDarkMode ? t('header.change_to_light') : t('header.change_to_dark')}
           onClick={toggleTheme}
+          suppressHydrationWarning
         >
           {isDarkMode ? (
-            /* Icono Sol (para pasar a Modo Claro) */
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
@@ -179,7 +174,6 @@ export const Header: React.FC<HeaderProps> = ({
               <path d="M12 20v2" />
             </svg>
           ) : (
-            /* Icono Luna (para pasar a Modo Oscuro) */
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
@@ -219,8 +213,8 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
             aria-expanded={isUserMenuOpen}
           >
-            <div className="user-avatar-podium-ring">
-              <div className="user-avatar-inner">JS</div>
+            <div className={`user-avatar-podium-ring ${user?.portal === 'rh' ? 'rh-podium' : ''}`}>
+              <div className="user-avatar-inner">{getInitials(user?.name)}</div>
             </div>
             <div className="user-meta-info">
               <span className="user-display-name">{user.name}</span>
@@ -240,7 +234,10 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 className="dialog-menu-item"
-                onClick={() => setIsUserMenuOpen(false)}
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  onSelectModule?.('settings');
+                }}
               >
                 <IconUser size={15} />
                 <span>Perfil</span>
@@ -249,7 +246,10 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 className="dialog-menu-item"
-                onClick={() => setIsUserMenuOpen(false)}
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  onSelectModule?.('settings');
+                }}
               >
                 <IconSettings size={15} />
                 <span>{t('nav.settings')}</span>

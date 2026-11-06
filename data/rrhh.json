@@ -1,0 +1,234 @@
+{
+  "empleados": [
+    {
+      "id": "emp_001",
+      "numeroEmpleado": "SFG-0001",
+      "nombre": "Mtra. Sofía Morales Ruiz",
+      "email": "sofia.morales@sifygsa.com",
+      "telefono": "+52 922 145 8890",
+      "area": "Seguridad Industrial & SIL-3",
+      "puesto": "Coordinadora de Seguridad F&G",
+      "sede": "Refinería Minatitlán",
+      "fechaIngreso": "2022-09-12",
+      "estado": "activo",
+      "certificacionStps": "DC-3 Vigente SIL-3",
+      "salarioMensual": 48500,
+      "rfc": "MORS900722AB1",
+      "nss": "44908812345",
+      "cuentaClabe": "012180001928374651",
+      "contactoEmergencia": "Pedro Morales (Esposo) • +52 922 100 2233"
+    },
+    {
+      "id": "emp_002",
+      "numeroEmpleado": "SFG-0002",
+      "nombre": "Ing. Carlos Hernández",
+      "email": "carlos.hernandez@sifygsa.com",
+      "telefono": "+52 921 234 5678",
+      "area": "Instrumentación & Fire/Gas",
+      "puesto": "Especialista en Detección H2S / LEL",
+      "sede": "Base Mapachapa",
+      "fechaIngreso": "2023-09-18",
+      "estado": "activo",
+      "certificacionStps": "DC-3 Vigente",
+      "salarioMensual": 38000,
+      "rfc": "HECA881103QR9",
+      "nss": "44887765432",
+      "cuentaClabe": "072180005544332211",
+      "contactoEmergencia": "Laura Hernández (Hermana) • +52 921 987 6543"
+    },
+    {
+      "id": "emp_003",
+      "numeroEmpleado": "SFG-0003",
+      "nombre": "Téc. Roberto Silva Alor",
+      "email": "roberto.silva@sifygsa.com",
+      "telefono": "+52 922 345 6712",
+      "area": "Instrumentación & Fire/Gas",
+      "puesto": "Supervisor de Instrumentación SCADA",
+      "sede": "Refinería Minatitlán",
+      "fechaIngreso": "2024-09-05",
+      "estado": "activo",
+      "certificacionStps": "Por Renovar DC-3",
+      "salarioMensual": 34200,
+      "rfc": "SIAR930418HN4",
+      "nss": "44931122334",
+      "cuentaClabe": "002180009988776655",
+      "contactoEmergencia": "Elena Alor (Madre) • +52 922 456 7890"
+    },
+    {
+      "id": "emp_004",
+      "numeroEmpleado": "SFG-0004",
+      "nombre": "Lic. Mariana Garza",
+      "email": "rrhh@sifygsa.com",
+      "telefono": "+52 81 1234 5678",
+      "area": "Capital Humano",
+      "puesto": "Coordinadora de Recursos Humanos",
+      "sede": "Monterrey HQ",
+      "fechaIngreso": "2021-03-15",
+      "estado": "activo",
+      "certificacionStps": "Administrativo",
+      "salarioMensual": 42000,
+      "rfc": "GAMA910510KL2",
+      "nss": "44915566778",
+      "cuentaClabe": "014180003344556677",
+      "contactoEmergencia": "Andrés Garza (Padre) • +52 81 8765 4321"
+    }
+  ],
+  "puestos": [
+    {
+      "id": "pto_001",
+      "area": "Seguridad Industrial & SIL-3",
+      "puesto": "Coordinador(a) de Seguridad F&G",
+      "nivelJerarquico": "Coordinación",
+      "plazasAutorizadas": 2,
+      "plazasOcupadas": 2,
+      "requiereSil3": true
+    },
+    {
+      "id": "pto_002",
+      "area": "Instrumentación & Fire/Gas",
+      "puesto": "Especialista en Detección H2S / LEL",
+      "nivelJerarquico": "Operativo",
+      "plazasAutorizadas": 8,
+      "plazasOcupadas": 6,
+      "requiereSil3": true
+    },
+    {
+      "id": "pto_003",
+      "area": "Instrumentación & Fire/Gas",
+      "puesto": "Supervisor de Instrumentación SCADA",
+      "nivelJerarquico": "Supervisión",
+      "plazasAutorizadas": 4,
+      "plazasOcupadas": 4,
+      "requiereSil3": true
+    },
+    {
+      "id": "pto_004",
+      "area": "Capital Humano",
+      "puesto": "Coordinador(a) de Recursos Humanos",
+      "nivelJerarquico": "Coordinación",
+      "plazasAutorizadas": 2,
+      "plazasOcupadas": 2,
+      "requiereSil3": false
+    }
+  ],
+  "asistencias": [
+    {
+      "id": "asi_001",
+      "empleadoId": "emp_001",
+      "empleadoNombre": "Mtra. Sofía Morales Ruiz",
+      "fecha": "2026-10-27",
+      "horaEntrada": "07:55",
+      "horaSalida": "17:10",
+      "horasTrabajadas": 9.25,
+      "estatus": "presente",
+      "sede": "Refinería Minatitlán"
+    },
+    {
+      "id": "asi_002",
+      "empleadoId": "emp_002",
+      "empleadoNombre": "Ing. Carlos Hernández",
+      "fecha": "2026-10-27",
+      "horaEntrada": "07:50",
+      "horaSalida": "17:05",
+      "horasTrabajadas": 9.25,
+      "estatus": "presente",
+      "sede": "Base Mapachapa"
+    },
+    {
+      "id": "asi_003",
+      "empleadoId": "emp_003",
+      "empleadoNombre": "Téc. Roberto Silva Alor",
+      "fecha": "2026-10-27",
+      "horaEntrada": "08:25",
+      "horaSalida": "17:00",
+      "horasTrabajadas": 8.5,
+      "estatus": "retardo",
+      "sede": "Refinería Minatitlán"
+    }
+  ],
+  "vacacionesPermisos": [
+    {
+      "id": "vac_001",
+      "empleadoId": "emp_002",
+      "empleadoNombre": "Ing. Carlos Hernández",
+      "tipo": "vacaciones",
+      "fechaInicio": "2026-11-16",
+      "fechaFin": "2026-11-23",
+      "dias": 6,
+      "motivo": "Periodo vacacional anual posterior a paro de planta.",
+      "estado": "pendiente"
+    },
+    {
+      "id": "vac_002",
+      "empleadoId": "emp_001",
+      "empleadoNombre": "Mtra. Sofía Morales Ruiz",
+      "tipo": "dia_economico",
+      "fechaInicio": "2026-10-15",
+      "fechaFin": "2026-10-15",
+      "dias": 1,
+      "motivo": "Trámite de renovación de licencia federal.",
+      "estado": "aprobada",
+      "aprobadoPor": "Lic. Mariana Garza"
+    }
+  ],
+  "incidencias": [
+    {
+      "id": "inc_001",
+      "empleadoId": "emp_003",
+      "empleadoNombre": "Téc. Roberto Silva Alor",
+      "fecha": "2026-10-26",
+      "tipo": "vencimiento_dc3",
+      "severidad": "alta",
+      "descripcion": "Certificado STPS DC-3 de Espacios Confinados H2S próximo a vencer en 10 días.",
+      "atendida": false
+    },
+    {
+      "id": "inc_002",
+      "empleadoId": "emp_001",
+      "empleadoNombre": "Mtra. Sofía Morales Ruiz",
+      "fecha": "2026-10-22",
+      "tipo": "reconocimiento_desempeno",
+      "severidad": "baja",
+      "descripcion": "Liderazgo sobresaliente en auditoría cero accidentes en Refinería Minatitlán.",
+      "atendida": true
+    }
+  ],
+  "nomina": [
+    {
+      "id": "nom_001",
+      "empleadoId": "emp_001",
+      "empleadoNombre": "Mtra. Sofía Morales Ruiz",
+      "periodo": "2026-10 (Quincena 2)",
+      "sueldoBase": 24250,
+      "bonoCampo": 3500,
+      "deduccionesIsrImss": 4820,
+      "netoPagar": 22930,
+      "estatus": "dispersada",
+      "fechaPago": "2026-10-30"
+    },
+    {
+      "id": "nom_002",
+      "empleadoId": "emp_002",
+      "empleadoNombre": "Ing. Carlos Hernández",
+      "periodo": "2026-10 (Quincena 2)",
+      "sueldoBase": 19000,
+      "bonoCampo": 2800,
+      "deduccionesIsrImss": 3650,
+      "netoPagar": 18150,
+      "estatus": "dispersada",
+      "fechaPago": "2026-10-30"
+    },
+    {
+      "id": "nom_003",
+      "empleadoId": "emp_003",
+      "empleadoNombre": "Téc. Roberto Silva Alor",
+      "periodo": "2026-10 (Quincena 2)",
+      "sueldoBase": 17100,
+      "bonoCampo": 1500,
+      "deduccionesIsrImss": 3120,
+      "netoPagar": 15480,
+      "estatus": "pendiente",
+      "fechaPago": "2026-10-30"
+    }
+  ]
+}

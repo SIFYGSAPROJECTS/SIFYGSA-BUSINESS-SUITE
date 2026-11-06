@@ -1,0 +1,370 @@
+[
+  {
+    "id": "req_1793123538771",
+    "folio": "SFG-ADM-INFRA-RQ-85/26",
+    "contrato": "ADM-INFRA",
+    "tipoCompra": "RQ - Requisición Operativa",
+    "subsidiaria": "SIFYGSA",
+    "departamento": "02 - Mantenimiento e Infraestructura",
+    "ubicacionAlmacen": "ALM-CENTRAL-MAPACHAPA",
+    "comprador": "— Seleccionar Comprador Asignado —",
+    "lugarEntrega": "Base de Operaciones Mapachapa / Refinería Tula",
+    "estadoDocumento": "A Revisar",
+    "solicitanteId": "usr_admin",
+    "solicitante": "Carlos Mendoza",
+    "area": "Operaciones & Logística",
+    "descripcion": "Base de Operaciones Mapachapa / Refinería Tula",
+    "prioridad": "critica",
+    "estado": "solicitud",
+    "justificacion": "Suministro urgente para instrumentación SIL-3",
+    "fechaCreacion": "2026-10-27T17:52:18.771Z",
+    "fechaRequerida": "2026-09-21",
+    "partidas": [
+      {
+        "codigoArticulo": "DET-GAS-IR-042 SIL-3",
+        "nombreProveedor": "DET-TRONICS / HONEYWELL FIRE & GAS",
+        "codigoProveedor": "PROV-DETRONICS-MX",
+        "disponible": 14,
+        "detalleInventario": "SERIE-EXP-2026-SIL3",
+        "descripcion": "Detector Óptico Infrarrojo de Gas CH4/H2S con display SIL-2/3",
+        "cantidad": 2,
+        "unidad": "PZA",
+        "precioUnitario": 48250,
+        "clienteTrabajo": "PEMEX-INFRA-REFINERIA",
+        "activityCode": "ACT-INST-09",
+        "fechaRecibo": "21/09/2026",
+        "id": "part_1793123538771_0",
+        "subtotal": 96500
+      }
+    ],
+    "subtotal": 96500,
+    "iva": 15440,
+    "total": 111940,
+    "nivelAprobacionRequerido": "nivel_2_gerencia",
+    "historial": [
+      {
+        "id": "hist_1793123538771",
+        "fecha": "2026-10-27T17:52:18.771Z",
+        "estadoAnterior": null,
+        "estadoNuevo": "solicitud",
+        "usuarioNombre": "Carlos Mendoza",
+        "rolUsuario": "administrador",
+        "comentario": "Creación y registro inicial de la requisición SFG-ADM-INFRA-RQ-85/26. Notificado a Revisión (Compras y Gerencia)."
+      }
+    ],
+    "bitacoraNetSuite": [
+      {
+        "id": "ns_1793123538771_1",
+        "fecha": "2026-10-27T17:52:18.771Z",
+        "usuarioNombre": "Carlos Mendoza",
+        "rolUsuario": "administrador",
+        "contexto": "UI — SIFYGSA Requisición (Oracle NetSuite)",
+        "tipoOperacion": "Creación",
+        "campo": "Requisición Nº (Transacción)",
+        "valorAnterior": "—",
+        "valorNuevo": "SFG-ADM-INFRA-RQ-85/26"
+      },
+      {
+        "id": "ns_1793123538771_2",
+        "fecha": "2026-10-27T17:52:18.771Z",
+        "usuarioNombre": "Carlos Mendoza",
+        "rolUsuario": "administrador",
+        "contexto": "UI — SIFYGSA Requisición (Oracle NetSuite)",
+        "tipoOperacion": "Creación",
+        "campo": "Importe Total (IVA 16% inc.)",
+        "valorAnterior": "$0.00 MXN",
+        "valorNuevo": "$111,940.00 MXN (1 partida(s))"
+      },
+      {
+        "id": "ns_1793123538771_3",
+        "fecha": "2026-10-27T17:52:18.771Z",
+        "usuarioNombre": "Carlos Mendoza",
+        "rolUsuario": "administrador",
+        "contexto": "UI — SIFYGSA Requisición (Oracle NetSuite)",
+        "tipoOperacion": "Creación",
+        "campo": "Estado de Aprobación",
+        "valorAnterior": "—",
+        "valorNuevo": "1. Solicitud"
+      }
+    ]
+  },
+  {
+    "id": "req_001",
+    "folio": "REQ-2026-0081",
+    "contrato": "PEMEX-MINA-SIL3-26",
+    "solicitanteId": "usr_requisiciones",
+    "solicitante": "Pablo Vázquez Culebro",
+    "area": "Instrumentación & Fire/Gas",
+    "descripcion": "Suministro de detectores ópticos infrarrojos CH4/H2S SIL-3",
+    "prioridad": "critica",
+    "estado": "aprobacion",
+    "justificacion": "Suministro urgente de detectores ópticos infrarrojos CH4/H2S con display SIL-3 para Refinería Minatitlán.",
+    "fechaCreacion": "2026-10-24T09:15:00.000Z",
+    "fechaRequerida": "2026-11-05",
+    "partidas": [
+      {
+        "id": "part_001",
+        "codigoArticulo": "DET-GAS-IR-042",
+        "descripcion": "Detector Óptico Infrarrojo de Gas CH4/H2S SIL-3 Det-Tronics",
+        "cantidad": 2,
+        "unidad": "PZA",
+        "precioUnitario": 48250,
+        "subtotal": 96500
+      },
+      {
+        "id": "part_002",
+        "codigoArticulo": "SNSR-CAL-H2S",
+        "descripcion": "Cilindro patrón de calibración certificada H2S 50 ppm",
+        "cantidad": 4,
+        "unidad": "PZA",
+        "precioUnitario": 6800,
+        "subtotal": 27200
+      }
+    ],
+    "subtotal": 123700,
+    "iva": 19792,
+    "total": 143492,
+    "nivelAprobacionRequerido": "nivel_2_gerencia",
+    "historial": [
+      {
+        "id": "hist_001",
+        "fecha": "2026-10-24T09:15:00.000Z",
+        "estadoAnterior": null,
+        "estadoNuevo": "solicitud",
+        "usuarioNombre": "Pablo Vázquez Culebro",
+        "rolUsuario": "requisiciones",
+        "comentario": "Solicitud inicial creada con partidas críticas de instrumentación."
+      },
+      {
+        "id": "hist_002",
+        "fecha": "2026-10-25T11:20:00.000Z",
+        "estadoAnterior": "solicitud",
+        "estadoNuevo": "revision",
+        "usuarioNombre": "Pablo Vázquez Culebro",
+        "rolUsuario": "requisiciones",
+        "comentario": "Validación técnica de números de parte y disponibilidad con proveedor."
+      },
+      {
+        "id": "hist_003",
+        "fecha": "2026-10-26T10:00:00.000Z",
+        "estadoAnterior": "revision",
+        "estadoNuevo": "aprobacion",
+        "usuarioNombre": "Pablo Vázquez Culebro",
+        "rolUsuario": "requisiciones",
+        "comentario": "Enviada a aprobación Nivel 2 Gerencia por monto superior a $50,000 MXN."
+      }
+    ]
+  },
+  {
+    "id": "req_002",
+    "folio": "REQ-2026-0082",
+    "contrato": "ADM-SEGURIDAD-CAMPO",
+    "solicitanteId": "usr_rrhh",
+    "solicitante": "Mariana Garza",
+    "area": "Operaciones & Logística",
+    "descripcion": "Base de Operaciones Mapachapa / Refinería Tula",
+    "prioridad": "alta",
+    "estado": "revision",
+    "justificacion": "Renovación de equipo de protección personal ignífugo para cuadrilla Alfa en Base Mapachapa.",
+    "fechaCreacion": "2026-10-25T14:00:00.000Z",
+    "fechaRequerida": "2026-11-08",
+    "partidas": [
+      {
+        "codigoArticulo": "EPP-OVEROL-NOMEX",
+        "nombreProveedor": "DET-TRONICS / HONEYWELL FIRE & GAS",
+        "codigoProveedor": "PROV-DETRONICS-MX",
+        "disponible": 14,
+        "detalleInventario": "SERIE-EXP-2026-SIL3",
+        "descripcion": "Overol ignífugo certificado NFPA 2112 talla L",
+        "cantidad": 12,
+        "unidad": "PZA",
+        "precioUnitario": 2200,
+        "clienteTrabajo": "PEMEX-INFRA-REFINERIA",
+        "activityCode": "ACT-INST-01",
+        "fechaRecibo": "2026-11-08",
+        "id": "part_1793124958841_0",
+        "subtotal": 26400
+      },
+      {
+        "codigoArticulo": "SNSR-CH4-OPT-2",
+        "nombreProveedor": "HONEYWELL ANALYTICS PEMEX",
+        "codigoProveedor": "PROV-HONEYWELL-01",
+        "disponible": 8,
+        "detalleInventario": "INV-DET-TULA",
+        "descripcion": "Sensor electroquímico de calibración rápida rango 0-100 ppm",
+        "cantidad": 1,
+        "unidad": "PZA",
+        "precioUnitario": 24500,
+        "clienteTrabajo": "PEMEX-INFRA-REFINERIA",
+        "activityCode": "ACT-INST-10",
+        "fechaRecibo": "25/09/2026",
+        "id": "part_1793124958841_1",
+        "subtotal": 24500
+      }
+    ],
+    "subtotal": 50900,
+    "iva": 8144,
+    "total": 59044,
+    "nivelAprobacionRequerido": "nivel_2_gerencia",
+    "historial": [
+      {
+        "id": "hist_1793124958842",
+        "fecha": "2026-10-27T18:15:58.841Z",
+        "estadoAnterior": "revision",
+        "estadoNuevo": "revision",
+        "usuarioNombre": "Carlos Mendoza",
+        "rolUsuario": "administrador",
+        "comentario": "Actualización en formulario NetSuite (Comprador Asignado: \"—\" → \"— Seleccionar Comprador Asignado —\"; Lugar de Entrega: \"—\" → \"Base de Operaciones Mapachapa / Refinería Tula\"; Líneas de Artículos / Importe Total: \"$...)"
+      },
+      {
+        "id": "hist_004",
+        "fecha": "2026-10-25T14:00:00.000Z",
+        "estadoAnterior": null,
+        "estadoNuevo": "solicitud",
+        "usuarioNombre": "Mariana Garza",
+        "rolUsuario": "rrhh",
+        "comentario": "Alta de requisición de EPP para brigada de campo."
+      },
+      {
+        "id": "hist_005",
+        "fecha": "2026-10-26T08:45:00.000Z",
+        "estadoAnterior": "solicitud",
+        "estadoNuevo": "revision",
+        "usuarioNombre": "Pablo Vázquez Culebro",
+        "rolUsuario": "requisiciones",
+        "comentario": "En revisión de tallas y existencias en almacén central."
+      }
+    ],
+    "tipoCompra": "RQ - Requisición Operativa",
+    "subsidiaria": "SIFYGSA",
+    "departamento": "02 - Operaciones & Logística",
+    "ubicacionAlmacen": "ALM-CENTRAL-MAPACHAPA",
+    "comprador": "— Seleccionar Comprador Asignado —",
+    "lugarEntrega": "Base de Operaciones Mapachapa / Refinería Tula",
+    "estadoDocumento": "A Revisar",
+    "bitacoraNetSuite": [
+      {
+        "id": "ns_1793124958841_1",
+        "fecha": "2026-10-27T18:15:58.841Z",
+        "usuarioNombre": "Carlos Mendoza",
+        "rolUsuario": "administrador",
+        "contexto": "UI — SIFYGSA Requisición (Oracle NetSuite)",
+        "tipoOperacion": "Modificación",
+        "campo": "Comprador Asignado",
+        "valorAnterior": "—",
+        "valorNuevo": "— Seleccionar Comprador Asignado —"
+      },
+      {
+        "id": "ns_1793124958841_2",
+        "fecha": "2026-10-27T18:15:58.841Z",
+        "usuarioNombre": "Carlos Mendoza",
+        "rolUsuario": "administrador",
+        "contexto": "UI — SIFYGSA Requisición (Oracle NetSuite)",
+        "tipoOperacion": "Modificación",
+        "campo": "Lugar de Entrega",
+        "valorAnterior": "—",
+        "valorNuevo": "Base de Operaciones Mapachapa / Refinería Tula"
+      },
+      {
+        "id": "ns_1793124958842_3",
+        "fecha": "2026-10-27T18:15:58.841Z",
+        "usuarioNombre": "Carlos Mendoza",
+        "rolUsuario": "administrador",
+        "contexto": "UI — SIFYGSA Requisición (Oracle NetSuite)",
+        "tipoOperacion": "Modificación",
+        "campo": "Líneas de Artículos / Importe Total",
+        "valorAnterior": "$38,280.00 MXN (1 línea(s))",
+        "valorNuevo": "$59,044.00 MXN (2 línea(s))"
+      }
+    ]
+  },
+  {
+    "id": "req_003",
+    "folio": "REQ-2026-0083",
+    "contrato": "CORP-TI-DESARROLLO",
+    "solicitanteId": "usr_admin",
+    "solicitante": "Carlos Mendoza",
+    "area": "Tecnología & Sistemas",
+    "descripcion": "Infraestructura de servidores de telemetría redundantes SCADA",
+    "prioridad": "normal",
+    "estado": "atencion",
+    "justificacion": "Servidores de telemetría redundantes para monitoreo remoto Modbus/SCADA.",
+    "fechaCreacion": "2026-10-18T10:30:00.000Z",
+    "fechaRequerida": "2026-11-12",
+    "partidas": [
+      {
+        "id": "part_004",
+        "codigoArticulo": "SRV-RACK-SCADA-01",
+        "descripcion": "Servidor Rack Industrial Dual Xeon 64GB RAM RAID-10",
+        "cantidad": 2,
+        "unidad": "PZA",
+        "precioUnitario": 125000,
+        "subtotal": 250000
+      }
+    ],
+    "subtotal": 250000,
+    "iva": 40000,
+    "total": 290000,
+    "nivelAprobacionRequerido": "nivel_3_direccion",
+    "historial": [
+      {
+        "id": "hist_006",
+        "fecha": "2026-10-18T10:30:00.000Z",
+        "estadoAnterior": null,
+        "estadoNuevo": "solicitud",
+        "usuarioNombre": "Carlos Mendoza",
+        "rolUsuario": "administrador",
+        "comentario": "Requisición de infraestructura crítica SCADA."
+      },
+      {
+        "id": "hist_007",
+        "fecha": "2026-10-20T16:00:00.000Z",
+        "estadoAnterior": "aprobacion",
+        "estadoNuevo": "atencion",
+        "usuarioNombre": "Carlos Mendoza",
+        "rolUsuario": "administrador",
+        "comentario": "Aprobada en Nivel 3 Dirección General; orden de compra emitida."
+      }
+    ]
+  },
+  {
+    "id": "req_004",
+    "folio": "REQ-2026-0084",
+    "contrato": "COM-DEMO-GAS-ISTMO",
+    "solicitanteId": "usr_vendedor",
+    "solicitante": "Diego Ramírez Vega",
+    "area": "Dirección Comercial",
+    "descripcion": "Maletín demostrativo de calibración y detección portátil H2S",
+    "prioridad": "alta",
+    "estado": "solicitud",
+    "justificacion": "Equipo portátil requerido para pruebas técnicas en sitio con clientes de la Zona Istmo.",
+    "fechaCreacion": "2026-10-26T15:10:00.000Z",
+    "fechaRequerida": "2026-11-10",
+    "partidas": [
+      {
+        "id": "part_005",
+        "codigoArticulo": "KIT-DEMO-BW-01",
+        "descripcion": "Detector portátil multigas Honeywell BW Ultra + Kit de prueba",
+        "cantidad": 1,
+        "unidad": "KIT",
+        "precioUnitario": 24500,
+        "subtotal": 24500
+      }
+    ],
+    "subtotal": 24500,
+    "iva": 3920,
+    "total": 28420,
+    "nivelAprobacionRequerido": "nivel_1_compras",
+    "historial": [
+      {
+        "id": "hist_008",
+        "fecha": "2026-10-26T15:10:00.000Z",
+        "estadoAnterior": null,
+        "estadoNuevo": "solicitud",
+        "usuarioNombre": "Diego Ramírez Vega",
+        "rolUsuario": "vendedor",
+        "comentario": "Creación de solicitud comercial para demostraciones en campo."
+      }
+    ]
+  }
+]
