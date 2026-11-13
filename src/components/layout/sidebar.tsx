@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import type { RolUsuario } from '@/config/types';
-import { obtenerSubItemsPermitidosModulo } from '@/modules/registry';
-import { IconChevronDown, IconChevronRight, IconClose, IconUsers, IconAlmacen } from '../ui/Icons';
+import { obtenerSubItemsPermitidosModulo, type SubItemModulo } from '@/modules/registry';
+import { IconChevronRight, IconClose, IconShieldCheck } from '../ui/Icons';
 import { SfgLogoSymbol } from '../ui/Logo';
 import { useLanguage } from '../../context/LanguageContext';
 import { SubsidebarFavoritos } from './subsidebarFavoritos';
+
+type CrmSidebarModuleKey = 'crm' | 'compras' | 'admin';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -21,6 +23,54 @@ interface SidebarProps {
   rolUsuario?: RolUsuario;
 }
 
+interface ModuleConfig {
+  key: CrmSidebarModuleKey;
+  title: string;
+  titleEn: string;
+  subItems: SubItemModulo[];
+  activeCollapsedClass: string;
+}
+
+function renderModuleIcon(key: CrmSidebarModuleKey, size: number = 16) {
+  if (key === 'crm') {
+    return (
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+        style={{ width: size, height: size }}
+      >
+        <path
+          d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+  if (key === 'compras') {
+    return (
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+        style={{ width: size, height: size }}
+      >
+        <path
+          d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+  return <IconShieldCheck size={size} />;
+}
+
 export const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed,
   isMobileOpen = false,
@@ -32,16 +82,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   rolUsuario = 'administrador',
 }) => {
   const { language, t } = useLanguage();
-  const [openSection1, setOpenSection1] = useState(true);
-  const [openSection2, setOpenSection2] = useState(true);
-  const [openSectionRh, setOpenSectionRh] = useState(true);
-  const [openSection3, setOpenSection3] = useState(true);
-  const [openSectionAlmacen, setOpenSectionAlmacen] = useState(true);
 
   const subItemsCrm = obtenerSubItemsPermitidosModulo('crm', rolUsuario);
   const subItemsRequisiciones = obtenerSubItemsPermitidosModulo('requisiciones', rolUsuario);
-  const subItemsRrhh = obtenerSubItemsPermitidosModulo('rrhh', rolUsuario);
-  const subItemsAlmacen = obtenerSubItemsPermitidosModulo('almacen', rolUsuario);
   const subItemsAdmin = obtenerSubItemsPermitidosModulo('admin', rolUsuario);
 
   const subItemInicialCompras =
@@ -76,21 +119,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return activeSubItemId === idSubItem;
   };
 
-  const esSubItemRrhhActivo = (idSubItem: string): boolean => {
-    if (activeModuleId !== 'rh' && activeModuleId !== 'rrhh') return false;
-    if (!activeSubItemId || activeSubItemId === 'rh-directorio') {
-      return idSubItem === 'rrhh-panel';
-    }
-    return activeSubItemId === idSubItem;
+  const esSubItemAdminActivo = (idSubItem: string): boolean => {
+    if (activeModuleId !== 'admin') return false;
+    return (!activeSubItemId && idSubItem === 'resumen') || activeSubItemId === idSubItem;
   };
 
-  const esSubItemAlmacenActivo = (idSubItem: string): boolean => {
-    if (activeModuleId !== 'almacen') return false;
-    if (!activeSubItemId || activeSubItemId === '') {
-      return idSubItem === 'almacen-dashboard' || idSubItem === '';
+  const getActiveSubmoduleName = (mod: ModuleConfig): string | null => {
+    if (activeModuleId !== mod.key) return null;
+    if (activeSubItemId === '__menu__') {
+      return language === 'en' ? 'Module selector' : 'Menú selectivo';
     }
-    return activeSubItemId === idSubItem;
+    const found = mod.subItems.find((sub) => {
+      if (mod.key === 'crm') return esSubItemCrmActivo(sub.id);
+      if (mod.key === 'compras') return esSubItemComprasActivo(sub.id);
+      return esSubItemAdminActivo(sub.id);
+    });
+    if (!found) return null;
+    return language === 'en' ? found.nombreEn : found.nombre;
   };
+
+  const modulesList: ModuleConfig[] = [];
+  if (subItemsCrm.length > 0) {
+    modulesList.push({
+      key: 'crm',
+      title: t('nav.crm'),
+      titleEn: 'CRM & Sales',
+      subItems: subItemsCrm,
+      activeCollapsedClass: 'active-crm',
+    });
+  }
+  if (subItemsRequisiciones.length > 0) {
+    modulesList.push({
+      key: 'compras',
+      title: t('nav.operations'),
+      titleEn: 'Operations',
+      subItems: subItemsRequisiciones,
+      activeCollapsedClass: 'active-ops',
+    });
+  }
+  if (showAdmin && subItemsAdmin.length > 0) {
+    modulesList.push({
+      key: 'admin',
+      title: 'Administración',
+      titleEn: 'Administration',
+      subItems: subItemsAdmin,
+      activeCollapsedClass: 'active-crm',
+    });
+  }
 
   return (
     <aside
@@ -100,9 +175,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Cabecera Móvil (solo visible en pantallas pequeñas) */}
       <div className="sidebar-mobile-header">
         <div className="mobile-brand-row">
-          <div className="sidebar-brand-lockup" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div
+            className="sidebar-brand-lockup"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
             <SfgLogoSymbol size={28} />
-            <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '1.05rem', letterSpacing: '0.04em' }}>SIFYGSA</span>
+            <span
+              style={{
+                fontWeight: 800,
+                color: 'var(--text-primary)',
+                fontSize: '1.05rem',
+                letterSpacing: '0.04em',
+              }}
+            >
+              SIFYGSA
+            </span>
           </div>
         </div>
         {onCloseMobile && (
@@ -132,7 +219,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 title={t('nav.home')}
                 onClick={() => onSelectModule('dashboard')}
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" style={{ width: 16, height: 16 }}>
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  style={{ width: 16, height: 16 }}
+                >
                   <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                 </svg>
               </button>
@@ -143,8 +235,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 title={t('nav.settings')}
                 onClick={() => onSelectModule('settings')}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
-                  <path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  style={{ width: 16, height: 16 }}
+                >
+                  <path
+                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
 
@@ -162,74 +265,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             <div className="collapsed-divider-line" />
 
-            {/* Iconos de Grupos de Navegación */}
+            {/* Iconos de Módulos Principales CRM (Al hacer clic abren la vista selectiva .tsx del módulo) */}
             <div className="collapsed-nav-icons">
-              {subItemsCrm.length > 0 && (
-                <button
-                  type="button"
-                  className={`collapsed-nav-btn crm-group-btn ${activeModuleId === 'crm' ? 'active-crm' : ''}`}
-                  title="CRM & Ventas"
-                  onClick={() => onSelectModule('crm', 'crm-opportunities')}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18 }}>
-                    <path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              )}
-
-              {/* Icono de Grupo 2: Operaciones — Requisición */}
-              <button
-                type="button"
-                className={`collapsed-nav-btn ops-group-btn ${activeModuleId === 'compras' ? 'active-ops' : ''}`}
-                title="Operaciones — Requisición"
-                onClick={() => onSelectModule('compras', subItemInicialCompras)}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18 }}>
-                  <path d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-
-              {/* Icono de Grupo 3: Recursos Humanos */}
-              {subItemsRrhh.length > 0 && (
-                <button
-                  type="button"
-                  className={`collapsed-nav-btn rh-group-btn ${activeModuleId === 'rh' || activeModuleId === 'rrhh' ? 'active-crm' : ''}`}
-                  title="Recursos Humanos"
-                  onClick={() => onSelectModule('rh', 'rrhh-panel')}
-                >
-                  <IconUsers size={18} />
-                </button>
-              )}
-
-              {/* Icono de Grupo: Almacén & SGA */}
-              {subItemsAlmacen.length > 0 && (
-                <button
-                  type="button"
-                  className={`collapsed-nav-btn almacen-group-btn ${activeModuleId === 'almacen' ? 'active-crm' : ''}`}
-                  title="Almacén & SGA"
-                  onClick={() => onSelectModule('almacen', '')}
-                >
-                  <IconAlmacen size={18} />
-                </button>
-              )}
-
-              {showAdmin && subItemsAdmin.length > 0 && (
-                <button
-                  type="button"
-                  className={`collapsed-nav-btn ${activeModuleId === 'admin' ? 'active-crm' : ''}`}
-                  title="Administración General"
-                  onClick={() => onSelectModule('admin', 'resumen')}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18 }}>
-                    <path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              )}
+              {modulesList.map((mod) => {
+                const isModuleActive = activeModuleId === mod.key;
+                return (
+                  <button
+                    key={mod.key}
+                    type="button"
+                    className={`collapsed-nav-btn ${isModuleActive ? mod.activeCollapsedClass : ''}`}
+                    title={language === 'en' ? mod.titleEn : mod.title}
+                    onClick={() => onSelectModule(mod.key, '__menu__')}
+                  >
+                    {renderModuleIcon(mod.key, 18)}
+                  </button>
+                );
+              })}
             </div>
           </div>
         ) : (
           /* ====================================================================
-             MODO EXPANDIDO (Generado desde el registro central de módulos)
+             MODO EXPANDIDO (Módulos Principales Limpios → Clic abre Menú Selectivo)
              ==================================================================== */
           <>
             {/* Top Quick Tools Bar (Home, Ajustes y Favoritos Combobox) */}
@@ -241,7 +297,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   title={t('nav.home')}
                   onClick={() => onSelectModule('dashboard')}
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" style={{ width: 16, height: 16 }}>
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    style={{ width: 16, height: 16 }}
+                  >
                     <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                   </svg>
                 </button>
@@ -251,8 +312,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   title={t('nav.settings')}
                   onClick={() => onSelectModule('settings')}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
-                    <path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                    style={{ width: 16, height: 16 }}
+                  >
+                    <path
+                      d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </button>
 
@@ -269,197 +341,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </div>
 
-            {/* Navigation Links Group (CRM & VENTAS + OPERACIONES + RECURSOS HUMANOS + ADMINISTRADOR) */}
-            <nav className="sidebar-accordion-nav">
-              {/* Group 1: CRM & VENTAS */}
-              {subItemsCrm.length > 0 && (
-                <div className="accordion-entry">
-                  <button
-                    type="button"
-                    className="accordion-head-btn"
-                    onClick={() => setOpenSection1(!openSection1)}
-                  >
-                    <div className="head-left-content">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
-                        <path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span className="group-title-label">{t('nav.crm')}</span>
-                    </div>
-                    {openSection1 ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
-                  </button>
+            {/* Lista Limpia de Módulos Principales (Sin desplegables permanentes) */}
+            <nav className="sidebar-accordion-nav" aria-label="Módulos principales CRM">
+              {modulesList.map((mod) => {
+                const isModuleActive = activeModuleId === mod.key;
+                const activeSubName = getActiveSubmoduleName(mod);
 
-                  {openSection1 && (
-                    <div className="accordion-sub-stack">
-                      {subItemsCrm.map((sub) => {
-                        const activo = esSubItemCrmActivo(sub.id);
-                        return (
-                          <button
-                            key={sub.id}
-                            type="button"
-                            className={`sub-nav-link ${activo ? 'active-pill' : ''}`}
-                            onClick={() => onSelectModule('crm', sub.vista)}
-                          >
-                            <span className={`bullet-indicator ${activo ? 'orange' : 'gray'}`} />
-                            <span>{language === 'en' ? sub.nombreEn : sub.nombre}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Group 2: OPERACIONES / REQUISICIONES (Abierto a todos los roles) */}
-              <div className="accordion-entry">
-                <button
-                  type="button"
-                  className="accordion-head-btn"
-                  onClick={() => setOpenSection2(!openSection2)}
-                >
-                  <div className="head-left-content">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
-                      <path d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <span className="group-title-label">{t('nav.operations')}</span>
+                return (
+                  <div key={mod.key} className="accordion-entry">
+                    <button
+                      type="button"
+                      className={`accordion-head-btn sidebar-module-trigger ${isModuleActive ? 'is-active-module' : ''}`}
+                      onClick={() => onSelectModule(mod.key, '__menu__')}
+                    >
+                      <div className="head-left-content">
+                        {renderModuleIcon(mod.key, 16)}
+                        <div className="sidebar-module-label-group">
+                          <span className="group-title-label">
+                            {language === 'en' ? mod.titleEn : mod.title}
+                          </span>
+                          {activeSubName && (
+                            <span className="sidebar-active-sub-hint">{activeSubName}</span>
+                          )}
+                        </div>
+                      </div>
+                      <IconChevronRight size={14} className="sidebar-module-chevron" />
+                    </button>
                   </div>
-                  {openSection2 ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
-                </button>
-
-                {openSection2 && (
-                  <div className="accordion-sub-stack">
-                    {subItemsRequisiciones.map((sub) => {
-                      const activo = esSubItemComprasActivo(sub.id);
-                      return (
-                        <button
-                          key={sub.id}
-                          type="button"
-                          className={`sub-nav-link ${activo ? 'active-pill' : ''}`}
-                          onClick={() => onSelectModule('compras', sub.vista)}
-                        >
-                          <span className={`bullet-indicator ${activo ? 'orange' : 'gray'}`} />
-                          <span>{language === 'en' ? sub.nombreEn : sub.nombre}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Group 3: RECURSOS HUMANOS (solo si tiene permiso) */}
-              {subItemsRrhh.length > 0 && (
-                <div className="accordion-entry">
-                  <button
-                    type="button"
-                    className="accordion-head-btn"
-                    onClick={() => setOpenSectionRh(!openSectionRh)}
-                  >
-                    <div className="head-left-content">
-                      <IconUsers size={16} />
-                      <span className="group-title-label">
-                        {language === 'en' ? 'Human Resources' : 'Recursos Humanos'}
-                      </span>
-                    </div>
-                    {openSectionRh ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
-                  </button>
-
-                  {openSectionRh && (
-                    <div className="accordion-sub-stack">
-                      {subItemsRrhh.map((sub) => {
-                        const activo = esSubItemRrhhActivo(sub.id);
-                        return (
-                          <button
-                            key={sub.id}
-                            type="button"
-                            className={`sub-nav-link ${activo ? 'active-pill' : ''}`}
-                            onClick={() => onSelectModule('rh', sub.vista)}
-                          >
-                            <span className={`bullet-indicator ${activo ? 'orange' : 'gray'}`} />
-                            <span>{language === 'en' ? sub.nombreEn : sub.nombre}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Group: ALMACÉN & SGA (solo si tiene permiso) */}
-              {subItemsAlmacen.length > 0 && (
-                <div className="accordion-entry">
-                  <button
-                    type="button"
-                    className="accordion-head-btn"
-                    onClick={() => setOpenSectionAlmacen(!openSectionAlmacen)}
-                  >
-                    <div className="head-left-content">
-                      <IconAlmacen size={16} />
-                      <span className="group-title-label">
-                        {language === 'en' ? 'Warehouse & WMS' : 'Almacén & SGA'}
-                      </span>
-                    </div>
-                    {openSectionAlmacen ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
-                  </button>
-
-                  {openSectionAlmacen && (
-                    <div className="accordion-sub-stack">
-                      {subItemsAlmacen.map((sub) => {
-                        const activo = esSubItemAlmacenActivo(sub.id);
-                        return (
-                          <button
-                            key={sub.id}
-                            type="button"
-                            className={`sub-nav-link ${activo ? 'active-pill' : ''}`}
-                            onClick={() => onSelectModule('almacen', sub.vista)}
-                          >
-                            <span className={`bullet-indicator ${activo ? 'orange' : 'gray'}`} />
-                            <span>{language === 'en' ? sub.nombreEn : sub.nombre}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Group 4: ADMINISTRACIÓN (solo si tiene permiso) */}
-              {showAdmin && subItemsAdmin.length > 0 && (
-                <div className="accordion-entry">
-                  <button
-                    type="button"
-                    className="accordion-head-btn"
-                    onClick={() => setOpenSection3(!openSection3)}
-                  >
-                    <div className="head-left-content">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
-                        <path d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span className="group-title-label">Administración</span>
-                    </div>
-                    {openSection3 ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
-                  </button>
-
-                  {openSection3 && (
-                    <div className="accordion-sub-stack">
-                      {subItemsAdmin.map((sub) => {
-                        const activo =
-                          activeModuleId === 'admin' &&
-                          ((!activeSubItemId && sub.id === 'resumen') || activeSubItemId === sub.id);
-                        return (
-                          <button
-                            key={sub.id}
-                            type="button"
-                            className={`sub-nav-link ${activo ? 'active-pill' : ''}`}
-                            onClick={() => onSelectModule('admin', sub.vista)}
-                          >
-                            <span className={`bullet-indicator ${activo ? 'orange' : 'gray'}`} />
-                            <span>{language === 'en' ? sub.nombreEn : sub.nombre}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
+                );
+              })}
             </nav>
           </>
         )}

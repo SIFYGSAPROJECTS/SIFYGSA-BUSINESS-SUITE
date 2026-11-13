@@ -8,6 +8,8 @@ import { Header } from './Header';
 import { Sidebar } from './sidebar';
 import { SidebarRH } from './SidebarRH';
 import { SidebarAlmacen } from './SidebarAlmacen';
+import { MenuSelectivoModulo } from './MenuSelectivoModulo';
+import { CentroConversaciones } from './CentroConversaciones';
 import { Footer } from './Footer';
 import './MainLayout.css';
 
@@ -52,9 +54,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // El rail lateral permanece siempre compacto (como en la primera imagen), sin desplegarse
+  const isCollapsed = true;
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isChatCenterOpen, setIsChatCenterOpen] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(3);
 
   // Detección de dispositivo móvil montado de manera segura para SSR/Hydration
   useEffect(() => {
@@ -107,27 +112,32 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       ? 'rh'
       : 'dashboard');
 
+  const isModuleSelectorOpen =
+    portalDeterminado === 'crm' &&
+    searchParams.get('menu') === '1' &&
+    (activeModuleId === 'crm' || activeModuleId === 'compras' || activeModuleId === 'admin');
+
   const activeSubItemId =
     activeSubItemProp ??
-    searchParams.get('sub') ??
-    searchParams.get('vista') ??
-    (activeModuleId === 'crm'
-      ? 'crm-opportunities'
-      : activeModuleId === 'compras'
-      ? 'compras-requisicion'
-      : activeModuleId === 'rh'
-      ? 'rh-directorio'
-      : activeModuleId === 'almacen'
-      ? (pathname === '/almacen' ? '' : pathname.replace('/almacen/', ''))
-      : undefined);
+    (isModuleSelectorOpen
+      ? '__menu__'
+      : searchParams.get('sub') ??
+        searchParams.get('vista') ??
+        (activeModuleId === 'crm'
+          ? 'crm-kanban'
+          : activeModuleId === 'compras'
+          ? 'compras-requisicion'
+          : activeModuleId === 'rh'
+          ? 'rh-directorio'
+          : activeModuleId === 'almacen'
+          ? (pathname === '/almacen' ? '' : pathname.replace('/almacen/', ''))
+          : undefined));
 
-  const isSidebarOpen = isMobile ? isMobileOpen : !isCollapsed;
+  const isSidebarOpen = isMobile ? isMobileOpen : false;
 
   const handleToggleSidebar = () => {
     if (isMobile) {
       setIsMobileOpen((prev) => !prev);
-    } else {
-      setIsCollapsed((prev) => !prev);
     }
   };
 
@@ -145,6 +155,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     if (onSelectModuleProp) {
       onSelectModuleProp(moduleId, subItemId);
     } else {
+      const wantsMenu = subItemId === '__menu__';
       switch (moduleId) {
         case 'dashboard':
           router.push('/');
@@ -153,18 +164,24 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           router.push('/ajustes');
           break;
         case 'crm':
-          router.push(subItemId ? `/crm?sub=${subItemId}` : '/crm');
+          router.push(wantsMenu ? '/crm?menu=1' : subItemId ? `/crm?sub=${subItemId}` : '/crm');
           break;
         case 'compras':
         case 'requisiciones':
-          router.push(subItemId ? `/requisiciones?sub=${subItemId}` : '/requisiciones');
+          router.push(
+            wantsMenu
+              ? '/requisiciones?menu=1'
+              : subItemId
+              ? `/requisiciones?sub=${subItemId}`
+              : '/requisiciones'
+          );
           break;
         case 'rh':
         case 'rrhh':
           router.push(subItemId ? `/rrhh?sub=${subItemId}` : '/rrhh');
           break;
         case 'admin':
-          router.push(subItemId ? `/admin?vista=${subItemId}` : '/admin');
+          router.push(wantsMenu ? '/admin?menu=1' : subItemId ? `/admin?vista=${subItemId}` : '/admin');
           break;
         case 'almacen':
           if (!subItemId || subItemId === '' || subItemId === 'almacen-dashboard') {
@@ -181,6 +198,23 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
     if (isMobile) {
       setIsMobileOpen(false);
+    }
+  };
+
+  const handleBackToMenu = () => {
+    const targetMod =
+      activeModuleId === 'compras' || activeModuleId === 'admin' ? activeModuleId : 'crm';
+    if (isModuleSelectorOpen) {
+      handleModuleSelection(
+        targetMod,
+        targetMod === 'crm'
+          ? 'crm-kanban'
+          : targetMod === 'compras'
+          ? 'compras-requisicion'
+          : 'resumen'
+      );
+    } else {
+      handleModuleSelection(targetMod, '__menu__');
     }
   };
 
@@ -202,12 +236,18 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       {/* Header Superior Global (100% Ancho) */}
       <Header
         currentModuleTitle={currentModuleTitle}
+        activeModuleId={activeModuleId}
+        activeSubItemId={activeSubItemId}
+        onBackToMenu={handleBackToMenu}
         onToggleSidebar={handleToggleSidebar}
         isSidebarOpen={isSidebarOpen}
         onLogout={() => {
           void handleLogout();
         }}
         onSelectModule={handleModuleSelection}
+        isChatCenterOpen={isChatCenterOpen}
+        onToggleChatCenter={() => setIsChatCenterOpen((prev) => !prev)}
+        unreadChatCount={unreadChatCount}
         user={userData}
       />
 
@@ -258,12 +298,35 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           />
         )}
 
-        <main className="layout-content-area" id="main-content">
+        <main
+          className={`layout-content-area ${
+            activeModuleId === 'crm' && !isModuleSelectorOpen ? 'is-crm-flush' : ''
+          }`}
+          id="main-content"
+        >
           <div className="content-inner-container">
-            {children}
+            {isModuleSelectorOpen ? (
+              <MenuSelectivoModulo
+                moduleId={activeModuleId as 'crm' | 'compras' | 'admin'}
+                rolUsuario={usuario?.rol ?? 'administrador'}
+                onSelectSubmodule={handleModuleSelection}
+              />
+            ) : (
+              children
+            )}
           </div>
         </main>
       </div>
+
+      {/* Centro de Conversaciones y Chat Flotante (Exclusivo Portal CRM) */}
+      {portalDeterminado === 'crm' && (
+        <CentroConversaciones
+          isPopoverOpen={isChatCenterOpen}
+          onClosePopover={() => setIsChatCenterOpen(false)}
+          onUnreadChange={setUnreadChatCount}
+          userName={userData.name}
+        />
+      )}
 
       {/* Footer Oficial SIFYGSA 100% Ancho */}
       <Footer portal={userData.portal} />

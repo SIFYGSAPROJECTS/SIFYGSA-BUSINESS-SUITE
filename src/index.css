@@ -162,4 +162,171 @@ svg {
   background-color: var(--surface-alt);
   color: var(--text-secondary);
   border: 1px solid var(--border);
-}
+}
+
+/* ==========================================================================
+   SIFYGSA Suite CRM — Stitch Design System Tokens (Light & Dark Mode)
+   ========================================================================== */
+:root {
+  --stitch-surface: 249 249 255;
+  --stitch-surface-bright: 249 249 255;
+  --stitch-surface-dim: 211 218 239;
+  --stitch-surface-container-lowest: 255 255 255;
+  --stitch-surface-container-low: 241 243 255;
+  --stitch-surface-container: 233 237 255;
+  --stitch-surface-container-high: 225 232 253;
+  --stitch-surface-container-highest: 220 226 247;
+  --stitch-surface-variant: 220 226 247;
+  --stitch-background: 249 249 255;
+  --stitch-on-background: 20 27 43;
+  --stitch-on-surface: 20 27 43;
+  --stitch-on-surface-variant: 67 70 85;
+  --stitch-outline: 116 118 134;
+  --stitch-outline-variant: 196 197 215;
+  --stitch-primary: 0 55 176;
+  --stitch-on-primary: 255 255 255;
+  --stitch-primary-container: 29 78 216;
+  --stitch-on-primary-container: 202 211 255;
+  --stitch-primary-fixed: 220 225 255;
+  --stitch-primary-fixed-dim: 183 196 255;
+  --stitch-on-primary-fixed: 0 21 81;
+  --stitch-on-primary-fixed-variant: 0 57 181;
+  --stitch-secondary: 0 102 133;
+  --stitch-on-secondary: 255 255 255;
+  --stitch-secondary-container: 54 201 254;
+  --stitch-on-secondary-container: 0 82 107;
+  --stitch-secondary-fixed: 191 233 255;
+  --stitch-secondary-fixed-dim: 107 210 255;
+  --stitch-on-secondary-fixed: 0 31 42;
+  --stitch-on-secondary-fixed-variant: 0 77 101;
+  --stitch-tertiary: 0 80 31;
+  --stitch-on-tertiary: 255 255 255;
+  --stitch-tertiary-container: 0 107 44;
+  --stitch-on-tertiary-container: 113 238 138;
+  --stitch-tertiary-fixed: 127 252 151;
+  --stitch-tertiary-fixed-dim: 98 223 125;
+  --stitch-on-tertiary-fixed: 0 33 9;
+  --stitch-on-tertiary-fixed-variant: 0 83 32;
+  --stitch-error: 186 26 26;
+  --stitch-on-error: 255 255 255;
+  --stitch-error-container: 255 218 214;
+  --stitch-on-error-container: 147 0 10;
+  --stitch-inverse-surface: 41 48 64;
+  --stitch-inverse-on-surface: 237 240 255;
+  --stitch-inverse-primary: 183 196 255;
+  --stitch-surface-tint: 33 81 218;
+}
+
+[data-theme="dark"] {
+  --stitch-surface: 11 15 25;
+  --stitch-surface-bright: 30 41 59;
+  --stitch-surface-dim: 8 11 18;
+  --stitch-surface-container-lowest: 17 24 39;
+  --stitch-surface-container-low: 15 23 42;
+  --stitch-surface-container: 30 41 59;
+  --stitch-surface-container-high: 38 51 77;
+  --stitch-surface-container-highest: 51 65 85;
+  --stitch-surface-variant: 30 41 59;
+  --stitch-background: 11 15 25;
+  --stitch-on-background: 241 245 249;
+  --stitch-on-surface: 241 245 249;
+  --stitch-on-surface-variant: 148 163 184;
+  --stitch-outline: 100 116 139;
+  --stitch-outline-variant: 51 65 85;
+  --stitch-primary: 96 165 250;
+  --stitch-on-primary: 255 255 255;
+  --stitch-primary-container: 29 78 216;
+  --stitch-on-primary-container: 219 234 254;
+  --stitch-primary-fixed: 30 58 138;
+  --stitch-primary-fixed-dim: 37 99 235;
+  --stitch-on-primary-fixed: 219 234 254;
+  --stitch-on-primary-fixed-variant: 147 197 253;
+  --stitch-secondary: 56 189 248;
+  --stitch-on-secondary: 8 47 73;
+  --stitch-secondary-container: 3 105 161;
+  --stitch-on-secondary-container: 224 242 254;
+  --stitch-secondary-fixed: 12 74 110;
+  --stitch-secondary-fixed-dim: 2 132 199;
+  --stitch-on-secondary-fixed: 224 242 254;
+  --stitch-on-secondary-fixed-variant: 125 211 252;
+  --stitch-tertiary: 52 211 153;
+  --stitch-on-tertiary: 6 78 59;
+  --stitch-tertiary-container: 5 150 105;
+  --stitch-on-tertiary-container: 209 250 229;
+  --stitch-tertiary-fixed: 6 95 70;
+  --stitch-tertiary-fixed-dim: 16 185 129;
+  --stitch-on-tertiary-fixed: 209 250 229;
+  --stitch-on-tertiary-fixed-variant: 110 231 183;
+  --stitch-error: 248 113 113;
+  --stitch-on-error: 69 10 10;
+  --stitch-error-container: 127 29 29;
+  --stitch-on-error-container: 254 202 202;
+  --stitch-inverse-surface: 226 232 240;
+  --stitch-inverse-on-surface: 15 23 42;
+  --stitch-inverse-primary: 29 78 216;
+  --stitch-surface-tint: 59 130 246;
+}
+
+:where(.sifygsa-crm-container, .sifygsa-tailwind-scope) *,
+:where(.sifygsa-crm-container, .sifygsa-tailwind-scope) *::before,
+:where(.sifygsa-crm-container, .sifygsa-tailwind-scope) *::after {
+  border-width: 0;
+  border-style: solid;
+  border-color: rgb(var(--stitch-outline-variant) / 1);
+}
+
+/* ==========================================================================
+   Animaciones de Arrastrado y Aterrizaje del Tablero Kanban CRM
+   ========================================================================== */
+@keyframes kanbanCardDropLand {
+  0% {
+    transform: translateY(-10px) scale(1.035) rotate(-1.5deg);
+    box-shadow: 0 20px 30px -10px rgba(29, 78, 216, 0.35), 0 0 0 3px rgba(29, 78, 216, 0.35);
+  }
+  55% {
+    transform: translateY(2px) scale(0.992) rotate(0.4deg);
+    box-shadow: 0 8px 16px -4px rgba(29, 78, 216, 0.2), 0 0 0 2px rgba(29, 78, 216, 0.25);
+  }
+  100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes kanbanDropSlotExpand {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(-6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.kanban-card-draggable {
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 240ms cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 200ms ease,
+              opacity 200ms ease;
+  will-change: transform, box-shadow;
+}
+
+.kanban-card-draggable:hover {
+  transform: translateY(-2px);
+}
+
+.kanban-card-dragging {
+  transform: rotate(-2deg) scale(1.03) translateY(-3px) !important;
+  box-shadow: 0 20px 28px -8px rgba(15, 23, 42, 0.24),
+              0 0 0 3px rgba(29, 78, 216, 0.22) !important;
+  z-index: 30;
+}
+
+.kanban-card-landed {
+  animation: kanbanCardDropLand 520ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.kanban-drop-slot {
+  animation: kanbanDropSlotExpand 200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+

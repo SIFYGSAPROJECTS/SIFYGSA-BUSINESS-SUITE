@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { RolUsuario, ZonaComercial } from '@/config/types';
 import type { DatosCrm, MetricasReporteCrm } from '../types';
 import { HomeCRM } from '../pages/HomeCRM';
-import { VistaModuloCrm } from './VistaModuloCrm';
 
 export interface PropiedadesContenedorCrm {
   datosIniciales: DatosCrm;
@@ -16,71 +15,42 @@ export interface PropiedadesContenedorCrm {
 
 export const ContenedorCrmCliente: React.FC<PropiedadesContenedorCrm> = ({
   datosIniciales,
-  metricasIniciales,
   rolUsuario,
   zonaUsuario,
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const subParam = searchParams.get('sub');
+  const vistaParam = searchParams.get('vista');
   const folioParam = searchParams.get('folio') ?? undefined;
 
-  // Si se accede a la ruta de detalle sin un folio/ID válido, redirige a Oportunidades
-  useEffect(() => {
-    if (subParam === 'crm-opportunity-detail' && !folioParam) {
-      router.replace('/crm?sub=crm-opportunities');
-    }
-  }, [subParam, folioParam, router]);
-
-  const subItemId =
-    subParam === 'crm-opportunity-detail' && !folioParam
-      ? 'crm-opportunities'
-      : subParam ?? 'crm-opportunities';
+  let subItemId = subParam ?? 'crm-kanban';
+  if (subParam === 'crm-avanzado') {
+    if (vistaParam === 'reportes') subItemId = 'crm-reportes';
+    else if (vistaParam === 'actividades') subItemId = 'crm-calendar';
+    else if (vistaParam === 'clientes' || vistaParam === 'tabla' || vistaParam === 'oportunidades') subItemId = 'crm-opportunities';
+    else subItemId = 'crm-kanban';
+  }
 
   const abrirDetalleOportunidad = (folio: string) => {
     router.push(`/crm?sub=crm-opportunity-detail&folio=${encodeURIComponent(folio)}`);
   };
 
   const volverAOportunidades = () => {
-    router.push('/crm?sub=crm-opportunities');
+    router.push('/crm?sub=crm-kanban');
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      {subItemId === 'crm-avanzado' ? (
-        <>
-          <VistaModuloCrm
-            datosIniciales={datosIniciales}
-            metricasIniciales={metricasIniciales}
-            rolUsuario={rolUsuario}
-            zonaUsuario={zonaUsuario}
-            alSeleccionarOportunidad={abrirDetalleOportunidad}
-          />
-          <HomeCRM
-            subItemId="crm-opportunities"
-            oportunidadesExtra={datosIniciales.oportunidades}
-            alAbrirDetalle={abrirDetalleOportunidad}
-            alVolverAOportunidades={volverAOportunidades}
-          />
-        </>
-      ) : (
-        <>
-          <HomeCRM
-            subItemId={subItemId}
-            folioInicial={folioParam}
-            oportunidadesExtra={datosIniciales.oportunidades}
-            alAbrirDetalle={abrirDetalleOportunidad}
-            alVolverAOportunidades={volverAOportunidades}
-          />
-          <VistaModuloCrm
-            datosIniciales={datosIniciales}
-            metricasIniciales={metricasIniciales}
-            rolUsuario={rolUsuario}
-            zonaUsuario={zonaUsuario}
-            alSeleccionarOportunidad={abrirDetalleOportunidad}
-          />
-        </>
-      )}
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+      <HomeCRM
+        subItemId={subItemId}
+        folioInicial={folioParam}
+        oportunidadesExtra={datosIniciales.oportunidades}
+        rolUsuario={rolUsuario}
+        zonaUsuario={zonaUsuario}
+        alAbrirDetalle={abrirDetalleOportunidad}
+        alVolverAOportunidades={volverAOportunidades}
+      />
     </div>
   );
 };

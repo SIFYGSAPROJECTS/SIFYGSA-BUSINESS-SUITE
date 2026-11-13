@@ -382,7 +382,7 @@ export default function DashboardAlmacenPage() {
               </span>
               12 este mes
             </span>
-            <span className="dashboard-kpi-meta">98.2% Activos</span>
+
           </div>
         </div>
 
@@ -404,7 +404,7 @@ export default function DashboardAlmacenPage() {
           </div>
           <div className="dashboard-kpi-footer">
             <span className="dashboard-kpi-pill neutral">4 Naves Activas</span>
-            <span className="dashboard-kpi-meta emerald-meta">99.4% Conciliado</span>
+
           </div>
         </div>
 
@@ -426,7 +426,7 @@ export default function DashboardAlmacenPage() {
           </div>
           <div className="dashboard-kpi-footer">
             <span className="dashboard-kpi-pill amber">2 en Taller Externo</span>
-            <span className="dashboard-kpi-meta">5 Preventivo</span>
+
           </div>
         </div>
 

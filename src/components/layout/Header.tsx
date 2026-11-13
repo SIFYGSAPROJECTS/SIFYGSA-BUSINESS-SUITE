@@ -1,17 +1,51 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { IconSearch, IconBell, IconLogOut, IconSettings, IconUser } from '../ui/Icons';
+import {
+  IconSearch,
+  IconBell,
+  IconLogOut,
+  IconSettings,
+  IconUser,
+  IconChevronDown,
+  IconCheck,
+} from '../ui/Icons';
 import { SfgLogoSymbol } from '../ui/Logo';
+import { getSelectedMenuIconMeta } from './MenuSelectivoModulo';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 
+interface HeaderComboOption {
+  label: string;
+  subItemId: string;
+}
+
+const VENTAS_COMBO_OPTIONS: readonly HeaderComboOption[] = [
+  { label: 'Mi flujo', subItemId: 'crm-kanban' },
+  { label: 'Mis actividades', subItemId: 'crm-calendar' },
+  { label: 'Equipos', subItemId: 'crm-opportunities' },
+  { label: 'Clientes', subItemId: 'crm-opportunities' },
+];
+
+const REPORTES_COMBO_OPTIONS: readonly HeaderComboOption[] = [
+  { label: 'Pronóstico', subItemId: 'crm-reportes' },
+  { label: 'Flujo', subItemId: 'crm-kanban' },
+  { label: 'Leads', subItemId: 'crm-leads' },
+  { label: 'Actividades', subItemId: 'crm-calendar' },
+];
+
 interface HeaderProps {
   currentModuleTitle?: string;
+  activeModuleId?: string;
+  activeSubItemId?: string;
+  onBackToMenu?: () => void;
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
   onLogout: () => void;
   onSelectModule?: (moduleId: string, subItemId?: string) => void;
+  isChatCenterOpen?: boolean;
+  onToggleChatCenter?: () => void;
+  unreadChatCount?: number;
   user?: {
     name: string;
     email: string;
@@ -21,10 +55,15 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  activeModuleId = 'crm',
+  activeSubItemId = 'crm-kanban',
+  onBackToMenu,
   onToggleSidebar,
-  isSidebarOpen = false,
   onLogout,
   onSelectModule,
+  isChatCenterOpen = false,
+  onToggleChatCenter,
+  unreadChatCount = 3,
   user = {
     name: 'Carlos Mendoza',
     email: 'crm@sifygsa.com',
@@ -34,8 +73,15 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { t } = useLanguage();
   const { isDarkMode, toggleTheme } = useTheme();
+  const selectedMenuMeta = getSelectedMenuIconMeta(activeModuleId, activeSubItemId);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [openCombo, setOpenCombo] = useState<'ventas' | 'reportes' | null>(null);
+  const [selectedVentas, setSelectedVentas] = useState<string | null>(null);
+  const [selectedReportes, setSelectedReportes] = useState<string | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const combosRef = useRef<HTMLDivElement>(null);
+
+  const esPortalCrm = user?.portal !== 'rh' && user?.portal !== 'almacen';
 
   const getInitials = (name?: string) => {
     if (!name) return 'SF';
@@ -46,34 +92,84 @@ export const Header: React.FC<HeaderProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (userMenuRef.current && !userMenuRef.current.contains(target)) {
+        setIsUserMenuOpen(false);
+      }
+      if (combosRef.current && !combosRef.current.contains(target)) {
+        setOpenCombo(null);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpenCombo(null);
         setIsUserMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
+
+  const handleSelectComboOption = (
+    combo: 'ventas' | 'reportes',
+    option: HeaderComboOption
+  ) => {
+    if (combo === 'ventas') {
+      setSelectedVentas(option.label);
+    } else {
+      setSelectedReportes(option.label);
+    }
+    setOpenCombo(null);
+    onSelectModule?.('crm', option.subItemId);
+  };
 
   return (
     <header className="sifygsa-header">
-      {/* Left: 3-line menu button + Brand Logo Identity (Flama SIFYGSA) */}
+      {/* Left: Selected Menu Icon (animates to "<" on hover to return to launcher) + Brand Logo Identity */}
       <div className="header-brand-group">
-        {onToggleSidebar && (
-          <button
-            type="button"
-            className={`header-toggle-btn ${isSidebarOpen ? 'is-active' : ''}`}
-            onClick={onToggleSidebar}
-            aria-label={isSidebarOpen ? 'Plegar menú lateral' : 'Desplegar menú lateral'}
-            title={isSidebarOpen ? 'Plegar menú lateral' : 'Desplegar menú lateral'}
-            aria-expanded={isSidebarOpen}
-          >
-            <span className="hamburger-animated-box" aria-hidden="true">
-              <span className="hamburger-line line-top" />
-              <span className="hamburger-line line-middle" />
-              <span className="hamburger-line line-bottom" />
-            </span>
-          </button>
-        )}
+        <button
+          type="button"
+          className={`header-selected-menu-btn tile-color-${selectedMenuMeta.colorClass}`}
+          onClick={() => {
+            if (onBackToMenu) {
+              onBackToMenu();
+            } else if (onSelectModule) {
+              onSelectModule(
+                activeModuleId === 'compras' || activeModuleId === 'admin'
+                  ? activeModuleId
+                  : 'crm',
+                '__menu__'
+              );
+            } else if (onToggleSidebar) {
+              onToggleSidebar();
+            }
+          }}
+          aria-label={`Menú actual: ${selectedMenuMeta.title}. Clic para regresar al selector de módulos`}
+          title={`${selectedMenuMeta.title} — Regresar al menú de módulos`}
+        >
+          {/* Icono del menú seleccionado por defecto */}
+          <span className="header-selected-icon-front" aria-hidden="true">
+            {selectedMenuMeta.isCalendarTile ? (
+              <span className="header-mini-calendar-tile">
+                <span className="header-mini-calendar-month">NOV</span>
+                <span className="header-mini-calendar-day">11</span>
+              </span>
+            ) : (
+              selectedMenuMeta.icon
+            )}
+          </span>
+
+          {/* Flecha "<" animada al pasar el cursor por encima */}
+          <span className="header-selected-icon-back" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8">
+              <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        </button>
         <div className="brand-suite-identity" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <div className="flame-logo-wrapper" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
             <SfgLogoSymbol size={38} className="header-flame-logo" />
@@ -124,6 +220,115 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </div>
         </div>
+
+        {/* Dos Combo Box de Navegación CRM en el lado izquierdo del Header */}
+        {esPortalCrm && (
+          <div className="header-crm-combos" ref={combosRef}>
+            <span className="header-combos-divider" aria-hidden="true" />
+
+            {/* Combo Box 1: Ventas */}
+            <div className="header-combo-box">
+              <button
+                type="button"
+                className={`header-combo-trigger ${openCombo === 'ventas' ? 'is-open' : ''} ${selectedVentas ? 'has-value' : ''}`}
+                aria-haspopup="listbox"
+                aria-expanded={openCombo === 'ventas'}
+                aria-label="Ventas"
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  setOpenCombo((prev) => (prev === 'ventas' ? null : 'ventas'));
+                }}
+              >
+                <span className="header-combo-text">
+                  {selectedVentas ? (
+                    <>
+                      <span className="header-combo-prefix">Ventas:</span>
+                      <span className="header-combo-value">{selectedVentas}</span>
+                    </>
+                  ) : (
+                    <span className="header-combo-value">Ventas</span>
+                  )}
+                </span>
+                <IconChevronDown
+                  size={14}
+                  className={`header-combo-chevron ${openCombo === 'ventas' ? 'rotated' : ''}`}
+                />
+              </button>
+
+              {openCombo === 'ventas' && (
+                <div className="header-combo-menu" role="listbox" aria-label="Opciones de Ventas">
+                  {VENTAS_COMBO_OPTIONS.map((option) => {
+                    const isSelected = selectedVentas === option.label;
+                    return (
+                      <button
+                        key={option.label}
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        className={`header-combo-option ${isSelected ? 'is-selected' : ''}`}
+                        onClick={() => handleSelectComboOption('ventas', option)}
+                      >
+                        <span>{option.label}</span>
+                        {isSelected && <IconCheck size={14} className="header-combo-check" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Combo Box 2: Reportes */}
+            <div className="header-combo-box">
+              <button
+                type="button"
+                className={`header-combo-trigger ${openCombo === 'reportes' ? 'is-open' : ''} ${selectedReportes ? 'has-value' : ''}`}
+                aria-haspopup="listbox"
+                aria-expanded={openCombo === 'reportes'}
+                aria-label="Reportes"
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  setOpenCombo((prev) => (prev === 'reportes' ? null : 'reportes'));
+                }}
+              >
+                <span className="header-combo-text">
+                  {selectedReportes ? (
+                    <>
+                      <span className="header-combo-prefix">Reportes:</span>
+                      <span className="header-combo-value">{selectedReportes}</span>
+                    </>
+                  ) : (
+                    <span className="header-combo-value">Reportes</span>
+                  )}
+                </span>
+                <IconChevronDown
+                  size={14}
+                  className={`header-combo-chevron ${openCombo === 'reportes' ? 'rotated' : ''}`}
+                />
+              </button>
+
+              {openCombo === 'reportes' && (
+                <div className="header-combo-menu" role="listbox" aria-label="Opciones de Reportes">
+                  {REPORTES_COMBO_OPTIONS.map((option) => {
+                    const isSelected = selectedReportes === option.label;
+                    return (
+                      <button
+                        key={option.label}
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        className={`header-combo-option ${isSelected ? 'is-selected' : ''}`}
+                        onClick={() => handleSelectComboOption('reportes', option)}
+                      >
+                        <span>{option.label}</span>
+                        {isSelected && <IconCheck size={14} className="header-combo-check" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Center: Search Input */}
@@ -193,16 +398,44 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </button>
 
-        {/* Notificaciones */}
-        <button
-          type="button"
-          className="header-tool-btn"
-          aria-label={t('header.notifications')}
-          title={t('header.notifications')}
-        >
-          <IconBell size={20} />
-          <span className="notification-number-badge">9</span>
-        </button>
+        {/* Centro de Conversaciones (CRM) o Notificaciones (RH / Almacén) */}
+        {esPortalCrm ? (
+          <button
+            type="button"
+            data-chat-trigger="true"
+            className={`header-tool-btn header-chat-trigger-btn ${isChatCenterOpen ? 'is-open' : ''}`}
+            aria-label="Centro de Conversaciones"
+            aria-expanded={isChatCenterOpen}
+            title="Centro de Conversaciones"
+            onClick={onToggleChatCenter}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            {unreadChatCount > 0 && (
+              <span className="notification-number-badge">{unreadChatCount}</span>
+            )}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="header-tool-btn"
+            aria-label={t('header.notifications')}
+            title={t('header.notifications')}
+          >
+            <IconBell size={20} />
+            <span className="notification-number-badge">9</span>
+          </button>
+        )}
 
         <div className="header-separator-line" />
 

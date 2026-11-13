@@ -20,6 +20,7 @@ function applyThemeToDOM(theme: Theme) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
   root.setAttribute('data-theme', theme);
+  root.classList.toggle('dark', theme === 'dark');
   root.style.colorScheme = theme;
 
   // Limpieza de clases heredadas en body
