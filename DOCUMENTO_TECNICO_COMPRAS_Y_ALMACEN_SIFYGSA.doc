@@ -1,0 +1,443 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office'
+xmlns:w='urn:schemas-microsoft-com:office:word'
+xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<title>SIFYGSA Business Suite - Especificación Técnica Compras y Almacén</title>
+<!--[if gte mso 9]>
+<xml>
+ <w:WordDocument>
+  <w:View>Print</w:View>
+  <w:Zoom>100</w:Zoom>
+  <w:DoNotOptimizeForBrowser/>
+ </w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+  @page {
+    size: letter;
+    margin: 2cm 2cm 2cm 2cm;
+    mso-page-orientation: portrait;
+  }
+  body {
+    font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+    line-height: 1.5;
+    color: #1e293b;
+    background: #ffffff;
+    font-size: 11pt;
+  }
+  h1 {
+    color: #1d4ed8;
+    border-bottom: 2.5pt solid #1d4ed8;
+    padding-bottom: 6pt;
+    font-size: 22pt;
+    margin-top: 18pt;
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+  }
+  h2 {
+    color: #1e40af;
+    border-bottom: 1.5pt solid #cbd5e1;
+    padding-bottom: 4pt;
+    font-size: 16pt;
+    margin-top: 24pt;
+    margin-bottom: 10pt;
+    page-break-after: avoid;
+  }
+  h3 {
+    color: #0f172a;
+    font-size: 13pt;
+    margin-top: 16pt;
+    margin-bottom: 6pt;
+    page-break-after: avoid;
+  }
+  h4 {
+    color: #334155;
+    font-size: 11pt;
+    font-weight: bold;
+    margin-top: 12pt;
+    margin-bottom: 4pt;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 14pt 0;
+    font-size: 10pt;
+  }
+  th {
+    background-color: #1d4ed8;
+    color: #ffffff;
+    text-align: left;
+    padding: 8pt 10pt;
+    border: 1pt solid #1d4ed8;
+    font-weight: bold;
+  }
+  td {
+    padding: 7pt 10pt;
+    border: 1pt solid #cbd5e1;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td {
+    background-color: #f8fafc;
+  }
+  code {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    padding: 1.5pt 4pt;
+    border-radius: 3pt;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 9.5pt;
+  }
+  pre {
+    background-color: #0f172a;
+    color: #f8fafc;
+    padding: 12pt 16pt;
+    border-radius: 6pt;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 9pt;
+    line-height: 1.4;
+    white-space: pre-wrap;
+  }
+  pre code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+  }
+  blockquote {
+    margin: 12pt 0;
+    padding: 10pt 16pt;
+    background-color: #eff6ff;
+    border-left: 4pt solid #2563eb;
+    color: #1e3a8a;
+    font-size: 10pt;
+  }
+  hr {
+    border: none;
+    border-top: 1pt solid #cbd5e1;
+    margin: 20pt 0;
+  }
+  ul, ol {
+    margin-top: 4pt;
+    margin-bottom: 8pt;
+    padding-left: 20pt;
+  }
+  li {
+    margin-bottom: 4pt;
+  }
+  p {
+    margin-top: 4pt;
+    margin-bottom: 8pt;
+  }
+</style>
+</head>
+<body>
+
+<h1>SIFYGSA BUSINESS SUITE ERP — ESPECIFICACIÓN TÉCNICA Y FUNCIONAL</h1>
+<h2>Módulos de Compras &amp; Procura y Almacén &amp; Control de Inventarios (SGA)</h2>
+<blockquote>[!NOTE]</blockquote>
+<blockquote><strong>Documento de Arquitectura y Funcionalidad del Sistema</strong>  </blockquote>
+<blockquote><strong>Versión del Sistema:</strong> v3.4.2 Enterprise ERP  </blockquote>
+<blockquote><strong>Área de Cobertura:</strong> Módulo de Compras (Procura) y Módulo de Almacén (SGA)  </blockquote>
+<blockquote><strong>Stack de Desarrollo:</strong> Next.js 15 (App Router), React 18, TypeScript, TailwindCSS + Tokens CSS Modulares, Context API, Material Symbols &amp; Lucide.</blockquote>
+<hr>
+<h2>1. Resumen Ejecutivo y Arquitectura de Módulos</h2>
+<p>El sistema <strong>SIFYGSA Business Suite</strong> implementa una suite ERP modular para empresas de ingeniería, procura, construcción y servicios petroleros e industriales. La integración entre <strong>Compras</strong> y <strong>Almacén</strong> conforma la cadena de suministro crítica del sistema:</p>
+<pre><code>flowchart LR
+    subgraph Compras [&quot;MÓDULO DE COMPRAS&quot;]
+        CP_Hub[&quot;Menú Hub\n(/compras)&quot;]
+        CP_ODC[&quot;Órdenes de Compra\n(/compras/ordenes)&quot;]
+        CP_Aut[&quot;Autorización ODC\n(Firma &amp; 32-D)&quot;]
+        CP_Prov[&quot;Proveedores\n(/compras/proveedores)&quot;]
+        CP_Fac[&quot;Bóveda CFDI 4.0\n(3-Way Match)&quot;]
+    end
+
+    subgraph Almacen [&quot;MÓDULO DE ALMACÉN&quot;]
+        AL_Nav[&quot;Menú Hub\n(/almacen)&quot;]
+        AL_Inv[&quot;Inventarios\n(Existencias &amp; Kárdex)&quot;]
+        AL_Art[&quot;Artículos\n(Catálogo &amp; SKU)&quot;]
+        AL_Srv[&quot;Servicios\n(No Inventariables)&quot;]
+        AL_IR03[&quot;Entradas IR03\n(Recepción ODC)&quot;]
+        AL_SA[&quot;Salidas SA\n(A Frentes/Proyectos)&quot;]
+        AL_Asg[&quot;Custodia\n(Asignaciones &amp; Retorno)&quot;]
+    end
+
+    CP_ODC --&gt;|ODC Autorizada| AL_IR03
+    AL_IR03 --&gt;|Cotejo de Recepción| CP_Fac
+    AL_Art --&gt;|Catálogo de Insumos| CP_ODC
+    AL_IR03 --&gt;|Afecta Kárdex| AL_Inv
+    AL_Inv --&gt;|Despacho| AL_SA</code></pre>
+<hr>
+<h2>2. Módulo de Compras (Compras &amp; Procura)</h2>
+<p>El módulo de compras gestiona el ciclo integral de adquisición de bienes y servicios: desde la calificación fiscal del contratista, emisión de la orden de compra, validación gerencial con firma digital, hasta la recepción y cotejo de facturas CFDI 4.0.</p>
+<h3>2.1. Menú Principal de Compras (`/compras`)</h3>
+<ul><li><strong>Ubicación:</strong> [MenuPrincipalComprasPage.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/compras/pages/MenuPrincipalComprasPage.tsx) y ruta raíz [page.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/app/(dashboard)/compras/page.tsx).</li></ul>
+<ul><li><strong>Concepto UI/UX:</strong> Portal de bienvenida ejecutivo. Se eliminaron gráficas y tableros invasivos para ofrecer una puerta de entrada rápida, limpia e intuitiva.</li></ul>
+<ul><li><strong>Barra Lanzadora Punteada (<code>SubmoduloNavCompras</code>):</strong> Contenedor con patrón de cuadrícula punteada (<code>radial-gradient</code>) y tarjetas squircle interactivas para los 4 submódulos:</li></ul>
+<ol><li><strong>Órdenes de Compra:</strong> Acceso al tablero y lista operativa.</li></ol>
+<ol><li><strong>Autorización de Órdenes de Compra:</strong> Acceso a la mesa de validación gerencial.</li></ol>
+<ol><li><strong>Proveedores:</strong> Directorio unificado y expediente fiscal.</li></ol>
+<ol><li><strong>Nuevo Proveedor:</strong> Asistente de alta rápida y homologación.</li></ol>
+<ul><li><strong>Tarjetas Gateway:</strong> 4 tarjetas informativas con elevación hover, badges de categoría y botones CTA que redirigen directamente a las pantallas operativas.</li></ul>
+<ul><li><strong>Acción de Cabecera:</strong> Botón principal <code>+ Nueva Orden (ODC)</code> alineado a la derecha.</li></ul>
+<hr>
+<h3>2.2. Submódulo 1: Órdenes de Compra (`/compras/ordenes`)</h3>
+<ul><li><strong>Ubicación:</strong> [DashboardOrdenesCompraPage.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/compras/pages/DashboardOrdenesCompraPage.tsx).</li></ul>
+<ul><li><strong>Modos de Vista:</strong></li></ul>
+<ul><li>Modo <strong>Control:</strong> Vista operativa para compradores y administradores.</li></ul>
+<ul><li>Modo <strong>Autorizar:</strong> Vista gerencial para revisión y firma de órdenes pendientes.</li></ul>
+<h4>Indicadores Clave de Desempeño (KPIs)</h4>
+<table>
+<thead><tr><th>KPI</th><th>Campo Calculado</th><th>Formato Visual</th><th>Indicador de Tendencia / Meta</th></tr></thead><tbody>
+<tr><td><strong>Órdenes Totales</strong></td><td><code>kpis.totalOrdenes</code></td><td>Entero grande (<code>1.85rem</code>)</td><td>Padrón histórico de órdenes registradas</td></tr>
+<tr><td><strong>Pendientes de Autorización</strong></td><td><code>kpis.pendientesCount</code></td><td>Entero advertencia (ámbar)</td><td>Monto monetario retenido por autorizar</td></tr>
+<tr><td><strong>Órdenes Autorizadas</strong></td><td><code>kpis.autorizadasCount</code></td><td>Entero éxito (verde)</td><td>Conteo de abiertas y cerradas</td></tr>
+<tr><td><strong>Monto Total Comprado</strong></td><td><code>kpis.montoTotalMXN</code></td><td>Moneda MXN formateada</td><td>Ticket promedio por orden de compra</td></tr>
+</tbody></table>
+<h4>Datos Recibidos y Administrados</h4>
+<ul><li><strong>Folio Institucional:</strong> Identificador único (ej. <code>PO-2026-0173</code>, <code>OC-2024-001</code>).</li></ul>
+<ul><li><strong>Proveedor:</strong> Razón social, RFC, ID de proveedor, régimen fiscal.</li></ul>
+<ul><li><strong>Fechas:</strong> Fecha de emisión y fecha de entrega comprometida en obra/almacén.</li></ul>
+<ul><li><strong>Proyecto / Centro de Costos:</strong> Código de frente (ej. <code>SFG-C259 (Tenaris Tamsa)</code>).</li></ul>
+<ul><li><strong>Almacén Destino:</strong> Nave A, Nave B o Patio Exterior.</li></ul>
+<ul><li><strong>Partidas (Items):</strong> SKU, descripción, cantidad pedida, unidad de medida, precio unitario, porcentaje de descuento y subtotal por partida.</li></ul>
+<ul><li><strong>Importes Totales:</strong> Subtotal, IVA (16%), retenciones y total general (soporta MXN y USD con tipo de cambio).</li></ul>
+<ul><li><strong>Estatus Operativo:</strong> <code>abierta</code>, <code>pendiente</code>, <code>transito</code>, <code>cerrada</code>, <code>cancelada</code>.</li></ul>
+<ul><li><strong>Vinculación con Factura:</strong> Banderas <code>tieneFactura</code>, <code>facturaFolio</code> y <code>facturaUuid</code>.</li></ul>
+<h4>Funcionalidades Interactivas</h4>
+<ul><li><strong>Búsqueda en vivo:</strong> Filtra en tiempo real por folio, proveedor, RFC, solicitante o texto en las partidas.</li></ul>
+<ul><li><strong>Filtros combinados:</strong> Por estatus, por proveedor adjudicado y por rango de fechas (desde / hasta).</li></ul>
+<ul><li><strong>Tabla de Órdenes Recientes:</strong> Top 5 de órdenes emitidas recientemente para consulta inmediata.</li></ul>
+<ul><li><strong>Modal de Vista Rápida:</strong> Visualización de detalles, partidas e historial sin recargar la página.</li></ul>
+<ul><li><strong>Exportación CSV:</strong> Descarga directa de la vista filtrada en formato compatible con Excel.</li></ul>
+<hr>
+<h3>2.3. Submódulo 2: Mesa de Autorización de Órdenes (`/compras/ordenes?vista=autorizar`)</h3>
+<ul><li><strong>Ubicación:</strong> Integrada en [DashboardOrdenesCompraPage.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/compras/pages/DashboardOrdenesCompraPage.tsx) mediante parámetro de URL <code>?vista=autorizar</code>.</li></ul>
+<ul><li><strong>Propósito:</strong> Bandeja de validación gerencial y directiva antes de liberar la compra a los proveedores.</li></ul>
+<ul><li><strong>Pestañas de Filtrado:</strong></li></ul>
+<ul><li>*Pendientes de Autorización* (ordenes en estatus <code>pendiente</code>).</li></ul>
+<ul><li>*Autorizadas* (ordenes en estatus <code>abierta</code>, <code>transito</code> o <code>cerrada</code>).</li></ul>
+<ul><li>*Rechazadas* (ordenes canceladas con motivo).</li></ul>
+<ul><li>*Todas*.</li></ul>
+<h4>Datos y Reglas de Negocio de Autorización</h4>
+<ul><li><strong>Validación SAT 32-D:</strong> Muestra alerta visual si el proveedor tiene opinión fiscal negativa o en revisión.</li></ul>
+<ul><li><strong>Selección Múltiple (Lote):</strong> Casillas de selección para autorizar 1 o más órdenes simultáneamente.</li></ul>
+<ul><li><strong>Campo de Comentarios / Motivo:</strong> Justificación gerencial obligatoria para autorizaciones o rechazos.</li></ul>
+<ul><li><strong>Transición de Estatus:</strong> Al autorizar, la orden cambia automáticamente de <code>pendiente</code> a <code>abierta</code>, notificando al sistema de almacén para esperar la entrada de mercancía.</li></ul>
+<hr>
+<h3>2.4. Submódulo 3: Directorio de Proveedores (`/compras/proveedores`)</h3>
+<ul><li><strong>Ubicación:</strong> [DashboardProveedoresPage.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/compras/pages/DashboardProveedoresPage.tsx).</li></ul>
+<ul><li><strong>Propósito:</strong> Padrón institucional de contratistas, fabricantes y prestadores de servicio homologados.</li></ul>
+<h4>Indicadores Clave de Proveedores (KPIs)</h4>
+<ul><li><strong>Proveedores Totales:</strong> Número total de empresas registradas y variedad de giros industriales.</li></ul>
+<ul><li><strong>Proveedores Activos:</strong> Conteo de proveedores habilitados y porcentaje con opinión SAT 32-D Positiva.</li></ul>
+<ul><li><strong>Inactivos / En Revisión:</strong> Conteo de proveedores que requieren actualización de expediente fiscal.</li></ul>
+<h4>Datos Recibidos del Proveedor</h4>
+<pre><code>interface Proveedor {
+  id: string;                     // Clave interna (ej. PRV-001)
+  rfc: string;                    // Registro Federal de Contribuyentes (SAT)
+  razonSocial: string;            // Denominación legal oficial
+  nombreComercial: string;        // Nombre comercial de la marca
+  tipoPersona: &#x27;moral&#x27; | &#x27;fisica&#x27;;
+  giro: string;                   // Actividad económica primaria
+  categoria: string;              // Instrumentación, Válvulas, Tubería, Seguros, etc.
+  contactoPrincipal: string;      // Nombre del representante o ejecutivo de cuenta
+  email: string;                  // Correo de contacto comercial y facturación
+  telefono: string;               // Teléfono directo y conmutador
+  direccion: {
+    calle: string; colonia: string; cp: string; ciudad: string; estado: string;
+  };
+  estatus: &#x27;activo&#x27; | &#x27;inactivo&#x27; | &#x27;revision&#x27;;
+  opinionSat32D: &#x27;positiva&#x27; | &#x27;negativa&#x27; | &#x27;revision&#x27;;
+  fechaActualizacion32D: string;  // Fecha del último documento emitido por el SAT
+  moneda: &#x27;MXN&#x27; | &#x27;USD&#x27; | &#x27;EUR&#x27;;
+  diasCredito: number;            // Plazo de pago (ej. 15, 30, 60, 90 días)
+  limiteCredito: number;          // Monto máximo autorizado de línea comercial
+  banco: string;                  // Institución bancaria receptora
+  clabe: string;                  // Clave interbancaria estandarizada de 18 dígitos
+  cuenta: string;                 // Número de cuenta de cheques
+  regimenFiscal: string;          // Régimen fiscal según catálogo SAT (ej. 601 General de Ley)
+}</code></pre>
+<h4>Funcionalidades Interactivas</h4>
+<ul><li><strong>Filtros Avanzados:</strong> Por estatus (<code>activo</code>, <code>inactivo</code>, <code>revision</code>), categoría industrial, estatus 32-D (<code>positiva</code>, <code>negativa</code>, <code>revision</code>) y moneda autorizada.</li></ul>
+<ul><li><strong>Edición Rápida en Línea:</strong> Modal para actualizar contacto, correo, teléfono, estatus de opinión fiscal y crédito sin abandonar la lista.</li></ul>
+<ul><li><strong>Navegación al Detalle:</strong> Acceso al expediente completo del contratista con documentos adjuntos.</li></ul>
+<hr>
+<h3>2.5. Submódulo 4: Alta de Proveedor / Wizard (`/compras/proveedores/nuevo`)</h3>
+<ul><li><strong>Ubicación:</strong> [NuevoProveedorPage.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/compras/pages/NuevoProveedorPage.tsx).</li></ul>
+<ul><li><strong>Propósito:</strong> Asistente multietapa guiado para el alta y homologación fiscal de nuevos contratistas.</li></ul>
+<ul><li><strong>Etapas del Asistente:</strong></li></ul>
+<ol><li><strong>Datos Generales:</strong> Razón social, nombre comercial, RFC (con validación de formato SAT), tipo de persona, giro, régimen fiscal y domicilio legal completo.</li></ol>
+<ol><li><strong>Datos Comerciales &amp; Crédito:</strong> Categoría, asignación de comprador, plazo en días de crédito, límite crediticio, moneda y condiciones de pago.</li></ol>
+<ol><li><strong>Datos Bancarios:</strong> Banco receptor, CLABE interbancaria (18 dígitos validados), número de cuenta, titular y correo para notificaciones de dispersión.</li></ol>
+<ol><li><strong>Expediente Fiscal &amp; Validación 32-D:</strong> Carga de constancia de situación fiscal (PDF), opinión 32-D (PDF) y comprobante de domicilio.</li></ol>
+<hr>
+<h3>2.6. Submódulo 5: Alta de Orden de Compra (`/compras/ordenes/nueva`)</h3>
+<ul><li><strong>Ubicación:</strong> [NuevaOrdenCompraPage.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/compras/pages/NuevaOrdenCompraPage.tsx).</li></ul>
+<ul><li><strong>Propósito:</strong> Formulario para emitir nuevas órdenes de compra vinculadas a presupuestos y proyectos.</li></ul>
+<ul><li><strong>Datos Capturados:</strong></li></ul>
+<ul><li>Proveedor seleccionado del padrón activo.</li></ul>
+<ul><li>Solicitante, departamento de obra y centro de costos.</li></ul>
+<ul><li>Almacén de entrega asignado.</li></ul>
+<ul><li>Partidas en cascada: SKU, descripción detallada, cantidad, unidad de medida, precio unitario y descuento.</li></ul>
+<ul><li>Cálculo dinámico de subtotales, IVA (16%) y total neto.</li></ul>
+<ul><li>Términos y condiciones contractuales.</li></ul>
+<hr>
+<h3>2.7. Submódulo 6: Detalle de Orden de Compra (`/compras/ordenes/[id]`)</h3>
+<ul><li><strong>Ubicación:</strong> [DetalleOrdenCompraPage.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/compras/pages/DetalleOrdenCompraPage.tsx).</li></ul>
+<ul><li><strong>Propósito:</strong> Ficha técnica integral de la orden con trazabilidad 360°.</li></ul>
+<ul><li><strong>Elementos Visuales:</strong></li></ul>
+<ul><li>Indicador de línea de tiempo de estados: *Borrador* $\to$ *Pendiente* $\to$ *Autorizada* $\to$ *En Tránsito* $\to$ *Recibida en Almacén* $\to$ *Facturada*.</li></ul>
+<ul><li>Tabla completa de partidas con importes.</li></ul>
+<ul><li>Botones de acción directa: Imprimir orden, enviar PDF por correo al proveedor, registrar factura contra esta ODC o ver comprobante de recepción de almacén (IR03).</li></ul>
+<hr>
+<h3>2.8. Submódulo 7: Bóveda y Recepción de Facturas CFDI 4.0 (`/compras/facturas`)</h3>
+<ul><li><strong>Ubicación:</strong> [GestionFacturasProveedorPage.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/compras/pages/GestionFacturasProveedorPage.tsx) y [RegistroFacturaProveedorPage.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/compras/pages/RegistroFacturaProveedorPage.tsx).</li></ul>
+<ul><li><strong>Propósito:</strong> Recepción, validación fiscal y match contra órdenes de compra y recepciones de almacén.</li></ul>
+<ul><li><strong>Cotejo 3-Way Match:</strong></li></ul>
+<p>  $$\text{Orden de Compra (ODC)} \quad \longleftrightarrow \quad \text{Recepción de Almacén (IR03)} \quad \longleftrightarrow \quad \text{Factura Fiscal CFDI 4.0}$$</p>
+<ul><li><strong>Datos Administrados:</strong></li></ul>
+<ul><li>UUID fiscal timbrado ante el SAT (36 caracteres alfanuméricos).</li></ul>
+<ul><li>Desglose de impuestos: IVA 16%, retención de IVA 4% o 10.66%, retención de ISR 1.25% (RESICO) o 10%.</li></ul>
+<ul><li>Carga y parseo de archivos XML (CFDI 4.0 oficial) y representación impresa PDF.</li></ul>
+<ul><li>Fecha de emisión, fecha de vencimiento de pago y estatus de dispersión a tesorería (<code>abierta</code>, <code>pagada</code>, <code>cancelada</code>).</li></ul>
+<hr>
+<h2>3. Módulo de Almacén (Almacén &amp; Control de Inventarios SGA)</h2>
+<p>El módulo de almacén controla el inventario físico, existencias por almacén/nave, control de custodia de herramientas y equipos críticos, entradas por orden de compra (IR03) y salidas a frentes de trabajo (SA).</p>
+<h3>3.1. Navegación Unificada de Almacén (`SubmoduloNavAlmacen`)</h3>
+<ul><li><strong>Ubicación:</strong> [SubmoduloNavAlmacen.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/almacen/components/SubmoduloNavAlmacen.tsx).</li></ul>
+<ul><li><strong>Concepto:</strong> Réplica de la barra lanzadora punteada de Compras adaptada al flujo de Almacén:</li></ul>
+<ol><li><strong>Artículos (<code>/almacen/alta-articulo</code>):</strong> Catálogo maestro, SKUs, categorías y alta de insumos.</li></ol>
+<ol><li><strong>Servicios (<code>/almacen/alta-servicio</code>):</strong> Servicios no inventariables, calibraciones y contrataciones.</li></ol>
+<ol><li><strong>Inventarios (<code>/almacen</code>):</strong> Control de existencias, ubicaciones, naves y movimientos.</li></ol>
+<hr>
+<h3>3.2. Submódulo 1: Inventarios / Panel General (`/almacen`)</h3>
+<ul><li><strong>Ubicación:</strong> [DashboardAlmacenPage.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/almacen/pages/DashboardAlmacenPage.tsx).</li></ul>
+<ul><li><strong>Propósito:</strong> Tablero central de control de stock y existencias físicas.</li></ul>
+<h4>4 Tarjetas KPI Oficiales de Almacén</h4>
+<table>
+<thead><tr><th>Tarjeta KPI</th><th>Valor / Métrica</th><th>Subtítulo / Contexto</th><th>Píldora de Estado</th></tr></thead><tbody>
+<tr><td><strong>Total Artículos</strong></td><td>1,482 ítems</td><td>Catálogo unificado</td><td>8 Categorías Activas</td></tr>
+<tr><td><strong>Existencias Totales</strong></td><td>24,930 uds</td><td>Distribución física en naves</td><td>4 Naves Activas</td></tr>
+<tr><td><strong>En Mantenimiento</strong></td><td>7 equipos</td><td>Calibración &amp; Taller técnico</td><td>2 en Taller Externo</td></tr>
+<tr><td><strong>Stock Bajo / Alertas</strong></td><td>9 ítems</td><td>Bajo umbral mínimo de seguridad</td><td>3 Críticos • 6 Medios</td></tr>
+</tbody></table>
+<h4>Filtros de Inventario y Flujo de Almacén</h4>
+<ul><li><strong>Almacén / Nave:</strong> <code>Todos</code>, <code>Nave A - Almacén Central</code>, <code>Nave B - Químicos &amp; Resguardo</code>, <code>Patio Exterior</code>.</li></ul>
+<ul><li><strong>Categoría de Insumo:</strong> <code>Todas</code>, <code>Equipos de Medición</code>, <code>Consumibles</code>, <code>EPP</code>, <code>Herramientas</code>, <code>Mobiliario y Activos</code>.</li></ul>
+<ul><li><strong>Estado Operativo:</strong> <code>Todos</code>, <code>Disponible</code>, <code>Stock Bajo</code>.</li></ul>
+<ul><li><strong>Búsqueda en Vivo:</strong> Por código SKU o nombre del insumo.</li></ul>
+<h4>Tabla de Existencias de Inventario</h4>
+<ul><li><strong>Miniatura:</strong> Ícono temático con color diferenciado por categoría.</li></ul>
+<ul><li><strong>Código SKU:</strong> Identificador técnico único (ej. <code>DET-UVIR-FLAME-01</code>, <code>GAS-CAL-CH4-50</code>).</li></ul>
+<ul><li><strong>Descripción / Ficha Técnica:</strong> Nombre comercial y especificación industrial.</li></ul>
+<ul><li><strong>Categoría:</strong> Etiqueta visual de categoría.</li></ul>
+<ul><li><strong>Existencias:</strong></li></ul>
+<ul><li>*Total Físico:* Cantidad acumulada en kárdex.</li></ul>
+<ul><li>*Disponible:* Cantidad libre para despacho inmediato.</li></ul>
+<ul><li>*En Proyecto:* Cantidad prestada o asignada en frentes de obra.</li></ul>
+<ul><li>*Taller / Calibración:* Cantidad temporalmente fuera de servicio para calibración o reparación.</li></ul>
+<ul><li><strong>Ubicación en Nave:</strong> Localización física exacta (ej. *Rack A-02, Nivel 1*, *Gabinete Criogénico G-1*).</li></ul>
+<ul><li><strong>Estado Operativo:</strong> Badge de estatus (<code>Disponible</code> en verde o <code>Stock Bajo</code> en rojo/alerta).</li></ul>
+<hr>
+<h3>3.3. Submódulo 2: Catálogo de Artículos &amp; Alta Maestra (`/almacen/alta-articulo`)</h3>
+<ul><li><strong>Ubicación:</strong> [AltaArticuloCatalogoPage.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/almacen/pages/AltaArticuloCatalogoPage.tsx).</li></ul>
+<ul><li><strong>Propósito:</strong> Formulario técnico para registrar nuevos artículos en el catálogo institucional.</li></ul>
+<h4>Datos Recibidos y Validaciones</h4>
+<ul><li><strong>Generación Automática de SKU:</strong> Prefijo por categoría + correlativo único.</li></ul>
+<ul><li><strong>Información Primaria:</strong> Nombre comercial, descripción técnica, unidad base de almacenamiento, clave de producto/servicio SAT y clave de unidad SAT.</li></ul>
+<ul><li><strong>Tipo de Custodia:</strong></li></ul>
+<ul><li>*Material Consumible:* No sujeto a retorno (cables, tornillería, gases).</li></ul>
+<ul><li>*Herramienta Retornable:* Sujeta a préstamo y devolución (taladros, ponchadoras).</li></ul>
+<ul><li>*Equipo de Medición:* Sujeto a calibración periódica obligatoria y certificación.</li></ul>
+<ul><li>*Activo Fijo / Mobiliario:* Asignado con número de inventario patrimonial.</li></ul>
+<ul><li><strong>Parámetros de Reabastecimiento:</strong></li></ul>
+<ul><li>Stock Mínimo (dispara alertas preventivas).</li></ul>
+<ul><li>Stock Máximo (evita sobre-inventario).</li></ul>
+<ul><li>Almacén y Nave predeterminada.</li></ul>
+<ul><li>Ubicación en pasillo, rack y nivel.</li></ul>
+<ul><li><strong>Carga de Evidencia Multimedia:</strong> Imagen fotográfica del artículo y ficha técnica del fabricante en PDF.</li></ul>
+<hr>
+<h3>3.4. Submódulo 3: Servicios No Inventariables (`/almacen/alta-servicio`)</h3>
+<ul><li><strong>Ubicación:</strong> [AltaServicioNoInventariablePage.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/almacen/pages/AltaServicioNoInventariablePage.tsx).</li></ul>
+<ul><li><strong>Propósito:</strong> Registro y contratación de servicios especializados que no generan inventario físico en kárdex pero requieren seguimiento en compras y costos de obra.</li></ul>
+<h4>Datos Recibidos</h4>
+<ul><li><strong>Código de Servicio:</strong> Folio de catálogo (ej. <code>SRV-CALIB-NOM-01</code>).</li></ul>
+<ul><li><strong>Nombre del Servicio:</strong> Descripción técnica (ej. *Servicio de Calibración Acreditada ISO/IEC 17025 en Laboratorio*).</li></ul>
+<ul><li><strong>Tipo de Servicio:</strong> Calibración y Metrología, Mantenimiento Preventivo, Renta de Maquinaria, etc.</li></ul>
+<ul><li><strong>Proveedor y Contrato:</strong> Empresa asignada y contrato marco asociado.</li></ul>
+<ul><li><strong>Clasificación SAT:</strong> Clave SAT <code>81141500</code> (Servicios de pruebas y calibración) y Unidad <code>E48</code> (Unidad de servicio).</li></ul>
+<ul><li><strong>Centro de Costos &amp; Importe:</strong> Asignación presupuestal a frente de obra e importe proyectado en MXN o USD.</li></ul>
+<hr>
+<h3>3.5. Submódulo 4: Recepción de Mercancías IR03 (`/almacen/recepcion-ir03`)</h3>
+<ul><li><strong>Ubicación:</strong> [RecepcionMercanciaIR03Page.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/almacen/pages/RecepcionMercanciaIR03Page.tsx).</li></ul>
+<ul><li><strong>Propósito:</strong> Registro de entrada física de materiales e insumos al almacén contra una Orden de Compra autorizada.</li></ul>
+<h4>Flujo Operativo y Datos</h4>
+<pre><code>sequenceDiagram
+    autonumber
+    actor Proveedor as Proveedor / Fletera
+    participant Anden as Andén de Almacén
+    participant IR03 as Sistema SGA (IR03)
+    participant Kardex as Kárdex / Inventario
+    participant Compras as Bóveda de Compras
+
+    Proveedor-&gt;&gt;Anden: Entrega física de material con remisión
+    Anden-&gt;&gt;IR03: Carga Folio ODC (ej. PO51)
+    IR03--&gt;&gt;Anden: Despliega partidas pactadas
+    Anden-&gt;&gt;IR03: Captura cantidad física recibida, series y nave
+    Anden-&gt;&gt;IR03: Adjunta evidencia fotográfica de inspección
+    Anden-&gt;&gt;IR03: Confirma Entrada al Kárdex
+    IR03-&gt;&gt;Kardex: Incrementa existencias disponibles
+    IR03-&gt;&gt;Compras: Libera ODC para recepción de factura fiscal</code></pre>
+<ul><li><strong>Campos del Comprobante IR03:</strong></li></ul>
+<ul><li>Folio de recepción (ej. <code>IR03-2024-0089</code>).</li></ul>
+<ul><li>Folio de Orden de Compra origen (ej. <code>PO51</code>).</li></ul>
+<ul><li>Nombre del proveedor y fecha de descarga en andén.</li></ul>
+<ul><li>Desglose de partidas: Cantidad pactada vs cantidad recibida, estado de entrega (<code>Completo</code>, <code>Parcial</code>, <code>Pendiente</code>), número de serie asignado y ubicación de almacenamiento en nave.</li></ul>
+<hr>
+<h3>3.6. Submódulo 5: Salida de Artículos a Proyectos (`/almacen/salida`)</h3>
+<ul><li><strong>Ubicación:</strong> [SalidaArticuloPage.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/almacen/pages/SalidaArticuloPage.tsx).</li></ul>
+<ul><li><strong>Propósito:</strong> Registro de despacho de materiales y herramientas hacia frentes de obra y proyectos activos.</li></ul>
+<ul><li><strong>Datos Administrados:</strong></li></ul>
+<ul><li>Folio de salida oficial (ej. <code>SA-2024-0142</code>).</li></ul>
+<ul><li>Número de Solicitud de Material (SM) autorizada por la residencia de obra.</li></ul>
+<ul><li>Frente de trabajo destino (ej. *Refinería Dos Bocas*, *Plataforma Akal-C*, *Tenaris Tamsa*).</li></ul>
+<ul><li>Responsable que recibe: Nombre del ingeniero o supervisor, cargo y número de empleado institucional.</li></ul>
+<ul><li>Partidas despachadas con deducción automática del stock disponible en kárdex.</li></ul>
+<hr>
+<h3>3.7. Submódulo 6: Control de Custodia y Asignaciones (`/almacen/asignaciones`)</h3>
+<ul><li><strong>Ubicación:</strong> [AsignacionesProyectosPage.tsx](file:///c:/Users/stard/OneDrive/Desktop/PROYECTO1/SIFYGSA-BUSINESS-SUITE/src/modules/almacen/pages/AsignacionesProyectosPage.tsx).</li></ul>
+<ul><li><strong>Propósito:</strong> Control de préstamo, custodia y retorno de equipos de alto valor (detectores, multímetros, calibradores, arneses de seguridad).</li></ul>
+<ul><li><strong>Datos y Reglas de Negocio:</strong></li></ul>
+<ul><li>Folio de asignación (ej. <code>ASG-2024-0032</code>).</li></ul>
+<ul><li>Registro de fecha de entrega y fecha estimada de retorno.</li></ul>
+<ul><li>Estado de custodia: <code>En Frente</code>, <code>Por Vencer</code>, <code>Retornado</code>.</li></ul>
+<ul><li>Verificación de calibración vigente: Bloquea el préstamo si el equipo tiene el dictamen de calibración vencido.</li></ul>
+<ul><li>Checklist digital de retorno para constatar el estado físico al ingresar nuevamente a bodega.</li></ul>
+<hr>
+<h2>4. Matriz Comparativa de Datos entre Compras y Almacén</h2>
+<table>
+<thead><tr><th>Entidad / Concepto</th><th>Administrado en Compras</th><th>Administrado en Almacén</th><th>Vínculo / Integración</th></tr></thead><tbody>
+<tr><td><strong>Catálogo de Insumos</strong></td><td>Consulta partidas, precios y unidades</td><td>Define especificación técnica, SKU y fotos</td><td>El SKU del almacén se inserta en las partidas de la ODC</td></tr>
+<tr><td><strong>Proveedores</strong></td><td>Padrón completo, límite crediticio, SAT 32-D</td><td>Consulta proveedor al recibir remisiones</td><td>Mismo catálogo institucional centralizado</td></tr>
+<tr><td><strong>Orden de Compra</strong></td><td>Generación, cotización, autorización y firma</td><td>Consulta de partidas para descarga en andén</td><td>La ODC autorizada es el documento fuente de la entrada IR03</td></tr>
+<tr><td><strong>Recepción Física</strong></td><td>Consulta de estatus para autorizar pago</td><td>Inspección física, conteo y registro en kárdex</td><td>La recepción IR03 autoriza el 3-way match fiscal</td></tr>
+<tr><td><strong>Factura CFDI 4.0</strong></td><td>Validación SAT, UUID, retenciones y pago</td><td>No interviene directamente</td><td>Se valida que el monto facturado coincida con lo recibido</td></tr>
+<tr><td><strong>Existencias / Stock</strong></td><td>Consulta de existencias para emitir ODC</td><td>Control absoluto de ubicaciones, naves y kárdex</td><td>La salida SA o entrada IR03 actualiza el inventario en tiempo real</td></tr>
+</tbody></table>
+<hr>
+<h2>5. Estándares Visuales y Tokens UI/UX Implementados</h2>
+<p>Ambos módulos cumplen con las directrices del <strong>Manual UI/UX SIFYGSA v1.1</strong>:</p>
+<blockquote>[!TIP]</blockquote>
+<blockquote><strong>Paleta Cromática y Tokens Oficiales</strong></blockquote>
+<blockquote>* <strong>Azul Primario SIFYGSA:</strong> `#1D4ED8` (`var(--primary)`), hover `#1E40AF`.</blockquote>
+<blockquote>* <strong>Superficies:</strong> Modo claro `#FFFFFF` y `#F8FAFC` (`var(--surface)`); Modo oscuro `#0F172A` y `#1E293B` (`var(--card)`).</blockquote>
+<blockquote>* <strong>Bordes y Divisores:</strong> `var(--border, #E2E8F0)` y `var(--divider, #F1F5F9)`.</blockquote>
+<blockquote>* <strong>Radios de Borde:</strong> Tarjetas y modales a `16px` (`var(--radius-card)`), controles a `8px` (`var(--radius-control)`).</blockquote>
+<blockquote>* <strong>Botones de Encabezado:</strong> Agrupados en `.compras-header-actions` y `.dashboard-almacen-actions` con `margin-left: auto` para posicionamiento estricto a la derecha.</blockquote>
+<blockquote>* <strong>Tarjetas KPI:</strong> Contenedores flex con etiqueta a la izquierda, caja de ícono temática en squircle a la derecha, valor numérico en tipografía negrita (`1.85rem`) y pie con píldora de estado.</blockquote>
+<hr>
+<h2>6. Estado Técnico del Proyecto y Verificación</h2>
+<ol><li><strong>Compilación TypeScript:</strong> El proyecto compila limpiamente mediante <code>npx tsc --noEmit</code> con <strong>0 errores de tipo</strong>.</li></ol>
+<ol><li><strong>Desacoplamiento Modular:</strong> Las modificaciones en Compras y Almacén respetan la integridad de los módulos de RH, CRM, Administración y el backend de base de datos.</li></ol>
+<ol><li><strong>Persistencia y Simulación de Datos:</strong> Los estados operativos se sincronizan de manera reactiva mediante <code>ComprasContext</code> y repositorios mock con almacenamiento local (<code>localStorage</code>), permitiendo flujos completos de prueba de punta a punta.</li></ol>
+</body></html>

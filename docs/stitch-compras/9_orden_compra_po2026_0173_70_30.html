@@ -1,0 +1,1132 @@
+<!DOCTYPE html><html class="dark" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>SIFYGSA Fire &amp; Gas ERP - PO-2026-0173 Five Peaks México SA de CV</title>
+<!-- Tailwind CSS CDN con plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#1D4ED8',
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#1d4ed8',
+              700: '#1e40af',
+              800: '#1e3a8a',
+              900: '#172554',
+            },
+            industrial: {
+              950: '#070b14',
+              900: '#0b1120',
+              850: '#101728',
+              800: '#111827',
+              750: '#182234',
+              700: '#1f2937',
+              600: '#374151',
+              500: '#4b5563',
+              400: '#9ca3af',
+              300: '#cbd5e1',
+              200: '#e2e8f0',
+              100: '#f1f5f9',
+              50: '#f8fafc',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+          }
+        }
+      }
+    }
+</script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+    /* Custom refined scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b1120;
+    }
+    html:not(.dark) ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1f2937;
+      border-radius: 3px;
+    }
+    html:not(.dark) ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #374151;
+    }
+
+    .label-meta {
+      font-size: 0.6875rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+    html:not(.dark) .label-meta {
+      color: #64748b;
+    }
+</style>
+</head>
+<body class="bg-industrial-950 dark:bg-industrial-950 text-industrial-200 antialiased min-h-screen flex flex-col font-sans selection:bg-brand-600 selection:text-white transition-colors duration-200">
+<!-- BEGIN: TopGlobalHeader -->
+<header class="h-14 bg-industrial-900 border-b border-industrial-800 flex items-center justify-between px-4 sticky top-0 z-40 shadow-md">
+<!-- Brand & Workspace context -->
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-2.5">
+<div class="h-8 w-8 rounded-lg bg-gradient-to-br from-orange-500 via-red-600 to-brand-700 flex items-center justify-center shadow-lg shadow-orange-950/40">
+<i class="fa-solid fa-fire-flame-curved text-white text-base"></i>
+</div>
+<div>
+<span class="font-extrabold text-white tracking-tight text-base font-mono">SIFYGSA</span>
+<span class="text-[10px] uppercase font-bold tracking-widest text-brand-400 block -mt-1">Suite Fire &amp; Gas ERP</span>
+</div>
+</div>
+<span class="text-xs px-2 py-0.5 rounded bg-brand-900/50 text-brand-300 border border-brand-500/30 font-mono hidden sm:inline-block">PO-2026-0173</span>
+</div>
+<!-- Center Search Bar -->
+<div class="flex-1 max-w-xl mx-4 hidden lg:block">
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-industrial-400">
+<i class="fa-solid fa-magnifying-glass text-xs"></i>
+</div>
+<input class="w-full pl-9 pr-14 py-1.5 bg-industrial-800/70 border border-industrial-700 rounded-md text-xs text-white placeholder-industrial-400 focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 transition-all font-sans" placeholder="Buscar órdenes, facturas, compras, requisiciones... (Shift + S)" type="text">
+<div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+<kbd class="px-1.5 py-0.5 text-[10px] font-semibold text-industrial-400 bg-industrial-700/60 border border-industrial-600 rounded">Shift+S</kbd>
+</div>
+</div>
+</div>
+<!-- Right Controls, Theme Toggle and User Profile -->
+<div class="flex items-center space-x-2">
+<!-- Mode Claro / Oscuro Switcher -->
+<button class="p-2 text-industrial-400 hover:text-white hover:bg-industrial-800 rounded-md transition flex items-center justify-center" id="btn-theme-toggle" onclick="toggleDarkMode()" title="Cambiar Tema (Claro / Oscuro)">
+<i class="fa-solid fa-sun text-amber-400 text-xs" id="theme-toggle-icon"></i>
+</button>
+<button class="p-2 text-industrial-400 hover:text-white hover:bg-industrial-800 rounded-md transition" title="Historial reciente">
+<i class="fa-solid fa-clock-rotate-left text-xs"></i>
+</button>
+<button class="p-2 text-industrial-400 hover:text-white hover:bg-industrial-800 rounded-md relative transition" title="Notificaciones">
+<i class="fa-regular fa-bell text-xs"></i>
+<span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-industrial-900"></span>
+</button>
+<div class="h-5 w-px bg-industrial-700"></div>
+<!-- User Info Badge -->
+<div class="flex items-center space-x-2 pl-1 cursor-pointer group">
+<div class="h-7 w-7 rounded-full bg-brand-700/60 border border-brand-500/40 text-brand-200 flex items-center justify-center font-bold text-xs ring-1 ring-industrial-800 group-hover:border-brand-400">
+        JM
+      </div>
+<div class="hidden xl:flex flex-col text-left">
+<span class="text-xs font-semibold text-white leading-tight">Jeannete Ivonne Macías Ovando</span>
+<span class="text-[10px] text-brand-400 font-mono leading-none">SIFYGSA - Comprador</span>
+</div>
+<i class="fa-solid fa-angle-down text-[10px] text-industrial-400 hidden xl:block"></i>
+</div>
+</div>
+</header>
+<!-- END: TopGlobalHeader -->
+<div class="flex-1 flex overflow-hidden">
+<!-- BEGIN: LeftSidebarNav -->
+<aside class="w-60 bg-industrial-900 border-r border-industrial-800 hidden md:flex flex-col justify-between shrink-0 select-none">
+<div class="py-3 overflow-y-auto">
+<div class="px-3 mb-2">
+<p class="text-[10px] font-bold text-industrial-400 uppercase tracking-wider px-2">Operaciones &amp; Suministro</p>
+</div>
+<nav class="space-y-0.5 px-2">
+<a class="flex items-center px-2.5 py-1.5 text-xs rounded-md text-industrial-400 hover:text-white hover:bg-industrial-800 transition" href="#">
+<i class="fa-solid fa-chart-pie w-5 text-industrial-400"></i>
+<span>Tablero General</span>
+</a>
+<a class="flex items-center px-2.5 py-1.5 text-xs rounded-md text-industrial-400 hover:text-white hover:bg-industrial-800 transition" href="#">
+<i class="fa-solid fa-boxes-stacked w-5 text-industrial-400"></i>
+<span>Almacén e Inventario</span>
+</a>
+<!-- Active Compras Group -->
+<div class="pt-1 pb-1">
+<div class="flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold rounded-md bg-brand-600/10 text-brand-400 border border-brand-500/20">
+<div class="flex items-center">
+<i class="fa-solid fa-cart-flatbed w-5 text-brand-400"></i>
+<span class="text-white">Compras</span>
+</div>
+<i class="fa-solid fa-chevron-down text-[10px]"></i>
+</div>
+<div class="ml-4 pl-3 border-l border-industrial-700/60 mt-1 space-y-1">
+<a class="flex items-center justify-between py-1 text-xs text-brand-400 font-semibold" href="#">
+<span class="flex items-center"><i class="fa-solid fa-file-invoice text-[10px] mr-2"></i>Órdenes de Compra</span>
+<span class="bg-brand-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono">Activo</span>
+</a>
+<a class="flex items-center py-1 text-xs text-industrial-400 hover:text-white transition" href="#">
+<span class="flex items-center"><i class="fa-regular fa-clipboard text-[10px] mr-2"></i>Requisiciones (REQ)</span>
+</a>
+<a class="flex items-center py-1 text-xs text-industrial-400 hover:text-white transition" href="#">
+<span class="flex items-center"><i class="fa-solid fa-truck-ramp-box text-[10px] mr-2"></i>Recepción de Materiales (IR03)</span>
+</a>
+
+<a class="flex items-center py-1 text-xs text-industrial-400 hover:text-white transition" href="#">
+<span class="flex items-center"><i class="fa-solid fa-address-book text-[10px] mr-2"></i>Catálogo de Proveedores</span>
+</a>
+</div>
+</div>
+
+<a class="flex items-center px-2.5 py-1.5 text-xs rounded-md text-industrial-400 hover:text-white hover:bg-industrial-800 transition" href="#">
+<i class="fa-solid fa-scale-balanced w-5 text-industrial-400"></i>
+<span>Finanzas y Facturación</span>
+</a>
+<a class="flex items-center px-2.5 py-1.5 text-xs rounded-md text-industrial-400 hover:text-white hover:bg-industrial-800 transition" href="#">
+<i class="fa-solid fa-folder-tree w-5 text-industrial-400"></i>
+<span>Documentos Técnicos</span>
+</a>
+<a class="flex items-center px-2.5 py-1.5 text-xs rounded-md text-industrial-400 hover:text-white hover:bg-industrial-800 transition" href="#">
+<i class="fa-solid fa-gears w-5 text-industrial-400"></i>
+<span>Configuración</span>
+</a>
+</nav>
+</div>
+<div class="p-3 bg-industrial-950/60 border-t border-industrial-800/80 m-2 rounded-lg text-[11px] text-industrial-400 space-y-1 font-mono">
+<div class="flex items-center justify-between">
+<span>Servidor ERP:</span>
+<span class="text-emerald-400 flex items-center"><span class="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block mr-1"></span>En Línea</span>
+</div>
+<div class="flex items-center justify-between">
+<span>Sincronización:</span>
+<span class="text-industrial-300">27/10/2026 14:40</span>
+</div>
+</div>
+</aside>
+<!-- END: LeftSidebarNav -->
+<!-- BEGIN: MainContentArea -->
+<main class="flex-1 overflow-y-auto bg-industrial-950 flex flex-col">
+<!-- Breadcrumb superior -->
+<div class="bg-industrial-900/90 border-b border-industrial-800 px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+<div class="flex items-center space-x-2 text-industrial-400">
+<a class="hover:text-brand-400 transition" href="#">Compras</a>
+<i class="fa-solid fa-chevron-right text-[9px]"></i>
+<a class="hover:text-brand-400 transition" href="#">Órdenes de Compra</a>
+<i class="fa-solid fa-chevron-right text-[9px]"></i>
+<span class="text-white font-mono font-bold text-brand-300">PO-2026-0173</span>
+</div>
+<div class="flex items-center space-x-3 text-industrial-300">
+<div class="flex items-center border border-industrial-700 rounded bg-industrial-800 overflow-hidden shadow-sm">
+<button class="px-2.5 py-1 hover:bg-industrial-700 hover:text-white border-r border-industrial-700 transition" title="Registro anterior">
+<i class="fa-solid fa-arrow-left text-[11px]"></i>
+</button>
+<button class="px-2.5 py-1 hover:bg-industrial-700 hover:text-white transition" title="Siguiente registro">
+<i class="fa-solid fa-arrow-right text-[11px]"></i>
+</button>
+</div>
+<a class="hover:text-white hover:underline flex items-center gap-1" href="#"><i class="fa-solid fa-list-ul text-[10px]"></i> Lista</a>
+<span class="text-industrial-700">|</span>
+<a class="hover:text-white hover:underline flex items-center gap-1" href="#"><i class="fa-solid fa-magnifying-glass text-[10px]"></i> Buscar</a>
+<span class="text-industrial-700">|</span>
+<a class="hover:text-white hover:underline flex items-center gap-1" href="#"><i class="fa-solid fa-sliders text-[10px]"></i> Personalizar</a>
+</div>
+</div>
+<!-- Barra de acciones bajo el breadcrumb -->
+
+<!-- TARJETA DE ENCABEZADO DE LA ORDEN -->
+
+<!-- MAIN BODY CONTAINER: Layout de 2 columnas armónicas (70% - 30%) -->
+<div class="p-6 space-y-6"><div class="bg-[#101726] border border-[#1e293b] rounded-lg p-4 shadow-lg flex flex-wrap items-center justify-between gap-4">
+  <div class="flex items-center gap-3.5">
+    <div class="h-10 w-10 rounded-lg bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 flex items-center justify-center text-lg shadow-sm shrink-0">
+      <i class="fa-solid fa-file-invoice text-emerald-400"></i>
+    </div>
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-base font-bold text-white tracking-tight flex items-center gap-1.5">
+          <span>Orden de compra</span>
+          <i class="fa-solid fa-magnifying-glass text-xs text-brand-400"></i>
+        </h1>
+      </div>
+      <p class="text-xs text-industrial-300 font-mono mt-0.5">
+        <span class="text-brand-300 font-bold">PO10926</span> &nbsp;•&nbsp; <span class="text-white font-sans font-semibold">Five Peaks México SA de CV</span> <span class="text-industrial-400 text-[11px]">(PO-2026-0173)</span>
+      </p>
+    </div>
+  </div>
+  <div class="shrink-0">
+    <div class="border border-amber-600/70 bg-amber-950/40 text-amber-400 font-bold px-4 py-1.5 rounded-full flex items-center gap-2 text-xs tracking-wider uppercase shadow-inner whitespace-nowrap">
+      <span class="w-2 h-2 rounded-full bg-amber-400 inline-block animate-pulse"></span>
+      <span>ANULADA / REVERSADA EXITOSAMENTE</span>
+    </div>
+  </div>
+</div>
+  <!-- BLOQUE SUPERIOR 70 / 30 FIEL A IMAGE_8 -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <!-- Bloque Izquierdo (approx 72% / col-span-8 o 9): INFORMACIÓN PRIMARIA -->
+    <div class="lg:col-span-8 bg-[#101726] border border-[#1e293b] rounded-lg p-5 shadow-lg space-y-4">
+      <!-- Header de la tarjeta -->
+      <div class="flex items-center justify-between pb-3 border-b border-[#1e293b]/70">
+        <div class="flex items-center gap-2 cursor-pointer">
+          <i class="fa-solid fa-chevron-down text-brand-400 text-xs"></i>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-white font-sans">INFORMACIÓN PRIMARIA</h2>
+        </div>
+        <div class="text-[11px] text-industrial-400 font-mono">
+          <span>ID de Contrato / Requisición: </span>
+          <span class="text-industrial-300 font-semibold">SFG-C259-LVT-RQ-127/26</span>
+        </div>
+      </div>
+
+      <!-- Formulario en rejilla de 3 columnas -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs">
+        <!-- Fila 1 -->
+        <div>
+          <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1">NO. DE OC</label>
+          <input type="text" readonly="" value="PO-2026-0137" class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded px-3 py-1.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-brand-500">
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1">PROVEEDOR ADJUDICADO</label>
+          <select class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500 font-medium truncate">
+            <option selected="">FIVE PEAKS MÉXICO SA DE CV (FPM130918MPA)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1"><span class="text-rose-500 mr-0.5">*</span>SOLICITANTE / COMPRADOR</label>
+          <input type="text" readonly="" value="Carlos Mendoza" class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500 font-medium">
+        </div>
+
+        <!-- Fila 2 -->
+        <div>
+          <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1">FECHA DE EMISIÓN</label>
+          <div class="relative">
+            <input type="text" value="10/11/2026" class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-brand-500">
+            <i class="fa-regular fa-calendar absolute right-2.5 top-2 text-industrial-400 text-xs pointer-events-none"></i>
+          </div>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1"><span class="text-rose-500 mr-0.5">*</span>FECHA REQUERIDA DE ENTREGA</label>
+          <div class="relative">
+            <input type="text" value="25/11/2026" class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-brand-500">
+            <i class="fa-regular fa-calendar absolute right-2.5 top-2 text-industrial-400 text-xs pointer-events-none"></i>
+          </div>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1"><span class="text-rose-500 mr-0.5">*</span>ALMACÉN DESTINO</label>
+          <select class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500 font-medium truncate">
+            <option selected="">Almacén Principal (Sede CDMX)</option>
+            <option>Almacén Veracruz (Sitio Tenaris)</option>
+          </select>
+        </div>
+
+        <!-- Fila 3 -->
+        <div>
+          <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1">CONDICIÓN DE PAGO</label>
+          <select class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500 font-medium">
+            <option selected="">Crédito 30 días</option>
+            <option>Contado comercial</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1">TÉRMINOS DE ENTREGA</label>
+          <input type="text" value="Entrega DDP Sitio Obra" class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1">CENTRO DE COSTOS / FRENTE</label>
+          <input type="text" value="SFG-C259" class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-brand-500">
+        </div>
+
+        <!-- Fila 4: Ancho completo -->
+        <div class="md:col-span-3 pt-1">
+          <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1">NOTA DE LA ORDEN Y ESPECIFICACIONES TÉCNICAS</label>
+          <textarea rows="2" class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded p-2.5 text-xs text-white focus:outline-none focus:border-brand-500 resize-none font-sans leading-relaxed">Servicio de baño portátil para Tenaris Tamsa. Aclaración / Nota de partida: CC: SFG-C259 - Ref: SFG-C259-LVT-RQ-127/26. Tope Requisición: 1.00.</textarea>
+        </div>
+      </div>
+
+      <!-- Barra inferior: Firmas Digitales y Aprobación -->
+      <div class="pt-3 border-t border-[#1e293b]/70 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-2 text-emerald-400 font-medium">
+          <i class="fa-regular fa-circle-check text-sm"></i>
+          <span><strong class="text-white font-semibold">Firmas Digitales y Aprobación:</strong> Autorizado por Ing. Carlos Mendoza Estrada • Requisición ligada: SFG-C259-LVT-RQ-127/26.</span>
+        </div>
+        <button class="px-3 py-1 rounded bg-[#0b2820] text-emerald-400 border border-emerald-500/40 text-[10px] font-mono font-bold tracking-wider hover:bg-emerald-950 transition uppercase">
+          FIRMA DIGITAL OK
+        </button>
+      </div>
+    </div>
+
+    <!-- Bloque Derecho (approx 28% / col-span-4): RESUMEN DE IMPORTES -->
+    <div class="lg:col-span-4 bg-[#101726] border border-[#1e293b] rounded-lg p-5 shadow-lg space-y-4">
+      <!-- Header Resumen con badge MXN -->
+      <div class="flex items-center justify-between pb-3 border-b border-[#1e293b]/70">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-white font-sans">RESUMEN DE IMPORTES</h2>
+        <span class="text-[10px] font-bold uppercase font-mono px-2 py-0.5 rounded bg-brand-900/60 text-brand-300 border border-brand-500/30 leading-tight">MXN</span>
+      </div>
+
+      <!-- Desglose de importes -->
+      <div class="space-y-2.5 text-xs text-industrial-300">
+        <div class="flex items-center justify-between">
+          <span>Subtotal Partidas:</span>
+          <span class="font-mono font-bold text-white">$3,550.00</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span>Tax Total (Impuestos):</span>
+          <span class="font-mono font-bold text-white">$568.00</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span>IVA por Acreditar 16%:</span>
+          <span class="font-mono font-bold text-white">$568.00</span>
+        </div>
+      </div>
+
+      <!-- Línea discontinua divisoria -->
+      <div class="border-t border-dashed border-[#1e293b] pt-4 space-y-2">
+        <div>
+          <span class="text-[10px] font-bold text-industrial-400 uppercase tracking-wider block">TOTAL A PAGAR (MXN)</span>
+          <div class="text-2xl font-extrabold font-mono text-emerald-400 tracking-tight mt-0.5">
+            $4,118.00 <span class="text-sm font-bold text-emerald-400">MXN</span>
+          </div>
+        </div>
+
+        <!-- Estado de pago con bolita verde -->
+        <div class="flex items-center gap-2 pt-1 text-xs text-industrial-300">
+          <span class="h-2 w-2 rounded-full bg-emerald-400 inline-block"></span>
+          <span>Estado de pago: <strong class="text-white font-medium">Pendiente de factura</strong></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOQUE INFERIOR CON 3 TARJETAS EN FILA HORIZONTAL (GRID DE 3) EXACTO A IMAGE_8 -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Tarjeta 1: Clasificación Operativa -->
+    <div class="bg-[#101726] border border-[#1e293b] rounded-lg p-5 shadow-lg space-y-3.5">
+      <div class="flex items-center gap-2 pb-2 border-b border-[#1e293b]/70">
+        <i class="fa-solid fa-folder-tree text-brand-400 text-xs"></i>
+        <h3 class="text-xs font-bold text-white">Clasificación Operativa</h3>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1">SUBSIDIARIA</label>
+          <select class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500 font-medium truncate">
+            <option selected="">SIFYGSA Fire &amp; Gas S.A. de C.V.</option>
+            <option>SIFYGSA Operaciones del Golfo</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1">DEPARTAMENTO</label>
+          <input type="text" value="Operaciones &amp; Frentes de Obra" class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500 font-medium">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tarjeta 2: Gestión entre Empresas & Moneda -->
+    <div class="bg-[#101726] border border-[#1e293b] rounded-lg p-5 shadow-lg space-y-3.5">
+      <div class="flex items-center justify-between pb-2 border-b border-[#1e293b]/70">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-calculator text-brand-400 text-xs"></i>
+          <h3 class="text-xs font-bold text-white">Gestión entre Empresas &amp; Moneda</h3>
+        </div>
+        <button class="px-2 py-0.5 rounded bg-brand-600/30 text-brand-300 border border-brand-500/40 text-[9px] font-mono font-bold tracking-wider uppercase hover:bg-brand-600/50 transition">
+          FIX OFICIAL
+        </button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1">MONEDA</label>
+            <select class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500 font-medium">
+              <option selected="">MXN - Peso</option>
+              <option>USD - Dólar</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1">TIPO DE CAMBIO</label>
+            <input type="text" value="18.45" class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded px-3 py-1.5 text-xs font-mono font-semibold text-white focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+        <p class="text-[10px] text-industrial-400 font-sans leading-tight pt-1">
+          Cotización oficial Banxico para contratos en divisa extranjera.
+        </p>
+      </div>
+    </div>
+
+    <!-- Tarjeta 3: Términos & Operaciones -->
+    <div class="bg-[#101726] border border-[#1e293b] rounded-lg p-5 shadow-lg space-y-3.5">
+      <div class="flex items-center gap-2 pb-2 border-b border-[#1e293b]/70">
+        <i class="fa-solid fa-truck text-brand-400 text-xs"></i>
+        <h3 class="text-xs font-bold text-white">Términos &amp; Operaciones</h3>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1">TIPO DE COMPRA</label>
+          <select class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500 font-medium truncate">
+            <option selected="">Bienes y Servicios Industriales</option>
+            <option>Arrendamiento de Equipo</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-industrial-300 uppercase tracking-wider block mb-1">ALMACÉN DE RECEPCIÓN</label>
+          <input type="text" readonly="" value="Almacén Principal (Sede CDMX)" class="w-full bg-[#0a0f1d] border border-[#1e293b] rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500 font-medium truncate">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN DE PARTIDAS Y PESTAÑAS OPERATIVAS (PRESERVADA) -->
+  <section class="bg-[#101726] border border-[#1e293b] rounded-lg shadow-sm overflow-hidden" data-purpose="items-and-tabs-section">
+    <div class="border-b border-industrial-800 bg-[#0d1322] px-4 flex space-x-2 overflow-x-auto text-xs font-medium">
+      <button class="px-4 py-3 border-b-2 border-brand-500 text-white font-semibold flex items-center gap-2 whitespace-nowrap bg-industrial-900/80 transition" id="tab-btn-gastos" onclick="switchTab('gastos')">
+        <i class="fa-solid fa-boxes-stacked text-brand-400"></i>
+        <span>Gastos y artículos</span>
+        <span class="bg-brand-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono" id="tab-articulos-count">2</span>
+      </button>
+      
+      
+    </div>
+
+    <div class="p-5 space-y-4" id="tab-content-gastos"><!-- Top Action Toolbar matching IMAGE_8 -->
+<div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#1e293b]">
+  <div class="flex flex-wrap items-center gap-2.5">
+    <button class="px-3.5 py-1.5 bg-[#1D4ED8] hover:bg-blue-600 text-white rounded text-xs font-bold flex items-center gap-1.5 transition shadow active:scale-95" onclick="addNewPartida()"><i class="fa-solid fa-plus text-[11px]"></i><span>Añadir Partida</span></button>
+    
+    
+  </div>
+  <div class="text-xs text-industrial-400 font-mono">
+    <span>2 partida(s) registradas</span>
+    <span class="mx-1">•</span>
+    <span>Moneda: MXN</span>
+  </div>
+</div>
+
+<!-- Table matching IMAGE_8 -->
+<div class="overflow-x-auto">
+  <table class="w-full text-left border-collapse text-xs">
+    <thead>
+      <tr class="border-b border-[#1e293b] text-industrial-400 font-bold uppercase tracking-wider text-[10px]">
+        <th class="py-2.5 px-3 w-8 text-center">#</th>
+        <th class="py-2.5 px-3 w-32">CÓDIGO / SKU</th>
+        <th class="py-2.5 px-3">DESCRIPCIÓN DEL CONCEPTO O SERVICIO</th>
+        <th class="py-2.5 px-3 w-28 text-center">TOPE REQ.</th>
+        <th class="py-2.5 px-3 w-20 text-center">CANTIDAD</th>
+        <th class="py-2.5 px-3 w-28 text-center">UNIDAD</th>
+        <th class="py-2.5 px-3 w-24 text-center">P. UNITARIO</th>
+        <th class="py-2.5 px-3 w-24 text-right">IVA 16%</th>
+        <th class="py-2.5 px-3 w-28 text-right">IMPORTE</th>
+        <th class="py-2.5 px-2 w-8 text-center"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-[#1e293b]/70 font-sans">
+      <!-- Row 1 -->
+      <tr class="hover:bg-industrial-900/40 transition-colors group" id="row-partida-1">
+        <td class="py-3 px-3 text-center font-mono font-bold text-industrial-400 text-xs">1</td>
+        <td class="py-3 px-3">
+          <div class="inline-block bg-[#0a0f1d] border border-[#1e293b] rounded px-2.5 py-1 font-mono text-[11px] font-bold text-white tracking-wide">
+            SRV-SAN-001
+          </div>
+        </td>
+        <td class="py-3 px-3">
+          <div class="bg-[#0a0f1d] border border-[#1e293b] rounded px-3 py-1.5 text-xs text-white">
+            Servicio de baño portátil para Tenaris Tamsa - Ref: SFG-C259-LVT-RQ-127/26
+          </div>
+        </td>
+        <td class="py-3 px-3 text-center leading-tight">
+          <div class="text-[11px] font-mono text-industrial-400">Req: 1.00</div>
+          <div class="text-[10px] text-emerald-400 font-semibold">Protegida</div>
+        </td>
+        <td class="py-3 px-3 text-center">
+          <input type="number" value="1" class="w-14 bg-[#0a0f1d] border border-[#1e293b] rounded py-1 text-center font-mono font-bold text-xs text-white focus:outline-none focus:border-brand-500">
+        </td>
+        <td class="py-3 px-3 text-center">
+          <div class="inline-block w-full bg-[#0a0f1d] border border-[#1e293b] rounded py-1 px-2 font-mono text-[11px] text-white font-semibold uppercase text-center">
+            SERVICIO
+          </div>
+        </td>
+        <td class="py-3 px-3 text-center">
+          <input type="text" value="2700" class="w-20 bg-[#0a0f1d] border border-[#1e293b] rounded py-1 px-2 text-center font-mono font-semibold text-xs text-white focus:outline-none focus:border-brand-500">
+        </td>
+        <td class="py-3 px-3 text-right font-mono text-xs font-semibold text-white">
+          $432.00
+        </td>
+        <td class="py-3 px-3 text-right font-mono font-bold text-xs text-white">
+          $2,700.00
+        </td>
+        <td class="py-3 px-2 text-center">
+          <button class="text-rose-500 hover:text-rose-400 font-bold text-sm leading-none transition p-1" onclick="eliminarPartida('row-partida-1', 2700)" title="Eliminar partida">
+            ✕
+          </button>
+        </td>
+      </tr>
+
+      <!-- Row 2 -->
+      <tr class="hover:bg-industrial-900/40 transition-colors group" id="row-partida-2">
+        <td class="py-3 px-3 text-center font-mono font-bold text-industrial-400 text-xs">2</td>
+        <td class="py-3 px-3">
+          <div class="inline-block bg-[#0a0f1d] border border-[#1e293b] rounded px-2.5 py-1 font-mono text-[11px] font-bold text-white tracking-wide">
+            SRV-EMB-001
+          </div>
+        </td>
+        <td class="py-3 px-3">
+          <div class="bg-[#0a0f1d] border border-[#1e293b] rounded px-3 py-1.5 text-xs text-white">
+            Flete y Servicio de Envio / Embarque Especializado en sitio Tenaris Tamsa
+          </div>
+        </td>
+        <td class="py-3 px-3 text-center leading-tight">
+          <div class="text-[11px] font-mono text-industrial-400">Req: 1.00</div>
+          <div class="text-[10px] text-emerald-400 font-semibold">Protegida</div>
+        </td>
+        <td class="py-3 px-3 text-center">
+          <input type="number" value="1" class="w-14 bg-[#0a0f1d] border border-[#1e293b] rounded py-1 text-center font-mono font-bold text-xs text-white focus:outline-none focus:border-brand-500">
+        </td>
+        <td class="py-3 px-3 text-center">
+          <div class="inline-block w-full bg-[#0a0f1d] border border-[#1e293b] rounded py-1 px-2 font-mono text-[11px] text-white font-semibold uppercase text-center">
+            SERVICIO
+          </div>
+        </td>
+        <td class="py-3 px-3 text-center">
+          <input type="text" value="850" class="w-20 bg-[#0a0f1d] border border-[#1e293b] rounded py-1 px-2 text-center font-mono font-semibold text-xs text-white focus:outline-none focus:border-brand-500">
+        </td>
+        <td class="py-3 px-3 text-right font-mono text-xs font-semibold text-white">
+          $136.00
+        </td>
+        <td class="py-3 px-3 text-right font-mono font-bold text-xs text-white">
+          $850.00
+        </td>
+        <td class="py-3 px-2 text-center">
+          <button class="text-rose-500 hover:text-rose-400 font-bold text-sm leading-none transition p-1" onclick="eliminarPartida('row-partida-2', 850)" title="Eliminar partida">
+            ✕
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Bottom Summary Bar matching IMAGE_8 -->
+<div class="border-t border-[#1e293b] pt-4 pb-2 flex flex-wrap items-center justify-end gap-6 text-xs font-mono">
+  <div>
+    <span class="text-industrial-400 font-sans">Subtotal Partidas: </span>
+    <span class="font-bold text-white">$3,550.00 MXN</span>
+  </div>
+  <div>
+    <span class="text-industrial-400 font-sans">IVA Trasladado (16%): </span>
+    <span class="font-bold text-white">$568.00 MXN</span>
+  </div>
+  <div>
+    <span class="text-industrial-400 font-sans">Total Orden: </span>
+    <span class="font-extrabold text-emerald-400 text-sm">$4,118.00 MXN</span>
+  </div>
+</div></div>
+  </section><!-- SECCIÓN: DOCUMENTOS Y ARCHIVOS ADJUNTOS -->
+
+
+<!-- SECCIÓN: FACTURAS ASOCIADAS DEL PROVEEDOR -->
+<section class="bg-[#101726] border border-[#1e293b] rounded-lg shadow-lg overflow-hidden p-5 space-y-4" data-purpose="attached-files-section">
+  <!-- Header con título, badge y botón de acción -->
+  <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#1e293b]/70">
+    <div class="flex items-center gap-2.5">
+      <div class="h-8 w-8 rounded-lg bg-brand-900/60 border border-brand-500/40 text-brand-400 flex items-center justify-center text-sm shadow-sm">
+        <i class="fa-solid fa-folder-tree text-brand-400"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-white font-sans">Documentos y Archivos Adjuntos</h3>
+          <span class="bg-brand-600 text-white text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">3 Archivos</span>
+          <span class="border border-emerald-500/40 bg-emerald-950/80 text-emerald-400 font-semibold px-2 py-0.5 rounded text-[10px] tracking-wide uppercase flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
+            Expediente Digital Verificado
+          </span>
+        </div>
+        <p class="text-[11px] text-industrial-400 font-sans">Expediente digitalizado de la orden: requisiciones, cotizaciones de proveedor y contratos aprobados</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 flex-wrap">
+      <button onclick="triggerNotification('Abriendo explorador para adjuntar documento al expediente...');" class="px-3.5 py-1.5 bg-[#1D4ED8] hover:bg-blue-600 text-white rounded text-xs font-bold flex items-center gap-1.5 transition shadow active:scale-95">
+        <i class="fa-solid fa-plus text-[11px]"></i>
+        <span>Adjuntar Archivo</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Lista de Archivos Adjuntos -->
+  <div class="space-y-2.5">
+    <!-- Documento 1 -->
+    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:border-brand-500/40 transition group">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded bg-rose-500/20 border border-rose-500/30 text-rose-400 flex items-center justify-center font-bold text-xs shrink-0">
+          PDF
+        </div>
+        <div class="space-y-0.5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-mono text-xs font-bold text-white group-hover:text-brand-300 transition">Requisicion_SFG-C212-06.pdf</span>
+            <span class="px-2 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/40 font-mono text-[10px] font-semibold">Requisición Validada</span>
+          </div>
+          <p class="text-[11px] text-industrial-400 font-sans">1.4 MB · Firmado digital por Ing. Roberto Silva · 14/10/2026</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 self-end md:self-auto">
+        <button onclick="triggerNotification('Visualizando Requisicion_SFG-C212-06.pdf...');" class="px-2.5 py-1 bg-industrial-800 hover:bg-industrial-700 text-industrial-200 border border-industrial-700 rounded text-xs font-medium flex items-center gap-1.5 transition">
+          <i class="fa-regular fa-clipboard text-brand-400 text-[11px]"></i>
+          <span>Ver Documento</span>
+        </button>
+        <button onclick="triggerNotification('Descargando Requisicion_SFG-C212-06.pdf...');" class="px-2.5 py-1 bg-industrial-800 hover:bg-industrial-700 text-brand-300 border border-industrial-700 rounded text-xs font-medium flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-truck-ramp-box text-[11px]"></i>
+          <span>Descargar</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Documento 2 -->
+    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:border-brand-500/40 transition group">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded bg-rose-500/20 border border-rose-500/30 text-rose-400 flex items-center justify-center font-bold text-xs shrink-0">
+          PDF
+        </div>
+        <div class="space-y-0.5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-mono text-xs font-bold text-white group-hover:text-brand-300 transition">Cotizacion_FivePeaks_0173.pdf</span>
+            <span class="px-2 py-0.2 rounded bg-brand-900/60 text-brand-300 border border-brand-500/40 font-mono text-[10px] font-semibold">Cotización Proveedor</span>
+          </div>
+          <p class="text-[11px] text-industrial-400 font-sans">840 KB · Validez 30 días · Adjudicado</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 self-end md:self-auto">
+        <button onclick="triggerNotification('Visualizando Cotizacion_FivePeaks_0173.pdf...');" class="px-2.5 py-1 bg-industrial-800 hover:bg-industrial-700 text-industrial-200 border border-industrial-700 rounded text-xs font-medium flex items-center gap-1.5 transition">
+          <i class="fa-regular fa-clipboard text-brand-400 text-[11px]"></i>
+          <span>Ver Documento</span>
+        </button>
+        <button onclick="triggerNotification('Descargando Cotizacion_FivePeaks_0173.pdf...');" class="px-2.5 py-1 bg-industrial-800 hover:bg-industrial-700 text-brand-300 border border-industrial-700 rounded text-xs font-medium flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-truck-ramp-box text-[11px]"></i>
+          <span>Descargar</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Documento 3 -->
+    <div class="bg-[#0a0f1d] border border-[#1e293b] rounded-lg p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:border-brand-500/40 transition group">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded bg-rose-500/20 border border-rose-500/30 text-rose-400 flex items-center justify-center font-bold text-xs shrink-0">
+          PDF
+        </div>
+        <div class="space-y-0.5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-mono text-xs font-bold text-white group-hover:text-brand-300 transition">Orden_Compra_PO2026_Firma.pdf</span>
+            <span class="px-2 py-0.2 rounded bg-amber-950/40 text-amber-300 border border-amber-600/70 font-mono text-[10px] font-semibold">ODC Firmada</span>
+          </div>
+          <p class="text-[11px] text-industrial-400 font-sans">2.1 MB · Autorización D.G. Lic. Fernando Garza</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 self-end md:self-auto">
+        <button onclick="triggerNotification('Visualizando Orden_Compra_PO2026_Firma.pdf...');" class="px-2.5 py-1 bg-industrial-800 hover:bg-industrial-700 text-industrial-200 border border-industrial-700 rounded text-xs font-medium flex items-center gap-1.5 transition">
+          <i class="fa-regular fa-clipboard text-brand-400 text-[11px]"></i>
+          <span>Ver Documento</span>
+        </button>
+        <button onclick="triggerNotification('Descargando Orden_Compra_PO2026_Firma.pdf...');" class="px-2.5 py-1 bg-industrial-800 hover:bg-industrial-700 text-brand-300 border border-industrial-700 rounded text-xs font-medium flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-truck-ramp-box text-[11px]"></i>
+          <span>Descargar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+</main>
+</div>
+<!-- BEGIN: BottomPersistentStatusBar -->
+<footer class="h-8 bg-industrial-900 border-t border-industrial-800 px-4 flex items-center justify-between text-[11px] text-industrial-400 z-40 select-none">
+<div class="flex items-center space-x-4">
+<span class="flex items-center gap-1.5">
+<i class="fa-solid fa-network-wired text-brand-500"></i>
+<span>Ambiente: <strong class="text-industrial-300">Producción Principal SIFYGSA</strong></span>
+</span>
+<span class="text-industrial-700">|</span>
+<span>Orden activa: <strong class="text-white font-mono">PO-2026-0173</strong></span>
+<span class="text-industrial-700 hidden sm:inline">|</span>
+<span class="hidden sm:inline">Subsidiaria: <strong class="text-white">SIFYGSA Fire &amp; Gas S.A. de C.V.</strong></span>
+</div>
+<div class="flex items-center space-x-3 font-mono">
+<span>Versión: 2026.4-LTS</span>
+<span class="text-industrial-700">|</span>
+<span class="text-emerald-400 flex items-center"><i class="fa-solid fa-lock text-[10px] mr-1"></i> Sesión Segura SSL</span>
+</div>
+</footer>
+<!-- END: BottomPersistentStatusBar -->
+<!-- ================================================= -->
+<!-- MODALES INTERACTIVOS -->
+<!-- ================================================= -->
+<!-- 1. MODAL 'REGISTRAR FACTURA PROVEEDOR' -->
+
+<!-- 2. MODAL VISTA PREVIA DE IMPUESTO 16% -->
+<div aria-modal="true" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm hidden" id="modal-tax-preview" role="dialog">
+<div class="bg-industrial-900 border border-brand-500/40 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-fadeIn ring-1 ring-brand-500/30">
+<div class="px-5 py-3.5 bg-industrial-850 border-b border-industrial-800 flex items-center justify-between">
+<div class="flex items-center gap-2.5 text-white font-bold text-sm">
+<div class="p-1.5 rounded bg-brand-600/20 text-brand-300 border border-brand-500/30">
+<i class="fa-solid fa-calculator text-xs"></i>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span>Vista Previa de Impuestos 16%</span>
+<span class="text-[10px] font-mono px-2 py-0.2 rounded bg-brand-600 text-white font-semibold">PO-2026-0173</span>
+</div>
+<span class="text-[11px] font-normal text-industrial-400 block">Cálculo fiscal anticipado para validación de compras</span>
+</div>
+</div>
+<button class="text-industrial-400 hover:text-white p-1 rounded transition" onclick="closeTaxModal()" type="button">
+<i class="fa-solid fa-xmark text-sm"></i>
+</button>
+</div>
+<div class="p-5 space-y-4 text-xs">
+<div class="p-3.5 rounded-lg bg-brand-950/40 border border-brand-500/30 text-industrial-300 flex items-start gap-3">
+<i class="fa-solid fa-circle-info text-brand-400 text-sm mt-0.5 shrink-0"></i>
+<div class="space-y-1">
+<strong class="text-white block font-semibold">Cálculo Oficial SIFYGSA ERP:</strong>
+<p class="leading-relaxed text-[11px]">Validación conforme al régimen fiscal nacional mexicano (IVA 16% tasa general). Aplica sobre servicios y fletes con partida cotizada de Five Peaks México SA de CV.</p>
+</div>
+</div>
+<div class="bg-industrial-950/80 rounded-lg border border-industrial-800 p-4 space-y-2.5 font-mono">
+<div class="flex items-center justify-between text-industrial-300 pb-2 border-b border-industrial-800">
+<span class="font-sans">Subtotal Partidas Acumuladas:</span>
+<span class="text-white font-bold text-sm" id="modal-tax-subtotal">$5,400.00 MXN</span>
+</div>
+<div class="flex items-center justify-between text-industrial-300">
+<span class="font-sans">IVA Trasladado (Tasa General 16%):</span>
+<span class="text-white font-bold" id="modal-tax-iva">$864.00 MXN</span>
+</div>
+<div class="flex items-center justify-between text-industrial-400 text-[11px]">
+<span class="font-sans">Retención IVA (0% no aplica):</span>
+<span>$0.00 MXN</span>
+</div>
+<div class="flex items-center justify-between text-industrial-400 text-[11px]">
+<span class="font-sans">Retención ISR (0% no aplica):</span>
+<span>$0.00 MXN</span>
+</div>
+<div class="pt-3 border-t border-industrial-700 flex items-center justify-between text-sm">
+<span class="font-sans font-bold text-white uppercase tracking-wider">Total Orden de Compra:</span>
+<span class="font-extrabold text-emerald-400 text-base tracking-tight" id="modal-tax-total">$6,264.00 MXN</span>
+</div>
+</div>
+</div>
+<div class="px-5 py-3.5 bg-industrial-850 border-t border-industrial-800 flex items-center justify-between">
+<button class="px-3.5 py-1.5 bg-industrial-800 hover:bg-industrial-700 text-industrial-300 rounded text-xs transition" onclick="closeTaxModal()" type="button">
+        Cerrar
+      </button>
+<button class="px-4 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded text-xs font-semibold shadow-md transition active:scale-95" onclick="closeTaxModal(); triggerNotification('Cálculo de impuestos validado conforme');" type="button">
+        Confirmar Validación Fiscal
+      </button>
+</div>
+</div>
+</div>
+<!-- 3. MODAL STICKYNOTES -->
+<div aria-modal="true" class="fixed inset-0 z-50 flex items-start justify-end p-4 md:pt-20 md:pr-12 pointer-events-none transition-all duration-200 hidden" id="modal-stickynotes" role="dialog">
+<div class="pointer-events-auto w-full max-w-sm rounded-lg shadow-2xl border transition-all duration-200 overflow-hidden relative bg-amber-100 text-slate-900 border-amber-300 ring-1 ring-black/10" id="sticky-box">
+<div class="px-3.5 pt-3 pb-2 flex items-center justify-between border-b bg-amber-200/70 border-amber-300/60">
+<div class="flex items-center gap-1.5">
+<i class="fa-solid fa-thumbtack text-amber-700 text-xs"></i>
+<span class="text-xs font-bold font-mono tracking-tight text-amber-950">PO-2026-0173 • StickyNote</span>
+<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-amber-300/80 text-amber-900 ml-1" id="sticky-color-name">Amarillo</span>
+</div>
+<button class="text-slate-600 hover:text-black rounded p-1 text-xs" onclick="closeStickyModal()" type="button">
+<i class="fa-solid fa-xmark"></i>
+</button>
+</div>
+<div class="p-3.5 space-y-2.5 text-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="text-[10px] font-bold text-slate-700 uppercase">Tono:</span>
+<button class="h-4 w-4 rounded-full bg-amber-200 border border-amber-400 hover:scale-125 transition" onclick="setStickyColor('yellow')"></button>
+<button class="h-4 w-4 rounded-full bg-rose-300 border border-rose-400 hover:scale-125 transition" onclick="setStickyColor('rose')"></button>
+<button class="h-4 w-4 rounded-full bg-pink-500 border border-pink-600 hover:scale-125 transition" onclick="setStickyColor('magenta')"></button>
+</div>
+<span class="text-[10px] text-slate-600 font-mono">Jeannete Macías</span>
+</div>
+<textarea class="w-full text-xs p-2.5 rounded border border-amber-300/80 bg-white/70 text-slate-900 placeholder-slate-500 focus:outline-none resize-none" id="sticky-text-input" rows="4">Verificar que el proveedor adjunte la bitácora de limpieza del baño portátil firmada por el supervisor de Tenaris Tamsa antes de liberar el pago a 30 días.</textarea>
+<div class="flex items-center justify-end gap-2 pt-1">
+<button class="px-2.5 py-1 text-[11px] rounded text-slate-700 hover:bg-black/5" onclick="closeStickyModal()" type="button">Cerrar</button>
+<button class="px-3.5 py-1 text-[11px] font-bold text-white bg-amber-700 hover:bg-amber-800 rounded shadow" onclick="saveSticky()" type="button">Guardar Nota</button>
+</div>
+</div>
+</div>
+</div>
+<!-- 4. MODAL ANULAR ORDEN -->
+<div aria-modal="true" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm hidden" id="modal-anular-orden" role="dialog">
+<div class="bg-industrial-900 border border-rose-600/40 rounded-xl shadow-2xl w-full max-w-md overflow-hidden p-5 space-y-4">
+<div class="flex items-start gap-3">
+<div class="p-2 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30">
+<i class="fa-solid fa-triangle-exclamation text-lg"></i>
+</div>
+<div>
+<h3 class="text-sm font-bold text-white">¿Desea anular la Orden PO-2026-0173?</h3>
+<p class="text-xs text-industrial-300 mt-1">Esta acción revertirá el estatus a "ANULADA" y liberará el compromiso presupuestal del contrato SFG-C259-LVT-RQ-127/26.</p>
+</div>
+</div>
+<div class="pt-2 flex justify-end gap-2 text-xs">
+<button class="px-3 py-1.5 bg-industrial-800 hover:bg-industrial-700 text-industrial-300 rounded" onclick="closeAnularModal()">Cancelar</button>
+<button class="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded shadow" onclick="confirmarAnulacion()">Sí, Anular Orden</button>
+</div>
+</div>
+</div>
+<!-- TOAST DE NOTIFICACIÓN FLOTANTE -->
+<div class="fixed bottom-12 right-6 z-50 hidden bg-emerald-950/95 border border-emerald-500/40 text-white px-4 py-2.5 rounded-lg shadow-2xl backdrop-blur-sm flex items-center gap-3 animate-fadeIn" id="toast-notification">
+<i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+<span class="text-xs font-medium" id="toast-text">Acción completada con éxito</span>
+</div>
+<!-- SCRIPTS DE INTERACTIVIDAD -->
+<script>
+  // Control de Tema Claro / Oscuro
+  function toggleDarkMode() {
+    const html = document.documentElement;
+    const icon = document.getElementById('theme-toggle-icon');
+    if (html.classList.contains('dark')) {
+      html.classList.remove('dark');
+      icon.className = 'fa-solid fa-moon text-brand-600 text-xs';
+    } else {
+      html.classList.add('dark');
+      icon.className = 'fa-solid fa-sun text-amber-400 text-xs';
+    }
+  }
+
+  // Notificación Toast
+  function triggerNotification(msg) {
+    const toast = document.getElementById('toast-notification');
+    const toastTxt = document.getElementById('toast-text');
+    if (!toast || !toastTxt) return;
+    toastTxt.textContent = msg;
+    toast.classList.remove('hidden');
+    setTimeout(() => {
+      toast.classList.add('hidden');
+    }, 3500);
+  }
+
+  // Dropdown Acciones
+  function toggleDropdownAcciones() {
+    const m = document.getElementById('dropdown-acciones-menu');
+    if (m) m.classList.toggle('hidden');
+  }
+
+  // Conmutador de Pestañas
+  function switchTab(tabName) {
+    const tabGastos = document.getElementById('tab-content-gastos');
+    const tabFac = document.getElementById('tab-content-facturacion');
+    const tabCom = document.getElementById('tab-content-comunicacion');
+
+    const btnGastos = document.getElementById('tab-btn-gastos');
+    const btnFac = document.getElementById('tab-btn-facturacion');
+    const btnCom = document.getElementById('tab-btn-comunicacion');
+
+    // Reset styles
+    [btnGastos, btnFac, btnCom].forEach(b => {
+      b.className = 'px-4 py-3 border-b-2 border-transparent text-industrial-400 hover:text-white hover:border-industrial-600 flex items-center gap-2 whitespace-nowrap transition';
+    });
+    tabGastos.classList.add('hidden');
+    tabFac.classList.add('hidden');
+    tabCom.classList.add('hidden');
+
+    if (tabName === 'gastos') {
+      tabGastos.classList.remove('hidden');
+      btnGastos.className = 'px-4 py-3 border-b-2 border-brand-500 text-white font-semibold flex items-center gap-2 whitespace-nowrap bg-industrial-900/80 transition';
+    } else if (tabName === 'facturacion') {
+      tabFac.classList.remove('hidden');
+      btnFac.className = 'px-4 py-3 border-b-2 border-brand-500 text-white font-semibold flex items-center gap-2 whitespace-nowrap bg-industrial-900/80 transition';
+    } else if (tabName === 'comunicacion') {
+      tabCom.classList.remove('hidden');
+      btnCom.className = 'px-4 py-3 border-b-2 border-brand-500 text-white font-semibold flex items-center gap-2 whitespace-nowrap bg-industrial-900/80 transition';
+    }
+  }
+
+  // Validación de tope de requisición
+  function validarTopeRequisicion(inputEl, topeMax) {
+    let curVal = parseFloat(inputEl.value || 0);
+    if (curVal > topeMax) {
+      inputEl.value = topeMax.toFixed(2);
+      triggerNotification(`Alerta: No se puede incrementar la cantidad. Tope autorizado de requisición es ${topeMax.toFixed(2)}`);
+      inputEl.classList.add('border-rose-500', 'ring-2', 'ring-rose-500');
+      setTimeout(() => {
+        inputEl.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500');
+      }, 2500);
+    }
+  }
+
+  // Eliminar partida
+  function eliminarPartida(cardId, monto) {
+    const card = document.getElementById(cardId);
+    if (card) {
+      card.remove();
+      triggerNotification('Partida eliminada. Totales recalculados.');
+    }
+  }
+
+  // Añadir partida demo
+  function addNewPartida() {
+    triggerNotification('Abriendo catálogo de partidas autorizadas...');
+  }
+
+  // Exportar CSV
+  function exportCSV() {
+    triggerNotification('Generando archivo CSV para PO-2026-0173...');
+  }
+
+  // Modal Factura
+  function openFacturaModal() {
+    const m = document.getElementById('modal-factura-proveedor');
+    if (m) m.classList.remove('hidden');
+  }
+  function closeFacturaModal() {
+    const m = document.getElementById('modal-factura-proveedor');
+    if (m) m.classList.add('hidden');
+  }
+
+  function validarMontoFactura(val) {
+    const num = parseFloat(val || 0);
+    const badge = document.getElementById('badge-monto-validacion');
+    const msg = document.getElementById('msg-discrepancia-monto');
+    if (Math.abs(num - 4118.00) < 0.01) {
+      badge.className = 'text-[10px] font-mono px-2 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/40 font-bold flex items-center gap-1';
+      badge.innerHTML = '<i class="fa-solid fa-check text-[9px]"></i> Monto Coincide con ODC';
+      if (msg) msg.classList.add('hidden');
+    } else {
+      badge.className = 'text-[10px] font-mono px-2 py-0.2 rounded bg-rose-950 text-rose-300 border border-rose-500/40 font-bold flex items-center gap-1';
+      badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-[9px]"></i> Discrepancia con ODC';
+      if (msg) msg.classList.remove('hidden');
+    }
+  }
+
+  function handleGuardarFactura(e) {
+    e.preventDefault();
+    const folio = document.getElementById('input-folio-fac').value || 'FAC-2026-NUEVA';
+    const monto = document.getElementById('input-monto-fac').value || '4,118.00';
+    const fecha = document.getElementById('input-fecha-fac').value || '2026-10-27';
+    const uuid = document.getElementById('input-uuid-fac').value || 'UUID-NOVO';
+
+    closeFacturaModal();
+    triggerNotification(`Factura ${folio} registrada y asociada exitosamente.`);
+
+    // Agregar a la lista de facturas
+    const list = document.getElementById('facturas-cards-list');
+    if (list) {
+      const card = document.createElement('div');
+      card.className = 'bg-industrial-950/70 border border-emerald-500/40 rounded-lg p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition shadow-sm animate-fadeIn';
+      card.innerHTML = `
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/40 font-mono text-xs font-bold">${folio}</span>
+            <span class="text-xs font-bold text-white">Five Peaks México SA de CV</span>
+            <span class="text-[10px] font-mono text-industrial-400 font-semibold px-2 py-0.5 rounded bg-industrial-800">UUID: ${uuid.substring(0, 16)}...</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-3 text-xs text-industrial-400">
+            <span>Fecha: <strong class="text-industrial-200 font-mono">${fecha}</strong></span>
+            <span>•</span>
+            <span>Monto: <strong class="text-white font-mono font-bold">$${parseFloat(monto).toLocaleString('en-US', {minimumFractionDigits: 2})} MXN</strong></span>
+            <span>•</span>
+            <span class="inline-flex items-center gap-1 text-emerald-400 font-medium">
+              <i class="fa-solid fa-circle-check text-[10px]"></i> Registrada / Validada SAT
+            </span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="triggerNotification('Abriendo visor XML/PDF SAT...')" class="px-3 py-1.5 bg-industrial-800 hover:bg-industrial-700 text-industrial-200 border border-industrial-700 rounded text-xs font-medium flex items-center gap-1 transition">
+            <i class="fa-regular fa-file-lines text-brand-400"></i> Ver XML/PDF
+          </button>
+          <button onclick="triggerNotification('Descargando comprobante fiscal...')" class="px-3 py-1.5 bg-industrial-800 hover:bg-industrial-700 text-industrial-200 border border-industrial-700 rounded text-xs font-medium flex items-center gap-1 transition">
+            <i class="fa-solid fa-download text-emerald-400"></i> Descargar
+          </button>
+        </div>
+      `;
+      list.prepend(card);
+      const c = document.getElementById('tab-facturas-count');
+      if (c) c.textContent = parseInt(c.textContent || '1') + 1;
+    }
+
+    // Switch to tab Facturacion automatically
+    switchTab('facturacion');
+  }
+
+  // Modal Impuestos
+  function openTaxModal() {
+    const m = document.getElementById('modal-tax-preview');
+    if (m) m.classList.remove('hidden');
+  }
+  function closeTaxModal() {
+    const m = document.getElementById('modal-tax-preview');
+    if (m) m.classList.add('hidden');
+  }
+
+  // Modal StickyNotes
+  function openStickyModal(color) {
+    const m = document.getElementById('modal-stickynotes');
+    if (m) m.classList.remove('hidden');
+    if (color) setStickyColor(color);
+  }
+  function closeStickyModal() {
+    const m = document.getElementById('modal-stickynotes');
+    if (m) m.classList.add('hidden');
+  }
+  function setStickyColor(c) {
+    const box = document.getElementById('sticky-box');
+    const badge = document.getElementById('sticky-color-name');
+    if (!box) return;
+    if (c === 'yellow') {
+      box.className = 'pointer-events-auto w-full max-w-sm rounded-lg shadow-2xl border overflow-hidden relative bg-amber-100 text-slate-900 border-amber-300 ring-1 ring-black/10';
+      if (badge) badge.textContent = 'Amarillo';
+    } else if (c === 'rose') {
+      box.className = 'pointer-events-auto w-full max-w-sm rounded-lg shadow-2xl border overflow-hidden relative bg-rose-100 text-slate-900 border-rose-300 ring-1 ring-black/10';
+      if (badge) badge.textContent = 'Rosa';
+    } else if (c === 'magenta') {
+      box.className = 'pointer-events-auto w-full max-w-sm rounded-lg shadow-2xl border overflow-hidden relative bg-pink-100 text-slate-900 border-pink-400 ring-1 ring-black/10';
+      if (badge) badge.textContent = 'Magenta';
+    }
+  }
+  function saveSticky() {
+    closeStickyModal();
+    triggerNotification('Nota adhesiva guardada para la orden PO-2026-0173');
+  }
+
+  // Modal Anular
+  function openAnularModal() {
+    const m = document.getElementById('modal-anular-orden');
+    if (m) m.classList.remove('hidden');
+  }
+  function closeAnularModal() {
+    const m = document.getElementById('modal-anular-orden');
+    if (m) m.classList.add('hidden');
+  }
+  function confirmarAnulacion() {
+    closeAnularModal();
+    triggerNotification('Orden PO-2026-0173 anulada y reversada exitosamente.');
+  }
+
+  // Divisa switcher
+  function actualizarDivisa(curr) {
+    const tc = document.getElementById('label-tipo-cambio');
+    if (!tc) return;
+    if (curr === 'MXN') tc.textContent = '1.0000 MXN';
+    else if (curr === 'USD') tc.textContent = '18.2500 MXN';
+    else if (curr === 'EUR') tc.textContent = '19.8500 MXN';
+  }
+
+  // Keyboard shortcut Shift + S
+  window.addEventListener('keydown', (e) => {
+    if (e.shiftKey && (e.key === 'S' || e.key === 's')) {
+      e.preventDefault();
+      const s = document.querySelector('input[placeholder*="Shift + S"]');
+      if (s) s.focus();
+    }
+  });
+</script>
+
+
+
+
+
+
+
+
+
+
+</body></html>
