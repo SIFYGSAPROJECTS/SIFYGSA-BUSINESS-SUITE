@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import AlmacenModal from '../components/ui/AlmacenModal';
-import { MOCK_ARTICULOS } from '../data/mock-data';
+import { useAlmacen } from '../context/AlmacenContext';
 
 // Interfaz para los artículos mostrados en el dashboard de inventario (Stitch Screens 1 & 2)
 export interface ArticuloDashboardItem {
@@ -212,6 +212,7 @@ export const ARTICULOS_DASHBOARD_STITCH: ArticuloDashboardItem[] = [
 
 export default function DashboardAlmacenPage() {
   const router = useRouter();
+  const { articulos } = useAlmacen();
 
   // Estados de Filtros
   const [almacenFiltro, setAlmacenFiltro] = useState('todos');
@@ -219,17 +220,80 @@ export default function DashboardAlmacenPage() {
   const [estadoFiltro, setEstadoFiltro] = useState('todos');
   const [searchTable, setSearchTable] = useState('');
 
+  // Dropdown de exportación
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+
   // Modales
   const [selectedArticulo, setSelectedArticulo] = useState<ArticuloDashboardItem | null>(null);
   const [modalSalidaOpen, setModalSalidaOpen] = useState(false);
   const [modalAuditoriaOpen, setModalAuditoriaOpen] = useState(false);
 
   // Formulario de salida rápida
-  const [salidaSku, setSalidaSku] = useState(ARTICULOS_DASHBOARD_STITCH[0]?.sku || '');
+  const [salidaSku, setSalidaSku] = useState(articulos[0]?.sku || '');
   const [salidaCantidad, setSalidaCantidad] = useState(1);
   const [salidaFrente, setSalidaFrente] = useState('PEMEX Refinería Dos Bocas');
   const [salidaResponsable, setSalidaResponsable] = useState('Roberto Velázquez');
   const [salidaExito, setSalidaExito] = useState(false);
+
+  // Conversión dinámica de artículos del almacén a vista de dashboard
+  const articulosDashboard = useMemo<ArticuloDashboardItem[]>(() => {
+    return articulos.map((art) => {
+      const catId =
+        art.categoria === 'Equipos de Medición'
+          ? 'medicion'
+          : art.categoria === 'Consumibles'
+          ? 'consumibles'
+          : art.categoria === 'EPP'
+          ? 'epp'
+          : art.categoria === 'Herramientas'
+          ? 'herramientas'
+          : 'mobiliario';
+
+      const esBajo = art.stockDisponible <= art.stockMinimo;
+
+      return {
+        id: art.id,
+        sku: art.sku,
+        nombre: art.descripcionCorta || art.nombre,
+        descripcion: art.descripcion || art.descripcionCorta || art.nombre,
+        icono:
+          art.categoria === 'Equipos de Medición'
+            ? 'electric_meter'
+            : art.categoria === 'Herramientas'
+            ? 'handyman'
+            : art.categoria === 'EPP'
+            ? 'security'
+            : 'inventory_2',
+        iconoColorLight: esBajo ? '#DC2626' : '#1D4ED8',
+        iconoColorDark: esBajo ? '#F87171' : '#60A5FA',
+        categoria: art.categoria,
+        categoriaId: catId,
+        total: art.stockTotal,
+        disponible: art.stockDisponible,
+        enProyecto: art.stockProyecto,
+        tallerCalib: art.stockMantenimiento,
+        ubicacion: art.ubicacionNave || 'Nave Central',
+        almacenId: art.almacenId || 'nave-a',
+        estado: esBajo ? 'Stock Bajo' : 'Disponible',
+        estadoId: esBajo ? 'stock-bajo' : 'disponible',
+      };
+    });
+  }, [articulos]);
+
+  // KPIs dinámicos calculados en tiempo real
+  const kpis = useMemo(() => {
+    const totalArticulos = articulos.length;
+    const existenciasTotales = articulos.reduce((acc, a) => acc + (a.stockTotal || 0), 0);
+    const enMantenimiento = articulos.reduce((acc, a) => acc + (a.stockMantenimiento || 0), 0);
+    const stockBajo = articulos.filter((a) => a.stockDisponible <= a.stockMinimo).length;
+
+    return {
+      totalArticulos,
+      existenciasTotales,
+      enMantenimiento,
+      stockBajo,
+    };
+  }, [articulos]);
 
   // Verificación de filtros activos
   const hayFiltrosActivos =
@@ -247,7 +311,7 @@ export default function DashboardAlmacenPage() {
 
   // Filtrado reactivo de artículos
   const articulosFiltrados = useMemo(() => {
-    return ARTICULOS_DASHBOARD_STITCH.filter((art) => {
+    return articulosDashboard.filter((art) => {
       const matchAlmacen = almacenFiltro === 'todos' || art.almacenId === almacenFiltro;
       const matchCategoria = categoriaFiltro === 'todas' || art.categoriaId === categoriaFiltro;
       const matchEstado = estadoFiltro === 'todos' || art.estadoId === estadoFiltro;
@@ -262,19 +326,21 @@ export default function DashboardAlmacenPage() {
 
       return matchAlmacen && matchCategoria && matchEstado && matchSearch;
     });
-  }, [almacenFiltro, categoriaFiltro, estadoFiltro, searchTable]);
+  }, [articulosDashboard, almacenFiltro, categoriaFiltro, estadoFiltro, searchTable]);
 
-  // Exportar CSV oficial
+  // Exportar CSV oficial compatible con Excel (UTF-8 con BOM)
   const handleExportCSV = () => {
+    const BOM = '\uFEFF';
+    const metadata = `REPORTE DE CONTROL DE INVENTARIO - SIFYGSA BUSINESS SUITE ERP\nGenerado: ${new Date().toLocaleString('es-MX')}\nTotal Artículos Mostrados: ${articulosFiltrados.length}\n\n`;
     const headers =
       'SKU,Descripcion,Categoria,Total,Disponible,En_Proyecto,Taller_Calibracion,Ubicacion,Estado\n';
     const rows = articulosFiltrados
       .map(
         (art) =>
-          `"${art.sku}","${art.nombre}","${art.categoria}",${art.total},${art.disponible},${art.enProyecto},${art.tallerCalib},"${art.ubicacion}","${art.estado}"`
+          `"${art.sku}","${art.nombre.replace(/"/g, '""')}","${art.categoria}",${art.total},${art.disponible},${art.enProyecto},${art.tallerCalib},"${art.ubicacion}","${art.estado}"`
       )
       .join('\n');
-    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([BOM + metadata + headers + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -285,6 +351,142 @@ export default function DashboardAlmacenPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setExportMenuOpen(false);
+  };
+
+  // Exportar PDF oficial con diseño corporativo y resumen de métricas
+  const handleExportPDF = () => {
+    setExportMenuOpen(false);
+    const fechaHora = new Date().toLocaleString('es-MX', {
+      dateStyle: 'full',
+      timeStyle: 'short',
+    });
+
+    const totalStock = articulosFiltrados.reduce((acc, a) => acc + a.total, 0);
+    const dispStock = articulosFiltrados.reduce((acc, a) => acc + a.disponible, 0);
+    const proyStock = articulosFiltrados.reduce((acc, a) => acc + a.enProyecto, 0);
+    const mantStock = articulosFiltrados.reduce((acc, a) => acc + a.tallerCalib, 0);
+
+    const filasHtml = articulosFiltrados
+      .map(
+        (art, idx) => `
+        <tr style="background-color: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'}; border-bottom: 1px solid #e2e8f0;">
+          <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #1e40af;">${art.sku}</td>
+          <td style="padding: 8px 10px;">
+            <div style="font-weight: 600; color: #0f172a;">${art.nombre}</div>
+            <div style="font-size: 11px; color: #64748b;">${art.descripcion}</div>
+          </td>
+          <td style="padding: 8px 10px; font-size: 11px; color: #334155;">${art.categoria}</td>
+          <td style="padding: 8px 10px; text-align: center; font-weight: bold;">${art.total}</td>
+          <td style="padding: 8px 10px; text-align: center; font-weight: bold; color: #16a34a;">${art.disponible}</td>
+          <td style="padding: 8px 10px; text-align: center; color: #2563eb;">${art.enProyecto}</td>
+          <td style="padding: 8px 10px; text-align: center; color: #d97706;">${art.tallerCalib}</td>
+          <td style="padding: 8px 10px; font-size: 11px; color: #475569;">${art.ubicacion}</td>
+          <td style="padding: 8px 10px; text-align: center;">
+            <span style="display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 700; background: ${art.estado === 'Stock Bajo' ? '#fee2e2' : '#dcfce7'}; color: ${art.estado === 'Stock Bajo' ? '#991b1b' : '#166534'};">
+              ${art.estado}
+            </span>
+          </td>
+        </tr>`
+      )
+      .join('');
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Reporte_Inventario_SIFYGSA_${new Date().toISOString().slice(0, 10)}</title>
+          <style>
+            @page { size: landscape; margin: 10mm; }
+            body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #0f172a; margin: 0; padding: 12px; }
+            .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #1d4ed8; padding-bottom: 12px; margin-bottom: 14px; }
+            .logo-text { font-size: 20px; font-weight: 900; color: #1d4ed8; letter-spacing: -0.5px; }
+            .subtitle { font-size: 12px; color: #475569; margin-top: 2px; }
+            .meta-box { text-align: right; font-size: 11px; color: #64748b; }
+            .kpis { display: flex; gap: 10px; margin-bottom: 14px; }
+            .kpi-card { flex: 1; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; background: #f8fafc; }
+            .kpi-title { font-size: 10px; text-transform: uppercase; font-weight: 700; color: #64748b; }
+            .kpi-val { font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 2px; }
+            table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+            th { background: #0f172a; color: #ffffff; padding: 8px 10px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+            th.center { text-align: center; }
+            .footer { margin-top: 16px; font-size: 10px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 6px; }
+          </style>
+        </head>
+        <body>
+          <div class="header-bar">
+            <div>
+              <div class="logo-text">SIFYGSA BUSINESS SUITE ERP</div>
+              <div class="subtitle">SGA Almacén &amp; Control de Inventarios - Reporte Oficial de Existencias</div>
+            </div>
+            <div class="meta-box">
+              <div><strong>Fecha de Emisión:</strong> ${fechaHora}</div>
+              <div><strong>Filtro Almacén:</strong> ${almacenFiltro === 'todos' ? 'Todos los Almacenes' : almacenFiltro}</div>
+              <div><strong>Artículos Reportados:</strong> ${articulosFiltrados.length}</div>
+            </div>
+          </div>
+
+          <div class="kpis">
+            <div class="kpi-card">
+              <div class="kpi-title">Artículos en Catálogo</div>
+              <div class="kpi-val">${articulosFiltrados.length}</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Existencias Totales</div>
+              <div class="kpi-val">${totalStock} uds</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Stock Disponible</div>
+              <div class="kpi-val" style="color: #16a34a;">${dispStock} uds</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">En Frentes / Proyecto</div>
+              <div class="kpi-val" style="color: #2563eb;">${proyStock} uds</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">En Mantenimiento / Taller</div>
+              <div class="kpi-val" style="color: #d97706;">${mantStock} uds</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 130px;">SKU</th>
+                <th>Descripción del Artículo</th>
+                <th style="width: 130px;">Categoría</th>
+                <th class="center" style="width: 60px;">Total</th>
+                <th class="center" style="width: 70px;">Disponible</th>
+                <th class="center" style="width: 70px;">En Obra</th>
+                <th class="center" style="width: 70px;">Taller</th>
+                <th style="width: 130px;">Ubicación</th>
+                <th class="center" style="width: 85px;">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filasHtml}
+            </tbody>
+          </table>
+
+          <div class="footer">
+            Documento emitido automáticamente por el Sistema SIFYGSA SGA. Sujeto a auditorías internas y kárdex oficial.
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    const printWin = window.open('', '_blank');
+    if (printWin) {
+      printWin.document.open();
+      printWin.document.write(htmlContent);
+      printWin.document.close();
+    }
   };
 
   return (
@@ -346,6 +548,20 @@ export default function DashboardAlmacenPage() {
           <button
             type="button"
             className="dashboard-btn-action dashboard-btn-secondary"
+            onClick={() => router.push('/almacen')}
+          >
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: '18px' }}
+            >
+              arrow_back
+            </span>
+            <span>Menú Almacén</span>
+          </button>
+
+          <button
+            type="button"
+            className="dashboard-btn-action dashboard-btn-secondary"
             onClick={() => setModalAuditoriaOpen(true)}
           >
             <span
@@ -356,6 +572,100 @@ export default function DashboardAlmacenPage() {
             </span>
             <span>Auditoría de Devoluciones</span>
           </button>
+
+          {/* Menú Desplegable de Exportación */}
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              className="dashboard-btn-action dashboard-btn-secondary"
+              onClick={() => setExportMenuOpen(!exportMenuOpen)}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#1D4ED8' }}>
+                download
+              </span>
+              <span>Exportar</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                {exportMenuOpen ? 'expand_less' : 'expand_more'}
+              </span>
+            </button>
+
+            {exportMenuOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '6px',
+                  background: 'var(--card)',
+                  borderRadius: '10px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.25)',
+                  border: '1px solid var(--border)',
+                  minWidth: '190px',
+                  zIndex: 50,
+                  overflow: 'hidden',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={handleExportCSV}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    width: '100%',
+                    padding: '10px 14px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--surface-alt)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <span className="material-symbols-outlined" style={{ color: '#16a34a', fontSize: '20px' }}>
+                    table_view
+                  </span>
+                  <div>
+                    <div>Exportar a CSV</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Compatible con Excel (UTF-8)</div>
+                  </div>
+                </button>
+                <div style={{ height: '1px', background: 'var(--divider)' }} />
+                <button
+                  type="button"
+                  onClick={handleExportPDF}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    width: '100%',
+                    padding: '10px 14px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--surface-alt)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <span className="material-symbols-outlined" style={{ color: '#dc2626', fontSize: '20px' }}>
+                    picture_as_pdf
+                  </span>
+                  <div>
+                    <div>Exportar a PDF</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Reporte imprimible formal</div>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -372,7 +682,7 @@ export default function DashboardAlmacenPage() {
             </div>
           </div>
           <div className="dashboard-kpi-value-block">
-            <div className="dashboard-kpi-value">1,482</div>
+            <div className="dashboard-kpi-value">{kpis.totalArticulos}</div>
             <p className="dashboard-kpi-subtitle">Catálogo unificado</p>
           </div>
           <div className="dashboard-kpi-footer">
@@ -380,9 +690,8 @@ export default function DashboardAlmacenPage() {
               <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>
                 add
               </span>
-              12 este mes
+              Activos en sistema
             </span>
-
           </div>
         </div>
 
@@ -398,13 +707,12 @@ export default function DashboardAlmacenPage() {
           </div>
           <div className="dashboard-kpi-value-block">
             <div className="dashboard-kpi-value">
-              24,930 <span className="dashboard-kpi-unit">uds</span>
+              {kpis.existenciasTotales.toLocaleString('es-MX')} <span className="dashboard-kpi-unit">uds</span>
             </div>
             <p className="dashboard-kpi-subtitle">Distribución física</p>
           </div>
           <div className="dashboard-kpi-footer">
-            <span className="dashboard-kpi-pill neutral">4 Naves Activas</span>
-
+            <span className="dashboard-kpi-pill neutral">Almacén y Bodegas</span>
           </div>
         </div>
 
@@ -420,13 +728,12 @@ export default function DashboardAlmacenPage() {
           </div>
           <div className="dashboard-kpi-value-block">
             <div className="dashboard-kpi-value">
-              7 <span className="dashboard-kpi-unit">equipos</span>
+              {kpis.enMantenimiento} <span className="dashboard-kpi-unit">equipos</span>
             </div>
             <p className="dashboard-kpi-subtitle">Calibración &amp; Taller</p>
           </div>
           <div className="dashboard-kpi-footer">
-            <span className="dashboard-kpi-pill amber">2 en Taller Externo</span>
-
+            <span className="dashboard-kpi-pill amber">En Taller y Laboratorio</span>
           </div>
         </div>
 
@@ -442,13 +749,13 @@ export default function DashboardAlmacenPage() {
           </div>
           <div className="dashboard-kpi-value-block">
             <div className="dashboard-kpi-value alert-red">
-              9 <span className="dashboard-kpi-unit alert-red">ítems</span>
+              {kpis.stockBajo} <span className="dashboard-kpi-unit alert-red">ítems</span>
             </div>
             <p className="dashboard-kpi-subtitle">Bajo umbral mínimo</p>
           </div>
           <div className="dashboard-kpi-footer">
-            <span className="dashboard-kpi-pill red">3 Críticos • 6 Medios</span>
-            <span className="dashboard-kpi-meta red-meta">Reponer Hoy</span>
+            <span className="dashboard-kpi-pill red">Atención requerida</span>
+            <span className="dashboard-kpi-meta red-meta">Reponer</span>
           </div>
         </div>
       </div>
@@ -964,14 +1271,9 @@ export default function DashboardAlmacenPage() {
                   onChange={(e) => setSalidaSku(e.target.value)}
                   style={{ marginTop: '0.25rem' }}
                 >
-                  {ARTICULOS_DASHBOARD_STITCH.map((art) => (
+                  {articulos.map((art) => (
                     <option key={art.id} value={art.sku}>
-                      {art.sku} — {art.nombre} (Disponibles: {art.disponible})
-                    </option>
-                  ))}
-                  {MOCK_ARTICULOS.map((art) => (
-                    <option key={art.id} value={art.sku}>
-                      {art.sku} — {art.nombre} (Disponibles: {art.stockDisponible})
+                      {art.sku} — {art.descripcionCorta || art.nombre} (Disponibles: {art.stockDisponible})
                     </option>
                   ))}
                 </select>

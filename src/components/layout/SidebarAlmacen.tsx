@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import type { RolUsuario } from '@/config/types';
 import {
   IconChevronDown,
@@ -33,13 +34,38 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
   rolUsuario = 'requisiciones',
 }) => {
   const { t } = useLanguage();
+  const pathname = usePathname() || '';
   const [openSectionOperaciones, setOpenSectionOperaciones] = useState(true);
   const [openSectionCatalogo, setOpenSectionCatalogo] = useState(true);
+
+  const esArticulosActivo =
+    activeModuleId === 'almacen' &&
+    (activeSubItemId === 'articulos' ||
+      activeSubItemId === 'alta-articulo' ||
+      activeSubItemId === 'recepcion-ir03' ||
+      activeSubItemId === 'salida' ||
+      pathname.startsWith('/almacen/articulos') ||
+      pathname.startsWith('/almacen/alta-articulo') ||
+      pathname.startsWith('/almacen/recepcion-ir03') ||
+      pathname.startsWith('/almacen/salida'));
+
+  const esServiciosActivo =
+    activeModuleId === 'almacen' &&
+    (activeSubItemId === 'servicios' ||
+      activeSubItemId === 'alta-servicio' ||
+      pathname.startsWith('/almacen/servicios') ||
+      pathname.startsWith('/almacen/alta-servicio'));
 
   const esSubItemActivo = (subId: string): boolean => {
     if (activeModuleId !== 'almacen') return false;
     if (!activeSubItemId || activeSubItemId === '') {
       return subId === '' || subId === 'almacen-dashboard';
+    }
+    if (subId === 'articulos') {
+      return esArticulosActivo;
+    }
+    if (subId === 'servicios') {
+      return esServiciosActivo;
     }
     return activeSubItemId === subId;
   };
@@ -93,7 +119,7 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
             <div className="collapsed-tools-stack">
               <button
                 type="button"
-                className={`tool-icon-btn ${activeModuleId === 'almacen' && (!activeSubItemId || activeSubItemId === '')
+                className={`tool-icon-btn ${pathname === '/almacen' || (activeModuleId === 'almacen' && (!activeSubItemId || activeSubItemId === ''))
                     ? 'active'
                     : ''
                   }`}
@@ -150,6 +176,7 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
                       activeSubItemId === '' ||
                       activeSubItemId === 'recepcion-ir03' ||
                       activeSubItemId === 'salida' ||
+                      activeSubItemId === 'mantenimiento' ||
                       activeSubItemId === 'asignaciones')
                     ? 'active-ops'
                     : ''
@@ -164,28 +191,15 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
               <button
                 type="button"
                 className={`collapsed-nav-btn almacen-ops-btn ${activeModuleId === 'almacen' &&
-                    (activeSubItemId === 'alta-articulo' || activeSubItemId === 'alta-servicio')
+                    (esArticulosActivo || esServiciosActivo)
                     ? 'active-ops'
                     : ''
                   }`}
-                title="Catálogo & Suministros"
-                onClick={() => onSelectModule('almacen', 'alta-articulo')}
+                title="Catálogo & Suministros (Artículos / Servicios)"
+                onClick={() => onSelectModule('almacen', 'articulos')}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18 }}>
                   <path d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-
-              {/* Grupo 4: Requisiciones */}
-              <button
-                type="button"
-                className={`collapsed-nav-btn ops-group-btn ${activeModuleId === 'compras' ? 'active-ops' : ''
-                  }`}
-                title="Requisiciones de Compra"
-                onClick={() => onSelectModule('compras', 'compras-mis-requisiciones')}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18 }}>
-                  <path d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             </div>
@@ -268,7 +282,16 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
                             : 'gray'
                           }`}
                       />
-                      <span>Dashboard General</span>
+                      <span>Menú Principal</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`sub-nav-link ${esSubItemActivo('inventarios') ? 'active-pill' : ''}`}
+                      onClick={() => onSelectModule('almacen', 'inventarios')}
+                    >
+                      <span className={`bullet-indicator ${esSubItemActivo('inventarios') ? 'orange' : 'gray'}`} />
+                      <span>Control de Inventarios</span>
                     </button>
 
                     <button
@@ -287,6 +310,15 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
                     >
                       <span className={`bullet-indicator ${esSubItemActivo('salida') ? 'orange' : 'gray'}`} />
                       <span>Salidas de Almacén (SA)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`sub-nav-link ${esSubItemActivo('mantenimiento') ? 'active-pill' : ''}`}
+                      onClick={() => onSelectModule('almacen', 'mantenimiento')}
+                    >
+                      <span className={`bullet-indicator ${esSubItemActivo('mantenimiento') ? 'orange' : 'gray'}`} />
+                      <span>Mantenimiento de Artículos</span>
                     </button>
 
                     <button
@@ -321,6 +353,15 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
                   <div className="accordion-sub-stack">
                     <button
                       type="button"
+                      className={`sub-nav-link ${esSubItemActivo('articulos') ? 'active-pill' : ''}`}
+                      onClick={() => onSelectModule('almacen', 'articulos')}
+                    >
+                      <span className={`bullet-indicator ${esSubItemActivo('articulos') ? 'orange' : 'gray'}`} />
+                      <span>Artículos</span>
+                    </button>
+
+                    <button
+                      type="button"
                       className={`sub-nav-link ${esSubItemActivo('alta-articulo') ? 'active-pill' : ''}`}
                       onClick={() => onSelectModule('almacen', 'alta-articulo')}
                     >
@@ -330,11 +371,20 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
 
                     <button
                       type="button"
+                      className={`sub-nav-link ${esSubItemActivo('servicios') ? 'active-pill' : ''}`}
+                      onClick={() => onSelectModule('almacen', 'servicios')}
+                    >
+                      <span className={`bullet-indicator ${esSubItemActivo('servicios') ? 'orange' : 'gray'}`} />
+                      <span>Servicios</span>
+                    </button>
+
+                    <button
+                      type="button"
                       className={`sub-nav-link ${esSubItemActivo('alta-servicio') ? 'active-pill' : ''}`}
                       onClick={() => onSelectModule('almacen', 'alta-servicio')}
                     >
                       <span className={`bullet-indicator ${esSubItemActivo('alta-servicio') ? 'orange' : 'gray'}`} />
-                      <span>Alta de Servicio</span>
+                      <span>+ Alta de Servicio</span>
                     </button>
                   </div>
                 )}

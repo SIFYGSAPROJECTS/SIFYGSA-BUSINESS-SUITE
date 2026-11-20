@@ -1,372 +1,421 @@
 'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { AlmacenButton as Button } from '../components/ui/AlmacenButton';
-import { AlmacenBadge as Badge } from '../components/ui/AlmacenBadge';
-import { AlmacenModal as ModalUniversal } from '../components/ui/AlmacenModal';
-import { MOCK_ARTICULOS } from '../data/mock-data';
 
-interface Asignacion {
-  id: string;
-  folio: string;
-  equipoNombre: string;
-  sku: string;
-  frenteTrabajo: string;
-  solicitante: string;
-  fechaPrestamo: string;
-  fechaRetornoPrevista: string;
-  estado: 'En Frente' | 'Por Vencer' | 'Retornado';
-  calibracionVigente: boolean;
-}
+import { useState, useMemo } from 'react';
+import { useAlmacen } from '../context/AlmacenContext';
+import '../almacen.css';
 
 export default function AsignacionesProyectosPage() {
-  const router = useRouter();
-  const [frenteFiltro, setFrenteFiltro] = useState('todos');
-  const [modalChecklistOpen, setModalChecklistOpen] = useState(false);
-  const [modalNuevaAsignacion, setModalNuevaAsignacion] = useState(false);
-  const [asignacionExito, setAsignacionExito] = useState(false);
+  const { monitorCalibracion, bitacora } = useAlmacen();
 
-  // Formulario nueva asignación
-  const [selectedSku, setSelectedSku] = useState(MOCK_ARTICULOS[2]?.sku || '');
-  const [nuevoFrente, setNuevoFrente] = useState('PEMEX Refinería Dos Bocas (Olmeca)');
-  const [nuevoIngeniero, setNuevoIngeniero] = useState('Ing. Carlos Mendoza (Residente Obra)');
-  const [diasPrestamo, setDiasPrestamo] = useState(15);
+  const [tabActiva, setTabActiva] = useState<'calibracion' | 'bitacora'>('calibracion');
+  const [filtroEstatusCalib, setFiltroEstatusCalib] = useState<string>('todos');
+  const [busqueda, setBusqueda] = useState('');
 
-  const [asignaciones, setAsignaciones] = useState<Asignacion[]>([
-    {
-      id: 'asg-1',
-      folio: 'ASG-2024-0041',
-      equipoNombre: 'Multímetro Industrial TRMS Fluke 87V',
-      sku: 'FLUKE-87V-IND',
-      frenteTrabajo: 'PEMEX Refinería Dos Bocas (Olmeca)',
-      solicitante: 'Ing. Carlos Mendoza',
-      fechaPrestamo: '2024-10-15',
-      fechaRetornoPrevista: '2024-11-05',
-      estado: 'En Frente',
-      calibracionVigente: true,
-    },
-    {
-      id: 'asg-2',
-      folio: 'ASG-2024-0038',
-      equipoNombre: 'Torquímetro de Click 1/2" Snap-on Calibrado',
-      sku: 'TORQ-SNAP-ON-12',
-      frenteTrabajo: 'Plataforma Marina Akal-C (Sonda Campeche)',
-      solicitante: 'Téc. Fernando Ruiz',
-      fechaPrestamo: '2024-10-10',
-      fechaRetornoPrevista: '2024-10-28',
-      estado: 'Por Vencer',
-      calibracionVigente: true,
-    },
-    {
-      id: 'asg-3',
-      folio: 'ASG-2024-0032',
-      equipoNombre: 'Arnés Anticaídas Petzl Avao Bod Fast',
-      sku: 'HARN-PETZL-AVAO',
-      frenteTrabajo: 'CFE Central Ciclo Combinado Tuxpan',
-      solicitante: 'Ing. Laura Salgado',
-      fechaPrestamo: '2024-09-20',
-      fechaRetornoPrevista: '2024-10-20',
-      estado: 'Retornado',
-      calibracionVigente: true,
-    },
-  ]);
+  // Equipos filtrados por estatus de calibración
+  const itemsFiltrados = useMemo(() => {
+    return monitorCalibracion.filter((item) => {
+      const matchStatus =
+        filtroEstatusCalib === 'todos' || item.estatusCalibracion === filtroEstatusCalib;
+      const q = busqueda.toLowerCase().trim();
+      const matchBusqueda =
+        !q ||
+        item.nombreEquipo.toLowerCase().includes(q) ||
+        item.sku.toLowerCase().includes(q) ||
+        item.numeroSerie.toLowerCase().includes(q) ||
+        item.marca.toLowerCase().includes(q);
 
-  const filtradas = asignaciones.filter((a) => {
-    return frenteFiltro === 'todos' || a.frenteTrabajo.includes(frenteFiltro);
-  });
+      return matchStatus && matchBusqueda;
+    });
+  }, [monitorCalibracion, filtroEstatusCalib, busqueda]);
 
-  const handleCrearAsignacion = (e: React.FormEvent) => {
-    e.preventDefault();
-    const art = MOCK_ARTICULOS.find((x) => x.sku === selectedSku);
-    const newAsg: Asignacion = {
-      id: `asg-${Date.now()}`,
-      folio: `ASG-2024-00${asignaciones.length + 42}`,
-      equipoNombre: art ? art.nombre : selectedSku,
-      sku: selectedSku,
-      frenteTrabajo: nuevoFrente,
-      solicitante: nuevoIngeniero,
-      fechaPrestamo: new Date().toISOString().slice(0, 10),
-      fechaRetornoPrevista: new Date(Date.now() + diasPrestamo * 86400000).toISOString().slice(0, 10),
-      estado: 'En Frente',
-      calibracionVigente: true,
-    };
-    setAsignaciones([newAsg, ...asignaciones]);
-    setAsignacionExito(true);
-  };
+  // Contadores para KPIs de calibración
+  const stats = useMemo(() => {
+    const total = monitorCalibracion.length;
+    const vigentes = monitorCalibracion.filter((i) => i.estatusCalibracion === 'Vigente').length;
+    const proximos = monitorCalibracion.filter((i) => i.estatusCalibracion === 'Próximo a Vencer').length;
+    const vencidos = monitorCalibracion.filter((i) => i.estatusCalibracion === 'Vencido').length;
+    return { total, vigentes, proximos, vencidos };
+  }, [monitorCalibracion]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '1440px', margin: '0 auto' }}>
-      {/* HEADER */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <h1
-              className="font-headline-lg"
+    <div className="almacen-module-container" style={{ minHeight: '100vh', background: 'var(--bg-almacen)' }}>
+      <main style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 20px 80px' }}>
+        {/* Cabecera Principal */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 24,
+            padding: '20px 24px',
+            background: 'var(--card-bg, #ffffff)',
+            borderRadius: 16,
+            border: '1px solid var(--border-color, #e2e8f0)',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+            flexWrap: 'wrap',
+            gap: 16,
+          }}
+        >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 42,
+                  height: 42,
+                  borderRadius: 12,
+                  background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
+                  color: '#ffffff',
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 24 }}>verified</span>
+              </span>
+              <div>
+                <h1 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                  Monitor de Calibración, Custodia & Bitácora de Auditoría
+                </h1>
+                <p style={{ margin: '2px 0 0', fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
+                  Control de vigencia metrológica, bloqueo de salida a obra por vencimiento y registro estricto de auditoría.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Selector de Pestaña */}
+          <div style={{ display: 'flex', gap: 8, background: 'var(--surface-alt)', padding: 4, borderRadius: 10, border: '1px solid var(--border)' }}>
+            <button
+              type="button"
+              onClick={() => setTabActiva('calibracion')}
               style={{
-                fontSize: '1.75rem',
+                padding: '8px 16px',
+                borderRadius: 8,
+                border: 'none',
+                background: tabActiva === 'calibracion' ? 'var(--card)' : 'transparent',
+                color: tabActiva === 'calibracion' ? 'var(--warning)' : 'var(--text-secondary)',
                 fontWeight: 800,
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.02em',
-                margin: 0,
+                fontSize: '0.84rem',
+                cursor: 'pointer',
+                boxShadow: tabActiva === 'calibracion' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
               }}
             >
-              Control de Custodia & Asignaciones a Proyectos
-            </h1>
-            <Badge variant="select">{asignaciones.length} Registros Activos</Badge>
+              Monitor de Calibración ({stats.total})
+            </button>
+            <button
+              type="button"
+              onClick={() => setTabActiva('bitacora')}
+              style={{
+                padding: '8px 16px',
+                borderRadius: 8,
+                border: 'none',
+                background: tabActiva === 'bitacora' ? 'var(--card)' : 'transparent',
+                color: tabActiva === 'bitacora' ? 'var(--brand-600, #1d4ed8)' : 'var(--text-secondary)',
+                fontWeight: 800,
+                fontSize: '0.84rem',
+                cursor: 'pointer',
+                boxShadow: tabActiva === 'bitacora' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
+              }}
+            >
+              Bitácora de Auditoría ({bitacora.length})
+            </button>
           </div>
-          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-            Trazabilidad 100% de herramientas y equipos críticos en frentes petroleros y plantas de energía
-          </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <Button variant="secondary" icon="arrow_back" onClick={() => router.push('/almacen')}>
-            Volver a Almacén
-          </Button>
+        {/* PESTAÑA 1: MONITOR DE CALIBRACIÓN */}
+        {tabActiva === 'calibracion' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {/* KPIs de Calibración */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+              <div style={{ background: 'var(--card)', borderRadius: 12, padding: 18, border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+                  Total Equipos Sujetos a Calibración
+                </div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--text-primary)', marginTop: 4 }}>
+                  {stats.total}
+                </div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>En catálogo y frentes</span>
+              </div>
 
-          <Button
-            variant="secondary"
-            icon="checklist"
-            onClick={() => setModalChecklistOpen(true)}
-          >
-            Checklist de Retorno
-          </Button>
+              <div style={{ background: 'var(--card)', borderRadius: 12, padding: 18, border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--success)', textTransform: 'uppercase' }}>
+                  Certificación Vigente
+                </div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--success)', marginTop: 4 }}>
+                  {stats.vigentes}
+                </div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--success)' }}>Habilitados para despacho a obra</span>
+              </div>
 
-          <Button
-            variant="primary"
-            icon="assignment"
-            onClick={() => {
-              setAsignacionExito(false);
-              setModalNuevaAsignacion(true);
+              <div style={{ background: 'var(--card)', borderRadius: 12, padding: 18, border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--warning)', textTransform: 'uppercase' }}>
+                  Próximos a Vencer (&lt;30 días)
+                </div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--warning)', marginTop: 4 }}>
+                  {stats.proximos}
+                </div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--warning)' }}>Programar envío a laboratorio</span>
+              </div>
+
+              <div style={{ background: 'var(--card)', borderRadius: 12, padding: 18, border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--danger)', textTransform: 'uppercase' }}>
+                  Vencidos (Salida Bloqueada)
+                </div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--danger)', marginTop: 4 }}>
+                  {stats.vencidos}
+                </div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--danger)' }}>Bloqueados para salida a nuevos frentes</span>
+              </div>
+            </div>
+
+            {/* Barra de Filtros */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '14px 18px',
+                background: 'var(--card)',
+                borderRadius: 12,
+                border: '1px solid var(--border)',
+                gap: 16,
+                flexWrap: 'wrap',
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Buscar por equipo, SKU, serie o marca..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                style={{
+                  minWidth: 280,
+                  flex: 1,
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.88rem',
+                }}
+              />
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                {['todos', 'Vigente', 'Próximo a Vencer', 'Vencido'].map((est) => (
+                  <button
+                    key={est}
+                    type="button"
+                    onClick={() => setFiltroEstatusCalib(est)}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: 6,
+                      border: '1px solid var(--border)',
+                      background: filtroEstatusCalib === est ? 'var(--primary)' : 'var(--surface-alt)',
+                      color: filtroEstatusCalib === est ? '#ffffff' : 'var(--text-secondary)',
+                      fontWeight: 700,
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {est === 'todos' ? 'Todos los Estados' : est}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tabla del Monitor de Calibración */}
+            <div
+              style={{
+                background: 'var(--card-bg, #ffffff)',
+                borderRadius: 16,
+                border: '1px solid var(--border-color, #e2e8f0)',
+                padding: 24,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              }}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.86rem' }}>
+                <thead>
+                  <tr style={{ background: 'var(--surface-alt)', borderBottom: '2px solid var(--border)', color: 'var(--text-secondary)', textAlign: 'left' }}>
+                    <th style={{ padding: '12px 10px' }}>Equipo & Modelo</th>
+                    <th style={{ padding: '12px 10px' }}>Número de Serie</th>
+                    <th style={{ padding: '12px 10px' }}>Ubicación Actual</th>
+                    <th style={{ padding: '12px 10px' }}>Última Calibración</th>
+                    <th style={{ padding: '12px 10px' }}>Fecha Vencimiento</th>
+                    <th style={{ padding: '12px 10px', textAlign: 'center' }}>Días Restantes</th>
+                    <th style={{ padding: '12px 10px' }}>Estatus & Candado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {itemsFiltrados.map((item) => (
+                    <tr
+                      key={item.id}
+                      style={{
+                        borderBottom: '1px solid var(--divider)',
+                        background: item.bloqueadoParaSalida ? 'rgba(239, 68, 68, 0.12)' : 'transparent',
+                      }}
+                    >
+                      <td style={{ padding: '12px 10px' }}>
+                        <strong style={{ color: 'var(--text-primary)' }}>{item.nombreEquipo}</strong>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                          SKU: {item.sku} • {item.marca} {item.modelo}
+                        </div>
+                      </td>
+                      <td style={{ padding: '12px 10px', fontFamily: 'monospace', fontWeight: 800, color: 'var(--primary)' }}>
+                        {item.numeroSerie}
+                      </td>
+                      <td style={{ padding: '12px 10px' }}>
+                        <span style={{ padding: '3px 8px', borderRadius: 6, background: 'var(--surface-alt)', border: '1px solid var(--border)', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                          {item.ubicacionActual}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>
+                        {item.fechaUltimaCalibracion}
+                      </td>
+                      <td style={{ padding: '12px 10px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {item.fechaVencimientoCalibracion}
+                      </td>
+                      <td style={{ padding: '12px 10px', textAlign: 'center', fontWeight: 800 }}>
+                        <span style={{ color: item.diasParaVencimiento <= 0 ? 'var(--danger)' : item.diasParaVencimiento <= 30 ? 'var(--warning)' : 'var(--success)' }}>
+                          {item.diasParaVencimiento <= 0 ? 'Vencida' : `${item.diasParaVencimiento} días`}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 10px' }}>
+                        {item.bloqueadoParaSalida ? (
+                          <div
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: 8,
+                              background: 'var(--danger-bg)',
+                              color: 'var(--danger-text)',
+                              fontSize: '0.76rem',
+                              fontWeight: 800,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                            }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>block</span>
+                            SALIDA BLOQUEADA
+                          </div>
+                        ) : (
+                          <div
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: 8,
+                              background: item.estatusCalibracion === 'Vigente' ? 'var(--success-bg)' : 'var(--warning-bg)',
+                              color: item.estatusCalibracion === 'Vigente' ? 'var(--success-text)' : 'var(--warning-text)',
+                              fontSize: '0.76rem',
+                              fontWeight: 800,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                            }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>check_circle</span>
+                            {item.estatusCalibracion}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* PESTAÑA 2: BITÁCORA DE AUDITORÍA */}
+        {tabActiva === 'bitacora' && (
+          <div
+            style={{
+              background: 'var(--card-bg, #ffffff)',
+              borderRadius: 16,
+              border: '1px solid var(--border-color, #e2e8f0)',
+              padding: 24,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
             }}
           >
-            + Nueva Asignación a Frente
-          </Button>
-        </div>
-      </div>
-
-      {/* FILTROS Y TABLA */}
-      <div
-        style={{
-          borderRadius: 'var(--radius-card)',
-          backgroundColor: 'var(--card)',
-          border: '1px solid var(--border)',
-          padding: '1.25rem',
-          boxShadow: 'var(--shadow-sm)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1rem',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Filtrar por Frente:</span>
-            <select
-              className="sga-select"
-              value={frenteFiltro}
-              onChange={(e) => setFrenteFiltro(e.target.value)}
-              style={{ width: '240px' }}
-            >
-              <option value="todos">Todos los frentes</option>
-              <option value="Dos Bocas">PEMEX Refinería Dos Bocas</option>
-              <option value="Akal-C">Plataforma Marina Akal-C</option>
-              <option value="Tuxpan">CFE Central Ciclo Combinado Tuxpan</option>
-            </select>
-          </div>
-
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Mostrando <strong>{filtradas.length}</strong> asignaciones
-          </span>
-        </div>
-
-        <div className="sga-table-wrapper">
-          <table className="sga-table">
-            <thead>
-              <tr>
-                <th>Folio Vale</th>
-                <th>Equipo / Herramienta</th>
-                <th>Código SKU</th>
-                <th>Frente de Trabajo</th>
-                <th>Ingeniero / Residente</th>
-                <th>Fecha Salida</th>
-                <th>Retorno Previsto</th>
-                <th style={{ textAlign: 'center' }}>Calibración</th>
-                <th style={{ textAlign: 'center' }}>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtradas.map((asg) => (
-                <tr key={asg.id}>
-                  <td style={{ fontFamily: 'var(--font-family-mono)', fontWeight: 700, color: 'var(--primary)' }}>
-                    {asg.folio}
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{asg.equipoNombre}</div>
-                  </td>
-                  <td style={{ fontFamily: 'var(--font-family-mono)', fontSize: '0.75rem' }}>{asg.sku}</td>
-                  <td style={{ fontSize: '0.75rem', fontWeight: 600 }}>{asg.frenteTrabajo}</td>
-                  <td style={{ fontSize: '0.75rem' }}>{asg.solicitante}</td>
-                  <td style={{ fontSize: '0.75rem' }}>{asg.fechaPrestamo}</td>
-                  <td style={{ fontSize: '0.75rem', fontFamily: 'var(--font-family-mono)' }}>{asg.fechaRetornoPrevista}</td>
-                  <td style={{ textAlign: 'center' }}>
-                    <Badge variant="success" size="sm" icon="verified">
-                      Vigente
-                    </Badge>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <Badge
-                      variant={asg.estado === 'Retornado' ? 'neutral' : asg.estado === 'Por Vencer' ? 'warning' : 'select'}
-                      size="sm"
-                    >
-                      {asg.estado}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* MODAL: NUEVA ASIGNACIÓN */}
-      <ModalUniversal
-        open={modalNuevaAsignacion}
-        title="Nueva Asignación de Equipo a Frente de Trabajo"
-        subtitle="Emisión de vale de resguardo y registro de salida"
-        onClose={() => setModalNuevaAsignacion(false)}
-        footer={
-          asignacionExito ? (
-            <Button variant="primary" onClick={() => setModalNuevaAsignacion(false)}>
-              Aceptar y Cerrar
-            </Button>
-          ) : (
-            <>
-              <Button variant="secondary" onClick={() => setModalNuevaAsignacion(false)}>
-                Cancelar
-              </Button>
-              <Button variant="primary" icon="check_circle" onClick={handleCrearAsignacion}>
-                Emitir Vale de Asignación
-              </Button>
-            </>
-          )
-        }
-      >
-        {asignacionExito ? (
-          <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '56px', color: 'var(--success)' }}>
-              task_alt
-            </span>
-            <h3 style={{ margin: '0.5rem 0' }}>Vale de Asignación Generado</h3>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-              El equipo ha sido asignado a <strong>{nuevoFrente}</strong> bajo custodia de <strong>{nuevoIngeniero}</strong>.
-            </p>
-          </div>
-        ) : (
-          <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div>
-              <label className="sga-field-label">
-                <span className="material-symbols-outlined sga-field-label-icon">handyman</span>
-                <span>Equipo / Herramienta a Prestar:</span>
-              </label>
-              <select
-                className="sga-select"
-                value={selectedSku}
-                onChange={(e) => setSelectedSku(e.target.value)}
-                style={{ marginTop: '0.25rem' }}
-              >
-                {MOCK_ARTICULOS.filter((x) => x.custodia !== 'Consumible').map((art) => (
-                  <option key={art.id} value={art.sku}>
-                    {art.sku} — {art.nombre} (Disponibles: {art.stockDisponible})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="sga-field-label">
-                <span className="material-symbols-outlined sga-field-label-icon">pin_drop</span>
-                <span>Frente de Trabajo Destino:</span>
-              </label>
-              <select
-                className="sga-select"
-                value={nuevoFrente}
-                onChange={(e) => setNuevoFrente(e.target.value)}
-                style={{ marginTop: '0.25rem' }}
-              >
-                <option value="PEMEX Refinería Dos Bocas (Olmeca)">PEMEX Refinería Dos Bocas (Olmeca)</option>
-                <option value="Plataforma Marina Akal-C (Sonda Campeche)">Plataforma Marina Akal-C (Sonda Campeche)</option>
-                <option value="CFE Central Ciclo Combinado Tuxpan">CFE Central Ciclo Combinado Tuxpan</option>
-                <option value="Terminal Marítima Pajaritos">Terminal Marítima Pajaritos</option>
-              </select>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div>
-                <label className="sga-field-label">
-                  <span className="material-symbols-outlined sga-field-label-icon">engineering</span>
-                  <span>Ingeniero Residente:</span>
-                </label>
-                <input
-                  type="text"
-                  className="sga-input"
-                  value={nuevoIngeniero}
-                  onChange={(e) => setNuevoIngeniero(e.target.value)}
-                  style={{ marginTop: '0.25rem' }}
-                />
-              </div>
-
-              <div>
-                <label className="sga-field-label">
-                  <span className="material-symbols-outlined sga-field-label-icon">date_range</span>
-                  <span>Días de Préstamo Estimados:</span>
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="90"
-                  className="sga-input"
-                  value={diasPrestamo}
-                  onChange={(e) => setDiasPrestamo(Number(e.target.value))}
-                  style={{ marginTop: '0.25rem' }}
-                />
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                  Bitácora de Auditoría del Sistema (System Log Inmutable)
+                </h2>
+                <p style={{ margin: '2px 0 0', fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
+                  Registro cronológico de creación, edición, inhabilitación, recepciones, salidas y notas con valor anterior y nuevo.
+                </p>
               </div>
             </div>
-          </form>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
+                <thead>
+                  <tr style={{ background: 'var(--surface-alt)', borderBottom: '2px solid var(--border)', color: 'var(--text-secondary)', textAlign: 'left' }}>
+                    <th style={{ padding: '10px 12px' }}>Fecha y Hora</th>
+                    <th style={{ padding: '10px 12px' }}>Usuario</th>
+                    <th style={{ padding: '10px 12px' }}>Folio / Documento</th>
+                    <th style={{ padding: '10px 12px' }}>Acción</th>
+                    <th style={{ padding: '10px 12px' }}>Campo Modificado</th>
+                    <th style={{ padding: '10px 12px' }}>Valor Anterior</th>
+                    <th style={{ padding: '10px 12px' }}>Valor Nuevo</th>
+                    <th style={{ padding: '10px 12px' }}>Motivo / Justificación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bitacora.map((b) => (
+                    <tr key={b.id} style={{ borderBottom: '1px solid var(--divider)' }}>
+                      <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: 'var(--text-secondary)' }}>
+                        {b.fechaHora}
+                      </td>
+                      <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {b.usuario}
+                      </td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontWeight: 800, color: 'var(--primary)' }}>
+                        {b.folioDocumento}
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <span
+                          style={{
+                            padding: '2px 8px',
+                            borderRadius: 6,
+                            fontSize: '0.74rem',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            background:
+                              b.accion === 'creacion'
+                                ? 'var(--success-bg)'
+                                : b.accion === 'eliminacion' || b.accion === 'inhabilitacion'
+                                ? 'var(--danger-bg)'
+                                : 'var(--brand-tonal-bg)',
+                            color:
+                              b.accion === 'creacion'
+                                ? 'var(--success-text)'
+                                : b.accion === 'eliminacion' || b.accion === 'inhabilitacion'
+                                ? 'var(--danger-text)'
+                                : 'var(--brand-tonal-text)',
+                          }}
+                        >
+                          {b.accion}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>
+                        {b.campoModificado || '-'}
+                      </td>
+                      <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                        {b.valorAnterior || '-'}
+                      </td>
+                      <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {b.valorNuevo || '-'}
+                      </td>
+                      <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>
+                        {b.motivo || '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
-      </ModalUniversal>
-
-      {/* MODAL: CHECKLIST DE RETORNO */}
-      <ModalUniversal
-        open={modalChecklistOpen}
-        title="Checklist de Inspección Física al Retorno"
-        subtitle="Protocolo obligatorio antes de reingresar herramientas al stock disponible"
-        onClose={() => setModalChecklistOpen(false)}
-        footer={
-          <Button variant="primary" onClick={() => setModalChecklistOpen(false)}>
-            Completar Checklist
-          </Button>
-        }
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.8125rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input type="checkbox" defaultChecked style={{ width: '18px', height: '18px' }} />
-            <span>1. Integridad estructural y libre de golpes mecánicos o fracturas.</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input type="checkbox" defaultChecked style={{ width: '18px', height: '18px' }} />
-            <span>2. Sellos y hologramas de calibración NOM / ISO intactos y legibles.</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input type="checkbox" defaultChecked style={{ width: '18px', height: '18px' }} />
-            <span>3. Puntas de prueba, cables y accesorios completos en estuche original.</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input type="checkbox" defaultChecked style={{ width: '18px', height: '18px' }} />
-            <span>4. Prueba de encendido y verificación de cero eléctrico / mecánico superada.</span>
-          </label>
-        </div>
-      </ModalUniversal>
+      </main>
     </div>
   );
 }
-
