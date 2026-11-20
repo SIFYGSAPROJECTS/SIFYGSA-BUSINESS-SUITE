@@ -25,6 +25,8 @@ export class RepositorioUsuariosJson implements IRepositorioUsuarios {
     const aliasEmail: Record<string, string> = {
       'crm@sifygsa.com': 'admin@sifygsa.com',
       'rh@sifygsa.com': 'rrhh@sifygsa.com',
+      'compras': 'compras@sifygsa.com',
+      'procura': 'compras@sifygsa.com',
     };
     const objetivo = aliasEmail[limpio] ?? limpio;
     const usuarios = await this.listarTodos();

@@ -85,7 +85,7 @@ export const SfgLogo: React.FC<SfgLogoProps> = ({
               letterSpacing: '0.06em',
               color: textColor,
               textTransform: 'uppercase',
-              fontFamily: "'Inter', sans-serif",
+              fontFamily: "var(--font-family-sans)",
             }}
           >
             SIFYGSA
@@ -99,7 +99,7 @@ export const SfgLogo: React.FC<SfgLogoProps> = ({
               color: 'var(--primary)',
               textTransform: 'none',
               fontStyle: 'italic',
-              fontFamily: "'Inter', sans-serif",
+              fontFamily: "var(--font-family-sans)",
             }}
           >
             Fire &amp; Gas

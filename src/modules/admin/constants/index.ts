@@ -6,6 +6,7 @@ export const ETIQUETAS_MODULOS: Record<IdModulo, string> = {
   requisiciones: 'Requisiciones',
   rrhh: 'Recursos Humanos',
   almacen: 'Almacén & SGA',
+  compras: 'Compras & Procura',
 };
 
 export const ETIQUETAS_ACCIONES: Record<AccionPermiso, string> = {

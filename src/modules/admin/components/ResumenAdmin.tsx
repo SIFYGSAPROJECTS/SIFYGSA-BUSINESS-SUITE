@@ -132,7 +132,7 @@ export const ResumenAdmin: React.FC<PropiedadesResumenAdmin> = ({
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <strong style={{ fontSize: '0.95rem', color: 'var(--primary)' }}>{mod.nombre}</strong>
-                <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>
+                <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-family-mono)', color: 'var(--text-secondary)' }}>
                   {mod.ruta}
                 </span>
               </div>

@@ -8,7 +8,7 @@ import { SfgLogoSymbol } from '../ui/Logo';
 import { useLanguage } from '../../context/LanguageContext';
 import { SubsidebarFavoritos } from './subsidebarFavoritos';
 
-type CrmSidebarModuleKey = 'crm' | 'compras' | 'admin';
+type CrmSidebarModuleKey = 'crm' | 'admin';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -50,24 +50,6 @@ function renderModuleIcon(key: CrmSidebarModuleKey, size: number = 16) {
       </svg>
     );
   }
-  if (key === 'compras') {
-    return (
-      <svg
-        className="w-4 h-4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-        style={{ width: size, height: size }}
-      >
-        <path
-          d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
-  }
   return <IconShieldCheck size={size} />;
 }
 
@@ -84,13 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { language, t } = useLanguage();
 
   const subItemsCrm = obtenerSubItemsPermitidosModulo('crm', rolUsuario);
-  const subItemsRequisiciones = obtenerSubItemsPermitidosModulo('requisiciones', rolUsuario);
   const subItemsAdmin = obtenerSubItemsPermitidosModulo('admin', rolUsuario);
-
-  const subItemInicialCompras =
-    subItemsRequisiciones.find((s) => s.id === 'compras-requisicion')?.id ??
-    subItemsRequisiciones[0]?.id ??
-    'compras-mis-requisiciones';
 
   const esSubItemCrmActivo = (idSubItem: string): boolean => {
     if (activeModuleId !== 'crm') return false;
@@ -111,14 +87,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return activeSubItemId === idSubItem;
   };
 
-  const esSubItemComprasActivo = (idSubItem: string): boolean => {
-    if (activeModuleId !== 'compras') return false;
-    if (!activeSubItemId) {
-      return idSubItem === subItemInicialCompras;
-    }
-    return activeSubItemId === idSubItem;
-  };
-
   const esSubItemAdminActivo = (idSubItem: string): boolean => {
     if (activeModuleId !== 'admin') return false;
     return (!activeSubItemId && idSubItem === 'resumen') || activeSubItemId === idSubItem;
@@ -131,7 +99,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
     const found = mod.subItems.find((sub) => {
       if (mod.key === 'crm') return esSubItemCrmActivo(sub.id);
-      if (mod.key === 'compras') return esSubItemComprasActivo(sub.id);
       return esSubItemAdminActivo(sub.id);
     });
     if (!found) return null;
@@ -146,15 +113,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       titleEn: 'CRM & Sales',
       subItems: subItemsCrm,
       activeCollapsedClass: 'active-crm',
-    });
-  }
-  if (subItemsRequisiciones.length > 0) {
-    modulesList.push({
-      key: 'compras',
-      title: t('nav.operations'),
-      titleEn: 'Operations',
-      subItems: subItemsRequisiciones,
-      activeCollapsedClass: 'active-ops',
     });
   }
   if (showAdmin && subItemsAdmin.length > 0) {

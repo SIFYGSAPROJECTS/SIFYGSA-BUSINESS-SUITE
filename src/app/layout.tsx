@@ -37,6 +37,10 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
         />
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
         <script src="https://cdn.tailwindcss.com"></script>
         <script
           id="tailwind-config"
@@ -162,7 +166,7 @@ export default function RootLayout({
             __html: `
               try {
                 var saved = localStorage.getItem('sfg_theme');
-                var theme = (saved === 'dark' || saved === 'light') ? saved : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                var theme = (saved === 'dark' || saved === 'light') ? saved : 'dark';
                 document.documentElement.setAttribute('data-theme', theme);
                 document.documentElement.classList.toggle('dark', theme === 'dark');
                 document.documentElement.style.colorScheme = theme;

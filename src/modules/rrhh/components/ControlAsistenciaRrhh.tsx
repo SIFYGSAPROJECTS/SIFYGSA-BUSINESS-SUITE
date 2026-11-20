@@ -112,7 +112,7 @@ export const ControlAsistenciaRrhh: React.FC<PropiedadesControlAsistenciaRrhh> =
                 <td style={{ padding: '0.65rem 0.6rem', fontWeight: 700 }}>{a.empleadoNombre}</td>
                 <td style={{ padding: '0.65rem 0.6rem' }}>{a.fecha}</td>
                 <td style={{ padding: '0.65rem 0.6rem' }}>{a.sede}</td>
-                <td style={{ padding: '0.65rem 0.6rem', fontFamily: 'monospace' }}>
+                <td style={{ padding: '0.65rem 0.6rem', fontFamily: 'var(--font-family-mono)' }}>
                   {a.horaEntrada || '--:--'} - {a.horaSalida || '--:--'}
                 </td>
                 <td style={{ padding: '0.65rem 0.6rem' }}>{a.horasTrabajadas} hrs</td>

@@ -206,7 +206,7 @@ export const BandejaRequisiciones: React.FC<PropiedadesBandejaRequisiciones> = (
               paginadas.map((r) => (
                 <tr key={r.id} style={{ borderBottom: '1px solid var(--divider)' }}>
                   <td style={{ padding: '0.65rem 0.6rem' }}>
-                    <span style={{ fontFamily: 'monospace', fontWeight: 800, color: 'var(--primary)' }}>
+                    <span style={{ fontFamily: 'var(--font-family-mono)', fontWeight: 800, color: 'var(--primary)' }}>
                       {r.folio}
                     </span>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{r.contrato}</div>

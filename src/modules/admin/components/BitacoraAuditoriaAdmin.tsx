@@ -172,7 +172,7 @@ export const BitacoraAuditoriaAdmin: React.FC<PropiedadesBitacoraAuditoriaAdmin>
           <tbody>
             {eventos.map((ev) => (
               <tr key={ev.id} style={{ borderBottom: '1px solid var(--divider)' }}>
-                <td style={{ padding: '0.65rem 0.6rem', whiteSpace: 'nowrap', fontFamily: 'monospace', fontSize: '0.76rem' }}>
+                <td style={{ padding: '0.65rem 0.6rem', whiteSpace: 'nowrap', fontFamily: 'var(--font-family-mono)', fontSize: '0.76rem' }}>
                   {new Date(ev.fecha).toLocaleString('es-MX')}
                 </td>
                 <td style={{ padding: '0.65rem 0.6rem' }}>

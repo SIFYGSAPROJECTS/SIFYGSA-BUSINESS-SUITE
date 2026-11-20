@@ -31,20 +31,18 @@ function applyThemeToDOM(theme: Theme) {
 }
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Inicializamos siempre en 'light' tanto en el servidor como en el primer render del cliente
-  // para evitar diferencias de renderizado (Hydration Mismatch) con localStorage.
-  const [theme, setThemeState] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>('dark');
   const [mounted, setMounted] = useState(false);
   const [, startTransition] = useTransition();
 
-  // Al montar en el cliente, sincronizamos con localStorage o con el esquema del sistema operativo
+  // Al montar en el cliente, sincronizamos con localStorage o por defecto 'dark'
   useEffect(() => {
-    let initialTheme: Theme = 'light';
+    let initialTheme: Theme = 'dark';
     try {
       const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
       if (saved === 'light' || saved === 'dark') {
         initialTheme = saved;
-      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      } else {
         initialTheme = 'dark';
       }
     } catch {

@@ -50,7 +50,7 @@ interface HeaderProps {
     name: string;
     email: string;
     role: string;
-    portal?: 'crm' | 'rh' | 'almacen';
+    portal?: 'crm' | 'rh' | 'almacen' | 'compras';
   };
 }
 

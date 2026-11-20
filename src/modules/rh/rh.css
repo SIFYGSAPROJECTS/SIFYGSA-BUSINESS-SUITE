@@ -384,7 +384,7 @@
 
 .kpi-sub-comparison {
   color: var(--text-secondary);
-  font-family: monospace;
+  font-family: var(--font-family-mono);
 }
 
 .kpi-sub-alert {
@@ -1088,7 +1088,7 @@
 .task-time-label {
   font-size: 0.7rem;
   color: var(--text-secondary);
-  font-family: monospace;
+  font-family: var(--font-family-mono);
 }
 
 .btn-ver-mas-tasks {
@@ -1472,7 +1472,7 @@
 .colab-date-text {
   font-size: 0.8rem;
   color: var(--text-secondary);
-  font-family: monospace;
+  font-family: var(--font-family-mono);
 }
 
 .colab-actions-cluster {
@@ -2089,7 +2089,7 @@
   font-size: 0.725rem;
   font-weight: 700;
   color: var(--primary);
-  font-family: monospace;
+  font-family: var(--font-family-mono);
 }
 
 .event-datetime.text-red {

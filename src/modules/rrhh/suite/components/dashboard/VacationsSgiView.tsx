@@ -2107,7 +2107,7 @@ export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees })
                 border: '1.5px solid #000',
                 padding: '20px',
                 backgroundColor: '#FFFFFF',
-                fontFamily: 'Arial, Helvetica, sans-serif'
+                fontFamily: 'var(--font-family-sans)'
               }}
             >
               {/* Encabezado Corporativo Oficial */}

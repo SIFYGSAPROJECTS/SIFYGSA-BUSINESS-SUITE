@@ -227,14 +227,14 @@
 
 .portlet-tag-mono {
   font-size: 0.6875rem;
-  font-family: monospace;
+  font-family: var(--font-family-mono);
   color: var(--text-secondary);
   text-transform: uppercase;
 }
 
 .active-tasks-pill {
   font-size: 0.6875rem;
-  font-family: monospace;
+  font-family: var(--font-family-mono);
   background-color: var(--success-bg);
   color: var(--success-text);
   padding: 0.15rem 0.45rem;
@@ -256,7 +256,7 @@
   flex-direction: column;
   justify-content: space-between;
   font-size: 0.6875rem;
-  font-family: monospace;
+  font-family: var(--font-family-mono);
   color: var(--text-secondary);
   padding-right: var(--space-3);
   border-right: 1px solid var(--divider);
@@ -489,7 +489,7 @@
 
 .center-cell {
   text-align: center;
-  font-family: monospace;
+  font-family: var(--font-family-mono);
 }
 
 .center-cell.green-text,
@@ -601,7 +601,7 @@
 }
 
 .mini-task-tag {
-  font-family: monospace;
+  font-family: var(--font-family-mono);
   font-size: 0.625rem;
   font-weight: 700;
   align-self: flex-start;
@@ -664,7 +664,7 @@
 /* 6. Team Leaders Podium */
 .top-performer-pill {
   font-size: 0.6875rem;
-  font-family: monospace;
+  font-family: var(--font-family-mono);
   color: var(--brand-tonal-text);
   background: var(--brand-tonal-bg);
   padding: 0.15rem 0.45rem;
@@ -803,7 +803,7 @@
 
 .podium-kpi-val {
   font-size: 0.6875rem;
-  font-family: monospace;
+  font-family: var(--font-family-mono);
   font-weight: 700;
   color: var(--link);
   margin-top: 2px;
@@ -825,7 +825,7 @@
   justify-content: space-between;
   font-size: 0.75rem;
   color: var(--text-secondary);
-  font-family: monospace;
+  font-family: var(--font-family-mono);
   padding: var(--space-2) var(--space-1) 0;
   border-top: 1px solid var(--divider);
 }

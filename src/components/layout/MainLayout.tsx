@@ -8,6 +8,7 @@ import { Header } from './Header';
 import { Sidebar } from './sidebar';
 import { SidebarRH } from './SidebarRH';
 import { SidebarAlmacen } from './SidebarAlmacen';
+import { SidebarCompras } from './SidebarCompras';
 import { MenuSelectivoModulo } from './MenuSelectivoModulo';
 import { CentroConversaciones } from './CentroConversaciones';
 import { Footer } from './Footer';
@@ -17,7 +18,7 @@ export interface UserData {
   name: string;
   email: string;
   role: string;
-  portal?: 'crm' | 'rh' | 'almacen';
+  portal?: 'crm' | 'rh' | 'almacen' | 'compras';
 }
 
 export interface UsuarioSesionLayout {
@@ -79,18 +80,22 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     userProp?.portal === 'almacen' ||
     usuario?.departamento === 'Almacén & SGA' ||
     pathname.startsWith('/almacen');
+  const esPortalCompras =
+    userProp?.portal === 'compras' ||
+    pathname.startsWith('/compras') ||
+    pathname.startsWith('/requisiciones');
 
-  const portalDeterminado: 'crm' | 'rh' | 'almacen' =
-    userProp?.portal ?? (esPortalRh ? 'rh' : esPortalAlmacen ? 'almacen' : 'crm');
+  const portalDeterminado: 'crm' | 'rh' | 'almacen' | 'compras' =
+    userProp?.portal ?? (esPortalRh ? 'rh' : esPortalAlmacen ? 'almacen' : esPortalCompras ? 'compras' : 'crm');
 
   const userData: UserData = userProp ?? {
     name: usuario?.nombre ?? (esPortalAlmacen ? 'Supervisor Almacén' : 'Carlos Mendoza'),
-    email: usuario?.email ?? (esPortalAlmacen ? 'almacen@sifygsa.com' : 'crm@sifygsa.com'),
+    email: usuario?.email ?? (esPortalAlmacen ? 'almacen@sifygsa.com' : esPortalCompras ? 'compras@sifygsa.com' : 'crm@sifygsa.com'),
     role: usuario
       ? NOMBRES_ROLES[usuario.rol]
       : esPortalAlmacen
       ? 'Supervisor de Almacén & SGA'
-      : 'Director Comercial & CRM',
+      : 'Administrador General',
     portal: portalDeterminado,
   };
 
@@ -100,6 +105,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       ? 'settings'
       : pathname.startsWith('/crm')
       ? 'crm'
+      : pathname.startsWith('/compras')
+      ? 'compras'
       : pathname.startsWith('/requisiciones')
       ? 'compras'
       : pathname.startsWith('/rrhh')
@@ -113,7 +120,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       : 'dashboard');
 
   const isModuleSelectorOpen =
-    portalDeterminado === 'crm' &&
+    (portalDeterminado === 'crm' || portalDeterminado === 'compras') &&
     searchParams.get('menu') === '1' &&
     (activeModuleId === 'crm' || activeModuleId === 'compras' || activeModuleId === 'admin');
 
@@ -167,6 +174,30 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           router.push(wantsMenu ? '/crm?menu=1' : subItemId ? `/crm?sub=${subItemId}` : '/crm');
           break;
         case 'compras':
+          if (wantsMenu || !subItemId || subItemId === 'menu' || subItemId === 'compras-menu') {
+            router.push('/compras');
+          } else if (subItemId === 'proveedores') {
+            router.push('/compras/proveedores');
+          } else if (subItemId === 'nuevo-proveedor') {
+            router.push('/compras/proveedores/nuevo');
+          } else if (subItemId === 'ordenes') {
+            router.push('/compras/ordenes');
+          } else if (subItemId === 'autorizar-ordenes') {
+            router.push('/compras/ordenes?vista=autorizar');
+          } else if (subItemId === 'nueva-orden') {
+            router.push('/compras/ordenes/nueva');
+          } else if (subItemId === 'requisiciones') {
+            router.push('/requisiciones');
+          } else if (subItemId === 'aprobar-requisiciones') {
+            router.push('/requisiciones?sub=compras-aprobaciones');
+          } else if (subItemId === 'facturas') {
+            router.push('/compras/facturas');
+          } else if (subItemId?.startsWith('/')) {
+            router.push(subItemId);
+          } else {
+            router.push('/compras/ordenes');
+          }
+          break;
         case 'requisiciones':
           router.push(
             wantsMenu
@@ -204,13 +235,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const handleBackToMenu = () => {
     const targetMod =
       activeModuleId === 'compras' || activeModuleId === 'admin' ? activeModuleId : 'crm';
+    if (targetMod === 'compras') {
+      router.push('/compras');
+      return;
+    }
     if (isModuleSelectorOpen) {
       handleModuleSelection(
         targetMod,
         targetMod === 'crm'
           ? 'crm-kanban'
-          : targetMod === 'compras'
-          ? 'compras-requisicion'
           : 'resumen'
       );
     } else {
@@ -220,7 +253,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   return (
     <div
-      className={`app-layout ${userData.portal === 'rh' ? 'portal-rh' : userData.portal === 'almacen' ? 'portal-almacen' : 'portal-crm'} ${
+      className={`app-layout ${userData.portal === 'rh' ? 'portal-rh' : userData.portal === 'almacen' ? 'portal-almacen' : userData.portal === 'compras' ? 'portal-compras' : 'portal-crm'} ${
         isCollapsed ? 'sidebar-collapsed' : ''
       } ${isMobileOpen ? 'mobile-open' : ''}`}
     >
@@ -269,6 +302,20 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           />
         ) : userData.portal === 'almacen' ? (
           <SidebarAlmacen
+            isCollapsed={isCollapsed}
+            isMobileOpen={isMobileOpen}
+            onToggleCollapse={handleToggleSidebar}
+            onCloseMobile={() => setIsMobileOpen(false)}
+            activeModuleId={activeModuleId}
+            activeSubItemId={activeSubItemId}
+            onSelectModule={handleModuleSelection}
+            onLogout={() => {
+              void handleLogout();
+            }}
+            rolUsuario={usuario?.rol ?? 'requisiciones'}
+          />
+        ) : esPortalCompras ? (
+          <SidebarCompras
             isCollapsed={isCollapsed}
             isMobileOpen={isMobileOpen}
             onToggleCollapse={handleToggleSidebar}

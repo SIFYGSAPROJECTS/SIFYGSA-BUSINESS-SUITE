@@ -69,7 +69,7 @@ export const AlertasRequisicionesRol: React.FC<PropiedadesAlertasRequisicionesRo
           >
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span style={{ fontFamily: 'monospace', fontWeight: 800, color: 'var(--primary)' }}>
+                <span style={{ fontFamily: 'var(--font-family-mono)', fontWeight: 800, color: 'var(--primary)' }}>
                   {al.folio}
                 </span>
                 <Badge variant="warning">${al.total.toLocaleString('es-MX')} MXN</Badge>

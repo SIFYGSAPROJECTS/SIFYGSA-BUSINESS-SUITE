@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { IdModulo, RolUsuario } from '@/config/types';
 import { REGISTRO_MODULOS, obtenerSubItemsPermitidosModulo } from '@/modules/registry';
 
-export type PortalFavoritos = 'crm' | 'rh' | 'almacen';
+export type PortalFavoritos = 'crm' | 'rh' | 'almacen' | 'compras';
 
 export interface FavoritoItem {
   key: string;          // ej: "almacen:recepcion-ir03" o "crm:crm-opportunities"
@@ -50,21 +50,24 @@ const DEFAULT_FAVORITES_BY_PORTAL: FavoritesByPortal = {
     'crm:crm-opportunities',
     'crm:crm-kanban',
     'crm:crm-avanzado',
-    'compras:compras-mis-requisiciones',
   ],
   rh: [
     'rh:rrhh-panel',
     'rh:rrhh-catalogos',
     'rh:rrhh-vacaciones',
     'rh:rrhh-formatos',
-    'compras:compras-mis-requisiciones',
   ],
   almacen: [
     'almacen:',
     'almacen:recepcion-ir03',
     'almacen:salida',
     'almacen:alta-articulo',
-    'compras:compras-mis-requisiciones',
+  ],
+  compras: [
+    'compras:ordenes',
+    'compras:ordenes/nueva',
+    'compras:proveedores',
+    'compras:facturas',
   ],
 };
 
@@ -73,13 +76,16 @@ function getAllowedModulesForPortal(
   showAdmin: boolean = false
 ): IdModulo[] {
   if (portal === 'rh') {
-    return ['rrhh', 'requisiciones'];
+    return ['rrhh'];
   }
   if (portal === 'almacen') {
-    return ['almacen', 'requisiciones'];
+    return ['almacen'];
+  }
+  if (portal === 'compras') {
+    return ['compras', 'requisiciones'];
   }
   // Portal CRM / General
-  const mods: IdModulo[] = ['crm', 'requisiciones'];
+  const mods: IdModulo[] = ['crm'];
   if (showAdmin) {
     mods.push('admin');
   }
@@ -146,6 +152,9 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             almacen: Array.isArray(parsed.almacen)
               ? parsed.almacen
               : DEFAULT_FAVORITES_BY_PORTAL.almacen,
+            compras: Array.isArray(parsed.compras)
+              ? parsed.compras
+              : DEFAULT_FAVORITES_BY_PORTAL.compras,
           });
         }
       }

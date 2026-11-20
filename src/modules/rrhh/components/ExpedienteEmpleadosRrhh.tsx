@@ -141,7 +141,7 @@ export const ExpedienteEmpleadosRrhh: React.FC<PropiedadesExpedienteEmpleadosRrh
             {filtrados.map((emp) => (
               <tr key={emp.id} style={{ borderBottom: '1px solid var(--divider)' }}>
                 <td style={{ padding: '0.65rem 0.6rem' }}>
-                  <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--primary)' }}>{emp.numeroEmpleado}</span>
+                  <span style={{ fontFamily: 'var(--font-family-mono)', fontWeight: 700, color: 'var(--primary)' }}>{emp.numeroEmpleado}</span>
                   <div style={{ fontWeight: 700 }}>{emp.nombre}</div>
                   <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>{emp.email}</div>
                 </td>
@@ -157,7 +157,7 @@ export const ExpedienteEmpleadosRrhh: React.FC<PropiedadesExpedienteEmpleadosRrh
                 </td>
                 {incluyeDatosSensibles && (
                   <>
-                    <td style={{ padding: '0.65rem 0.6rem', fontFamily: 'monospace', fontSize: '0.76rem' }}>
+                    <td style={{ padding: '0.65rem 0.6rem', fontFamily: 'var(--font-family-mono)', fontSize: '0.76rem' }}>
                       <div>RFC: {emp.rfc}</div>
                       <div>NSS: {emp.nss}</div>
                     </td>

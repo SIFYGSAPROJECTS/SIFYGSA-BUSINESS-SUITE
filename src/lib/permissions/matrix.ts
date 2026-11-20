@@ -17,6 +17,7 @@ export const MATRIZ_PERMISOS_POR_DEFECTO: MatrizPermisos = {
     requisiciones: ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
     rrhh: ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
     almacen: ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
+    compras: ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
   },
   gerente: {
     admin: [],
@@ -24,6 +25,7 @@ export const MATRIZ_PERMISOS_POR_DEFECTO: MatrizPermisos = {
     requisiciones: ['ver', 'ver_propias', 'crear', 'editar', 'aprobar', 'exportar'],
     rrhh: ['ver'],
     almacen: ['ver', 'ver_propias', 'crear', 'editar', 'aprobar', 'exportar'],
+    compras: ['ver', 'ver_propias', 'crear', 'editar', 'aprobar', 'exportar'],
   },
   vendedor: {
     admin: [],
@@ -31,6 +33,7 @@ export const MATRIZ_PERMISOS_POR_DEFECTO: MatrizPermisos = {
     requisiciones: ['ver_propias', 'crear'],
     rrhh: [],
     almacen: ['ver'],
+    compras: ['ver'],
   },
   rrhh: {
     admin: [],
@@ -38,6 +41,7 @@ export const MATRIZ_PERMISOS_POR_DEFECTO: MatrizPermisos = {
     requisiciones: ['ver_propias', 'crear'],
     rrhh: ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
     almacen: [],
+    compras: [],
   },
   requisiciones: {
     admin: [],
@@ -45,6 +49,7 @@ export const MATRIZ_PERMISOS_POR_DEFECTO: MatrizPermisos = {
     requisiciones: ['ver', 'ver_propias', 'crear', 'editar', 'aprobar', 'exportar'],
     rrhh: [],
     almacen: ['ver', 'ver_propias', 'crear', 'editar', 'aprobar', 'exportar'],
+    compras: ['ver', 'ver_propias', 'crear', 'editar', 'aprobar', 'exportar'],
   },
 };
 

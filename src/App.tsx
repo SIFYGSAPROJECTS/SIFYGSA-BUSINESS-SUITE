@@ -15,7 +15,7 @@ export interface UserSession {
   name: string;
   email: string;
   role: string;
-  portal?: 'crm' | 'rh';
+  portal?: 'crm' | 'rh' | 'almacen' | 'compras';
 }
 
 function AppContent() {

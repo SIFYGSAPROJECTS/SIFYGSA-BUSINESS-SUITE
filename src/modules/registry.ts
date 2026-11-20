@@ -1,7 +1,7 @@
 import type { AccionPermiso, IdModulo, MatrizPermisos, RolUsuario } from '@/config/types';
 import { MATRIZ_PERMISOS_POR_DEFECTO, tienePermiso } from '@/lib/permissions';
 
-export type IconoModulo = 'shield' | 'crm' | 'requisiciones' | 'rrhh' | 'dashboard' | 'almacen';
+export type IconoModulo = 'shield' | 'crm' | 'requisiciones' | 'rrhh' | 'dashboard' | 'almacen' | 'compras';
 
 export interface SubItemModulo {
   id: string;
@@ -150,6 +150,23 @@ export const REGISTRO_MODULOS: readonly DefinicionModulo[] = [
       { id: 'almacen-asignaciones', nombre: 'Asignaciones a Proyectos', nombreEn: 'Project Assignments', vista: 'asignaciones', accionRequerida: 'ver' },
     ],
   },
+  {
+    id: 'compras',
+    nombre: 'Compras & Procura',
+    nombreEn: 'Purchasing & Procurement',
+    descripcion: 'Padrón de proveedores, emisión de órdenes de compra, control de insumos y vinculación con facturas CFDI 4.0.',
+    ruta: '/compras',
+    icono: 'compras',
+    accionMinima: 'ver',
+    colorAcento: 'brand',
+    subItems: [
+      { id: 'compras-ordenes', nombre: 'Órdenes de Compra', nombreEn: 'Purchase Orders', vista: 'ordenes', accionRequerida: 'ver' },
+      { id: 'compras-nueva-orden', nombre: 'Nueva Orden de Compra', nombreEn: 'New Purchase Order', vista: 'ordenes/nueva', accionRequerida: 'crear' },
+      { id: 'compras-proveedores', nombre: 'Gestión de Proveedores', nombreEn: 'Suppliers Management', vista: 'proveedores', accionRequerida: 'ver' },
+      { id: 'compras-nuevo-proveedor', nombre: 'Alta de Proveedor', nombreEn: 'New Supplier', vista: 'proveedores/nuevo', accionRequerida: 'crear' },
+      { id: 'compras-facturas', nombre: 'Recepción de Facturas', nombreEn: 'Invoices CFDI 4.0', vista: 'facturas', accionRequerida: 'ver' },
+    ],
+  },
 ] as const;
 
 export function obtenerModuloPorId(id: IdModulo): DefinicionModulo | undefined {
@@ -198,12 +215,19 @@ export function obtenerRutaInicialParaUsuario(
     modulosUsuario &&
     modulosUsuario.includes('almacen') &&
     !modulosUsuario.includes('crm') &&
+    !modulosUsuario.includes('compras') &&
     rol !== 'administrador'
   ) {
     return '/almacen';
   }
-  if (rol === 'requisiciones' && modulosUsuario?.includes('almacen') && !modulosUsuario?.includes('admin')) {
-    return '/almacen';
+  if (modulosUsuario?.includes('compras') && !modulosUsuario?.includes('admin')) {
+    return '/compras/ordenes';
+  }
+  if (rol === 'requisiciones') {
+    if (modulosUsuario?.includes('almacen') && !modulosUsuario?.includes('crm') && !modulosUsuario?.includes('compras')) {
+      return '/almacen';
+    }
+    return '/compras/ordenes';
   }
   return '/';
 }
