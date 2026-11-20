@@ -1,4 +1,4 @@
-import { NavModule, KpiMetric, AgendaDay, Employee, Subsidiary, LocationItem, DepartmentItem } from '../types';
+import { NavModule, KpiMetric, AgendaDay, Employee, Subsidiary, LocationItem, DepartmentItem, ExtensionDirectoryItem } from '../types';
 
 export const NAVIGATION_MODULES: NavModule[] = [
   {
@@ -13,11 +13,12 @@ export const NAVIGATION_MODULES: NavModule[] = [
     iconName: 'Users',
     subItems: [
       { id: 'rrhh-panel', title: 'Menú Principal', path: '/rrhh/dashboard' },
-      { id: 'rrhh-alta', title: 'Alta de Empleado', path: '/rrhh/empleados/nuevo' },
-      { id: 'rrhh-catalogos', title: 'Catálogo Personal', path: '/rrhh/empleados' },
+      { id: 'rrhh-alta', title: 'Registro del Personal', path: '/rrhh/empleados/nuevo' },
+      { id: 'rrhh-catalogos', title: 'Directorio de Personal', path: '/rrhh/empleados' },
       { id: 'rrhh-vacaciones', title: 'Vacaciones', path: '/rrhh/vacaciones' },
       { id: 'rrhh-formatos', title: 'Formatos SGI', path: '/rrhh/formatos' },
       { id: 'rrhh-departamentos', title: 'Departamentos', path: '/rrhh/departamentos' },
+      { id: 'rrhh-extensiones', title: 'Extensiones Telefónicas', path: '/rrhh/extensiones' },
       { id: 'rrhh-cumpleanos', title: 'Cumpleaños', path: '/rrhh/cumpleanos' },
       { id: 'rrhh-festivos', title: 'Días Festivos', path: '/rrhh/festivos' }
     ]
@@ -27,9 +28,10 @@ export const NAVIGATION_MODULES: NavModule[] = [
     title: 'Finanzas',
     iconName: 'Landmark',
     subItems: [
-      { id: 'fin-nominas', title: 'Nóminas y Pagos', path: '/finanzas/nominas' },
-      { id: 'fin-viaticos', title: 'Cuentas y Viáticos', path: '/finanzas/viaticos' },
-      { id: 'fin-facturacion', title: 'Facturación SGI', path: '/finanzas/facturacion' }
+      { id: 'finanzas-panel', title: 'Menú Principal', path: '/finanzas/panel' },
+      { id: 'finanzas-tabulador', title: 'Tabulador de Puestos', path: '/finanzas/tabulador' },
+      { id: 'finanzas-dispersion', title: 'Pagos de Nómina', path: '/finanzas/dispersion' },
+      { id: 'finanzas-fondos', title: 'Fondos y Partidas', path: '/finanzas/fondos' }
     ]
   },
   {
@@ -294,25 +296,46 @@ export const AGENDA_DAYS: AgendaDay[] = [
 ];
 
 export const INITIAL_DEPARTMENTS: DepartmentItem[] = [
-  { id: 'dep-01', name: 'Dirección', code: 'DEP-001', lead: 'Ing. Carlos Ortiz', employeeCount: 4, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Dirección general y gestión estratégica corporativa', createdAt: '01/01/2021' },
-  { id: 'dep-02', name: 'Administración', code: 'DEP-002', lead: 'Lic. Claudia Morales', employeeCount: 9, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Gestión administrativa, tesorería y contabilidad', createdAt: '01/01/2021' },
-  { id: 'dep-03', name: 'Calidad', code: 'DEP-003', lead: 'Ing. Fernando Ramos', employeeCount: 6, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Aseguramiento y control de calidad ISO / SIL-3', createdAt: '15/02/2021' },
-  { id: 'dep-04', name: 'Compras', code: 'DEP-004', lead: 'Lic. Patricia Reyes', employeeCount: 5, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Adquisición de suministros, equipos e importaciones F&G', createdAt: '10/03/2021' },
-  { id: 'dep-05', name: 'Almacén', code: 'DEP-005', lead: 'Manuel Cordero', employeeCount: 8, subsidiary: 'SIFYGSA', location: 'Base Mapachapa Km 18', status: 'active', description: 'Control de inventarios, resguardos y entrega de EPP', createdAt: '01/04/2021' },
-  { id: 'dep-06', name: 'HSE', code: 'DEP-006', lead: 'Ing. Roberto Martínez Alor', employeeCount: 14, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Seguridad industrial, salud ocupacional y medio ambiente', createdAt: '01/01/2021' },
-  { id: 'dep-07', name: 'Infraestructura', code: 'DEP-007', lead: 'Ing. Gabriel Solís', employeeCount: 7, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Mantenimiento de bases operativas y redes de telecomunicación', createdAt: '20/05/2021' },
-  { id: 'dep-08', name: 'Ingeniería', code: 'DEP-008', lead: 'Ing. Agustín Anastacio', employeeCount: 22, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Diseño e integración de sistemas de detección de gas y fuego SIL-3', createdAt: '15/01/2021' },
-  { id: 'dep-09', name: 'Medición y Control de Contratos', code: 'DEP-009', lead: 'Lic. Jorge Vázquez', employeeCount: 6, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Seguimiento de licitaciones, estimaciones y cumplimiento contractual', createdAt: '12/06/2021' },
-  { id: 'dep-10', name: 'QHSE', code: 'DEP-010', lead: 'Ing. Mariana Delgado', employeeCount: 5, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Gestión integrada de calidad, seguridad y medio ambiente', createdAt: '05/07/2021' },
-  { id: 'dep-11', name: 'Recursos Humanos', code: 'DEP-011', lead: 'Lic. Ana Martínez / Pablo Vázquez', employeeCount: 8, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Onboarding, nómina, altas de personal, acreditaciones y DC-3', createdAt: '01/01/2021' },
-  { id: 'dep-12', name: 'Capacitación', code: 'DEP-012', lead: 'Lic. Sandra Domínguez', employeeCount: 4, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Formación continua técnica, normas STPS y rig pass', createdAt: '10/08/2021' },
-  { id: 'dep-13', name: 'Servicios', code: 'DEP-013', lead: 'Ing. Mario Zúñiga', employeeCount: 16, subsidiary: 'SIFYGSA', location: 'Comalcalco, Tab.', status: 'active', description: 'Mantenimiento en campo, calibración y puestas en marcha', createdAt: '01/03/2021' },
-  { id: 'dep-14', name: 'Ventas', code: 'DEP-014', lead: 'Ing. Raúl Pech', employeeCount: 7, subsidiary: 'SIFYGSA', location: 'Xalapa, Ver.', status: 'active', description: 'Comercialización de soluciones de seguridad y detección de flama', createdAt: '01/02/2021' },
-  { id: 'dep-15', name: 'Definición de soluciones', code: 'DEP-015', lead: 'Ing. Alberto Cárdenas', employeeCount: 5, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Arquitectura de ingeniería previa y pruebas de aceptación FAT', createdAt: '18/09/2021' },
-  { id: 'dep-16', name: 'GSAPE', code: 'DEP-016', lead: 'Ing. Víctor Fuentes', employeeCount: 3, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Grupo de Soporte y Análisis de Proyectos Especiales F&G', createdAt: '01/10/2021' }
+  { id: 'dep-01', name: 'Dirección', code: 'DIR', lead: 'Ing. Agustín Anastacio Martínez', employeeCount: 4, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Dirección general y gestión estratégica corporativa', createdAt: '01/01/2021' },
+  { id: 'dep-02', name: 'Administración', code: 'ADM', lead: 'Lic. Viridiana Arenas Anastacio', employeeCount: 9, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Gestión administrativa, tesorería y contabilidad', createdAt: '01/01/2021' },
+  { id: 'dep-03', name: 'Calidad', code: 'CAL', lead: 'Ing. Carlos Enrique Cossio Ruíz', employeeCount: 6, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Aseguramiento y control de calidad ISO / SIL-3', createdAt: '15/02/2021' },
+  { id: 'dep-04', name: 'Compras', code: 'COM', lead: 'Lic. Marlem Campos García', employeeCount: 5, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Adquisición de suministros, equipos e importaciones F&G', createdAt: '10/03/2021' },
+  { id: 'dep-05', name: 'HSE', code: 'HSE-MIN', lead: 'Ing. Carlos Enrique Cossio Ruíz', employeeCount: 14, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Seguridad industrial, salud ocupacional y medio ambiente (Sede Minatitlán)', createdAt: '01/01/2021' },
+  { id: 'dep-06', name: 'Almacén', code: 'ALM', lead: 'Manuel Cordero', employeeCount: 8, subsidiary: 'SIFYGSA', location: 'Mapachapa, Ver.', status: 'active', description: 'Control de inventarios, resguardos y entrega de EPP', createdAt: '01/04/2021' },
+  { id: 'dep-07', name: 'Infraestructura', code: 'INF', lead: 'Ing. Pablo Vázquez Culebro', employeeCount: 7, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Mantenimiento de bases operativas y redes de telecomunicación', createdAt: '20/05/2021' },
+  { id: 'dep-08', name: 'Ingeniería', code: 'ING', lead: 'Ing. Miguel Ángel Guzmán Reyes', employeeCount: 22, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Diseño e integración de sistemas de detección de gas y fuego SIL-3', createdAt: '15/01/2021' },
+  { id: 'dep-09', name: 'Medición y Control de Proyectos', code: 'MCP', lead: 'Ing. Víctor Manuel Anastacio Martínez', employeeCount: 6, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Seguimiento de proyectos, licitaciones, estimaciones y control operativo', createdAt: '12/06/2021' },
+  { id: 'dep-10', name: 'HSE', code: 'HSE-COM', lead: 'Ing. Rosa Ivette Trujillo Palma', employeeCount: 5, subsidiary: 'SIFYGSA', location: 'Comalcalco, Tab.', status: 'active', description: 'Seguridad industrial, salud ocupacional y medio ambiente (Sede Comalcalco)', createdAt: '05/07/2021' },
+  { id: 'dep-11', name: 'Recursos Humanos', code: 'RH', lead: 'Lic. Valeria Méndez Albores', employeeCount: 12, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Gestión de talento, nómina, acreditaciones y rama de Capacitación (DC-3 / STPS)', createdAt: '01/01/2021' },
+  { id: 'dep-12', name: 'Servicios', code: 'SRV', lead: 'Ing. Emmanuel Mendoza Ramírez', employeeCount: 16, subsidiary: 'SIFYGSA', location: 'Comalcalco, Tab.', status: 'active', description: 'Mantenimiento en campo, calibración y puestas en marcha', createdAt: '01/03/2021' },
+  { id: 'dep-13', name: 'Ventas', code: 'VTA', lead: 'Ing. Manuel Martínez Ruíz', employeeCount: 12, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Comercialización de soluciones F&G y rama de Definición de Soluciones', createdAt: '01/02/2021' },
+  { id: 'dep-14', name: 'GSAPE', code: 'GSAPE', lead: 'Ing. Samuel Martín Cruz Camera', employeeCount: 3, subsidiary: 'SIFYGSA', location: 'Minatitlán, Ver.', status: 'active', description: 'Grupo de Soporte y Análisis de Proyectos Especiales F&G', createdAt: '01/10/2021' }
 ];
 
-export const DEPARTMENTS: string[] = INITIAL_DEPARTMENTS.map((d) => d.name);
+export const DEPARTMENTS: string[] = Array.from(new Set(INITIAL_DEPARTMENTS.map((d) => d.name)));
+
+export const INITIAL_EXTENSIONS_DIRECTORY: ExtensionDirectoryItem[] = [
+  { id: 'ext-101', extension: '101', areaLabel: 'Dirección General', department: 'Dirección', assignedTo: 'Ing. Agustín Anastacio Martínez', location: 'Minatitlán, Ver.', isDefaultForDept: true, status: 'active' },
+  { id: 'ext-102', extension: '102', areaLabel: 'Dirección Comercial', department: 'Dirección', assignedTo: 'Ing. Manuel Martínez Ruiz', location: 'Minatitlán, Ver.', isDefaultForDept: false, status: 'active' },
+  { id: 'ext-103', extension: '103', areaLabel: 'Ventas Istmo', department: 'Ventas', assignedTo: 'Ing. Guillermo Sánchez Escobar', location: 'Minatitlán, Ver.', isDefaultForDept: true, status: 'active' },
+  { id: 'ext-104', extension: '104', areaLabel: 'Ventas Sur', department: 'Ventas', assignedTo: 'Ing. Yesenia Rosas Rogel', location: 'Minatitlán, Ver.', isDefaultForDept: false, status: 'active' },
+  { id: 'ext-105', extension: '105', areaLabel: 'Administración', department: 'Administración', assignedTo: 'Lic. Daniela C. & Lic. Lorena H.', location: 'Minatitlán, Ver.', isDefaultForDept: true, status: 'active' },
+  { id: 'ext-106', extension: '106', areaLabel: 'Administración (2)', department: 'Administración', assignedTo: 'Lic. Andrea S. & Lic. Zimrry F.', location: 'Minatitlán, Ver.', isDefaultForDept: false, status: 'active' },
+  { id: 'ext-107', extension: '107', areaLabel: 'Gerencia de Compras', department: 'Compras', assignedTo: 'Lic. Marlem Campos García', location: 'Minatitlán, Ver.', isDefaultForDept: true, status: 'active' },
+  { id: 'ext-108', extension: '108', areaLabel: 'Compras 1', department: 'Compras', assignedTo: 'Lic. Mayra Ixchel González Jara', location: 'Minatitlán, Ver.', isDefaultForDept: false, status: 'active' },
+  { id: 'ext-109', extension: '109', areaLabel: 'Compras 2', department: 'Compras', assignedTo: 'Lic. Jeannete Ivonne Macías Ovando', location: 'Minatitlán, Ver.', isDefaultForDept: false, status: 'active' },
+  { id: 'ext-110', extension: '110', areaLabel: 'Compras 3', department: 'Compras', assignedTo: 'Lic. Aurelio Palacios Xolo', location: 'Minatitlán, Ver.', isDefaultForDept: false, status: 'active' },
+  { id: 'ext-111', extension: '111', areaLabel: 'Infraestructura', department: 'Infraestructura', assignedTo: 'Ing. Pablo Vázquez Culebro', location: 'Minatitlán, Ver.', isDefaultForDept: true, status: 'active' },
+  { id: 'ext-112', extension: '112', areaLabel: 'RRHH', department: 'Recursos Humanos', assignedTo: 'Lic. Valeria Méndez Albores', location: 'Minatitlán, Ver.', isDefaultForDept: true, status: 'active' },
+  { id: 'ext-113', extension: '113', areaLabel: 'IDS Sur (1)', department: 'Servicios', assignedTo: 'Vigilancias (Provisional)', location: 'Minatitlán, Ver.', isDefaultForDept: false, status: 'active' },
+  { id: 'ext-114', extension: '114', areaLabel: 'IDS Istmo (2)', department: 'Almacén', assignedTo: 'Almacén (Provisional)', location: 'Mapachapa, Ver.', isDefaultForDept: true, status: 'active' },
+  { id: 'ext-115', extension: '115', areaLabel: 'Ingeniería', department: 'Ingeniería', assignedTo: 'Ing. Miguel Guzmán Reyes', location: 'Minatitlán, Ver.', isDefaultForDept: true, status: 'active' },
+  { id: 'ext-116', extension: '116', areaLabel: 'Servicios', department: 'Servicios', assignedTo: 'Ing. Emmanuel Mendoza Ramírez', location: 'Minatitlán, Ver.', isDefaultForDept: true, status: 'active' },
+  { id: 'ext-117', extension: '117', areaLabel: 'HSE', department: 'HSE', assignedTo: 'Ing. Carlos Enrique Cossío Ruiz', location: 'Minatitlán, Ver.', isDefaultForDept: true, status: 'active' },
+  { id: 'ext-118', extension: '118', areaLabel: 'Subgerencia de Servicios', department: 'Servicios', assignedTo: 'Ing. Erick Hernández Rueda', location: 'Minatitlán, Ver.', isDefaultForDept: false, status: 'active' },
+  { id: 'ext-119', extension: '119', areaLabel: 'HSE Comal', department: 'HSE', assignedTo: 'Ing. Rosa Ivette Trujillo Palma', location: 'Comalcalco, Tab.', isDefaultForDept: false, status: 'active' },
+  { id: 'ext-120', extension: '120', areaLabel: 'Ingeniería Comal', department: 'Ingeniería', assignedTo: 'Ing. José Antonio González Fuentes', location: 'Comalcalco, Tab.', isDefaultForDept: false, status: 'active' }
+];
 
 export const SUBSIDIARIES: Subsidiary[] = [
   { id: 'sifygsa', name: 'SIFYGSA', isDefault: true },
@@ -475,7 +498,7 @@ export const EMPLOYEES: Employee[] = [
     initials: 'CH',
     avatarBg: '#374151',
     position: 'Técnico en Detección de Gas',
-    department: 'QHSE',
+    department: 'HSE',
     subsidiary: 'SIFYGSA',
     location: 'Mapachapa, Ver.',
     squad: 'Operaciones F&G',
@@ -490,7 +513,7 @@ export const EMPLOYEES: Employee[] = [
     initials: 'RM',
     avatarBg: '#2563EB',
     position: 'Especialista en Automatización & Control',
-    department: 'Medición y Control de Contratos',
+    department: 'Medición y Control de Proyectos',
     subsidiary: 'SIFYGSA',
     location: 'Comalcalco, Tab.',
     squad: 'Cuadrilla Bravo (Base Operativa)',
@@ -520,10 +543,10 @@ export const EMPLOYEES: Employee[] = [
     initials: 'MV',
     avatarBg: '#DB2777',
     position: 'Analista de Capacitación & Anexos',
-    department: 'Capacitación',
+    department: 'Recursos Humanos',
     subsidiary: 'SIFYGSA',
     location: 'Minatitlán, Ver.',
-    squad: 'Staff Técnico',
+    squad: 'Rama Capacitación',
     silStatus: 'Certificación Vigente',
     silStatusType: 'success',
     hireDate: '01/09/2024'

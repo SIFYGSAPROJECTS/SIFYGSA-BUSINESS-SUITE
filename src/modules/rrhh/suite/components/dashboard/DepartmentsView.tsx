@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useMemo } from 'react';
 import {
   Building2,
@@ -17,9 +19,11 @@ import {
   ArrowUpDown,
   History,
   LayoutGrid,
-  List as ListIcon
+  List as ListIcon,
+  PhoneCall
 } from 'lucide-react';
 import { DepartmentItem } from '../../types';
+import { ExtensionsCatalogView } from './ExtensionsCatalogView';
 import {
   sanitizeCleanText,
   sanitizePersonName,
@@ -44,13 +48,29 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
   const departments = useSyncedDepartments(initialDepartments);
 
   // Estados de Vista y Filtros
+  const [activeCatalogTab, setActiveCatalogTab] = useState<'departamentos' | 'extensiones'>('departamentos');
   const [viewMode, setViewMode] = useState<'list' | 'cards'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [showInactives, setShowInactives] = useState(false);
   const [selectedView, setSelectedView] = useState('Vista predeterminada de departamento');
   const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
-  const [sortField, setSortField] = useState<'name' | 'code' | 'employeeCount'>('name');
+  const [sortField, setSortField] = useState<'name' | 'code' | 'employeeCount'>('code');
   const [sortAsc, setSortAsc] = useState(true);
+
+  const getDepartmentBranchLabel = (dept: DepartmentItem): string | null => {
+    const cleanName = dept.name.trim().toLowerCase();
+    const cleanLoc = (dept.location || '').toLowerCase();
+    if (cleanName === 'hse') {
+      return cleanLoc.includes('comalcalco') ? 'Comalcalco' : 'Minatitlán';
+    }
+    if (cleanName === 'recursos humanos') {
+      return 'Rama: Capacitación';
+    }
+    if (cleanName === 'ventas') {
+      return 'Rama: Definición de Soluciones';
+    }
+    return null;
+  };
 
   // Estados de Modal (Crear / Editar / Ver)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -370,26 +390,34 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
 
             <button
               type="button"
-              className="btn btn-secondary"
-              onClick={() => showToast('Vista personalizada para el rol de RRHH')}
-              style={{ fontSize: '12px' }}
+              onClick={() => setActiveCatalogTab(activeCatalogTab === 'departamentos' ? 'extensiones' : 'departamentos')}
+              className={activeCatalogTab === 'extensiones' ? 'btn btn-primary' : 'btn btn-secondary'}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700 }}
             >
-              Personalizar vista
+              <PhoneCall className="w-4 h-4" />
+              <span>{activeCatalogTab === 'extensiones' ? 'Volver a Departamentos' : 'Extensiones Telefónicas (CRUD)'}</span>
             </button>
 
             {/* Botón Principal Crear Departamento */}
-            <button
-              type="button"
-              onClick={handleOpenCreate}
-              className="btn btn-primary"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 700 }}
-            >
-              <Plus className="w-4 h-4" />
-              <span>Crear Departamento</span>
-            </button>
+            {activeCatalogTab === 'departamentos' && (
+              <button
+                type="button"
+                onClick={handleOpenCreate}
+                className="btn btn-primary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 700 }}
+              >
+                <Plus className="w-4 h-4" />
+                <span>Crear Departamento</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {activeCatalogTab === 'extensiones' ? (
+        <ExtensionsCatalogView departments={departments.map((d) => d.name)} />
+      ) : (
+        <>
 
       {/* ========================================================================= */}
       {/* 2. TARJETAS DE MÉTRICAS RÁPIDAS (KPIs DEPARTAMENTALES)                    */}
@@ -666,7 +694,7 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
 
                       {/* Nombre del Departamento */}
                       <td style={{ padding: '10px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                           <div
                             style={{
                               width: '28px',
@@ -687,6 +715,21 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
                           <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
                             {dept.name}
                           </span>
+                          {getDepartmentBranchLabel(dept) && (
+                            <span
+                              style={{
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                padding: '2px 7px',
+                                borderRadius: '999px',
+                                backgroundColor: 'var(--surface-alt)',
+                                color: 'var(--text-secondary)',
+                                border: '1px solid var(--border)'
+                              }}
+                            >
+                              {getDepartmentBranchLabel(dept)}
+                            </span>
+                          )}
                         </div>
                       </td>
 
@@ -771,9 +814,26 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
                   </span>
                 </div>
 
-                <h3 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
-                  {dept.name}
-                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                    {dept.name}
+                  </h3>
+                  {getDepartmentBranchLabel(dept) && (
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        padding: '1px 7px',
+                        borderRadius: '999px',
+                        backgroundColor: 'var(--surface-alt)',
+                        color: 'var(--text-secondary)',
+                        border: '1px solid var(--border)'
+                      }}
+                    >
+                      {getDepartmentBranchLabel(dept)}
+                    </span>
+                  )}
+                </div>
                 <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: 0, minHeight: '34px', lineHeight: 1.4 }}>
                   {dept.description || 'Departamento operativo central de SIFYGSA.'}
                 </p>
@@ -807,6 +867,8 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
             </div>
           ))}
         </div>
+      )}
+        </>
       )}
 
       {/* ========================================================================= */}

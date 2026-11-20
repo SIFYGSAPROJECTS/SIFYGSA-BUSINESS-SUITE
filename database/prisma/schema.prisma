@@ -1,0 +1,535 @@
+// ============================================================================
+// database/prisma/schema.prisma
+// Capa ORM TypeScript (Prisma) mapeada 1 a 1 con PostgreSQL Multi-Schema
+// Schemas activos: core, rrhh (preparado para sumar finanzas, compras, crm)
+//
+// Compatibilidad PostgreSQL DOMAIN + Prisma:
+//   En PostgreSQL, cada DOMAIN (core.*, rrhh.*) envuelve su tipo base exacto
+//   (ej. core.nombre_entidad -> VARCHAR(120)). Prisma Client lee/escribe
+//   transparentemente sobre dominios y PostgreSQL hace cumplir cada CHECK
+//   automáticamente en toda escritura desde el backend.
+// ============================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["core", "rrhh"]
+}
+
+// ============================================================================
+// SCHEMA: core
+// ============================================================================
+
+model Empresa {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @map("id_empresa") @db.Uuid
+  codigo      String   @unique @db.VarChar(20) // DOMAIN core.codigo_corto
+  nombreCorto String   @unique @map("nombre_corto") @db.VarChar(80) // DOMAIN core.nombre_corto
+  razonSocial String   @map("razon_social") @db.VarChar(180) // DOMAIN core.razon_social
+  rfc         String?  @unique @db.VarChar(13) // DOMAIN core.rfc_mx
+  logoUrl     String?  @map("logo_url")
+  esPrincipal Boolean  @default(false) @map("es_principal")
+  activa      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  sedes         Sede[]
+  departamentos Departamento[]
+  empleados     Empleado[]
+
+  @@map("empresas")
+  @@schema("core")
+}
+
+model Sede {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @map("id_sede") @db.Uuid
+  empresaId   String   @map("id_empresa") @db.Uuid
+  codigo      String   @unique @db.VarChar(20) // DOMAIN core.codigo_corto
+  nombre      String   @unique @db.VarChar(120) // DOMAIN core.nombre_entidad
+  ciudad      String   @db.VarChar(80) // DOMAIN core.nombre_corto
+  estado      String   @db.VarChar(80) // DOMAIN core.nombre_corto
+  direccion   String?  @db.VarChar(255) // DOMAIN core.descripcion
+  cp          String?  @db.Char(5) // DOMAIN core.codigo_postal_mx
+  esMatriz    Boolean  @default(false) @map("es_matriz")
+  activa      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  empresa       Empresa              @relation(fields: [empresaId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  departamentos Departamento[]
+  empleados     Empleado[]
+  extensiones   ExtensionTelefonica[]
+
+  @@index([empresaId], map: "idx_core_sedes_empresa")
+  @@map("sedes")
+  @@schema("core")
+}
+
+model Modulo {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @map("id_modulo") @db.Uuid // DOMAIN core.id_uuid
+  codigo      String      @unique @db.VarChar(20) // DOMAIN core.codigo_corto
+  nombre      String      @db.VarChar(80) // DOMAIN core.nombre_corto
+  descripcion String?     @db.VarChar(255) // DOMAIN core.descripcion
+  orden       Int         @default(0) @db.SmallInt
+  activo      Boolean     @default(true)
+  submodulos  Submodulo[]
+
+  @@map("modulos")
+  @@schema("core")
+}
+
+model Submodulo {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @map("id_submodulo") @db.Uuid // DOMAIN core.id_uuid
+  moduloId    String       @map("id_modulo") @db.Uuid
+  codigo      String       @unique @db.VarChar(40) // DOMAIN core.clave_sistema
+  nombre      String       @db.VarChar(80) // DOMAIN core.nombre_corto
+  rutaUrl     String       @unique @map("ruta_url") @db.VarChar(150) // DOMAIN core.url_ruta
+  descripcion String?      @db.VarChar(255) // DOMAIN core.descripcion
+  orden       Int          @default(0) @db.SmallInt
+  activo      Boolean      @default(true)
+
+  modulo      Modulo       @relation(fields: [moduloId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  permisos    RolPermiso[]
+
+  @@index([moduloId], map: "idx_core_submodulos_modulo")
+  @@map("submodulos")
+  @@schema("core")
+}
+
+model Rol {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @map("id_rol") @db.Uuid // DOMAIN core.id_uuid
+  codigo      String       @unique @db.VarChar(40) // DOMAIN core.clave_sistema
+  nombre      String       @db.VarChar(80) // DOMAIN core.nombre_corto
+  descripcion String?      @db.VarChar(255) // DOMAIN core.descripcion
+  nivelAcceso Int          @default(1) @map("nivel_acceso") @db.SmallInt // DOMAIN core.nivel_jerarquico
+  activo      Boolean      @default(true)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz
+
+  permisos    RolPermiso[]
+  usuarios    Usuario[]
+
+  @@map("roles")
+  @@schema("core")
+}
+
+model RolPermiso {
+  rolId         String  @map("id_rol") @db.Uuid
+  submoduloId   String  @map("id_submodulo") @db.Uuid
+  puedeVer      Boolean @default(false) @map("puede_ver")
+  puedeCrear    Boolean @default(false) @map("puede_crear")
+  puedeEditar   Boolean @default(false) @map("puede_editar")
+  puedeEliminar Boolean @default(false) @map("puede_eliminar")
+  puedeExportar Boolean @default(false) @map("puede_exportar")
+
+  rol       Rol       @relation(fields: [rolId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  submodulo Submodulo @relation(fields: [submoduloId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@id([rolId, submoduloId])
+  @@map("rol_permisos")
+  @@schema("core")
+}
+
+model Usuario {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @map("id_usuario") @db.Uuid // DOMAIN core.id_uuid
+  rolId        String    @map("id_rol") @db.Uuid
+  empleadoId   String?   @unique @map("id_empleado") @db.Uuid
+  username     String    @unique @db.VarChar(40) // DOMAIN core.username_dom
+  correo       String    @unique @db.VarChar(150) // DOMAIN core.correo_electronico
+  passwordHash String    @map("password_hash") @db.VarChar(255) // DOMAIN core.pwd_hash
+  activo       Boolean   @default(true)
+  ultimoAcceso DateTime? @map("ultimo_acceso") @db.Timestamptz
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  rol      Rol       @relation(fields: [rolId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  empleado Empleado? @relation(fields: [empleadoId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  sesiones Sesion[]
+
+  @@index([rolId], map: "idx_core_usuarios_rol")
+  @@map("usuarios")
+  @@schema("core")
+}
+
+model Sesion {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @map("id_sesion") @db.Uuid // DOMAIN core.id_uuid
+  usuarioId String   @map("id_usuario") @db.Uuid
+  tokenHash String   @unique @map("token_hash") @db.Char(64) // DOMAIN core.token_sha256
+  ipOrigen  String?  @map("ip_origen") @db.VarChar(45) // DOMAIN core.ip_addr
+  userAgent String?  @map("user_agent") @db.VarChar(255) // DOMAIN core.descripcion
+  expiraEn  DateTime @map("expira_en") @db.Timestamptz
+  revocada  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@index([usuarioId], map: "idx_core_sesiones_usuario")
+  @@map("sesiones")
+  @@schema("core")
+}
+
+// ============================================================================
+// SCHEMA: rrhh
+// ============================================================================
+
+model ControlFolio {
+  entidad      String   @id @db.VarChar(40) // DOMAIN core.clave_sistema
+  prefijo      String   @db.VarChar(20) // DOMAIN core.codigo_corto
+  ultimoNumero Int      @default(0) @map("ultimo_numero")
+  longitudMin  Int      @default(4) @map("longitud_min") @db.SmallInt
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("control_folios")
+  @@schema("rrhh")
+}
+
+model CatBanco {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @map("id_banco") @db.Uuid // DOMAIN core.id_uuid
+  codigoSpei  String?          @unique @map("codigo_spei") @db.VarChar(10) // DOMAIN rrhh.codigo_spei
+  nombre      String           @unique @db.VarChar(80) // DOMAIN core.nombre_corto
+  activo      Boolean          @default(true)
+  cuentas     CuentaBancaria[]
+
+  @@map("cat_bancos")
+  @@schema("rrhh")
+}
+
+model CatTipoContrato {
+  id               String     @id @default(dbgenerated("gen_random_uuid()")) @map("id_tipo_contrato") @db.Uuid // DOMAIN core.id_uuid
+  codigo           String     @unique @db.VarChar(20) // DOMAIN core.codigo_corto
+  nombre           String     @unique @db.VarChar(80) // DOMAIN core.nombre_corto
+  requiereVigencia Boolean    @default(false) @map("requiere_vigencia")
+  activo           Boolean    @default(true)
+  empleados        Empleado[]
+
+  @@map("cat_tipos_contrato")
+  @@schema("rrhh")
+}
+
+model Departamento {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @map("id_departamento") @db.Uuid
+  empresaId      String   @map("id_empresa") @db.Uuid
+  sedeId         String?  @map("id_sede") @db.Uuid
+  padreId        String?  @map("id_depto_padre") @db.Uuid
+  codigo         String   @unique @db.VarChar(15) // DOMAIN rrhh.codigo_departamento
+  nombre         String   @db.VarChar(120) // DOMAIN core.nombre_entidad
+  descripcion    String?  @db.VarChar(255) // DOMAIN core.descripcion
+  responsableId  String?  @map("id_responsable") @db.Uuid
+  activo         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  empresa         Empresa               @relation(fields: [empresaId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  sede            Sede?                 @relation(fields: [sedeId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  padre           Departamento?         @relation("RamaDepartamento", fields: [padreId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  subramas        Departamento[]        @relation("RamaDepartamento")
+  responsable     Empleado?             @relation("ResponsableDepto", fields: [responsableId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  puestos         CatPuesto[]
+  empleados       Empleado[]            @relation("EmpleadoDepartamento")
+  extensiones     ExtensionTelefonica[]
+  formatosSgi     FormatoSgi[]
+  movsAnteriores  HistorialMovimiento[] @relation("MovDeptoAnterior")
+  movsNuevos      HistorialMovimiento[] @relation("MovDeptoNuevo")
+
+  @@map("departamentos")
+  @@schema("rrhh")
+}
+
+model CatPuesto {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @map("id_puesto") @db.Uuid
+  departamentoId  String?       @map("id_departamento") @db.Uuid
+  nombre          String        @unique @db.VarChar(120) // DOMAIN core.nombre_entidad
+  categoria       String?       @db.VarChar(80) // DOMAIN core.nombre_corto
+  nivelJerarquico Int           @default(5) @map("nivel_jerarquico") @db.SmallInt // DOMAIN core.nivel_jerarquico
+  sueldoBaseMin   Decimal?      @map("sueldo_base_min") @db.Decimal(12, 2) // DOMAIN core.monto_mxn
+  sueldoBaseMax   Decimal?      @map("sueldo_base_max") @db.Decimal(12, 2) // DOMAIN core.monto_mxn
+  activo          Boolean       @default(true)
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  departamento    Departamento? @relation(fields: [departamentoId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  empleados       Empleado[]
+
+  @@map("cat_puestos")
+  @@schema("rrhh")
+}
+
+model Empleado {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @map("id_empleado") @db.Uuid
+  folio                String    @unique @db.VarChar(12) // DOMAIN rrhh.folio_empleado
+  empresaId            String    @map("id_empresa") @db.Uuid
+  departamentoId       String    @map("id_departamento") @db.Uuid
+  puestoId             String?   @map("id_puesto") @db.Uuid
+  sedeId               String?   @map("id_sede") @db.Uuid
+  tipoContratoId       String?   @map("id_tipo_contrato") @db.Uuid
+  supervisorId         String?   @map("id_supervisor") @db.Uuid
+
+  // Identidad separada
+  nombrePila           String    @map("nombre_pila") @db.VarChar(80) // DOMAIN core.nombre_corto
+  apellidoPaterno      String    @default("") @map("apellido_paterno") @db.VarChar(60) // DOMAIN rrhh.apellido_dom
+  apellidoMaterno      String    @default("") @map("apellido_materno") @db.VarChar(60) // DOMAIN rrhh.apellido_dom
+  nombreCompleto       String    @map("nombre_completo") @db.VarChar(210) // DOMAIN rrhh.nombre_completo_dom
+  iniciales            String    @default("SF") @db.VarChar(4) // DOMAIN rrhh.iniciales_dom
+  avatarColor          String    @default("#1D4ED8") @map("avatar_color") @db.VarChar(20) // DOMAIN core.color_hex
+  fotoUrl              String?   @map("foto_url")
+
+  // Laboral
+  puestoTexto          String    @default("Por definir") @map("puesto_texto") @db.VarChar(120) // DOMAIN core.nombre_entidad
+  categoriaLaboral     String?   @map("categoria_laboral") @db.VarChar(80) // DOMAIN core.nombre_corto
+  proyectoAsignado     String?   @map("proyecto_asignado") @db.VarChar(120) // DOMAIN core.nombre_entidad
+  sueldoMensualBruto   Decimal?  @map("sueldo_mensual_bruto") @db.Decimal(12, 2) // DOMAIN core.monto_mxn
+  fechaIngreso         DateTime  @default(now()) @map("fecha_ingreso") @db.Date
+  fechaFinContrato     DateTime? @map("fecha_fin_contrato") @db.Date
+  fechaBaja            DateTime? @map("fecha_baja") @db.Date
+  estatus              String    @default("ACTIVO") @db.VarChar(20) // DOMAIN rrhh.estatus_empleado
+  acreditacionSil      String    @default("En Trámite") @map("acreditacion_sil") @db.VarChar(80) // DOMAIN core.nombre_corto
+  acreditacionTipo     String    @default("info") @map("acreditacion_tipo") @db.VarChar(15) // DOMAIN rrhh.acreditacion_tipo
+
+  // Oficiales
+  rfc                  String?   @db.VarChar(13) // DOMAIN core.rfc_mx
+  curp                 String?   @db.Char(18) // DOMAIN core.curp_mx
+  nss                  String?   @db.VarChar(15) // DOMAIN rrhh.nss_mx
+  fechaNacimiento      DateTime? @map("fecha_nacimiento") @db.Date
+
+  // Contacto
+  correoCorporativo    String?   @map("correo_corporativo") @db.VarChar(150) // DOMAIN core.correo_electronico
+  correoPersonal       String?   @map("correo_personal") @db.VarChar(150) // DOMAIN core.correo_electronico
+  telefonoCelular      String?   @map("telefono_celular") @db.VarChar(15) // DOMAIN core.telefono_mx
+  telefonoFijo         String?   @map("telefono_fijo") @db.VarChar(15) // DOMAIN core.telefono_mx
+  extensionOficina     String?   @map("extension_oficina") @db.VarChar(6) // DOMAIN rrhh.extension_tel
+
+  // Domicilio
+  calle                String?   @db.VarChar(120) // DOMAIN core.nombre_entidad
+  numeroExterior       String?   @map("numero_exterior") @db.VarChar(20) // DOMAIN core.num_domicilio
+  numeroInterior       String?   @map("numero_interior") @db.VarChar(20) // DOMAIN core.num_domicilio
+  colonia              String?   @db.VarChar(120) // DOMAIN core.nombre_entidad
+  codigoPostal         String?   @map("codigo_postal") @db.Char(5) // DOMAIN core.codigo_postal_mx
+  municipio            String?   @db.VarChar(80) // DOMAIN core.nombre_corto
+  estadoDomicilio      String?   @map("estado_domicilio") @db.VarChar(80) // DOMAIN core.nombre_corto
+  ubicacionTexto       String?   @map("ubicacion_texto") @db.VarChar(120) // DOMAIN core.nombre_entidad
+
+  // Emergencia
+  emergenciaNombre     String?   @map("emergencia_nombre") @db.VarChar(120) // DOMAIN core.nombre_entidad
+  emergenciaParentesco String?   @map("emergencia_parentesco") @db.VarChar(80) // DOMAIN core.nombre_corto
+  emergenciaTelefono   String?   @map("emergencia_telefono") @db.VarChar(15) // DOMAIN core.telefono_mx
+
+  // Salud y EPP
+  tipoSangre           String?   @map("tipo_sangre") @db.VarChar(4) // DOMAIN rrhh.tipo_sangre
+  tallaCalzadoMex      String?   @map("talla_calzado_mex") @db.VarChar(10) // DOMAIN rrhh.talla_calzado
+  tallaOverol          String?   @map("talla_overol") @db.VarChar(6) // DOMAIN rrhh.talla_overol
+  discapacidad         String?   @db.VarChar(255) // DOMAIN core.descripcion
+  padecimientos        String?
+  alergias             String?
+
+  estatusCsf           String    @default("PENDIENTE") @map("estatus_csf") @db.VarChar(20) // DOMAIN rrhh.estatus_csf
+  notasContratacion    String?   @map("notas_contratacion")
+
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz
+
+  // Relaciones
+  empresa              Empresa               @relation(fields: [empresaId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  departamento         Departamento          @relation("EmpleadoDepartamento", fields: [departamentoId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  puesto               CatPuesto?            @relation(fields: [puestoId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  sede                 Sede?                 @relation(fields: [sedeId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  tipoContrato         CatTipoContrato?      @relation(fields: [tipoContratoId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  supervisor           Empleado?             @relation("OrganigramaJerarquia", fields: [supervisorId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  subordinados         Empleado[]            @relation("OrganigramaJerarquia")
+  deptosDirigidos      Departamento[]        @relation("ResponsableDepto")
+  usuario              Usuario?
+  movimientos          HistorialMovimiento[]
+  cuentasBancarias     CuentaBancaria[]
+  carpetasExpediente   CarpetaExpediente[]
+  documentos           DocumentoExpediente[]
+  extensionesAsignadas ExtensionTelefonica[]
+  vacaciones           VacacionSolicitud[]   @relation("VacacionesEmpleado")
+  vacacionesAprobadas  VacacionSolicitud[]   @relation("VacacionesAprobador")
+  formatosSgi          FormatoSgi[]
+  actividadesAgenda    AgendaActividad[]
+
+  @@index([departamentoId], map: "idx_rrhh_emp_departamento")
+  @@index([sedeId], map: "idx_rrhh_emp_sede")
+  @@index([supervisorId], map: "idx_rrhh_emp_supervisor")
+  @@index([estatus], map: "idx_rrhh_emp_estatus")
+  @@map("empleados")
+  @@schema("rrhh")
+}
+
+model HistorialMovimiento {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @map("id_movimiento") @db.Uuid // DOMAIN core.id_uuid (Append-Only)
+  empleadoId       String        @map("id_empleado") @db.Uuid
+  tipoMovimiento   String        @map("tipo_movimiento") @db.VarChar(35) // DOMAIN rrhh.tipo_movimiento
+  deptoAnteriorId  String?       @map("id_depto_anterior") @db.Uuid
+  deptoNuevoId     String?       @map("id_depto_nuevo") @db.Uuid
+  puestoAnterior   String?       @map("puesto_anterior") @db.VarChar(120) // DOMAIN core.nombre_entidad
+  puestoNuevo      String?       @map("puesto_nuevo") @db.VarChar(120) // DOMAIN core.nombre_entidad
+  sueldoAnterior   Decimal?      @map("sueldo_anterior") @db.Decimal(12, 2) // DOMAIN core.monto_mxn
+  sueldoNuevo      Decimal?      @map("sueldo_nuevo") @db.Decimal(12, 2) // DOMAIN core.monto_mxn
+  motivo           String?       @db.VarChar(255) // DOMAIN core.descripcion
+  realizadoPor     String        @map("realizado_por") @db.VarChar(80) // DOMAIN core.nombre_corto
+  fechaEfecto      DateTime      @default(now()) @map("fecha_efecto") @db.Date
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  empleado         Empleado      @relation(fields: [empleadoId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  deptoAnterior    Departamento? @relation("MovDeptoAnterior", fields: [deptoAnteriorId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  deptoNuevo       Departamento? @relation("MovDeptoNuevo", fields: [deptoNuevoId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
+  @@map("historial_movimientos")
+  @@schema("rrhh")
+}
+
+model CuentaBancaria {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @map("id_cuenta") @db.Uuid // DOMAIN core.id_uuid
+  empleadoId    String    @map("id_empleado") @db.Uuid
+  bancoId       String?   @map("id_banco") @db.Uuid
+  bancoNombre   String    @map("banco_nombre") @db.VarChar(80) // DOMAIN core.nombre_corto
+  alias         String    @default("Nómina") @db.VarChar(80) // DOMAIN core.nombre_corto
+  clabe         String?   @db.Char(18) // DOMAIN core.clabe_mx
+  numeroTarjeta String?   @map("numero_tarjeta") @db.VarChar(19) // DOMAIN rrhh.num_tarjeta_mx
+  esPrincipal   Boolean   @default(true) @map("es_principal")
+  activa        Boolean   @default(true)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  empleado      Empleado  @relation(fields: [empleadoId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  banco         CatBanco? @relation(fields: [bancoId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
+  @@index([empleadoId], map: "idx_rrhh_cb_empleado")
+  @@map("cuentas_bancarias")
+  @@schema("rrhh")
+}
+
+model CarpetaExpediente {
+  id         String                @id @default(dbgenerated("gen_random_uuid()")) @map("id_carpeta") @db.Uuid
+  empleadoId String?               @map("id_empleado") @db.Uuid
+  nombre     String                @db.VarChar(80) // DOMAIN core.nombre_corto
+  esSistema  Boolean               @default(false) @map("es_sistema")
+  orden      Int                   @default(0) @db.SmallInt
+  createdAt  DateTime              @default(now()) @map("created_at") @db.Timestamptz
+
+  empleado   Empleado?             @relation(fields: [empleadoId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  documentos DocumentoExpediente[]
+
+  @@map("carpetas_expediente")
+  @@schema("rrhh")
+}
+
+model DocumentoExpediente {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @map("id_documento") @db.Uuid
+  empleadoId       String             @map("id_empleado") @db.Uuid
+  carpetaId        String?            @map("id_carpeta") @db.Uuid
+  carpetaNombre    String             @default("Documentos") @map("carpeta_nombre") @db.VarChar(80) // DOMAIN core.nombre_corto
+  categoria        String             @db.VarChar(80) // DOMAIN core.nombre_corto
+  titulo           String             @db.VarChar(180) // DOMAIN core.razon_social
+  emisor           String?            @db.VarChar(120) // DOMAIN core.nombre_entidad
+  fechaEmision     DateTime?          @map("fecha_emision") @db.Date
+  fechaVencimiento DateTime?          @map("fecha_vencimiento") @db.Date
+  nombreArchivo    String?            @map("nombre_archivo") @db.VarChar(255) // DOMAIN core.descripcion
+  mimeType         String?            @map("mime_type") @db.VarChar(100) // DOMAIN rrhh.mime_type_dom
+  tamanoBytes      Int?               @map("tamano_bytes")
+  storageUrl       String?            @map("storage_url")
+  enlaceExterno    String?            @map("enlace_externo")
+  verificado       Boolean            @default(false)
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  empleado         Empleado           @relation(fields: [empleadoId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  carpeta          CarpetaExpediente? @relation(fields: [carpetaId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
+  @@map("documentos_expediente")
+  @@schema("rrhh")
+}
+
+model ExtensionTelefonica {
+  id                 String       @id @default(dbgenerated("gen_random_uuid()")) @map("id_extension") @db.Uuid
+  extension          String       @unique @db.VarChar(6) // DOMAIN rrhh.extension_tel
+  etiquetaArea       String       @map("etiqueta_area") @db.VarChar(120) // DOMAIN core.nombre_entidad
+  departamentoId     String       @map("id_departamento") @db.Uuid
+  sedeId             String?      @map("id_sede") @db.Uuid
+  empleadoAsignadoId String?      @map("id_empleado_asignado") @db.Uuid
+  asignadoTexto      String?      @map("asignado_texto") @db.VarChar(120) // DOMAIN core.nombre_entidad
+  esPrincipalDepto   Boolean      @default(false) @map("es_principal_depto")
+  activa             Boolean      @default(true)
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  departamento       Departamento @relation(fields: [departamentoId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  sede               Sede?        @relation(fields: [sedeId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  empleadoAsignado   Empleado?    @relation(fields: [empleadoAsignadoId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
+  @@index([departamentoId], map: "idx_rrhh_ext_departamento")
+  @@map("extensiones_telefonicas")
+  @@schema("rrhh")
+}
+
+model VacacionSolicitud {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @map("id_solicitud") @db.Uuid
+  folioSolicitud  String    @unique @map("folio_solicitud") @db.VarChar(30) // DOMAIN rrhh.folio_documento
+  empleadoId      String    @map("id_empleado") @db.Uuid
+  aprobadorId     String?   @map("id_aprobador") @db.Uuid
+  fechaInicio     DateTime  @map("fecha_inicio") @db.Date
+  fechaFin        DateTime  @map("fecha_fin") @db.Date
+  diasSolicitados Int       @map("dias_solicitados") @db.SmallInt // DOMAIN rrhh.dias_vacaciones
+  periodoAnual    Int       @map("periodo_anual") @db.SmallInt // DOMAIN rrhh.anio_laboral
+  estatus         String    @default("PENDIENTE") @db.VarChar(20) // DOMAIN rrhh.estatus_solicitud
+  comentarios     String?
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  empleado        Empleado  @relation("VacacionesEmpleado", fields: [empleadoId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  aprobador       Empleado? @relation("VacacionesAprobador", fields: [aprobadorId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
+  @@map("vacaciones_solicitudes")
+  @@schema("rrhh")
+}
+
+model FormatoSgi {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @map("id_formato") @db.Uuid
+  folioSgi       String        @unique @map("folio_sgi") @db.VarChar(30) // DOMAIN rrhh.folio_documento
+  codigoFormato  String        @map("codigo_formato") @db.VarChar(30) // DOMAIN rrhh.folio_documento
+  empleadoId     String?       @map("id_empleado") @db.Uuid
+  departamentoId String?       @map("id_departamento") @db.Uuid
+  estatus        String        @default("PENDIENTE") @db.VarChar(20) // DOMAIN rrhh.estatus_solicitud
+  datosFormato   Json          @default("{}") @map("datos_formato")
+  emitidoPor     String?       @map("emitido_por") @db.VarChar(120) // DOMAIN core.nombre_entidad
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  empleado       Empleado?     @relation(fields: [empleadoId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  departamento   Departamento? @relation(fields: [departamentoId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
+  @@map("formatos_sgi")
+  @@schema("rrhh")
+}
+
+model DiaFestivo {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @map("id_festivo") @db.Uuid // DOMAIN core.id_uuid
+  fecha                 DateTime @unique @db.Date
+  nombre                String   @db.VarChar(120) // DOMAIN core.nombre_entidad
+  tipo                  String   @default("OFICIAL_LFT") @db.VarChar(30) // DOMAIN rrhh.tipo_festivo
+  esDescansoObligatorio Boolean  @default(true) @map("es_descanso_obligatorio")
+  descripcion           String?  @db.VarChar(255) // DOMAIN core.descripcion
+
+  @@map("dias_festivos")
+  @@schema("rrhh")
+}
+
+model AgendaActividad {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @map("id_actividad") @db.Uuid
+  fecha         DateTime  @db.Date
+  horaTexto     String?   @map("hora_texto") @db.VarChar(20) // DOMAIN rrhh.hora_texto_dom
+  titulo        String    @db.VarChar(180) // DOMAIN core.razon_social
+  categoria     String    @default("Operativo") @db.VarChar(80) // DOMAIN core.nombre_corto
+  responsableId String?   @map("id_responsable") @db.Uuid
+  completada    Boolean   @default(false)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  responsable   Empleado? @relation(fields: [responsableId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
+  @@map("agenda_actividades")
+  @@schema("rrhh")
+}

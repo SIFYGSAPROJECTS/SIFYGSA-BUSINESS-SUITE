@@ -415,11 +415,124 @@
   50% { opacity: 0.4; transform: scale(0.85); }
 }
 
+@keyframes stepReadyBounce {
+  0%, 100% {
+    transform: translateY(0);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+  }
+  20% {
+    transform: translateY(-4px) scale(1.015);
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.45);
+  }
+  40% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+  }
+  60% {
+    transform: translateY(-2px) scale(1.008);
+    box-shadow: 0 7px 18px rgba(37, 99, 235, 0.36);
+  }
+  80% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+  }
+}
+
+.step-continue-bounce {
+  animation: stepReadyBounce 2.2s infinite ease-in-out;
+}
+
+@keyframes stageSlideNext {
+  0% {
+    opacity: 0;
+    transform: translateX(18px) translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+@keyframes stageSlidePrev {
+  0% {
+    opacity: 0;
+    transform: translateX(-18px) translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+.step-stage-enter-next {
+  animation: stageSlideNext 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.step-stage-enter-prev {
+  animation: stageSlidePrev 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes activeStepHaloPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 3px #ffffff, 0 0 0 6px rgba(37, 99, 235, 0.24);
+  }
+  50% {
+    box-shadow: 0 0 0 3px #ffffff, 0 0 0 9px rgba(37, 99, 235, 0.36);
+  }
+}
+
+.stepper-circle-active {
+  animation: activeStepHaloPulse 2.4s infinite ease-in-out;
+}
+
+@keyframes checkPopIn {
+  0% {
+    transform: scale(0.75);
+  }
+  60% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.stepper-circle-done {
+  animation: checkPopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.stepper-node-btn {
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.stepper-node-btn:hover {
+  transform: translateY(-2px);
+}
+
+.stepper-node-btn:hover .stepper-circle-pending {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+  background-color: var(--brand-50) !important;
+}
+
+.wizard-pill-btn {
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wizard-pill-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.wizard-pill-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
 /* --- 3. MAIN CONTENT CONTAINER --- */
 .main-viewport {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-gutter: stable;
   padding: var(--space-6) var(--space-8);
   max-width: 1600px;
   width: 100%;

@@ -13,6 +13,7 @@ import { RrhhDashboard } from '../suite/components/dashboard/RrhhDashboard';
 import { BirthdaysView } from '../suite/components/dashboard/BirthdaysView';
 import { EmployeeCreateView } from '../suite/components/dashboard/EmployeeCreateView';
 import { DepartmentsView } from '../suite/components/dashboard/DepartmentsView';
+import { ExtensionsCatalogView } from '../suite/components/dashboard/ExtensionsCatalogView';
 import { EmployeesCatalogView } from '../suite/components/dashboard/EmployeesCatalogView';
 import { EmployeeDetailModal } from '../suite/components/dashboard/EmployeeDetailModal';
 import { EmployeeEditModal } from '../suite/components/dashboard/EmployeeEditModal';
@@ -26,9 +27,14 @@ import {
   INITIAL_DEPARTMENTS,
 } from '../suite/data/mockData';
 import type { Employee, DepartmentItem } from '../suite/types';
-
-const STORAGE_KEY_EMPLOYEES = 'sifygsa_rrhh_employees_v1';
-const STORAGE_KEY_DEPARTMENTS = 'sifygsa_rrhh_departments_v1';
+import type { CvImportDraft } from '../suite/utils/cvParser';
+import {
+  bootstrapLocalJsonDb,
+  useSyncedEmployees,
+  useSyncedDepartments,
+  savePersistedEmployees,
+  savePersistedDepartments,
+} from '../suite/utils/formShield';
 
 export interface PropiedadesContenedorRrhh {
   datosIniciales: DatosRrhhCliente;
@@ -48,57 +54,34 @@ export const ContenedorRrhhCliente: React.FC<PropiedadesContenedorRrhh> = ({
   const activeSubmenuId = rawSub === 'rh-directorio' ? 'rrhh-panel' : rawSub;
 
   const [selectedLocation] = useState<string>('Minatitlán, Ver.');
-  const [employeesList, setEmployeesList] = useState<Employee[]>(EMPLOYEES);
-  const [departmentsList, setDepartmentsList] = useState<DepartmentItem[]>(INITIAL_DEPARTMENTS);
-
-  useEffect(() => {
-    try {
-      const savedEmp = window.localStorage.getItem(STORAGE_KEY_EMPLOYEES);
-      if (savedEmp) setEmployeesList(JSON.parse(savedEmp) as Employee[]);
-      const savedDept = window.localStorage.getItem(STORAGE_KEY_DEPARTMENTS);
-      if (savedDept) setDepartmentsList(JSON.parse(savedDept) as DepartmentItem[]);
-    } catch {
-      // Ignore storage read errors
-    }
-  }, []);
-
-  const updateEmployees = (updater: (prev: Employee[]) => Employee[]) => {
-    setEmployeesList((prev) => {
-      const next = updater(prev);
-      try {
-        window.localStorage.setItem(STORAGE_KEY_EMPLOYEES, JSON.stringify(next));
-      } catch {
-        // Ignore storage write errors
-      }
-      return next;
-    });
-  };
-
-  const updateDepartments = (updater: (prev: DepartmentItem[]) => DepartmentItem[]) => {
-    setDepartmentsList((prev) => {
-      const next = updater(prev);
-      try {
-        window.localStorage.setItem(STORAGE_KEY_DEPARTMENTS, JSON.stringify(next));
-      } catch {
-        // Ignore storage write errors
-      }
-      return next;
-    });
-  };
+  const employeesList = useSyncedEmployees(EMPLOYEES);
+  const departmentsList = useSyncedDepartments(INITIAL_DEPARTMENTS);
 
   const [selectedEmployeeDetail, setSelectedEmployeeDetail] = useState<Employee | null>(null);
   const [selectedEmployeeEdit, setSelectedEmployeeEdit] = useState<Employee | null>(null);
+  const [pendingCvDraft, setPendingCvDraft] = useState<CvImportDraft | null>(null);
+
+  useEffect(() => {
+    void bootstrapLocalJsonDb({
+      employees: EMPLOYEES,
+      departments: INITIAL_DEPARTMENTS,
+    });
+  }, []);
 
   const handleAddDepartment = (newDept: DepartmentItem) => {
-    updateDepartments((prev) => [newDept, ...prev]);
+    savePersistedDepartments([newDept, ...departmentsList]);
   };
 
   const handleUpdateDepartment = (updatedDept: DepartmentItem) => {
-    updateDepartments((prev) => prev.map((d) => (d.id === updatedDept.id ? updatedDept : d)));
+    savePersistedDepartments(
+      departmentsList.map((d) => (d.id === updatedDept.id ? updatedDept : d))
+    );
   };
 
   const handleUpdateEmployee = (updatedEmp: Employee) => {
-    updateEmployees((prev) => prev.map((e) => (e.id === updatedEmp.id ? updatedEmp : e)));
+    savePersistedEmployees(
+      employeesList.map((e) => (e.id === updatedEmp.id ? updatedEmp : e))
+    );
     setSelectedEmployeeEdit(null);
   };
 
@@ -121,18 +104,29 @@ export const ContenedorRrhhCliente: React.FC<PropiedadesContenedorRrhh> = ({
       {activeSubmenuId === 'rrhh-alta' ? (
         <EmployeeCreateView
           departments={departmentNames}
+          initialCvDraft={pendingCvDraft}
+          onConsumeCvDraft={() => setPendingCvDraft(null)}
           onSuccess={(newEmp) => {
-            updateEmployees((prev) => [newEmp, ...prev]);
-            router.push('/rrhh?sub=rrhh-panel');
+            savePersistedEmployees([newEmp, ...employeesList]);
+            setPendingCvDraft(null);
+            router.push('/rrhh?sub=rrhh-catalogos');
           }}
           onCancel={() => {
-            router.push('/rrhh?sub=rrhh-panel');
+            setPendingCvDraft(null);
+            router.push('/rrhh?sub=rrhh-catalogos');
           }}
         />
       ) : activeSubmenuId === 'rrhh-catalogos' ? (
         <EmployeesCatalogView
           employees={employeesList}
-          onOpenNewEmployee={() => router.push('/rrhh?sub=rrhh-alta')}
+          onOpenNewEmployee={() => {
+            setPendingCvDraft(null);
+            router.push('/rrhh?sub=rrhh-alta');
+          }}
+          onImportCv={(draft) => {
+            setPendingCvDraft(draft);
+            router.push('/rrhh?sub=rrhh-alta');
+          }}
           onEditEmployee={(emp) => setSelectedEmployeeEdit(emp)}
           onViewEmployee={(emp) => setSelectedEmployeeDetail(emp)}
         />
@@ -142,10 +136,18 @@ export const ContenedorRrhhCliente: React.FC<PropiedadesContenedorRrhh> = ({
           onAddDepartment={handleAddDepartment}
           onUpdateDepartment={handleUpdateDepartment}
         />
+      ) : activeSubmenuId === 'rrhh-extensiones' ? (
+        <ExtensionsCatalogView departments={departmentNames} />
       ) : activeSubmenuId === 'rrhh-vacaciones' ? (
         <VacationsSgiView employees={employeesList} />
       ) : activeSubmenuId === 'rrhh-formatos' ? (
-        <SgiFormatsView employees={employeesList} />
+        <SgiFormatsView
+          employees={employeesList}
+          onOpenNewEmployee={() => {
+            setPendingCvDraft(null);
+            router.push('/rrhh?sub=rrhh-alta');
+          }}
+        />
       ) : activeSubmenuId === 'rrhh-cumpleanos' ? (
         <BirthdaysView />
       ) : activeSubmenuId === 'rrhh-festivos' ? (
@@ -157,8 +159,12 @@ export const ContenedorRrhhCliente: React.FC<PropiedadesContenedorRrhh> = ({
           employees={employeesList}
           selectedLocation={selectedLocation}
           departments={departmentNames}
-          onOpenNewEmployee={() => router.push('/rrhh?sub=rrhh-alta')}
+          onOpenNewEmployee={() => {
+            setPendingCvDraft(null);
+            router.push('/rrhh?sub=rrhh-alta');
+          }}
           onNavigateToBirthdays={() => router.push('/rrhh?sub=rrhh-cumpleanos')}
+          onNavigateSubmenu={(submenuId) => router.push(`/rrhh?sub=${submenuId}`)}
         />
       )}
 

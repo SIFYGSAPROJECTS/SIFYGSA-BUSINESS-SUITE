@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Calendar,
@@ -221,6 +223,39 @@ interface VacationsSgiViewProps {
 
 const VACATIONS_STORAGE_KEY = 'sifygsa_erp_vacations_v1';
 
+const normalizePersonKey = (name: string): string =>
+  name
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ');
+
+const parseHireYear = (hireDate?: string): number => {
+  if (!hireDate) return 2024;
+  const slashMatch = hireDate.match(/(\d{4})$/);
+  if (slashMatch) return parseInt(slashMatch[1], 10);
+  const isoMatch = hireDate.match(/^(\d{4})/);
+  if (isoMatch) return parseInt(isoMatch[1], 10);
+  return 2024;
+};
+
+const deduplicateVacationRecords = (records: VacationRecord[]): VacationRecord[] => {
+  const seenIds = new Set<string>();
+  const result: VacationRecord[] = [];
+
+  for (const rec of records) {
+    if (!rec) continue;
+    const rawId = (rec.id || '').trim();
+    const keyId = rawId || `vac-row-${result.length + 1}`;
+    if (seenIds.has(keyId)) continue;
+    seenIds.add(keyId);
+    result.push(keyId === rec.id ? rec : { ...rec, id: keyId });
+  }
+
+  return result;
+};
+
 export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees }) => {
   const syncedEmployees = useSyncedEmployees(employees);
 
@@ -233,7 +268,13 @@ export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees })
       const saved = localStorage.getItem(VACATIONS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const clean = deduplicateVacationRecords(parsed);
+          if (clean.length !== parsed.length) {
+            localStorage.setItem(VACATIONS_STORAGE_KEY, JSON.stringify(clean));
+          }
+          return clean;
+        }
       }
     } catch {
       // Fallback
@@ -241,31 +282,88 @@ export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees })
     return INITIAL_VACATIONS;
   });
 
-  // Sincronizar en localStorage e incorporar nuevos empleados dados de alta
+  // Sincronizar en localStorage e incorporar/actualizar colaboradores sin duplicar IDs ni llaves React
   useEffect(() => {
-    setVacationRecords((prev) => {
-      const existingNames = new Set(prev.map((r) => r.employeeName.toLowerCase()));
-      const additions: VacationRecord[] = [];
-      for (const emp of syncedEmployees) {
-        if (!existingNames.has(emp.name.toLowerCase())) {
-          additions.push({
-            id: `vac-${emp.id}`,
-            employeeName: emp.name,
-            department: emp.department,
-            position: emp.position,
-            hireDate: emp.hireDate || new Date().toLocaleDateString('es-MX'),
-            antiquityText: '1er Año (Nuevo Ingreso)',
-            antiquityYears: 1,
-            periodYear: '2026 - 2027',
-            daysByLaw: 12,
-            daysTaken: 0,
-            daysRemaining: 12,
-            lastRequestDate: '—',
-            status: 'active'
-          });
-        }
+    const mergedEmployeesMap = new Map<string, Employee>();
+    for (const emp of [...syncedEmployees, ...employees]) {
+      if (emp?.id && !mergedEmployeesMap.has(emp.id)) {
+        mergedEmployeesMap.set(emp.id, emp);
       }
-      const merged = additions.length > 0 ? [...additions, ...prev] : prev;
+    }
+    const allEmployees = Array.from(mergedEmployeesMap.values());
+
+    setVacationRecords((prev) => {
+      const base = deduplicateVacationRecords(prev);
+      let hasChanges = base.length !== prev.length;
+
+      const updated = base.map((r) => ({ ...r }));
+      const indexById = new Map<string, number>();
+      const matchedNameKeys = new Set<string>();
+
+      updated.forEach((rec, idx) => {
+        indexById.set(rec.id, idx);
+        matchedNameKeys.add(normalizePersonKey(rec.employeeName));
+      });
+
+      const additions: VacationRecord[] = [];
+      const addedIds = new Set<string>();
+
+      for (const emp of allEmployees) {
+        const vacId = `vac-${emp.id}`;
+        const legacyErpId = `vac-erp-${emp.id}`;
+        const existingIdx = indexById.get(vacId) ?? indexById.get(legacyErpId);
+
+        if (existingIdx !== undefined) {
+          const current = updated[existingIdx];
+          if (
+            current.employeeName !== emp.name ||
+            current.department !== emp.department ||
+            current.position !== emp.position
+          ) {
+            updated[existingIdx] = {
+              ...current,
+              employeeName: emp.name,
+              department: emp.department,
+              position: emp.position
+            };
+            hasChanges = true;
+          }
+          continue;
+        }
+
+        const empNameKey = normalizePersonKey(emp.name);
+        if (matchedNameKeys.has(empNameKey) || indexById.has(vacId) || addedIds.has(vacId)) {
+          continue;
+        }
+
+        const years = Math.max(1, 2026 - parseHireYear(emp.hireDate));
+        const lawDays = calculateLftDays(years);
+
+        addedIds.add(vacId);
+        matchedNameKeys.add(empNameKey);
+        hasChanges = true;
+        additions.push({
+          id: vacId,
+          employeeName: emp.name,
+          department: emp.department,
+          position: emp.position,
+          hireDate: emp.hireDate || new Date().toLocaleDateString('es-MX'),
+          antiquityText: emp.hireDate ? `${years} año${years === 1 ? '' : 's'}` : '1er Año (Nuevo Ingreso)',
+          antiquityYears: years,
+          periodYear: '2026 - 2027',
+          daysByLaw: lawDays,
+          daysTaken: 0,
+          daysRemaining: lawDays,
+          lastRequestDate: '—',
+          status: 'active'
+        });
+      }
+
+      if (!hasChanges) {
+        return prev;
+      }
+
+      const merged = deduplicateVacationRecords(additions.length > 0 ? [...additions, ...updated] : updated);
       try {
         localStorage.setItem(VACATIONS_STORAGE_KEY, JSON.stringify(merged));
       } catch {
@@ -273,7 +371,7 @@ export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees })
       }
       return merged;
     });
-  }, [syncedEmployees]);
+  }, [syncedEmployees, employees]);
 
   // Selector de Formato Oficial Activo
   const [activeFormatCode, setActiveFormatCode] = useState<'SGI-FR-RH-06' | 'SGI-FR-RH-01' | 'SGI-FR-RH-02' | 'SGI-FR-RH-13' | 'SGI-FR-RH-15'>('SGI-FR-RH-06');
@@ -661,17 +759,28 @@ export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees })
     if (parsedImportRows.length === 0) return;
 
     setVacationRecords((prev) => {
-      // Reemplazar o agregar
+      // Reemplazar o agregar conservando IDs únicos
       const updated = [...prev];
       parsedImportRows.forEach((newRec) => {
-        const existingIdx = updated.findIndex((r) => r.employeeName.toLowerCase() === newRec.employeeName?.toLowerCase());
+        const normTarget = normalizePersonKey(newRec.employeeName || '');
+        const existingIdx = updated.findIndex((r) => normalizePersonKey(r.employeeName) === normTarget);
         if (existingIdx >= 0) {
-          updated[existingIdx] = { ...updated[existingIdx], ...(newRec as VacationRecord) };
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            ...(newRec as VacationRecord),
+            id: updated[existingIdx].id
+          };
         } else {
           updated.push(newRec as VacationRecord);
         }
       });
-      return updated;
+      const clean = deduplicateVacationRecords(updated);
+      try {
+        localStorage.setItem(VACATIONS_STORAGE_KEY, JSON.stringify(clean));
+      } catch {
+        // Ignore
+      }
+      return clean;
     });
 
     showToast(`✓ Se integraron ${parsedImportRows.length} registros exitosamente a la Matriz de Vacaciones.`);
@@ -679,39 +788,6 @@ export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees })
     setParsedImportRows([]);
     setImportFileName(null);
   };
-
-  // Sincronización automática silenciosa con el catálogo general de colaboradores ERP
-  useEffect(() => {
-    setVacationRecords((prev) => {
-      let hasChanges = false;
-      const updated = [...prev];
-      employees.forEach((emp) => {
-        const exists = updated.some((r) => r.employeeName.toLowerCase() === emp.name.toLowerCase());
-        if (!exists) {
-          hasChanges = true;
-          const hireYear = emp.hireDate ? parseInt(emp.hireDate.slice(0, 4), 10) : 2024;
-          const years = Math.max(0, 2026 - hireYear);
-          const lawDays = calculateLftDays(years);
-
-          updated.push({
-            id: `vac-erp-${emp.id}`,
-            employeeName: emp.name,
-            department: emp.department,
-            position: emp.position,
-            hireDate: emp.hireDate || '01/01/2024',
-            antiquityYears: years,
-            antiquityText: `${years} año${years === 1 ? '' : 's'}`,
-            periodYear: '2025 - 2026',
-            daysByLaw: lawDays,
-            daysTaken: 0,
-            daysRemaining: lawDays,
-            status: 'active'
-          });
-        }
-      });
-      return hasChanges ? updated : prev;
-    });
-  }, [employees]);
 
 
 
@@ -853,7 +929,7 @@ export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees })
               {vacationRecords.length} Colaboradores
             </div>
             <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-              Padrón activo · Ciclo 2025-2026
+              Personal activo · Ciclo 2025-2026
             </div>
           </div>
         </div>
@@ -2107,7 +2183,7 @@ export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees })
                 border: '1.5px solid #000',
                 padding: '20px',
                 backgroundColor: '#FFFFFF',
-                fontFamily: 'var(--font-family-sans)'
+                fontFamily: "Inter, Arial, Helvetica, sans-serif"
               }}
             >
               {/* Encabezado Corporativo Oficial */}

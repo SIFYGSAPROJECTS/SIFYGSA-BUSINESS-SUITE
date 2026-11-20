@@ -64,9 +64,51 @@ export interface LocationItem {
   type: string;
 }
 
+export interface EmployeeBankAccount {
+  id: string;
+  bank: string;
+  clabe: string;
+  cardNumber?: string;
+  accountNumber?: string;
+  alias?: string;
+  isPrimary?: boolean;
+}
+
+export interface EmployeeDocumentItem {
+  id: string;
+  folder?: string;
+  category:
+    | 'Constancia Fiscal (SAT)'
+    | 'Certificación Técnica / DC-3'
+    | 'Curso / Certificación DC-3'
+    | 'Curso de Seguridad / Brigada'
+    | 'Carta de Recomendación'
+    | 'Título / Cédula Profesional'
+    | 'Título / Cédula'
+    | 'Identificación (INE)'
+    | 'CURP'
+    | 'Comprobante de Domicilio'
+    | 'Acta de Nacimiento'
+    | 'NSS / IMSS'
+    | 'Otro Anexo'
+    | 'Otro Documento'
+    | string;
+  title: string;
+  issuer?: string;
+  issueDate?: string;
+  fileName?: string;
+  fileDataUrl?: string;
+  fileMimeType?: string;
+  externalUrl?: string;
+  notes?: string;
+}
+
 export interface Employee {
   id: string;
   name: string;
+  firstName?: string;
+  paternalSurname?: string;
+  maternalSurname?: string;
   email: string;
   emailPersonal?: string;
   initials: string;
@@ -78,6 +120,7 @@ export interface Employee {
   squad: string;
   silStatus: 'Vigente SIL-3' | 'DC-3 Vigente' | 'Por Renovar' | 'En Trámite' | 'Certificación Vigente' | 'DC-3 Acreditado' | string;
   silStatusType: 'success' | 'warning' | 'info';
+  employmentStatus?: 'Activo' | 'Inactivo';
   hireDate: string;
   photoUrl?: string;
   phonePrimary?: string;
@@ -85,6 +128,14 @@ export interface Employee {
   supervisor?: string;
   codeLocation?: string;
   address?: string;
+  addressStreet?: string;
+  addressNumber?: string;
+  addressInterior?: string;
+  addressColony?: string;
+  addressZip?: string;
+  addressCity?: string;
+  addressState?: string;
+  officeExtension?: string;
   rfc?: string;
   curp?: string;
   nss?: string;
@@ -95,10 +146,21 @@ export interface Employee {
   emergencyRelationship?: string;
   bank?: string;
   clabe?: string;
+  cardNumber?: string;
+  bankAccounts?: EmployeeBankAccount[];
   bloodType?: string;
   shoeSize?: string;
+  shirtSize?: string;
+  pantsSize?: string;
   coverallSize?: string;
   allergies?: string;
+  chronicConditions?: string;
+  disabilityInfo?: string;
+  taxCertificateStatus?: 'Vigente' | 'Pendiente' | 'En Revisión';
+  taxCertificateFileUrl?: string;
+  taxCertificateFileName?: string;
+  taxCertificateExternalUrl?: string;
+  documents?: EmployeeDocumentItem[];
 }
 
 export interface DepartmentItem {
@@ -112,4 +174,15 @@ export interface DepartmentItem {
   status: 'active' | 'inactive';
   description?: string;
   createdAt: string;
+}
+
+export interface ExtensionDirectoryItem {
+  id: string;
+  extension: string;
+  areaLabel: string;
+  department: string;
+  assignedTo: string;
+  location: string;
+  isDefaultForDept?: boolean;
+  status: 'active' | 'inactive';
 }

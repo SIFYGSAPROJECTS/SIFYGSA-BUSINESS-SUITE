@@ -1,5 +1,29 @@
 [
   {
+    "usuarioId": "usr_rrhh",
+    "usuarioNombre": "Mariana Garza",
+    "rol": "rrhh",
+    "modulo": "auth",
+    "tipoEvento": "cierre_sesion",
+    "entidad": "Sesión JWT",
+    "entidadId": "usr_rrhh",
+    "detalle": "Cierre de sesión de usuario.",
+    "id": "aud_1795204198545_qhjys",
+    "fecha": "2026-11-20T19:49:58.545Z"
+  },
+  {
+    "usuarioId": "usr_rrhh",
+    "usuarioNombre": "Mariana Garza",
+    "rol": "rrhh",
+    "modulo": "auth",
+    "tipoEvento": "inicio_sesion",
+    "entidad": "Sesión JWT",
+    "entidadId": "usr_rrhh",
+    "detalle": "Inicio de sesión exitoso (rrhh).",
+    "id": "aud_1795204114677_ekk4y",
+    "fecha": "2026-11-20T19:48:34.677Z"
+  },
+  {
     "usuarioId": "usr_requisiciones",
     "usuarioNombre": "Pablo Vázquez Culebro",
     "rol": "requisiciones",
