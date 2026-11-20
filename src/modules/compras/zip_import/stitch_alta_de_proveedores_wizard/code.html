@@ -1,0 +1,998 @@
+<!DOCTYPE html><html class="dark" data-theme="dark" lang="es" style="min-height: 100%; width: 100%;"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=Hanken+Grotesk:wght@100..900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style id="light-mode-styles">:root { --app-bg: #F3F4F6; --surface: #FFFFFF; --surface-alt: #FFFFFF; --card: #FFFFFF; --card-hover: #F9FAFB; --border: #D1D5DB; --divider: #E5E7EB; --field-bg: #FFFFFF; --field-border: #D1D5DB; --primary: #1D4ED8; --primary-hover: #1E40AF; --primary-active: #1E3A8A; --text-primary: #111827; --text-secondary: #4B5563; --text-muted: #6B7280; --table-header: #F3F4F6; } html.dark { --app-bg: #0B1120; --surface: #111827; --surface-alt: #151E2E; --card: #1F2937; --card-hover: #273449; --border: #374151; --divider: #334155; --field-bg: #111827; --field-border: #6B7280; --primary: #1D4ED8; --primary-hover: #1E40AF; --primary-active: #1E3A8A; --text-primary: #F9FAFB; --text-secondary: #CBD5E1; --text-muted: #9CA3AF; --table-header: #1F2937; } body, main { background-color: var(--app-bg) !important; color: var(--text-primary) !important; transition: background-color 0.2s, color 0.2s; } aside { background-color: var(--surface) !important; border-right: 1px solid var(--border) !important; } aside .bg-surface-container-lowest, aside .bg-surface-container { background-color: var(--card-hover) !important; border-color: var(--border) !important; } header { background-color: var(--surface) !important; border-bottom: 1px solid var(--border) !important; } .bg-surface-container-low { background-color: var(--surface-alt) !important; border: 1px solid var(--border) !important; } .bg-surface-container { background-color: var(--card-hover) !important; border-color: var(--border) !important; } .bg-surface-container-lowest { background-color: var(--surface) !important; } .bg-surface-container-high { background-color: var(--table-header) !important; } .bg-surface-container-highest { background-color: var(--card-hover) !important; } input:not([type="checkbox"]), select, textarea { background-color: var(--field-bg) !important; border: 1px solid var(--field-border) !important; color: var(--text-primary) !important; } input:focus, select:focus, textarea:focus { border-color: var(--primary) !important; outline: 2px solid rgba(29, 78, 216, 0.2) !important; } input::placeholder, textarea::placeholder { color: var(--text-muted) !important; } .text-on-surface { color: var(--text-primary) !important; } .text-on-surface-variant { color: var(--text-secondary) !important; } .text-outline { color: var(--text-muted) !important; } .border-outline-variant, .border-outline-variant\/60, .border-outline-variant\/40, .border-outline-variant\/30 { border-color: var(--border) !important; } .fixed.bottom-0 { background-color: var(--surface) !important; border-top: 1px solid var(--border) !important; } html:not(.dark) #erp-main-tabs-container { background-color: #E5E7EB !important; } html:not(.dark) .erp-main-tab { color: #4B5563 !important; } html:not(.dark) .erp-main-tab.active { background-color: #1D4ED8 !important; color: #FFFFFF !important; } html:not(.dark) .tab-triangle { border-bottom-color: #FFFFFF !important; } html:not(.dark) thead { background-color: #F3F4F6 !important; color: #374151 !important; border-color: #D1D5DB !important; } html:not(.dark) tbody tr { background-color: #FFFFFF !important; border-color: #E5E7EB !important; color: #111827 !important; } html:not(.dark) tbody tr:hover { background-color: #F9FAFB !important; }</style><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-variant": "#323537", "on-tertiary": "#003824", "surface-dim": "#111416", "inverse-primary": "#2e4ce3", "surface": "#111416", "on-tertiary-fixed": "#002113", "secondary-fixed-dim": "#bec6e0", "inverse-surface": "#e1e2e5", "secondary": "#bec6e0", "tertiary": "#4edea3", "on-error-container": "#ffdad6", "on-tertiary-container": "#50e0a4", "secondary-fixed": "#dae2fc", "surface-container-high": "#272a2c", "on-primary": "#001e91", "inverse-on-surface": "#2e3133", "status-warning": "#F59E0B", "surface-container-low": "#191c1e", "surface-container-highest": "#323537", "surface-bright": "#373a3c", "surface-dark-elevated": "#1F2937", "on-background": "#e1e2e5", "on-primary-fixed-variant": "#002ecb", "primary-fixed": "#dee0ff", "background": "#111416", "on-secondary-fixed": "#131b2e", "canvas-dark": "#0B0F19", "border-dark": "#374151", "on-secondary": "#283044", "on-tertiary-fixed-variant": "#005236", "surface-container-lowest": "#0c0f10", "tertiary-container": "#006041", "on-primary-fixed": "#000f5c", "brand-blue-accent": "#1D3ED8", "on-surface-variant": "#c5c5d8", "on-error": "#690005", "outline": "#8e8fa1", "outline-variant": "#444655", "surface-tint": "#bac3ff", "secondary-container": "#3e465b", "primary-container": "#1d3ed8", "status-inflow": "#10B981", "tertiary-fixed": "#6ffbbe", "error-container": "#93000a", "on-secondary-container": "#adb5ce", "primary-fixed-dim": "#bac3ff", "on-primary-container": "#bcc4ff", "status-transfer": "#6366F1", "surface-dark": "#111827", "on-surface": "#e1e2e5", "status-critical": "#EF4444", "primary": "#bac3ff", "surface-container": "#1d2022", "tertiary-fixed-dim": "#4edea3", "error": "#ffb4ab", "on-secondary-fixed-variant": "#3e465b" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter-sm": "0.75rem", "margin": "1.5rem", "space-lg": "1.5rem", "space-md": "1rem", "space-sm": "0.5rem", "gutter": "1.25rem", "space-xl": "2rem", "margin-sm": "1rem", "space-xs": "0.25rem" }, "fontFamily": { "label-sm": ["Geist"], "headline-xl": ["Hanken Grotesk"], "headline-sm": ["Hanken Grotesk"], "label-md": ["Geist"], "headline-lg-mobile": ["Hanken Grotesk"], "headline-md": ["Hanken Grotesk"], "headline-lg": ["Hanken Grotesk"], "body-md": ["Hanken Grotesk"], "body-sm": ["Hanken Grotesk"], "body-lg": ["Hanken Grotesk"], "data-tabular": ["Geist"] }, "fontSize": { "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }], "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }], "headline-lg-mobile": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "data-tabular": ["13px", { "lineHeight": "18px", "letterSpacing": "-0.01em", "fontWeight": "500" }] } } } };</script></head><body class="bg-surface font-body-md text-on-surface selection:bg-primary-container selection:text-on-primary-container min-h-screen overflow-x-hidden"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-low z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.25)]"><div class="flex flex-col flex-1 overflow-y-auto"><div class="h-16 flex items-center px-margin bg-surface-container-lowest gap-space-sm"><div class="flex items-center justify-center w-8 h-8 rounded bg-primary-container font-headline-sm text-headline-sm font-bold tracking-wider text-white">S</div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface uppercase tracking-wide">SIFYGSA</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Fire &amp; Gas ERP</span></div></div><div class="px-margin-sm py-space-sm"><div class="flex items-center gap-space-xs px-space-sm py-space-xs rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm"><span class="material-symbols-outlined text-[16px] text-tertiary">shield</span><span>SGA Operativo v2.4</span></div></div><nav class="flex-1 px-space-sm space-y-space-md" data-active-classes="bg-primary-container text-on-primary font-headline-sm rounded-lg shadow-[0_1px_4px_rgba(0,0,0,0.3)]"><div class="space-y-space-xs"><div class="px-space-sm font-label-sm text-label-sm uppercase tracking-wider text-outline">Almacén</div><div class="space-y-0.5"><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="dashboard-general" href="#"><span class="material-symbols-outlined text-[18px]">grid_view</span><span>Dashboard General</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="entradas-de-almacen" href="#"><span class="material-symbols-outlined text-[18px]">move_to_inbox</span><span>Entradas de Almacén</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="salidas-de-almacen" href="#"><span class="material-symbols-outlined text-[18px]">outbox</span><span>Salidas de Almacén</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="alta-de-articulos" href="#"><span class="material-symbols-outlined text-[18px]">category</span><span>Alta de Artículos</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="alta-de-servicios" href="#"><span class="material-symbols-outlined text-[18px]">build_circle</span><span>Alta de Servicios</span></a></div></div><div class="space-y-space-xs"><div class="px-space-sm font-label-sm text-label-sm uppercase tracking-wider text-outline">Compras</div><div class="space-y-0.5"><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="ordenes-de-compra" href="#"><span class="material-symbols-outlined text-[18px]">receipt_long</span><span>Órdenes de Compra</span></a></div></div><div class="space-y-space-xs"><div class="px-space-sm font-label-sm text-label-sm uppercase tracking-wider text-outline">Proveedores</div><div class="space-y-0.5"><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="alta-de-proveedores" href="#"><span class="material-symbols-outlined text-[18px]">person_add</span><span>Alta de Proveedores</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="busqueda-de-proveedores" href="#"><span class="material-symbols-outlined text-[18px]">person_search</span><span>Búsqueda de Proveedores</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="documentos-de-proveedor" href="#"><span class="material-symbols-outlined text-[18px]">folder_shared</span><span>Documentos de Proveedor</span></a></div></div></nav></div><div class="p-space-sm bg-surface-container-lowest"><div class="flex items-center justify-between p-space-xs rounded bg-surface-container text-on-surface-variant"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-status-inflow text-[14px]">wifi_tethering</span><span class="font-label-sm text-label-sm">Terminal Online</span></div><span class="font-data-tabular text-data-tabular">SGA-QRO-01</span></div></div></aside><div class="pl-64 w-full"><header class="fixed top-0 left-64 right-0 h-16 bg-surface-container-low/90 backdrop-blur-xl z-40 flex items-center justify-between px-gutter shadow-[0_1px_8px_rgba(0,0,0,0.25)]"><div class="flex items-center gap-space-md flex-1 max-w-xl"><div class="relative w-full"><span class="material-symbols-outlined absolute left-space-sm top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span><input class="w-full h-10 pl-10 pr-space-md bg-surface-container rounded font-body-sm text-body-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:bg-surface-container-highest transition-colors" placeholder="Buscar artículo, código de barras, proveedor u orden..." type="text"><div class="absolute right-space-sm top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1"><kbd class="px-1.5 py-0.5 rounded bg-surface-variant font-label-sm text-label-sm text-on-surface-variant">Shift + S</kbd></div></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs px-space-sm py-space-xs rounded bg-surface-container text-on-surface font-body-sm text-body-sm"><span class="material-symbols-outlined text-primary text-[18px]">location_city</span><div class="flex flex-col text-left"><span class="font-label-sm text-label-sm uppercase text-outline">Ubicación Activa</span><span class="font-body-sm text-body-sm font-semibold">Sede Querétaro / Matriz</span></div></div><div class="relative"><button class="relative p-space-xs rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-status-critical"></span></button></div><button class="flex items-center gap-space-xs px-space-sm py-space-xs rounded bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors font-label-sm text-label-sm" id="theme-toggle-btn" onclick="const isDark = document.documentElement.classList.toggle('dark'); document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light'); const icon = document.getElementById('theme-icon'); const txt = document.getElementById('theme-text'); if(isDark){ icon.textContent='light_mode'; icon.className='material-symbols-outlined text-[18px] text-status-warning'; txt.textContent='Modo Claro'; } else { icon.textContent='dark_mode'; icon.className='material-symbols-outlined text-[18px] text-primary'; txt.textContent='Modo Oscuro'; }" title="Alternar Tema" type="button"><span class="material-symbols-outlined text-[18px] text-status-warning" id="theme-icon">light_mode</span><span class="hidden sm:inline" id="theme-text">Modo Claro</span></button><div class="h-8 w-px bg-surface-variant"></div><div class="flex items-center gap-space-sm pl-space-xs"><div class="flex flex-col text-right hidden md:flex"><span class="font-body-sm text-body-sm font-semibold text-on-surface">Roberto Velázquez</span><span class="font-label-sm text-label-sm text-on-surface-variant">Jefe de Almacén &amp; Logística</span></div><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1UFgcu6u7WIzawj6EFdqonhZPMLdCyHgK-mRXfxYXp6JE6sjkdLks6aw_iMUKOtN9KU-U7E92gO_sfvVKgFKiohgNkBMFmM83bxE9qfb9SGVtmvUmGGUzLkNoEaYxHbqh2A_cbEm_2EKNH3LgwVu91bELD61bXRdREQ9c1Gxn5woDccWk8qzVPAxISHJRNnY1yLi6I1psagFiegZyfadFg_AzNnOAc__W8zN4UjEanbuNN1zhzSFcItmogILAt0DhzbfDSTsef10Q"></div></div></header><main class="w-full pt-16 bg-surface px-gutter min-h-screen overflow-y-auto" style="min-height: 100vh; width: 100%; overflow-y: auto; scroll-behavior: smooth;"><div class="flex flex-col w-full py-6">
+<!-- BREADCRUMB & METADATA BAR -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm pb-space-md">
+<div class="flex items-center gap-space-xs font-label-md text-label-md text-outline">
+<a class="hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[16px]">business_center</span>
+<span>Compras</span>
+</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Proveedores</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-on-surface font-semibold">Alta de Proveedores</span>
+</div>
+<div class="flex items-center gap-space-sm self-start md:self-auto">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed-dim animate-pulse"></span>
+<span id="autosave-indicator">Guardado hace 1s</span>
+</div>
+<a class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md transition-colors shadow-sm" href="#">
+<span class="material-symbols-outlined text-[16px]">arrow_back</span>
+<span>Volver al Listado</span>
+</a>
+</div>
+</div>
+<!-- PAGE HEADER & SUPPLIER BADGE HERO STRIP -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg mb-space-lg shadow-sm relative overflow-hidden">
+<div class="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 rounded-full bg-primary/5 blur-3xl pointer-events-none"></div>
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md relative z-10">
+<div class="space-y-1"><div class="flex items-center gap-space-sm flex-wrap mb-1"><span class="px-2.5 py-0.5 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm uppercase tracking-wider">Módulo ERP</span><span class="px-2.5 py-0.5 rounded-lg bg-surface-container-high text-on-surface-variant font-data-tabular text-data-tabular">CFDI 4.0 Compliant</span><span class="px-2.5 py-0.5 rounded-lg bg-secondary-container text-on-secondary-fixed-variant font-label-sm text-label-sm flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">lock</span> Folio Reservado: PRV-2026-0048</span></div><h1 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">Alta de Proveedores</h1></div>
+
+</div>
+</div>
+<!-- HORIZONTAL STEPPER WIZARD (INTERACTIVE TABS) -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md mb-space-lg shadow-sm">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm pb-space-sm mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">linear_scale</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Asistente de Registro Multietapa</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label-md text-label-md text-outline" id="progress-percentage-label">Progreso General: 60%</span>
+<div class="w-36 h-2 rounded-full bg-surface-container-high overflow-hidden">
+<div class="h-full bg-primary-container transition-all duration-300" id="wizard-progress-bar" style="width: 60%;"></div>
+</div>
+</div>
+</div>
+<!-- Stepper Navigation Buttons -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2" id="wizard-stepper-nav">
+<!-- Step 1 Tab -->
+<button class="wizard-step-btn flex items-center gap-3 p-3 rounded-xl text-left transition-all bg-surface-container-low hover:bg-surface-container" id="step-nav-1" onclick="goToStep(1)" type="button">
+<div class="step-badge w-8 h-8 rounded-lg flex items-center justify-center font-data-tabular text-data-tabular font-bold bg-tertiary text-on-tertiary"><span class="material-symbols-outlined text-[16px]">check</span></div>
+<div class="flex flex-col min-w-0">
+<span class="step-title font-label-md text-label-md font-semibold text-on-surface truncate">1. Información General</span>
+<span class="step-sub text-[11px] text-tertiary font-medium">Completa</span>
+</div>
+</button>
+<!-- Step 2 Tab -->
+<button class="wizard-step-btn flex items-center gap-3 p-3 rounded-xl text-left transition-all bg-surface-container-low hover:bg-surface-container" id="step-nav-2" onclick="goToStep(2)" type="button">
+<div class="step-badge w-8 h-8 rounded-lg flex items-center justify-center font-data-tabular text-data-tabular font-bold bg-tertiary text-on-tertiary"><span class="material-symbols-outlined text-[16px]">check</span></div>
+<div class="flex flex-col min-w-0">
+<span class="step-title font-label-md text-label-md font-semibold text-on-surface truncate">2. Contacto &amp; Domicilio</span>
+<span class="step-sub text-[11px] text-tertiary font-medium">Completa</span>
+</div>
+</button>
+<!-- Step 3 Tab (Active) -->
+<button class="wizard-step-btn flex items-center gap-3 p-3 rounded-xl text-left transition-all bg-primary-container text-on-primary shadow-sm" id="step-nav-3" onclick="goToStep(3)" type="button">
+<div class="step-badge w-8 h-8 rounded-lg flex items-center justify-center font-data-tabular text-data-tabular font-bold bg-on-primary text-primary-container">3</div>
+<div class="flex flex-col min-w-0">
+<span class="step-title font-label-md text-label-md font-semibold truncate text-on-primary">3. Fiscal (CFDI 4.0)</span>
+<span class="step-sub text-[11px] text-on-primary-container font-medium">En Progreso</span>
+</div>
+</button>
+<!-- Step 4 Tab -->
+<button class="wizard-step-btn flex items-center gap-3 p-3 rounded-xl text-left transition-all bg-surface-container-low hover:bg-surface-container" id="step-nav-4" onclick="goToStep(4)" type="button">
+<div class="step-badge w-8 h-8 rounded-lg flex items-center justify-center font-data-tabular text-data-tabular font-bold bg-surface-container-high text-outline">4</div>
+<div class="flex flex-col min-w-0">
+<span class="step-title font-label-md text-label-md font-semibold text-on-surface truncate">4. Condiciones &amp; Banco</span>
+<span class="step-sub text-[11px] text-outline font-medium">Pendiente</span>
+</div>
+</button>
+<!-- Step 5 Tab -->
+<button class="wizard-step-btn flex items-center gap-3 p-3 rounded-xl text-left transition-all bg-surface-container-low hover:bg-surface-container" id="step-nav-5" onclick="goToStep(5)" type="button">
+<div class="step-badge w-8 h-8 rounded-lg flex items-center justify-center font-data-tabular text-data-tabular font-bold bg-surface-container-high text-outline">5</div>
+<div class="flex flex-col min-w-0">
+<span class="step-title font-label-md text-label-md font-semibold text-on-surface truncate">5. Resumen &amp; Expediente</span>
+<span class="step-sub text-[11px] text-outline font-medium">Pendiente</span>
+</div>
+</button>
+</div>
+</div>
+<!-- FORM CONTAINER WITH 5 TAB PANELS -->
+<form class="space-y-space-lg mb-24" id="provider-form" onsubmit="event.preventDefault();">
+<!-- ========================================== -->
+<!-- ETAPA 1: INFORMACIÓN GENERAL -->
+<!-- ========================================== -->
+<div class="wizard-panel space-y-space-lg hidden" id="step-panel-1">
+<div class="gap-space-lg w-full">
+<!-- Left 2 Cols: Main Info -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm space-y-space-md w-full">
+<div class="flex items-center justify-between pb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]">badge</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Datos de Identificación del Proveedor</h2>
+</div>
+<span class="font-label-sm text-label-sm text-outline">* Campos obligatorios</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md"><div><label class="block font-label-md text-label-md text-on-surface mb-1">ID Proveedor ERP</label><div class="relative"><input class="w-full h-10 px-3 pr-8 rounded-xl font-data-tabular text-data-tabular bg-surface-container text-on-surface-variant cursor-not-allowed" readonly="" type="text" value="PRV-2026-0048"><span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-outline text-[16px]">lock</span></div><p class="font-label-sm text-label-sm text-outline mt-1">Generado por secuencia del catálogo matriz.</p></div><div><div class="flex items-center justify-between mb-1"><label class="block font-label-md text-label-md text-on-surface">Tipo de Entidad Fiscal *</label><span class="text-tertiary text-[11px] font-label-sm font-semibold flex items-center gap-0.5"><span class="material-symbols-outlined text-[13px]">check</span> Desde CSF</span></div><select class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest"><option selected="" value="fisica">Persona Física con Actividad Empresarial</option><option value="moral">Persona Moral (Sociedad Anónima / S.A.P.I. / S. de R.L.)</option><option value="extranjero">Entidad Extranjera / Non-resident Supplier</option></select></div><div><div class="flex items-center justify-between mb-1"><label class="block font-label-md text-label-md text-on-surface">Nombre Comercial / Marca *</label><span class="text-tertiary text-[11px] font-label-sm font-semibold flex items-center gap-0.5"><span class="material-symbols-outlined text-[13px]">check</span> Autocompletado desde CSF</span></div><div class="relative"><input class="w-full h-10 px-3 pr-8 rounded-xl font-body-md text-body-md text-on-surface placeholder:text-outline bg-surface-container-lowest" id="nombreComercial" placeholder="Ej. YAK Adventure" type="text" value="YAK Adventure"><span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-tertiary text-[16px]" title="Editable manualmente">edit</span></div></div><div><label class="block font-label-md text-label-md text-on-surface mb-1">Tratamiento / Título</label><select class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest"><option selected="" value="Sra.">Sra. (Señora)</option><option value="Sr.">Sr. (Señor)</option><option value="Ing.">Ing. (Ingeniero/a)</option><option value="Lic.">Lic. (Licenciado/a)</option><option value="Dr.">Dr. (Doctor/a)</option></select></div><div><div class="flex items-center justify-between mb-1"><label class="block font-label-md text-label-md text-on-surface">Nombre del Proveedor / Representante *</label><span class="text-tertiary text-[11px] font-label-sm font-semibold flex items-center gap-0.5"><span class="material-symbols-outlined text-[13px]">check</span> Autocompletado desde CSF</span></div><div class="relative"><input class="w-full h-10 px-3 pr-8 rounded-xl font-body-md text-body-md text-on-surface placeholder:text-outline bg-surface-container-lowest" id="nombreRepresentante" type="text" value="Pamela León Cadena"><span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-tertiary text-[16px]" title="Editable manualmente">edit</span></div></div><div><label class="block font-label-md text-label-md text-on-surface mb-1">Denominación de Puesto de Trabajo</label><input class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface placeholder:text-outline bg-surface-container-lowest" type="text" value="Vendedora / Asesora Comercial de Cuentas Clave"></div><div><label class="block font-label-md text-label-md text-on-surface mb-1">Categoría Operativa</label><select class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest"><option selected="" value="industriales">Bienes, Herramientas y Servicios Industriales</option><option value="seguridad">Equipo de Protección Personal &amp; Detección de Fuego</option><option value="mantenimiento">Mantenimiento de Redes de Contra Incendio</option><option value="logistica">Transporte &amp; Fletes Terrestres</option></select></div><div><label class="block font-label-md text-label-md text-on-surface mb-1">Sitio Web Corporativo</label><div class="relative"><input class="w-full h-10 pl-9 pr-3 rounded-xl font-body-md text-body-md text-on-surface placeholder:text-outline bg-surface-container-lowest" type="url" value="https://www.yakadventure.com.mx"><span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">language</span></div></div><div class="md:col-span-2"><label class="block font-label-md text-label-md text-on-surface mb-1">Comentarios y Notas Operativas</label><textarea class="w-full p-3 rounded-xl font-body-md text-body-md text-on-surface placeholder:text-outline bg-surface-container-lowest resize-none" rows="3">Vendedora asignada a frente industrial Poza Rica / Minatitlán. Contacto directo por WhatsApp para cotizaciones urgentes de válvulas e instrumentación con entrega en planta.</textarea></div></div>
+</div>
+<!-- Right Col: Profile Overview & Checklist -->
+
+</div>
+</div>
+<!-- ========================================== -->
+<!-- ETAPA 2: CONTACTO Y DOMICILIO -->
+<!-- ========================================== -->
+<div class="wizard-panel space-y-space-lg hidden" id="step-panel-2">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-space-lg">
+<!-- Tarjeta 1: Contacto Ejecutivo -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm space-y-space-md">
+<div class="flex items-center gap-2 pb-space-sm">
+<span class="material-symbols-outlined text-primary text-[22px]">contact_phone</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Canales de Contacto Ejecutivo</h2>
+</div>
+<div class="space-y-space-md">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Correo Electrónico Principal *</label>
+<div class="relative">
+<input class="w-full h-10 pl-9 pr-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest" type="email" value="pamela.leon.ventas@gmail.com">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">mail</span>
+</div>
+<p class="font-label-sm text-label-sm text-outline mt-1">Receptor de órdenes de compra y solicitudes de cotización.</p>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Correo Alternativo / Facturación</label>
+<div class="relative">
+<input class="w-full h-10 pl-9 pr-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest" type="email" value="facturacion@yakadventure.com.mx">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">receipt_long</span>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Teléfono Móvil / WhatsApp *</label>
+<div class="relative">
+<input class="w-full h-10 pl-9 pr-24 rounded-xl font-data-tabular text-data-tabular text-on-surface bg-surface-container-lowest" type="tel" value="228 362 3996">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">smartphone</span>
+<span class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded-md bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-[10px] font-bold">WHATSAPP</span>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Teléfono Oficina / PBX</label>
+<div class="relative">
+<input class="w-full h-10 pl-9 pr-3 rounded-xl font-data-tabular text-data-tabular text-on-surface bg-surface-container-lowest" type="tel" value="(228) 814-6195">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">phone</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Teléfono Alternativo / Almacén</label>
+<input class="w-full h-10 px-3 rounded-xl font-data-tabular text-data-tabular text-on-surface bg-surface-container-lowest" type="tel" value="(272) 105-1335">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Número de Fax / Conmutador</label>
+<input class="w-full h-10 px-3 rounded-xl font-data-tabular text-data-tabular text-on-surface placeholder:text-outline bg-surface-container-lowest" placeholder="No registrado" type="text">
+</div>
+</div>
+</div>
+</div>
+<!-- Tarjeta 2: Domicilio Fiscal Registrado -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm space-y-space-md flex flex-col justify-between">
+<div class="space-y-space-md">
+<div class="flex items-center justify-between pb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]">location_on</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Domicilio Fiscal Registrado</h2>
+</div>
+<span class="px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed-variant font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                Verificada en Kárdex
+              </span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<div class="sm:col-span-2">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Atención / Destinatario en Sitio</label>
+<input class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest" type="text" value="Sra. Pamela León Cadena">
+</div>
+<div class="sm:col-span-2">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Calle y Número Exterior/Interior *</label>
+<input class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest" type="text" value="Calle Pípila #153">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Colonia / Asentamiento *</label>
+<input class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest" type="text" value="Col. José Cardel">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Código Postal (CP) *</label>
+<div class="flex gap-2">
+<input class="w-full h-10 px-3 rounded-xl font-data-tabular text-data-tabular text-on-surface bg-surface-container-lowest" maxlength="5" type="text" value="91030">
+<button class="px-3 h-10 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md flex-shrink-0 transition-colors" type="button">
+                    Validar
+                  </button>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Municipio / Alcaldía *</label>
+<input class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest" type="text" value="Xalapa">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Estado / Entidad Federativa *</label>
+<input class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest" type="text" value="Veracruz">
+</div>
+<div class="sm:col-span-2">
+<label class="block font-label-md text-label-md text-on-surface mb-1">País *</label>
+<input class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container cursor-not-allowed" readonly="" type="text" value="México (MEX)">
+</div>
+</div>
+</div>
+<!-- Geolocation Map Preview Component -->
+<div class="mt-space-md pt-space-sm">
+<div class="w-full h-32 rounded-xl bg-cover bg-center overflow-hidden relative shadow-inner" data-location="Calle Pipila 153, Jose Cardel, Xalapa, Veracruz, Mexico" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuALT7Z0iJofdUtWnNs-rpwpmod25K0I7W05JDzEPIAJ2M_x_xIj243JMCLTHY_38NIr6XJz3UREJnN_Tg3EZ34oqZRbh4_j_mgt9cfoTfZGSdoTmqu2ghPRKO3OYMxqORXJJXbgFtKzp3-O9PaGIdyGB8gZ4JK8dHjlFHaWyrpzGMMAmDn09lo0lWdBE6t4SylXEoI9x98H8rGm0C2qY3paR6lySEiSHnnbOYjmY3E')">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-2.5">
+<span class="text-white font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-tertiary-fixed">pin_drop</span>
+                  Coordenadas: 19.5392° N, 96.9189° W (Xalapa Centro)
+                </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ========================================== -->
+<!-- ETAPA 3: INFORMACIÓN FISCAL (CFDI 4.0) [ACTIVA] -->
+<!-- ========================================== -->
+<div class="wizard-panel space-y-space-lg" id="step-panel-3">
+<!-- CFDI 4.0 Principal Card -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm space-y-space-md">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm pb-space-sm">
+    <div class="flex items-center gap-2">
+      
+      <div>
+        
+        
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- Dropzone & Upload State -->
+  
+
+  <!-- Extracted / Verified Fields Grid -->
+  <div class="pt-space-xs">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-tertiary text-[18px]">verified_user</span>
+        <span class="font-label-md text-label-md font-semibold text-on-surface">Campos Fiscales Extraídos y Validados</span>
+      </div>
+      <span class="font-label-sm text-label-sm text-outline">Puedes editar manualmente cualquier campo si requieres ajustes.</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
+      <!-- RFC -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="font-label-md text-label-md text-on-surface">Registro Federal de Contribuyentes (RFC) *</label>
+          <span class="text-tertiary text-[11px] font-label-sm font-semibold flex items-center gap-0.5">
+            <span class="material-symbols-outlined text-[13px]">check</span> Validado SAT
+          </span>
+        </div>
+        <div class="relative">
+          <input type="text" value="LECP811207UJ9" class="w-full h-10 px-3 uppercase tracking-wider font-data-tabular text-data-tabular font-bold text-on-surface bg-surface-container-lowest">
+          <span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-tertiary text-[20px]">task_alt</span>
+        </div>
+        <p class="font-label-sm text-label-sm text-outline mt-1">Estructura válida para Persona Física (13 dígitos).</p>
+      </div>
+
+      <!-- Legal Name -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="font-label-md text-label-md text-on-surface">CFDI 4.0: Razón Social SAT *</label>
+          <span class="text-tertiary text-[11px] font-label-sm font-semibold flex items-center gap-0.5">
+            <span class="material-symbols-outlined text-[13px]">check</span> Desde CSF
+          </span>
+        </div>
+        <input type="text" value="PAMELA LEON CADENA" class="w-full h-10 px-3 uppercase tracking-wider font-body-md text-body-md font-semibold text-on-surface bg-surface-container-lowest">
+        <p class="font-label-sm text-label-sm text-outline mt-1">Coincide 100% idéntico con la cédula del SAT.</p>
+      </div>
+
+      <!-- CFDI Usage -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="font-label-md text-label-md text-on-surface">CFDI 4.0: Uso de CFDI Sugerido *</label>
+          <span class="text-outline text-[11px] font-label-sm font-medium">Predeterminado</span>
+        </div>
+        <select class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest">
+          <option value="G03" selected="">G03 - Gastos en general</option>
+          <option value="G01">G01 - Adquisición de mercancías</option>
+          <option value="I08">I08 - Mandos y refacciones</option>
+          <option value="S01">S01 - Sin efectos fiscales</option>
+          <option value="CP01">CP01 - Pagos</option>
+        </select>
+      </div>
+
+      <!-- Tax Regime -->
+      <div class="md:col-span-2">
+        <div class="flex items-center justify-between mb-1">
+          <label class="font-label-md text-label-md text-on-surface">CFDI 4.0: Régimen Fiscal SAT *</label>
+          <span class="text-tertiary text-[11px] font-label-sm font-semibold flex items-center gap-0.5">
+            <span class="material-symbols-outlined text-[13px]">check</span> Extraído CSF
+          </span>
+        </div>
+        <select class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest">
+          <option value="605">605 - Sueldos y Salarios e Ingresos Asimilados a Salarios</option>
+          <option value="612" selected="">612 - Personas Físicas con Actividades Empresariales y Profesionales</option>
+          <option value="626">626 - Régimen Simplificado de Confianza (RESICO)</option>
+          <option value="601">601 - General de Ley Personas Morales</option>
+        </select>
+      </div>
+
+      <!-- Postal Code & Emission Date -->
+      <div class="grid grid-cols-2 gap-space-sm">
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-label-md text-label-md text-on-surface">C.P. Fiscal *</label>
+            <span class="text-tertiary text-[11px] font-label-sm font-semibold flex items-center gap-0.5">
+              <span class="material-symbols-outlined text-[13px]">check</span> CSF
+            </span>
+          </div>
+          <input type="text" value="91030" maxlength="5" class="w-full h-10 px-3 rounded-xl font-data-tabular text-data-tabular text-on-surface bg-surface-container-lowest">
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-label-md text-label-md text-on-surface">Emisión CSF</label>
+            <span class="text-status-inflow text-[11px] font-label-sm font-semibold">Vigente</span>
+          </div>
+          <input type="text" value="08/07/2026" readonly="" class="w-full h-10 px-3 rounded-xl font-data-tabular text-data-tabular text-on-surface bg-surface-container cursor-not-allowed">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Secondary Table: Additional Tax Registrations / Factoring -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm space-y-space-md">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Registros Fiscales Adicionales &amp; Esquemas CFDI Factoring</h3>
+<p class="font-body-sm text-body-sm text-outline">Administra registros de retención o registros fiscales transfronterizos.</p>
+</div>
+<button class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-on-primary font-label-md text-label-md hover:bg-on-primary-fixed-variant transition-colors shadow-sm" onclick="openTaxModal()" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Agregar Registro Fiscal</span>
+</button>
+</div>
+<div class="overflow-x-auto rounded-xl">
+<table class="w-full text-left" id="tax-records-table"><colgroup><col class="w-[24%]"><col class="w-[22%]"><col class="w-[28%]"><col class="w-[15%]"><col class="w-[11%]"></colgroup><thead><tr class="bg-surface-container-high text-outline font-label-sm text-label-sm uppercase"><th class="py-3.5 px-4 font-semibold">País / Jurisdicción</th><th class="py-3.5 px-4 font-semibold">No. Identificación Fiscal / Tax ID</th><th class="py-3.5 px-4 font-semibold">Tipo de Registro</th><th class="py-3.5 px-4 font-semibold">Estatus SAT</th><th class="py-3.5 px-4 text-right font-semibold">Acciones</th></tr></thead><tbody class="font-body-sm text-body-sm divide-y-0"><tr class="bg-surface-container-lowest hover:bg-surface-container-low transition-colors"><td class="py-3.5 px-4 font-semibold text-on-surface"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">public</span><span>México (Federal)</span></div></td><td class="py-3.5 px-4 font-data-tabular text-data-tabular font-bold text-on-surface tracking-wide">LECP811207UJ9</td><td class="py-3.5 px-4 text-on-surface-variant font-medium">Matriz Principal SAT</td><td class="py-3.5 px-4"><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed-variant font-label-sm text-label-sm font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>Validado Activo</span></td><td class="py-3.5 px-4 text-right"><div class="flex items-center justify-end gap-2"><button class="p-1.5 rounded-lg hover:bg-surface-container text-outline hover:text-on-surface transition-colors" title="Editar registro" type="button"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="p-1.5 rounded-lg hover:bg-surface-container text-outline cursor-not-allowed" title="Registro obligatorio (No eliminable)" type="button"><span class="material-symbols-outlined text-[18px]">lock</span></button></div></td></tr><tr class="bg-surface-container-low/40 hover:bg-surface-container-low transition-colors"><td class="py-3.5 px-4 font-semibold text-on-surface"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-outline text-[18px]">account_balance</span><span>Veracruz (Estatal 3%)</span></div></td><td class="py-3.5 px-4 font-data-tabular text-data-tabular text-on-surface tracking-wide">VER-LECP811207</td><td class="py-3.5 px-4 text-on-surface-variant font-medium">Impuesto Sobre Nómina / Prestación</td><td class="py-3.5 px-4"><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-outline"></span>En Cotejo</span></td><td class="py-3.5 px-4 text-right"><div class="flex items-center justify-end gap-2"><button class="p-1.5 rounded-lg hover:bg-surface-container text-outline hover:text-on-surface transition-colors" title="Editar registro" type="button"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="p-1.5 rounded-lg hover:bg-surface-container text-outline hover:text-error transition-colors" onclick="this.closest('tr').remove()" title="Eliminar registro" type="button"><span class="material-symbols-outlined text-[18px]">delete</span></button></div></td></tr></tbody></table>
+</div>
+</div>
+</div>
+<!-- ========================================== -->
+<!-- ETAPA 4: CLASIFICACIÓN Y CONDICIONES -->
+<!-- ========================================== -->
+<div class="wizard-panel space-y-space-lg hidden" id="step-panel-4">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-space-lg">
+<!-- Tarjeta 1: Clasificación Interna -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm space-y-space-md">
+<div class="flex items-center gap-2 pb-space-sm">
+<span class="material-symbols-outlined text-primary text-[22px]">corporate_fare</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Clasificación Interna &amp; Control</h2>
+</div>
+<div class="space-y-space-md">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Subsidiaria Primaria Asignada *</label>
+<select class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest">
+<option selected="" value="sifygsa">SIFYGSA Fire &amp; Gas S.A. de C.V.</option>
+<option value="matriz">SIFYGSA Querétaro Matriz</option>
+<option value="golfo">SIFYGSA Operaciones Golfo / Veracruz</option>
+</select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Comprador Responsable Interno</label>
+<select class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest">
+<option selected="" value="carlos">Ing. Carlos Mendoza Estrada (Compras Industriales)</option>
+<option value="roberto">Roberto Velázquez (Jefe de Almacén)</option>
+<option value="daniela">Lic. Daniela Morales (Adquisiciones)</option>
+</select>
+</div>
+<div class="p-3 rounded-xl bg-surface-container-low flex items-start gap-3">
+<input checked="" class="mt-1 w-4 h-4 rounded text-primary focus:ring-0" id="chk-proyecto" type="checkbox">
+<div>
+<label class="font-label-md text-label-md font-semibold text-on-surface cursor-pointer" for="chk-proyecto">Proveedor de Proyecto</label>
+<p class="font-body-sm text-body-sm text-outline">Habilitado para asignación directa y requisición rápida a frentes de obra e instalaciones de clientes industriales.</p>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Dirección de Correo para Notificación de Pagos</label>
+<div class="relative">
+<input class="w-full h-10 pl-9 pr-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest" type="email" value="pagos.tesoreria@yakadventure.com.mx">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">payments</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Tarjeta 2: Condiciones Financieras y Crédito -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm space-y-space-md">
+<div class="flex items-center gap-2 pb-space-sm">
+<span class="material-symbols-outlined text-primary text-[22px]">credit_card</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Condiciones Comerciales y Crédito</h2>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Condición de Pago *</label>
+<select class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest">
+<option selected="" value="net30">Crédito 30 días</option>
+<option value="contado">Contado Inmediato</option>
+<option value="net15">Crédito 15 días</option>
+<option value="net60">Crédito 60 días</option>
+</select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Límite de Crédito Autorizado</label>
+<input class="w-full h-10 px-3 rounded-xl font-data-tabular text-data-tabular font-bold text-on-surface bg-surface-container-lowest" type="text" value="$150,000.00 MXN">
+</div>
+<div class="sm:col-span-2">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Cuenta Contable Pasivo ERP</label>
+<input class="w-full h-10 px-3 rounded-xl font-data-tabular text-data-tabular bg-surface-container text-on-surface-variant" readonly="" type="text" value="2110-0010-0000-0048 · PROVEEDORES NACIONALES MXN">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Método de Pago SAT</label>
+<select class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest">
+<option selected="" value="PPD">PPD - Pago en parcialidades o diferido</option>
+<option value="PUE">PUE - Pago en una sola exhibición</option>
+</select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Forma de Pago SAT Predeterminada</label>
+<select class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest">
+<option selected="" value="99">99 - Por definir</option>
+<option value="03">03 - Transferencia electrónica de fondos</option>
+<option value="02">02 - Cheque nominativo</option>
+</select>
+</div>
+</div>
+</div>
+</div>
+<!-- Datos Bancarios & Monedas Sub-Tables -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-space-lg">
+<!-- Multi-Moneda Table -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm space-y-space-md">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Monedas Operativas Autorizadas</h3>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md transition-colors" onclick="openCurrencyModal()" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>Agregar Moneda</span>
+</button>
+</div>
+<div class="overflow-x-auto rounded-xl">
+<table class="w-full text-left" id="currencies-table">
+<thead>
+<tr class="bg-surface-container-high text-outline font-label-sm text-label-sm uppercase">
+<th class="py-2.5 px-3">Divisa</th>
+<th class="py-2.5 px-3">Tipo de Cambio</th>
+<th class="py-2.5 px-3">Rol</th>
+<th class="py-2.5 px-3 text-right">Acción</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2.5 px-3 font-semibold text-on-surface">MXN - Peso Mexicano</td>
+<td class="py-2.5 px-3 font-data-tabular text-data-tabular">$1.0000</td>
+<td class="py-2.5 px-3">
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed-variant font-label-sm text-label-sm">Primaria</span>
+</td>
+<td class="py-2.5 px-3 text-right text-outline"><span class="material-symbols-outlined text-[18px]">lock</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2.5 px-3 font-semibold text-on-surface">USD - Dólar Estadounidense</td>
+<td class="py-2.5 px-3 font-data-tabular text-data-tabular">$18.4500 (Banxico)</td>
+<td class="py-2.5 px-3">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm">Secundaria</span>
+</td>
+<td class="py-2.5 px-3 text-right">
+<button class="p-1 hover:text-error text-outline transition-colors" onclick="this.closest('tr').remove()" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Bank Details Table -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm space-y-space-md">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Cuentas Bancarias para Dispersión</h3>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>Nueva Cuenta</span>
+</button>
+</div>
+<div class="space-y-2">
+<div class="p-3 rounded-xl bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high text-primary flex items-center justify-center font-bold text-sm">
+                  BNX
+                </div>
+<div>
+<div class="font-label-md text-label-md font-semibold text-on-surface">Pamela León Cadena · CLABE Interbancaria</div>
+<div class="font-data-tabular text-data-tabular text-outline">002840700777790091 (Banamex · MXN)</div>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed-variant font-label-sm text-label-sm font-semibold">Validada</span>
+</div>
+<div class="p-3 rounded-xl bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high text-primary flex items-center justify-center font-bold text-sm">
+                  BNX
+                </div>
+<div>
+<div class="font-label-md text-label-md font-semibold text-on-surface">Pamela León Cadena · Cta Cheques</div>
+<div class="font-data-tabular text-data-tabular text-outline">70077779009 (Banamex Suc. 7007)</div>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm">Secundaria</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ========================================== -->
+<!-- ETAPA 5: DOCUMENTACIÓN Y RESUMEN -->
+<!-- ========================================== -->
+<div class="wizard-panel space-y-space-lg hidden" id="step-panel-5">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-lg">
+<!-- Left 2 Cols: Expediente Digital Documental -->
+<div class="lg:col-span-2 bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm space-y-space-md">
+<div class="flex items-center justify-between pb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[24px]">folder_shared</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Expediente Digital del Proveedor</h2>
+<p class="font-body-sm text-body-sm text-outline">Documentación obligatoria para auditoría contable y cumplimiento SAT.</p>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">upload_file</span>
+<span>Adjuntar Archivo</span>
+</button>
+</div>
+<!-- Drag and Drop Dropzone -->
+<div class="p-6 rounded-2xl bg-surface-container-low text-center space-y-2 cursor-pointer hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-primary text-[36px]">cloud_upload</span>
+<p class="font-label-md text-label-md font-semibold text-on-surface">Arrastra y suelta tus archivos aquí o haz clic para explorar</p>
+<p class="font-label-sm text-label-sm text-outline">Formatos permitidos: PDF, XML, PNG, JPG (Máx. 15MB por archivo)</p>
+</div>
+<!-- Document List -->
+<div class="space-y-space-sm pt-space-xs">
+<!-- Doc 1 -->
+<div class="p-3.5 rounded-xl bg-surface-container-low flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high text-error flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+</div>
+<div class="min-w-0">
+<p class="font-label-md text-label-md font-semibold text-on-surface truncate">Constancia de Situación Fiscal SAT (CSF)</p>
+<p class="font-data-tabular text-[12px] text-outline">CSF_LECP811207UJ9.pdf · 138 KB · Subido hoy 10:24 AM</p>
+</div>
+</div>
+<div class="flex items-center gap-space-sm flex-shrink-0">
+<span class="px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed-variant font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check</span> Validada
+                </span>
+<button class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</div>
+<!-- Doc 2 -->
+<div class="p-3.5 rounded-xl bg-surface-container-low flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high text-error flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+</div>
+<div class="min-w-0">
+<p class="font-label-md text-label-md font-semibold text-on-surface truncate">Carátula Bancaria Banamex Oficial</p>
+<p class="font-data-tabular text-[12px] text-outline">Caratula_Banamex_Pamela.pdf · 181 KB · Subido hoy 10:28 AM</p>
+</div>
+</div>
+<div class="flex items-center gap-space-sm flex-shrink-0">
+<span class="px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed-variant font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check</span> Validada
+                </span>
+<button class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</div>
+<!-- Doc 3 -->
+<div class="p-3.5 rounded-xl bg-surface-container-low flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high text-error flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+</div>
+<div class="min-w-0">
+<p class="font-label-md text-label-md font-semibold text-on-surface truncate">Opinión de Cumplimiento SAT 32-D</p>
+<p class="font-data-tabular text-[12px] text-outline">Opinion_Positiva_32D.pdf · 245 KB · Positiva ✓</p>
+</div>
+</div>
+<div class="flex items-center gap-space-sm flex-shrink-0">
+<span class="px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed-variant font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check</span> Positiva
+                </span>
+<button class="p-1 text-outline hover:text-on-surface rounded" type="button">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Col: Audit Score & Section Shortcuts -->
+<div class="space-y-space-md">
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm space-y-space-md text-center">
+<h3 class="font-headline-sm text-headline-sm text-on-surface text-left">Resumen Ejecutivo de Alta</h3>
+<!-- Radial Progress Gauge (Inline SVG) -->
+<div class="relative w-36 h-36 mx-auto flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+<path class="text-surface-container-high" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.5"></path>
+<path class="text-tertiary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="100, 100" stroke-linecap="round" stroke-width="3.5"></path>
+</svg>
+<div class="absolute flex flex-col items-center justify-center">
+<span class="font-headline-lg text-headline-lg font-bold text-on-surface">100%</span>
+<span class="font-label-sm text-[10px] text-outline uppercase tracking-wider">Conformidad</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              Toda la información obligatoria y los documentos de soporte han sido verificados satisfactoriamente.
+            </p>
+<div class="space-y-2 text-left pt-space-xs">
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+<span class="font-label-sm text-label-sm text-outline">Datos Generales</span>
+<button class="font-label-sm text-label-sm text-primary hover:underline" onclick="goToStep(1)" type="button">Editar</button>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+<span class="font-label-sm text-label-sm text-outline">Contacto y Domicilio</span>
+<button class="font-label-sm text-label-sm text-primary hover:underline" onclick="goToStep(2)" type="button">Editar</button>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+<span class="font-label-sm text-label-sm text-outline">SAT CFDI 4.0</span>
+<button class="font-label-sm text-label-sm text-primary hover:underline" onclick="goToStep(3)" type="button">Editar</button>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+<span class="font-label-sm text-label-sm text-outline">Financiero y Cuentas</span>
+<button class="font-label-sm text-label-sm text-primary hover:underline" onclick="goToStep(4)" type="button">Editar</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</form>
+<!-- STICKY ACTION FOOTER BAR -->
+<div class="fixed bottom-0 left-64 right-0 bg-surface-container-lowest/95 backdrop-blur-md px-gutter py-space-sm flex items-center justify-between z-30 shadow-lg">
+<!-- Left: Draft and Status -->
+<div class="flex items-center gap-space-sm">
+<button class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors shadow-sm" onclick="saveDraftNotification()" type="button">
+<span class="material-symbols-outlined text-[18px]">save</span>
+<span class="hidden sm:inline">Guardar Borrador</span>
+</button>
+<span class="font-label-sm text-label-sm text-outline hidden md:inline">Cambios guardados en memoria local</span>
+</div>
+<!-- Center: Cancel Option -->
+<div>
+<button class="px-3 py-2 rounded-xl text-outline hover:text-error hover:bg-surface-container-high font-label-md text-label-md transition-colors" onclick="confirmCancel()" type="button">
+        Cancelar Registro
+      </button>
+</div>
+<!-- Right: Navigation Stepper Controls -->
+<div class="flex items-center gap-space-sm">
+<button class="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors shadow-sm" id="btn-prev-step" onclick="prevStep()" type="button">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+<span>Anterior</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary text-on-primary hover:bg-on-primary-fixed-variant font-label-md text-label-md font-semibold transition-all shadow-md active:scale-95" id="btn-next-step" onclick="nextStep()" type="button">
+<span id="btn-next-text">Continuar a Condiciones &amp; Banco →</span>
+<span class="material-symbols-outlined text-[18px]" id="btn-next-icon">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- TOAST NOTIFICATION CONTAINER -->
+<div class="fixed top-20 right-6 z-50 transform transition-all duration-300 translate-y-[-100px] opacity-0 pointer-events-none" id="toast">
+<div class="bg-surface-dark text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary-fixed text-[20px]" id="toast-icon">task_alt</span>
+<span class="font-label-md text-label-md" id="toast-message">¡Proveedor YAK Adventure registrado exitosamente en el catálogo ERP!</span>
+</div>
+</div>
+<!-- MODAL: AGREGAR REGISTRO FISCAL -->
+<div class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" id="modal-tax">
+<div class="bg-surface-container-lowest rounded-2xl max-w-lg w-full p-space-lg shadow-2xl space-y-space-md animate-in fade-in zoom-in-95 duration-200">
+<div class="flex items-center justify-between pb-space-xs">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Agregar Registro Fiscal Extra</h3>
+<button class="p-1 rounded text-outline hover:text-on-surface" onclick="closeTaxModal()" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="space-y-space-md">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">País o Jurisdicción *</label>
+<select class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest" id="modal-tax-country">
+<option value="México (Estatal Puebla)">México (Estatal Puebla 3%)</option>
+<option value="México (Estatal NL)">México (Estatal Nuevo León 3%)</option>
+<option value="Estados Unidos (IRS EIN)">Estados Unidos (IRS EIN - W9 Form)</option>
+</select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">No. de Registro / Tax Identification Number *</label>
+<input class="w-full h-10 px-3 rounded-xl font-data-tabular text-data-tabular text-on-surface bg-surface-container-lowest" id="modal-tax-id" placeholder="Ej. PUE-99201948" type="text">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Tipo de Gravamen o Rol</label>
+<input class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest" id="modal-tax-type" placeholder="Ej. Retención ISR / Padrón Local de Contratistas" type="text">
+</div>
+</div>
+<div class="flex items-center justify-end gap-2 pt-space-xs">
+<button class="px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md" onclick="closeTaxModal()" type="button">Cancelar</button>
+<button class="px-4 py-2 rounded-xl bg-primary text-on-primary hover:bg-on-primary-fixed-variant font-label-md text-label-md font-semibold" onclick="addTaxRecord()" type="button">Guardar Registro</button>
+</div>
+</div>
+</div>
+<!-- MODAL: AGREGAR MONEDA -->
+<div class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" id="modal-currency">
+<div class="bg-surface-container-lowest rounded-2xl max-w-md w-full p-space-lg shadow-2xl space-y-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Agregar Divisa de Operación</h3>
+<button class="p-1 rounded text-outline hover:text-on-surface" onclick="closeCurrencyModal()" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="space-y-space-md">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Moneda *</label>
+<select class="w-full h-10 px-3 rounded-xl font-body-md text-body-md text-on-surface bg-surface-container-lowest" id="modal-curr-select">
+<option value="EUR - Euro Europeo">EUR - Euro Europeo</option>
+<option value="CAD - Dólar Canadiense">CAD - Dólar Canadiense</option>
+<option value="GBP - Libra Esterlina">GBP - Libra Esterlina</option>
+</select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Tipo de Cambio Fix Banxico</label>
+<input class="w-full h-10 px-3 rounded-xl font-data-tabular text-data-tabular text-on-surface bg-surface-container-lowest" id="modal-curr-tc" type="text" value="$20.1500">
+</div>
+</div>
+<div class="flex items-center justify-end gap-2 pt-space-xs">
+<button class="px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md" onclick="closeCurrencyModal()" type="button">Cancelar</button>
+<button class="px-4 py-2 rounded-xl bg-primary text-on-primary hover:bg-on-primary-fixed-variant font-label-md text-label-md font-semibold" onclick="addCurrencyRecord()" type="button">Agregar Divisa</button>
+</div>
+</div>
+</div>
+</div>
+<!-- INTERACTIVE WIZARD & COMPONENT CONTROLLER -->
+<script>
+  let currentStep = 3;
+  const totalSteps = 5;
+
+  const stepMeta = [
+    { title: "1. Información General", nextText: "Continuar a Contacto →" },
+    { title: "2. Contacto & Domicilio", nextText: "Continuar a Información Fiscal →" },
+    { title: "3. Fiscal (CFDI 4.0)", nextText: "Continuar a Condiciones & Banco →" },
+    { title: "4. Condiciones & Banco", nextText: "Continuar a Resumen & Expediente →" },
+    { title: "5. Resumen & Expediente", nextText: "✓ Finalizar y Dar de Alta Proveedor" }
+  ];
+
+  function updateWizardUI() {
+    // Show/Hide Panels
+    for (let i = 1; i <= totalSteps; i++) {
+      const panel = document.getElementById(`step-panel-${i}`);
+      const btn = document.getElementById(`step-nav-${i}`);
+      if (!panel || !btn) continue;
+
+      if (i === currentStep) {
+        panel.classList.remove('hidden');
+        btn.className = 'wizard-step-btn flex items-center gap-3 p-3 rounded-xl text-left transition-all bg-primary-container text-on-primary shadow-sm';
+        const badge = btn.querySelector('.step-badge');
+        badge.className = 'step-badge w-8 h-8 rounded-lg flex items-center justify-center font-data-tabular text-data-tabular font-bold bg-on-primary text-primary-container';
+        badge.textContent = i;
+        btn.querySelector('.step-title').className = 'step-title font-label-md text-label-md font-semibold truncate text-on-primary';
+        btn.querySelector('.step-sub').className = 'step-sub text-[11px] text-on-primary-container font-medium';
+        btn.querySelector('.step-sub').textContent = 'En Progreso';
+      } else if (i < currentStep) {
+        panel.classList.add('hidden');
+        btn.className = 'wizard-step-btn flex items-center gap-3 p-3 rounded-xl text-left transition-all bg-surface-container-low hover:bg-surface-container';
+        const badge = btn.querySelector('.step-badge');
+        badge.className = 'step-badge w-8 h-8 rounded-lg flex items-center justify-center font-data-tabular text-data-tabular font-bold bg-tertiary text-on-tertiary';
+        badge.innerHTML = '<span class="material-symbols-outlined text-[16px]">check</span>';
+        btn.querySelector('.step-title').className = 'step-title font-label-md text-label-md font-semibold text-on-surface truncate';
+        btn.querySelector('.step-sub').className = 'step-sub text-[11px] text-tertiary font-medium';
+        btn.querySelector('.step-sub').textContent = 'Completa';
+      } else {
+        panel.classList.add('hidden');
+        btn.className = 'wizard-step-btn flex items-center gap-3 p-3 rounded-xl text-left transition-all bg-surface-container-low hover:bg-surface-container';
+        const badge = btn.querySelector('.step-badge');
+        badge.className = 'step-badge w-8 h-8 rounded-lg flex items-center justify-center font-data-tabular text-data-tabular font-bold bg-surface-container-high text-outline';
+        badge.textContent = i;
+        btn.querySelector('.step-title').className = 'step-title font-label-md text-label-md font-semibold text-on-surface truncate';
+        btn.querySelector('.step-sub').className = 'step-sub text-[11px] text-outline font-medium';
+        btn.querySelector('.step-sub').textContent = 'Pendiente';
+      }
+    }
+
+    // Update Progress bar & Label
+    const progressPercent = Math.round((currentStep / totalSteps) * 100);
+    const progressBar = document.getElementById('wizard-progress-bar');
+    const progressLabel = document.getElementById('progress-percentage-label');
+    if (progressBar) progressBar.style.width = `${progressPercent}%`;
+    if (progressLabel) progressLabel.textContent = `Progreso General: ${progressPercent}%`;
+
+    // Update Footer Buttons
+    const prevBtn = document.getElementById('btn-prev-step');
+    const nextBtn = document.getElementById('btn-next-step');
+    const nextText = document.getElementById('btn-next-text');
+    const nextIcon = document.getElementById('btn-next-icon');
+
+    if (prevBtn) {
+      if (currentStep === 1) {
+        prevBtn.setAttribute('disabled', 'true');
+        prevBtn.classList.add('opacity-40', 'cursor-not-allowed');
+      } else {
+        prevBtn.removeAttribute('disabled');
+        prevBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+      }
+    }
+
+    if (nextBtn && nextText && nextIcon) {
+      if (currentStep === totalSteps) {
+        nextText.textContent = "✓ Finalizar y Dar de Alta Proveedor";
+        nextIcon.textContent = "check_circle";
+        nextBtn.className = "inline-flex items-center gap-1.5 px-6 py-2 rounded-xl bg-tertiary text-on-tertiary hover:bg-tertiary-container font-label-md text-label-md font-bold transition-all shadow-md active:scale-95";
+      } else {
+        nextText.textContent = stepMeta[currentStep - 1].nextText;
+        nextIcon.textContent = "arrow_forward";
+        nextBtn.className = "inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary text-on-primary hover:bg-on-primary-fixed-variant font-label-md text-label-md font-semibold transition-all shadow-md active:scale-95";
+      }
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function goToStep(step) {
+    if (step >= 1 && step <= totalSteps) {
+      currentStep = step;
+      updateWizardUI();
+    }
+  }
+
+  function nextStep() {
+    if (currentStep < totalSteps) {
+      currentStep++;
+      updateWizardUI();
+    } else {
+      showToast("¡Proveedor YAK Adventure registrado exitosamente en el catálogo ERP!", "task_alt");
+    }
+  }
+
+  function prevStep() {
+    if (currentStep > 1) {
+      currentStep--;
+      updateWizardUI();
+    }
+  }
+
+  function showToast(message, iconName = "check_circle") {
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toast-message');
+    const toastIcon = document.getElementById('toast-icon');
+    if (!toast || !toastMsg) return;
+
+    toastMsg.textContent = message;
+    if (toastIcon && iconName) toastIcon.textContent = iconName;
+
+    toast.classList.remove('translate-y-[-100px]', 'opacity-0', 'pointer-events-none');
+    toast.classList.add('translate-y-0', 'opacity-100');
+
+    setTimeout(() => {
+      toast.classList.add('translate-y-[-100px]', 'opacity-0', 'pointer-events-none');
+      toast.classList.remove('translate-y-0', 'opacity-100');
+    }, 3200);
+  }
+
+  function saveDraftNotification() {
+    showToast("Borrador guardado localmente a las " + new Date().toLocaleTimeString());
+    const indicator = document.getElementById('autosave-indicator');
+    if (indicator) indicator.textContent = "Guardado hace 1s";
+  }
+
+  function confirmCancel() {
+    if (confirm("¿Estás seguro de cancelar? Se conservarán únicamente los datos sincronizados en el borrador local.")) {
+      showToast("Operación cancelada.", "info");
+    }
+  }
+
+  // Modals Controller
+  function openTaxModal() {
+    const m = document.getElementById('modal-tax');
+    if (m) m.classList.remove('hidden');
+  }
+
+  function closeTaxModal() {
+    const m = document.getElementById('modal-tax');
+    if (m) m.classList.add('hidden');
+  }
+
+  function addTaxRecord() {
+    const country = document.getElementById('modal-tax-country').value;
+    const taxId = document.getElementById('modal-tax-id').value || "REG-99482";
+    const type = document.getElementById('modal-tax-type').value || "Registro Secundario";
+
+    const tbody = document.querySelector('#tax-records-table tbody');
+    if (tbody) {
+      const tr = document.createElement('tr');
+      tr.className = "bg-surface-container-lowest hover:bg-surface-container-low transition-colors";
+      tr.innerHTML = `
+        <td class="py-3 px-4 font-semibold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-outline text-[18px]">public</span>
+          ${country}
+        </td>
+        <td class="py-3 px-4 font-data-tabular text-data-tabular text-on-surface">${taxId}</td>
+        <td class="py-3 px-4 text-on-surface-variant">${type}</td>
+        <td class="py-3 px-4">
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed-variant font-label-sm text-label-sm">
+            <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+            Registrado
+          </span>
+        </td>
+        <td class="py-3 px-4 text-right">
+          <button type="button" onclick="this.closest('tr').remove()" class="p-1 rounded hover:bg-surface-container text-outline hover:text-error">
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+    closeTaxModal();
+    showToast("Registro fiscal adicional agregado al expediente.");
+  }
+
+  function openCurrencyModal() {
+    const m = document.getElementById('modal-currency');
+    if (m) m.classList.remove('hidden');
+  }
+
+  function closeCurrencyModal() {
+    const m = document.getElementById('modal-currency');
+    if (m) m.classList.add('hidden');
+  }
+
+  function addCurrencyRecord() {
+    const curr = document.getElementById('modal-curr-select').value;
+    const tc = document.getElementById('modal-curr-tc').value || "$20.00";
+    const tbody = document.querySelector('#currencies-table tbody');
+    if (tbody) {
+      const tr = document.createElement('tr');
+      tr.className = "hover:bg-surface-container-low transition-colors";
+      tr.innerHTML = `
+        <td class="py-2.5 px-3 font-semibold text-on-surface">${curr}</td>
+        <td class="py-2.5 px-3 font-data-tabular text-data-tabular">${tc}</td>
+        <td class="py-2.5 px-3">
+          <span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm">Adicional</span>
+        </td>
+        <td class="py-2.5 px-3 text-right">
+          <button type="button" onclick="this.closest('tr').remove()" class="p-1 hover:text-error text-outline transition-colors">
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+    closeCurrencyModal();
+    showToast("Divisa comercial agregada exitosamente.");
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    updateWizardUI();
+  });
+</script></main></div>
+
+
+
+
+
+
+
+
+
+
+</body></html>

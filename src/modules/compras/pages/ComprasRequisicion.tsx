@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { NOMBRES_ROLES, type RolUsuario } from '@/config/types';
 import { tienePermiso } from '@/lib/permissions';
 import {
   ESTADOS_REQUISICION,
   ETIQUETAS_ESTADO_REQUISICION,
+  determinarNivelAprobacion,
   type AreaOperativa,
   type EstadoRequisicion,
   type PrioridadRequisicion,
@@ -14,6 +16,7 @@ import type {
   NotaSistemaRequisicion,
   Requisicion,
 } from '@/modules/requisiciones/types';
+import { ModuleMenu } from '@/components/ui/ModuleMenu';
 import '../compras.css';
 
 interface ArticleItem {
@@ -111,12 +114,39 @@ export const ComprasRequisicion: React.FC<ComprasRequisicionProps> = ({
   const [infoPrimariaOpen, setInfoPrimariaOpen] = useState(true);
   const [filtrosListaOpen, setFiltrosListaOpen] = useState(true);
 
-  // Vista activa: 'formulario' (el formulario NetSuite de requisición) o 'lista' (el apartado de visualizar requisiciones con el mismo diseño NetSuite)
-  const vistaInicial: 'formulario' | 'lista' =
-    subItemId === 'compras-mis-requisiciones' || subItemId === 'compras-aprobaciones'
+  // Vista activa: 'aprobar' (Interfaz para Aprobar Requisiciones), 'lista' (Catálogo) o 'formulario' (Captura/Detalle)
+  const vistaInicial: 'formulario' | 'lista' | 'aprobar' =
+    subItemId === 'compras-aprobaciones' || subItemId === 'aprobaciones'
+      ? 'aprobar'
+      : subItemId === 'compras-mis-requisiciones'
       ? 'lista'
-      : 'formulario';
-  const [vistaActiva, setVistaActiva] = useState<'formulario' | 'lista'>(vistaInicial);
+      : 'aprobar';
+  const [vistaActiva, setVistaActiva] = useState<'formulario' | 'lista' | 'aprobar'>(
+    vistaInicial
+  );
+  const [requisicionesState, setRequisicionesState] =
+    useState<Requisicion[]>(requisiciones);
+  const [tabAprobacion, setTabAprobacion] = useState<
+    'pendientes' | 'aprobadas' | 'rechazadas' | 'todas'
+  >('pendientes');
+  const [reqDetalleModal, setReqDetalleModal] = useState<Requisicion | null>(null);
+  const [comentarioDictamen, setComentarioDictamen] = useState<string>(
+    'Aprobada conforme a presupuesto operativo y urgencia de obra.'
+  );
+
+  useEffect(() => {
+    setRequisicionesState(requisiciones);
+  }, [requisiciones]);
+
+  useEffect(() => {
+    if (subItemId === 'compras-aprobaciones' || subItemId === 'aprobaciones') {
+      setVistaActiva('aprobar');
+    } else if (subItemId === 'compras-nueva') {
+      setVistaActiva('formulario');
+    } else if (subItemId === 'compras-mis-requisiciones') {
+      setVistaActiva('lista');
+    }
+  }, [subItemId]);
 
   // Modo del formulario: 'crear' (agregar nueva requisición) o 'ver' (visualizar / modificar una requisición existente)
   const modoInicial: 'crear' | 'ver' =
@@ -550,7 +580,7 @@ export const ComprasRequisicion: React.FC<ComprasRequisicionProps> = ({
   }, [reqSeleccionada]);
 
   // Filtrado de requisiciones en el Apartado de Visualizar Requisiciones
-  const requisicionesFiltradasLista = requisiciones.filter((r) => {
+  const requisicionesFiltradasLista = requisicionesState.filter((r) => {
     if (filtroEstadoLista !== 'todos' && r.estado !== filtroEstadoLista) return false;
     if (filtroContratoLista !== 'todos' && r.contrato !== filtroContratoLista) return false;
     if (busquedaLista.trim()) {
@@ -567,12 +597,772 @@ export const ComprasRequisicion: React.FC<ComprasRequisicionProps> = ({
 
   const sumaTotalLista = requisicionesFiltradasLista.reduce((acc, r) => acc + r.total, 0);
 
+  // Acción directa para aprobar o rechazar cualquier requisición desde la interfaz de Aprobación
+  const dictaminarRequisicionDirecto = async (
+    req: Requisicion,
+    accion: 'aprobar' | 'rechazar' | 'revision'
+  ) => {
+    const nuevoEstado: EstadoRequisicion =
+      accion === 'aprobar'
+        ? req.estado === 'solicitud' || req.estado === 'revision'
+          ? 'aprobacion'
+          : 'atencion'
+        : accion === 'rechazar'
+        ? 'rechazada'
+        : 'revision';
+
+    const textoComentario =
+      accion === 'aprobar'
+        ? comentarioDictamen || 'Aprobada por Gerencia de Compras y Procura.'
+        : accion === 'rechazar'
+        ? 'Rechazada en mesa de validación presupuestal.'
+        : 'Enviada a revisión técnica.';
+
+    // Actualización optimista inmediata en interfaz
+    setRequisicionesState((prev) =>
+      prev.map((item) =>
+        item.id === req.id ? { ...item, estado: nuevoEstado } : item
+      )
+    );
+    if (reqDetalleModal?.id === req.id) {
+      setReqDetalleModal((prev) => (prev ? { ...prev, estado: nuevoEstado } : null));
+    }
+
+    setAvisoSistema({
+      tipo: accion === 'rechazar' ? 'error' : 'exito',
+      mensaje:
+        accion === 'aprobar'
+          ? `Requisición ${req.folio} APROBADA exitosamente (${ETIQUETAS_ESTADO_REQUISICION[nuevoEstado]}).`
+          : `Requisición ${req.folio} marcada como ${ETIQUETAS_ESTADO_REQUISICION[nuevoEstado]}.`,
+    });
+
+    try {
+      await fetch(`/api/requisiciones/${req.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nuevoEstado, comentario: textoComentario }),
+      });
+      await alRecargarRequisiciones?.();
+    } catch {
+      // Mantiene estado local actualizado
+    }
+  };
+
+  const barraSuperiorModoRequisiciones = (
+    <div className="compras-header-banner" style={{ marginBottom: 18 }}>
+      <div className="compras-header-left">
+        <div className="compras-header-title-row">
+          <h1 className="compras-page-title">
+            {vistaActiva === 'aprobar'
+              ? 'Mesa de Aprobación de Requisiciones'
+              : vistaActiva === 'lista'
+              ? 'Catálogo y Seguimiento de Requisiciones'
+              : 'Captura y Expediente de Requisición'}
+          </h1>
+          <span className="compras-context-badge">
+            <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
+              assignment_turned_in
+            </span>
+            Control Presupuestal SIFYGSA
+          </span>
+        </div>
+        <p className="compras-page-subtitle">
+          Flujo corporativo: Solicitud de Obra → Revisión Técnica → Aprobación por Nivel/Monto → Conversión a Orden de Compra
+        </p>
+      </div>
+
+      <div className="compras-header-actions">
+        <ModuleMenu />
+
+        <div className="cp-view-mode-switch" role="group" aria-label="Vistas de Requisiciones">
+          <button
+            type="button"
+            className={`cp-view-mode-btn ${vistaActiva === 'aprobar' ? 'active' : ''}`}
+            onClick={() => setVistaActiva('aprobar')}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 17 }}>
+              fact_check
+            </span>
+            Aprobar Requisiciones
+            <span className="cp-view-mode-badge">
+              {
+                requisicionesState.filter(
+                  (r) =>
+                    r.estado === 'solicitud' ||
+                    r.estado === 'revision' ||
+                    r.estado === 'aprobacion'
+                ).length
+              }
+            </span>
+          </button>
+          <button
+            type="button"
+            className={`cp-view-mode-btn ${vistaActiva === 'lista' ? 'active' : ''}`}
+            onClick={() => setVistaActiva('lista')}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 17 }}>
+              list_alt
+            </span>
+            Directorio ({requisicionesState.length})
+          </button>
+          <button
+            type="button"
+            className={`cp-view-mode-btn ${vistaActiva === 'formulario' ? 'active' : ''}`}
+            onClick={() => {
+              iniciarNuevaRequisicion();
+              setVistaActiva('formulario');
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 17 }}>
+              add_circle
+            </span>
+            + Nueva Requisición
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // =========================================================================
+  // INTERFAZ PARA APROBAR REQUISICIONES (NUEVA VISTA EJECUTIVA E INTERACTIVA)
+  // =========================================================================
+  if (vistaActiva === 'aprobar') {
+    const porAprobarList = requisicionesState.filter(
+      (r) =>
+        r.estado === 'solicitud' ||
+        r.estado === 'revision' ||
+        r.estado === 'aprobacion'
+    );
+    const aprobadasList = requisicionesState.filter(
+      (r) => r.estado === 'atencion' || r.estado === 'cierre'
+    );
+    const rechazadasList = requisicionesState.filter(
+      (r) => r.estado === 'rechazada' || r.estado === 'cancelada'
+    );
+    const criticasCount = porAprobarList.filter(
+      (r) => r.prioridad === 'critica' || r.prioridad === 'alta'
+    ).length;
+    const montoPorAprobar = porAprobarList.reduce((acc, r) => acc + r.total, 0);
+
+    const listaAprobacionFiltrada = requisicionesState.filter((r) => {
+      if (
+        tabAprobacion === 'pendientes' &&
+        r.estado !== 'solicitud' &&
+        r.estado !== 'revision' &&
+        r.estado !== 'aprobacion'
+      ) {
+        return false;
+      }
+      if (
+        tabAprobacion === 'aprobadas' &&
+        r.estado !== 'atencion' &&
+        r.estado !== 'cierre'
+      ) {
+        return false;
+      }
+      if (
+        tabAprobacion === 'rechazadas' &&
+        r.estado !== 'rechazada' &&
+        r.estado !== 'cancelada'
+      ) {
+        return false;
+      }
+      if (filtroContratoLista !== 'todos' && r.contrato !== filtroContratoLista) {
+        return false;
+      }
+      if (busquedaLista.trim()) {
+        const q = busquedaLista.toLowerCase();
+        return (
+          r.folio.toLowerCase().includes(q) ||
+          r.contrato.toLowerCase().includes(q) ||
+          r.solicitante.toLowerCase().includes(q) ||
+          r.justificacion.toLowerCase().includes(q) ||
+          r.area.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+
+    return (
+      <div className="compras-module">
+        {barraSuperiorModoRequisiciones}
+
+        {avisoSistema && (
+          <div
+            className={`cp-toast-notification ${
+              avisoSistema.tipo === 'exito' ? 'cp-toast-success' : 'cp-toast-error'
+            }`}
+          >
+            <span className="material-symbols-outlined">
+              {avisoSistema.tipo === 'exito' ? 'check_circle' : 'error'}
+            </span>
+            <div className="cp-toast-body">
+              <strong>Dictamen de Requisición</strong>
+              <span>{avisoSistema.mensaje}</span>
+            </div>
+            <button
+              type="button"
+              className="cp-toast-close"
+              onClick={() => setAvisoSistema(null)}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+                close
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* KPIs de Aprobación de Requisiciones */}
+        <div className="cp-kpi-grid cp-kpi-grid-4">
+          <div
+            className="cp-kpi-card cp-kpi-interactive"
+            onClick={() => setTabAprobacion('pendientes')}
+            role="button"
+            tabIndex={0}
+          >
+            <div className="cp-kpi-top">
+              <span className="cp-kpi-label">Requisiciones por Aprobar</span>
+              <div className="cp-kpi-icon amber">
+                <span className="material-symbols-outlined">pending_actions</span>
+              </div>
+            </div>
+            <div className="cp-kpi-value-row">
+              <span className="cp-kpi-value">{porAprobarList.length}</span>
+              <span className="cp-kpi-unit">Solicitudes</span>
+            </div>
+            <div className="cp-kpi-footer">
+              <span className="cp-kpi-trend warning">
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+                  schedule
+                </span>
+                Requieren firma de nivel
+              </span>
+              <span className="cp-kpi-sub">Bandeja activa</span>
+            </div>
+          </div>
+
+          <div className="cp-kpi-card">
+            <div className="cp-kpi-top">
+              <span className="cp-kpi-label">Importe por Liberar (MXN)</span>
+              <div className="cp-kpi-icon blue">
+                <span className="material-symbols-outlined">request_quote</span>
+              </div>
+            </div>
+            <div className="cp-kpi-value-row">
+              <span className="cp-kpi-value">${formatCurrency(montoPorAprobar)}</span>
+            </div>
+            <div className="cp-kpi-footer">
+              <span className="cp-kpi-trend info">
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+                  account_balance_wallet
+                </span>
+                Validación presupuestal
+              </span>
+              <span className="cp-kpi-sub">IVA 16% incluido</span>
+            </div>
+          </div>
+
+          <div className="cp-kpi-card">
+            <div className="cp-kpi-top">
+              <span className="cp-kpi-label">Urgencia Crítica / Alta</span>
+              <div className="cp-kpi-icon red">
+                <span className="material-symbols-outlined">priority_high</span>
+              </div>
+            </div>
+            <div className="cp-kpi-value-row">
+              <span className="cp-kpi-value">{criticasCount}</span>
+              <span className="cp-kpi-unit">Prioritarias</span>
+            </div>
+            <div className="cp-kpi-footer">
+              <span className="cp-kpi-trend warning">
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+                  bolt
+                </span>
+                Frentes de obra / Paro
+              </span>
+              <span className="cp-kpi-sub">Atención inmediata</span>
+            </div>
+          </div>
+
+          <div
+            className="cp-kpi-card cp-kpi-interactive"
+            onClick={() => setTabAprobacion('aprobadas')}
+            role="button"
+            tabIndex={0}
+          >
+            <div className="cp-kpi-top">
+              <span className="cp-kpi-label">Aprobadas y En ODC</span>
+              <div className="cp-kpi-icon green">
+                <span className="material-symbols-outlined">task_alt</span>
+              </div>
+            </div>
+            <div className="cp-kpi-value-row">
+              <span className="cp-kpi-value">{aprobadasList.length}</span>
+              <span className="cp-kpi-unit">Liberadas</span>
+            </div>
+            <div className="cp-kpi-footer">
+              <span className="cp-kpi-trend positive">
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+                  check_circle
+                </span>
+                Listas para Orden de Compra
+              </span>
+              <span className="cp-kpi-sub">{rechazadasList.length} rechazadas</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Barra de Comando de Dictamen */}
+        <section className="cp-approval-CommandBar">
+          <div className="cp-approval-banner-left">
+            <div className="cp-approval-shield">
+              <span className="material-symbols-outlined">fact_check</span>
+            </div>
+            <div>
+              <h3>Centro de Validación y Aprobación Multinivel de Requisiciones</h3>
+              <p>
+                Revisa la justificación técnica, prioridad operativa y nivel de autorización
+                antes de aprobar o convertir en Orden de Compra.
+              </p>
+            </div>
+          </div>
+          <div className="cp-approval-banner-right">
+            <div className="cp-approval-comment-input">
+              <label htmlFor="req-auth-comment">Observación de Aprobación:</label>
+              <input
+                id="req-auth-comment"
+                type="text"
+                value={comentarioDictamen}
+                onChange={(e) => setComentarioDictamen(e.target.value)}
+                placeholder="Nota de autorización presupuestal..."
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Barra de Búsqueda y Tabs */}
+        <div className="cp-toolbar-card">
+          <div className="cp-toolbar-top">
+            <div className="cp-search-box">
+              <span className="material-symbols-outlined">search</span>
+              <input
+                type="text"
+                className="cp-search-input"
+                placeholder="Buscar requisición por folio (ej. SFG-ADM), contrato, solicitante, área o justificación..."
+                value={busquedaLista}
+                onChange={(e) => setBusquedaLista(e.target.value)}
+              />
+            </div>
+
+            <div className="cp-toolbar-actions">
+              <select
+                className="cp-filter-select"
+                style={{ width: 220 }}
+                value={filtroContratoLista}
+                onChange={(e) => setFiltroContratoLista(e.target.value)}
+              >
+                <option value="todos">Todos los contratos</option>
+                <option value="ADM-INFRA">ADM-INFRA</option>
+                <option value="PEMEX-MINA-SIL3-26">PEMEX-MINA-SIL3-26</option>
+                <option value="ADM-SEGURIDAD-CAMPO">ADM-SEGURIDAD-CAMPO</option>
+                <option value="CORP-TI-DESARROLLO">CORP-TI-DESARROLLO</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="cp-filter-tabs">
+            {[
+              {
+                id: 'pendientes',
+                label: 'Pendientes de Aprobar',
+                count: porAprobarList.length,
+              },
+              {
+                id: 'aprobadas',
+                label: 'Aprobadas / En ODC',
+                count: aprobadasList.length,
+              },
+              {
+                id: 'rechazadas',
+                label: 'Rechazadas / Canceladas',
+                count: rechazadasList.length,
+              },
+              {
+                id: 'todas',
+                label: 'Todas las Requisiciones',
+                count: requisicionesState.length,
+              },
+            ].map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className={`cp-filter-tab ${tabAprobacion === t.id ? 'active' : ''}`}
+                onClick={() =>
+                  setTabAprobacion(
+                    t.id as 'pendientes' | 'aprobadas' | 'rechazadas' | 'todas'
+                  )
+                }
+              >
+                {t.label}
+                <span className="cp-filter-tab-count">{t.count}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tabla de Aprobación de Requisiciones */}
+        <div className="cp-table-card">
+          <div className="cp-table-scroll">
+            <table className="cp-table">
+              <thead>
+                <tr>
+                  <th>Folio Requisición</th>
+                  <th>Solicitante / Área Operativa</th>
+                  <th>Contrato y Justificación</th>
+                  <th>Prioridad / Nivel</th>
+                  <th>Fecha Requerida</th>
+                  <th style={{ textAlign: 'right' }}>Importe Total</th>
+                  <th>Estado Actual</th>
+                  <th style={{ textAlign: 'right' }}>Dictamen / Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {listaAprobacionFiltrada.length === 0 ? (
+                  <tr>
+                    <td colSpan={8}>
+                      <div className="cp-empty-state">
+                        <span className="material-symbols-outlined">fact_check</span>
+                        <h3>Sin requisiciones en esta bandeja</h3>
+                        <p>
+                          No hay solicitudes que coincidan con el filtro actual. Puedes
+                          cambiar de pestaña o crear una nueva requisición.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  listaAprobacionFiltrada.map((req) => {
+                    const nivelInfo = determinarNivelAprobacion(req.total);
+                    const estaPendiente =
+                      req.estado === 'solicitud' ||
+                      req.estado === 'revision' ||
+                      req.estado === 'aprobacion';
+
+                    return (
+                      <tr
+                        key={req.id}
+                        className="cp-table-row-interactive"
+                        onClick={() => setReqDetalleModal(req)}
+                      >
+                        <td>
+                          <span className="cp-cell-folio">{req.folio}</span>
+                          <div className="cp-cell-sub">
+                            {req.partidas.length}{' '}
+                            {req.partidas.length === 1 ? 'partida' : 'partidas'}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="cp-cell-title">{req.solicitante}</div>
+                          <div className="cp-cell-sub">
+                            {req.departamento || req.area}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="cp-cell-title">Contrato: {req.contrato}</div>
+                          <div
+                            className="cp-cell-sub"
+                            style={{ maxWidth: 280, whiteSpace: 'normal' }}
+                          >
+                            {req.justificacion}
+                          </div>
+                        </td>
+                        <td>
+                          <span
+                            className={`cp-badge ${
+                              req.prioridad === 'critica'
+                                ? 'cp-badge-danger'
+                                : req.prioridad === 'alta'
+                                ? 'cp-badge-warning'
+                                : 'cp-badge-info'
+                            }`}
+                          >
+                            {req.prioridad.toUpperCase()}
+                          </span>
+                          <div className="cp-cell-sub" style={{ marginTop: 3 }}>
+                            {nivelInfo.etiqueta.split('(')[0]}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="cp-cell-title">{req.fechaRequerida}</div>
+                          <div className="cp-cell-sub">
+                            {req.ubicacionAlmacen || 'Almacén Central'}
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div className="cp-cell-amount">
+                            ${formatCurrency(req.total)}
+                          </div>
+                          <div className="cp-cell-sub">MXN c/IVA</div>
+                        </td>
+                        <td>
+                          <span
+                            className={`cp-badge ${
+                              req.estado === 'atencion' || req.estado === 'cierre'
+                                ? 'cp-badge-success'
+                                : req.estado === 'rechazada' ||
+                                  req.estado === 'cancelada'
+                                ? 'cp-badge-danger'
+                                : 'cp-badge-warning'
+                            }`}
+                          >
+                            {ETIQUETAS_ESTADO_REQUISICION[req.estado]}
+                          </span>
+                        </td>
+                        <td
+                          style={{ textAlign: 'right' }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="cp-row-actions">
+                            {estaPendiente ? (
+                              <>
+                                <button
+                                  type="button"
+                                  className="cp-btn cp-btn-approve-inline"
+                                  onClick={() =>
+                                    void dictaminarRequisicionDirecto(req, 'aprobar')
+                                  }
+                                  title="Aprobar Requisición"
+                                >
+                                  <span
+                                    className="material-symbols-outlined"
+                                    style={{ fontSize: 16 }}
+                                  >
+                                    check_circle
+                                  </span>
+                                  Aprobar
+                                </button>
+                                <button
+                                  type="button"
+                                  className="cp-btn cp-btn-reject-inline"
+                                  onClick={() =>
+                                    void dictaminarRequisicionDirecto(req, 'rechazar')
+                                  }
+                                  title="Rechazar Requisición"
+                                >
+                                  <span
+                                    className="material-symbols-outlined"
+                                    style={{ fontSize: 16 }}
+                                  >
+                                    cancel
+                                  </span>
+                                  Rechazar
+                                </button>
+                              </>
+                            ) : (
+                              <Link
+                                href="/compras/ordenes/nueva"
+                                className="cp-btn cp-btn-primary"
+                                style={{ padding: '5px 10px', fontSize: 11.5 }}
+                              >
+                                <span
+                                  className="material-symbols-outlined"
+                                  style={{ fontSize: 15 }}
+                                >
+                                  add_shopping_cart
+                                </span>
+                                Generar ODC
+                              </Link>
+                            )}
+                            <button
+                              type="button"
+                              className="cp-icon-action-btn"
+                              onClick={() => setReqDetalleModal(req)}
+                              title="Inspeccionar partidas de la requisición"
+                            >
+                              <span
+                                className="material-symbols-outlined"
+                                style={{ fontSize: 17 }}
+                              >
+                                visibility
+                              </span>
+                            </button>
+                            <button
+                              type="button"
+                              className="cp-icon-action-btn"
+                              onClick={() =>
+                                cargarDatosRequisicionEnFormulario(req, 'articulos')
+                              }
+                              title="Abrir en formulario completo"
+                            >
+                              <span
+                                className="material-symbols-outlined"
+                                style={{ fontSize: 17 }}
+                              >
+                                edit
+                              </span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Modal de Revisión Rápida y Aprobación de Requisición */}
+        {reqDetalleModal && (
+          <div
+            className="cp-modal-overlay"
+            onClick={() => setReqDetalleModal(null)}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div
+              className="cp-modal-content cp-modal-wide"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="cp-modal-header">
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span className="cp-cell-folio" style={{ fontSize: 16 }}>
+                      {reqDetalleModal.folio}
+                    </span>
+                    <span className="cp-badge cp-badge-warning">
+                      {ETIQUETAS_ESTADO_REQUISICION[reqDetalleModal.estado]}
+                    </span>
+                  </div>
+                  <h2
+                    style={{
+                      margin: '6px 0 0',
+                      fontSize: 17,
+                      fontWeight: 700,
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    Solicitante: {reqDetalleModal.solicitante} — Contrato{' '}
+                    {reqDetalleModal.contrato}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  className="cp-btn cp-btn-secondary"
+                  style={{ padding: 6 }}
+                  onClick={() => setReqDetalleModal(null)}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              <div className="cp-modal-body">
+                <div className="cp-detail-grid-3">
+                  <div className="cp-detail-box">
+                    <div className="cp-detail-box-label">Área y Departamento</div>
+                    <div className="cp-detail-box-value">{reqDetalleModal.area}</div>
+                    <div className="cp-cell-sub">
+                      Almacén: {reqDetalleModal.ubicacionAlmacen || 'Central'}
+                    </div>
+                  </div>
+                  <div className="cp-detail-box">
+                    <div className="cp-detail-box-label">Nivel de Autorización</div>
+                    <div className="cp-detail-box-value">
+                      {determinarNivelAprobacion(reqDetalleModal.total).etiqueta}
+                    </div>
+                    <div className="cp-cell-sub">
+                      Fecha requerida: {reqDetalleModal.fechaRequerida}
+                    </div>
+                  </div>
+                  <div className="cp-detail-box">
+                    <div className="cp-detail-box-label">Justificación Operativa</div>
+                    <div className="cp-detail-box-value" style={{ fontSize: 13 }}>
+                      {reqDetalleModal.justificacion}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="cp-table-card" style={{ boxShadow: 'none' }}>
+                  <table className="cp-table">
+                    <thead>
+                      <tr>
+                        <th>Código Artículo</th>
+                        <th>Descripción</th>
+                        <th style={{ textAlign: 'right' }}>Cantidad</th>
+                        <th style={{ textAlign: 'right' }}>P. Unitario</th>
+                        <th style={{ textAlign: 'right' }}>Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reqDetalleModal.partidas.map((p) => (
+                        <tr key={p.id}>
+                          <td>
+                            <span className="cp-cell-folio">{p.codigoArticulo}</span>
+                          </td>
+                          <td>{p.descripcion}</td>
+                          <td style={{ textAlign: 'right', fontWeight: 700 }}>
+                            {p.cantidad} {p.unidad}
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            ${formatCurrency(p.precioUnitario)}
+                          </td>
+                          <td style={{ textAlign: 'right', fontWeight: 700 }}>
+                            ${formatCurrency(p.subtotal)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="cp-modal-footer">
+                <button
+                  type="button"
+                  className="cp-btn cp-btn-secondary"
+                  onClick={() => setReqDetalleModal(null)}
+                >
+                  Cerrar
+                </button>
+                <button
+                  type="button"
+                  className="cp-btn cp-btn-reject-inline"
+                  onClick={() =>
+                    void dictaminarRequisicionDirecto(reqDetalleModal, 'rechazar')
+                  }
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+                    cancel
+                  </span>
+                  Rechazar Requisición
+                </button>
+                <button
+                  type="button"
+                  className="cp-btn cp-btn-approve-inline"
+                  onClick={() =>
+                    void dictaminarRequisicionDirecto(reqDetalleModal, 'aprobar')
+                  }
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+                    check_circle
+                  </span>
+                  Aprobar y Liberar Requisición
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // =========================================================================
   // APARTADO DE VISUALIZAR REQUISICIONES (Mismo diseño NetSuite de compras.css)
   // =========================================================================
   if (vistaActiva === 'lista') {
     return (
       <div className="compras-requisicion-container">
+        {barraSuperiorModoRequisiciones}
         <div className="req-header-card">
           <div className="req-header-top-row">
             <div className="req-title-group">
@@ -841,6 +1631,7 @@ export const ComprasRequisicion: React.FC<ComprasRequisicionProps> = ({
   // =========================================================================
   return (
     <div className="compras-requisicion-container">
+      {barraSuperiorModoRequisiciones}
       {/* Top Requisicion Bar */}
       <div className="req-header-card">
         {/* Title + Status + Breadcrumb */}
