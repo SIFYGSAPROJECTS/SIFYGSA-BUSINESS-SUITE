@@ -122,7 +122,7 @@ export const MenuPrincipalAlmacenPage: React.FC = () => {
 
                   {/* Opción 2: Entrada a inventario */}
                   <Link
-                    href="/almacen/recepcion-ir03"
+                    href="/almacen/recepcion-ir03?origen=articulos"
                     onClick={() => setMenuAbierto(null)}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors group no-underline"
                   >
@@ -137,7 +137,7 @@ export const MenuPrincipalAlmacenPage: React.FC = () => {
 
                   {/* Opción 3: Salida de inventario */}
                   <Link
-                    href="/almacen/salida"
+                    href="/almacen/salida?origen=articulos"
                     onClick={() => setMenuAbierto(null)}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-950/50 text-slate-700 dark:text-slate-200 hover:text-amber-700 dark:hover:text-amber-300 transition-colors group no-underline"
                   >
@@ -214,7 +214,7 @@ export const MenuPrincipalAlmacenPage: React.FC = () => {
 
                   {/* Opción 2: Entrada a inventario */}
                   <Link
-                    href="/almacen/recepcion-ir03"
+                    href="/almacen/recepcion-ir03?origen=servicios"
                     onClick={() => setMenuAbierto(null)}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/50 text-slate-700 dark:text-slate-200 hover:text-blue-700 dark:hover:text-blue-300 transition-colors group no-underline"
                   >
@@ -229,7 +229,7 @@ export const MenuPrincipalAlmacenPage: React.FC = () => {
 
                   {/* Opción 3: Salida de inventario */}
                   <Link
-                    href="/almacen/salida"
+                    href="/almacen/salida?origen=servicios"
                     onClick={() => setMenuAbierto(null)}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-950/50 text-slate-700 dark:text-slate-200 hover:text-amber-700 dark:hover:text-amber-300 transition-colors group no-underline"
                   >

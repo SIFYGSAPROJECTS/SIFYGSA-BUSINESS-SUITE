@@ -558,7 +558,7 @@ export default function AltaArticuloCatalogoPage() {
 
     registrarArticulo(nuevo);
     setModalConfirmacionOpen(true);
-    mostrarToast(`Artículo #${codigoArticulo} registrado exitosamente en el Catálogo Maestro de SIFYGSA.`, 'success');
+    mostrarToast(`Artículo #${codigoArticulo} registrado exitosamente en el Catálogo de SIFYGSA.`, 'success');
   };
 
   // Filtrado de tipos de artículo en combobox
@@ -600,26 +600,39 @@ export default function AltaArticuloCatalogoPage() {
           </nav>
           
           <h1 className="alta-articulo-title">
-            Alta de Artículo en Catálogo Maestro
+            Alta de Artículo al Catálogo
           </h1>
           <p className="alta-articulo-subtitle">
             Definición técnica y parámetros maestros para control de existencias y trazabilidad.
           </p>
         </div>
 
-        {/* Badge Folio Sugerido y Estado Borrador */}
-        <div className="alta-articulo-folio-badge">
-          <div className="alta-articulo-folio-info">
-            <span className="alta-articulo-folio-label">Folio Sugerido</span>
-            <span className="alta-articulo-folio-value">
-              SKU #{codigoArticulo || '9367'}
+        {/* Acciones y Badges del Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => router.push('/almacen/articulos')}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors shadow-xs cursor-pointer"
+            title="Volver a Artículos"
+          >
+            <span className="material-symbols-outlined text-[17px]">arrow_back</span>
+            <span>Volver a Artículos</span>
+          </button>
+
+          {/* Badge Folio Sugerido y Estado Borrador */}
+          <div className="alta-articulo-folio-badge">
+            <div className="alta-articulo-folio-info">
+              <span className="alta-articulo-folio-label">Folio Sugerido</span>
+              <span className="alta-articulo-folio-value">
+                SKU #{codigoArticulo || '9367'}
+              </span>
+            </div>
+            <div className="alta-articulo-divider-v" />
+            <span className="alta-articulo-status-pill">
+              <span className="alta-articulo-pulse-blue" />
+              Borrador
             </span>
           </div>
-          <div className="alta-articulo-divider-v" />
-          <span className="alta-articulo-status-pill">
-            <span className="alta-articulo-pulse-blue" />
-            Borrador
-          </span>
         </div>
       </div>
 
@@ -1238,7 +1251,7 @@ export default function AltaArticuloCatalogoPage() {
       {/* ====================================================================
           BARRA INFERIOR FIJA DE ACCIONES (STICKY BOTTOM ACTION BAR)
          ==================================================================== */}
-      <div className="alta-articulo-bottom-bar">
+      <div className="alta-articulo-bottom-bar fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 backdrop-blur-md shadow-[0_-4px_25px_rgba(0,0,0,0.15)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.5)]" style={{ left: 0 }}>
         <div className="alta-articulo-bottom-inner">
           
           {/* Indicador guardado automático */}
@@ -1254,7 +1267,7 @@ export default function AltaArticuloCatalogoPage() {
             {currentStep === 1 ? (
               <button
                 type="button"
-                onClick={() => router.push('/almacen/inventarios')}
+                onClick={() => router.push('/almacen/articulos')}
                 className="alta-articulo-btn-cancel"
               >
                 Cancelar
@@ -1331,7 +1344,7 @@ export default function AltaArticuloCatalogoPage() {
                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
                   add_box
                 </span>
-                <span>+ Crear Artículo en Catálogo Maestro</span>
+                <span>+ Crear Artículo en Catálogo</span>
               </button>
             )}
           </div>
@@ -1450,7 +1463,7 @@ export default function AltaArticuloCatalogoPage() {
             </p>
 
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 1.5rem 0' }}>
-              Ha sido incorporado al Catálogo Maestro de SIFYGSA y vinculado al centro de costos de {departamento} en {subsidiaria}.
+              Ha sido incorporado al Catálogo de SIFYGSA y vinculado al centro de costos de {departamento} en {subsidiaria}.
             </p>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -1470,11 +1483,11 @@ export default function AltaArticuloCatalogoPage() {
               </button>
               <button
                 type="button"
-                onClick={() => router.push('/almacen/inventarios')}
+                onClick={() => router.push('/almacen/articulos')}
                 className="alta-articulo-btn-submit"
                 style={{ padding: '0.625rem 1.25rem' }}
               >
-                Ver en Inventarios
+                Volver a Artículos
               </button>
             </div>
           </div>

@@ -197,21 +197,34 @@ export default function AltaServicioNoInventariablePage() {
             </p>
           </div>
 
-          {/* Badge a la derecha: Folio Sugerido y Estado Borrador */}
-          <div className="flex items-center gap-3 self-start md:self-auto px-4 py-2.5 rounded-xl shadow-xs" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
-            <div className="flex flex-col items-start md:items-end">
-              <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-secondary)' }}>
-                Folio Sugerido
-              </span>
-              <span className="text-lg font-bold text-emerald-500 font-mono">
-                SRV #{codigo || 'SRV-001'}
+          {/* Acciones y Badge a la derecha: Volver, Folio Sugerido y Estado Borrador */}
+          <div className="flex items-center gap-3 self-start md:self-auto flex-wrap">
+            <button
+              type="button"
+              onClick={() => router.push('/almacen/servicios')}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+              style={{ background: 'var(--surface-alt)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+              title="Volver a Servicios"
+            >
+              <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+              <span>Volver a Servicios</span>
+            </button>
+
+            <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl shadow-xs" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+              <div className="flex flex-col items-start md:items-end">
+                <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+                  Folio Sugerido
+                </span>
+                <span className="text-lg font-bold text-emerald-500 font-mono">
+                  SRV #{codigo || 'SRV-001'}
+                </span>
+              </div>
+              <div className="h-8 w-px" style={{ background: 'var(--divider)' }} />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold" style={{ background: 'var(--success-bg)', color: 'var(--success-text)', border: '1px solid var(--success-border, var(--border))' }}>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Borrador Activo
               </span>
             </div>
-            <div className="h-8 w-px" style={{ background: 'var(--divider)' }} />
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold" style={{ background: 'var(--success-bg)', color: 'var(--success-text)', border: '1px solid var(--success-border, var(--border))' }}>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Borrador Activo
-            </span>
           </div>
         </div>
 
@@ -539,7 +552,7 @@ export default function AltaServicioNoInventariablePage() {
       {/* ====================================================================
           BARRA INFERIOR FIJA DE ACCIONES (STICKY BOTTOM BAR)
          ==================================================================== */}
-      <div className="fixed bottom-0 left-0 right-0 py-3.5 z-40 px-4 md:px-8 transition-all duration-200" style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)', boxShadow: '0 -4px 25px rgba(0,0,0,0.15)' }}>
+      <div className="fixed bottom-0 left-0 right-0 py-3.5 z-40 px-4 md:px-8 transition-all duration-200 bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 backdrop-blur-md shadow-[0_-4px_25px_rgba(0,0,0,0.15)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.5)]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           
           {/* Indicador guardado automático */}
@@ -553,7 +566,7 @@ export default function AltaServicioNoInventariablePage() {
             {currentStep === 1 ? (
               <button
                 type="button"
-                onClick={() => router.push('/almacen')}
+                onClick={() => router.push('/almacen/servicios')}
                 className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-xs"
                 style={{ background: 'var(--surface-alt)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
               >
@@ -640,12 +653,12 @@ export default function AltaServicioNoInventariablePage() {
                   type="button"
                   onClick={() => {
                     setModalOpen(false);
-                    router.push('/almacen');
+                    router.push('/almacen/servicios');
                   }}
                   className="w-full py-2.5 px-4 rounded-xl text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
                   style={{ background: 'var(--primary)' }}
                 >
-                  Aceptar y Regresar al Almacén
+                  Aceptar y Regresar a Servicios
                 </button>
               </div>
             </div>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCompras } from '../context/ComprasContext';
 import type { Proveedor, TipoPersona, MonedaDivisa, CuentaBancariaProveedor } from '../types';
+import { Stepper } from '@/components/ui/Stepper';
 import { ModuleMenu } from '@/components/ui/ModuleMenu';
 import '../compras.css';
 import '../nuevo-proveedor-wizard.css';
@@ -295,9 +296,6 @@ export const NuevoProveedorPage: React.FC = () => {
   const [modalNotificarAdminOpen, setModalNotificarAdminOpen] = useState(false);
   const [modalConfirmCancelOpen, setModalConfirmCancelOpen] = useState(false);
 
-  // Progreso porcentual
-  const progressPercent = Math.round((currentStep / totalSteps) * 100);
-
   // Guardar borrador manual
   const handleGuardarBorrador = () => {
     setIsSavingDraft(true);
@@ -521,116 +519,16 @@ export const NuevoProveedorPage: React.FC = () => {
         </div>
 
         {/* ====================================================================
-            CREATIVE CONNECTED-NODE STEPPER (SEGUN SKETCH DE USUARIO: (1) ── (2) ── ...)
+            CREATIVE CONNECTED-NODE STEPPER (NORMATIVO CORPORATIVO SIFYGSA)
             ==================================================================== */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 md:p-6 shadow-xs mb-6">
-          {/* Header del Stepper */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-[#1D4ED8] text-xs font-black">
-                  {currentStep}
-                </span>
-                <h2 className="text-sm md:text-base font-bold text-slate-900">
-                  Etapa {currentStep} de {totalSteps}: {stepMeta[currentStep - 1].shortTitle}
-                </h2>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {stepMeta[currentStep - 1].description}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-xs font-bold text-slate-700">Progreso General</div>
-                <div className="text-[11px] font-bold text-[#1D4ED8]">{progressPercent}% Completado</div>
-              </div>
-              <div className="w-24 sm:w-32 bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200/80">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-500 via-blue-600 to-[#1D4ED8] rounded-full transition-all duration-300"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Connected Node Stepper Track */}
-          <div className="relative px-2 sm:px-6 pt-2 pb-1">
-            {/* Background Line */}
-            <div className="absolute top-7 left-10 right-10 sm:left-16 sm:right-16 h-1 bg-slate-200 z-0 rounded-full" />
-
-            {/* Active Filled Line */}
-            <div
-              className="absolute top-7 left-10 sm:left-16 h-1 bg-gradient-to-r from-emerald-500 to-[#1D4ED8] z-0 rounded-full transition-all duration-500"
-              style={{
-                width: `calc(${((currentStep - 1) / (totalSteps - 1)) * 100}% - 2.5rem)`,
-              }}
-            />
-
-            {/* 5 Nodes Flex */}
-            <div className="relative z-10 flex items-start justify-between">
-              {stepMeta.map((s, idx) => {
-                const stepNum = idx + 1;
-                const isActive = stepNum === currentStep;
-                const isCompleted = stepNum < currentStep;
-
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setCurrentStep(stepNum)}
-                    className="group flex flex-col items-center focus:outline-none cursor-pointer transition-transform hover:scale-105"
-                    style={{ width: `${100 / totalSteps}%` }}
-                    title={`Ir a ${s.title}`}
-                  >
-                    {/* Circle Node */}
-                    <div
-                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-black text-sm transition-all duration-300 shadow-md ${
-                        isActive
-                          ? 'bg-[#1D4ED8] text-white ring-4 ring-blue-100 ring-offset-2 scale-110 shadow-blue-500/30'
-                          : isCompleted
-                          ? 'bg-emerald-600 text-white ring-4 ring-emerald-50 shadow-emerald-500/20'
-                          : 'bg-white text-slate-400 border-2 border-slate-300 group-hover:border-slate-400 group-hover:text-slate-600'
-                      }`}
-                    >
-                      {isCompleted ? (
-                        <span className="material-symbols-outlined text-[20px] font-bold">check</span>
-                      ) : (
-                        <span>{stepNum}</span>
-                      )}
-                    </div>
-
-                    {/* Step Title Below */}
-                    <div className="mt-2 text-center px-1">
-                      <span
-                        className={`block text-[11px] sm:text-xs font-bold leading-tight transition-colors ${
-                          isActive
-                            ? 'text-[#1D4ED8]'
-                            : isCompleted
-                            ? 'text-emerald-700'
-                            : 'text-slate-600 group-hover:text-slate-900'
-                        }`}
-                      >
-                        {s.title}
-                      </span>
-                      <span
-                        className={`inline-block mt-0.5 text-[9px] sm:text-[10px] font-semibold px-1.5 py-0.2 rounded-full ${
-                          isActive
-                            ? 'bg-blue-50 text-blue-700'
-                            : isCompleted
-                            ? 'bg-emerald-50 text-emerald-600'
-                            : 'text-slate-400'
-                        }`}
-                      >
-                        {isCompleted ? 'Listo' : isActive ? 'En curso' : 'Pendiente'}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        <Stepper
+          steps={stepMeta}
+          currentStep={currentStep}
+          completedSteps={Array.from({ length: currentStep - 1 }, (_, i) => i + 1)}
+          onStepClick={(step) => setCurrentStep(step)}
+          stepLabelPrefix="Etapa"
+          className="mb-6"
+        />
 
         {/* ====================================================================
             CONTENEDOR ESTABLE DE PANELES (MIN-HEIGHT ESTABLE, SIN SALTOS VERTICALES)
@@ -1698,7 +1596,7 @@ export const NuevoProveedorPage: React.FC = () => {
           BARRA DE ACCIONES FIJA INFERIOR (STICKY FOOTER - SEGÚN REQUERIMIENTO)
           "noma que el boton de continuar sea fijo que no se mueva..."
           ==================================================================== */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md px-4 sm:px-8 py-3.5 z-40 shadow-[0_-4px_25px_rgba(0,0,0,0.07)] border-t border-slate-200">
+      <footer className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 sm:px-8 py-3.5 z-40 shadow-[0_-4px_25px_rgba(0,0,0,0.15)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.5)] border-t border-slate-200 dark:border-slate-800 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           {/* Lado Izquierdo: Guardar Borrador & Estado de Autoguardado */}
           <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
@@ -1706,7 +1604,7 @@ export const NuevoProveedorPage: React.FC = () => {
               type="button"
               onClick={handleGuardarBorrador}
               disabled={isSavingDraft}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer border border-slate-200 shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer border border-slate-200 dark:border-slate-700 shadow-xs"
               title="Guardar borrador de la sesión"
             >
               <span className="material-symbols-outlined text-[17px]">
@@ -1715,7 +1613,7 @@ export const NuevoProveedorPage: React.FC = () => {
               <span>{isSavingDraft ? 'Guardando...' : 'Guardar Borrador'}</span>
             </button>
 
-            <span className="text-xs text-slate-400 font-medium hidden md:inline">
+            <span className="text-xs text-slate-400 dark:text-slate-400 font-medium hidden md:inline">
               {ultimoGuardado}
             </span>
           </div>
@@ -1725,7 +1623,7 @@ export const NuevoProveedorPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setModalConfirmCancelOpen(true)}
-              className="px-3.5 py-2 rounded-xl text-slate-500 hover:text-red-600 hover:bg-red-50 text-xs font-bold transition-colors cursor-pointer"
+              className="px-3.5 py-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 text-xs font-bold transition-colors cursor-pointer"
             >
               Cancelar Operación
             </button>
@@ -1739,8 +1637,8 @@ export const NuevoProveedorPage: React.FC = () => {
               onClick={prevStep}
               className={`inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-bold transition-colors border shadow-xs ${
                 currentStep === 1
-                  ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
-                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 cursor-pointer'
+                  ? 'bg-slate-100 dark:bg-slate-800/60 text-slate-400 dark:text-slate-600 border-slate-200 dark:border-slate-800 cursor-not-allowed'
+                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer'
               }`}
             >
               <span className="material-symbols-outlined text-[17px]">arrow_back</span>
@@ -1912,24 +1810,24 @@ export const NuevoProveedorPage: React.FC = () => {
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
         >
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900">Agregar Cuenta Bancaria para Dispersión</h3>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Agregar Cuenta Bancaria para Dispersión</h3>
               <button
                 type="button"
                 onClick={() => setModalNuevaCuentaOpen(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Institución Bancaria</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Institución Bancaria</label>
               <select
                 value={nuevoBanco}
                 onChange={(e) => setNuevoBanco(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-bold bg-white"
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
               >
                 <option value="BBVA México">BBVA México</option>
                 <option value="Citibanamex">Citibanamex</option>
@@ -1942,7 +1840,7 @@ export const NuevoProveedorPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                 CLABE Interbancaria (18 dígitos) <span className="text-red-500">*</span>
               </label>
               <input
@@ -1955,34 +1853,36 @@ export const NuevoProveedorPage: React.FC = () => {
                 }}
                 placeholder="012905001234567890"
                 className={`w-full px-3 py-2 rounded-xl border text-sm font-mono font-bold tracking-wider ${
-                  errorClabe ? 'border-red-500 ring-2 ring-red-100' : 'border-slate-300 focus:border-[#1D4ED8]'
+                  errorClabe
+                    ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950'
+                    : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100'
                 }`}
               />
               {errorClabe ? (
                 <p className="text-[11px] text-red-600 font-bold mt-1">{errorClabe}</p>
               ) : (
-                <p className="text-[11px] text-slate-500 mt-1">Estandarizado a 18 dígitos para dispersión SPEI.</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Estandarizado a 18 dígitos para dispersión SPEI.</p>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Número de Cuenta</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Número de Cuenta</label>
                 <input
                   type="text"
                   value={nuevaCuentaNum}
                   onChange={(e) => setNuevaCuentaNum(e.target.value)}
                   placeholder="Ej. 0123456789"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-mono"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-mono bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Moneda</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Moneda</label>
                 <select
                   value={nuevaMonedaCta}
                   onChange={(e) => setNuevaMonedaCta(e.target.value as MonedaDivisa)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-bold bg-white"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                 >
                   <option value="MXN">MXN</option>
                   <option value="USD">USD</option>
@@ -1995,7 +1895,7 @@ export const NuevoProveedorPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setModalNuevaCuentaOpen(false)}
-                className="flex-1 px-4 py-2 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                className="flex-1 px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer"
               >
                 Cancelar
               </button>
@@ -2020,31 +1920,31 @@ export const NuevoProveedorPage: React.FC = () => {
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
         >
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
             <div className="text-center space-y-2">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
                 <span className="material-symbols-outlined text-[28px]">verified</span>
               </div>
-              <h3 className="text-lg font-black text-slate-900">
+              <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
                 {proveedorExistente ? 'Actualizar Expediente de Proveedor' : 'Finalizar Alta de Proveedor'}
               </h3>
-              <p className="text-xs text-slate-500">
-                El proveedor será homologado con RFC <strong className="font-mono text-slate-900">{rfc}</strong> y quedará habilitado de inmediato para compras institucionales.
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                El proveedor será homologado con RFC <strong className="font-mono text-slate-900 dark:text-slate-200">{rfc}</strong> y quedará habilitado de inmediato para compras institucionales.
               </p>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs space-y-1.5">
               <div className="flex justify-between">
-                <span className="text-slate-500 font-bold">Razón Social:</span>
-                <span className="font-bold text-slate-900 text-right">{razonSocial}</span>
+                <span className="text-slate-500 dark:text-slate-400 font-bold">Razón Social:</span>
+                <span className="font-bold text-slate-900 dark:text-slate-200 text-right">{razonSocial}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-bold">Crédito:</span>
-                <span className="font-bold text-slate-800">{diasCredito} días (${limiteCredito.toLocaleString()} MXN)</span>
+                <span className="text-slate-500 dark:text-slate-400 font-bold">Crédito:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{diasCredito} días (${limiteCredito.toLocaleString()} MXN)</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-bold">Cuentas Bancarias:</span>
-                <span className="font-bold text-slate-800">{cuentasBancarias.length} registrada(s)</span>
+                <span className="text-slate-500 dark:text-slate-400 font-bold">Cuentas Bancarias:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{cuentasBancarias.length} registrada(s)</span>
               </div>
             </div>
 
@@ -2061,7 +1961,7 @@ export const NuevoProveedorPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleConfirmarGuardado(false)}
-                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer"
               >
                 Solo Guardar en Directorio (Sin Notificar)
               </button>
@@ -2069,7 +1969,7 @@ export const NuevoProveedorPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setModalNotificarAdminOpen(false)}
-                className="w-full py-2 px-4 text-slate-400 hover:text-slate-600 text-xs font-semibold cursor-pointer"
+                className="w-full py-2 px-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-semibold cursor-pointer"
               >
                 Regresar a Revisar
               </button>
@@ -2087,19 +1987,19 @@ export const NuevoProveedorPage: React.FC = () => {
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
         >
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-center">
-            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto">
               <span className="material-symbols-outlined text-[28px]">warning</span>
             </div>
-            <h3 className="text-base font-bold text-slate-900">¿Deseas cancelar la operación?</h3>
-            <p className="text-xs text-slate-500">
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">¿Deseas cancelar la operación?</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Se conservarán los datos respaldados en el borrador local. Podrás reanudar el alta más adelante.
             </p>
             <div className="flex gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => setModalConfirmCancelOpen(false)}
-                className="flex-1 px-4 py-2 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                className="flex-1 px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer"
               >
                 Continuar Editando
               </button>

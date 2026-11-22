@@ -6,6 +6,7 @@ export interface StepItem {
   id: string | number;
   number?: number;
   title: string;
+  shortTitle?: string;
   description?: string;
   badgeLabel?: string;
 }
@@ -20,23 +21,29 @@ export interface StepperProps {
   isReadOnly?: boolean;
   className?: string;
   successBannerText?: string;
+  showHeader?: boolean;
+  stepLabelPrefix?: string; // 'Etapa' | 'Paso'
 }
 
 /**
- * Componente compartido Stepper (Indicador de Pasos Corporativo SIFYGSA)
- * Basado en la referencia de "Alta de Proveedores" (Identificación / Contacto / Fiscal).
+ * Componente unificado Stepper (Indicador de Pasos Corporativo SIFYGSA)
+ * Modelo normativo oficial basado en el patrón de "Agregar Proveedor":
  *
  * Características:
- * - Círculos conectados por líneas conectoras:
- *   * Completado: círculo verde (bg-emerald-600) con palomita blanca, ring verde suave, etiqueta verde y badge "Listo".
- *   * Actual: círculo azul de marca (#1D4ED8), escala 110%, ring azul claro, etiqueta azul y badge "En curso".
- *   * Pendiente: círculo neutro gris con número, etiqueta gris y badge "Pendiente".
- *   * Con Error: borde rojo semántico, badge "Revisar".
- *   * Concluido (isCompletedAll): todos en verde con palomita, último paso "Concluido" y banner de éxito superior discreto.
- * - Líneas conectoras: tramos completados en verde, tramo al paso actual degradado de verde a azul, siguientes en gris.
- * - Clics solo en pasos completados (excepto si isReadOnly).
- * - Variante compacta responsiva para dispositivos móviles.
- * - WCAG 2.2 AA / Accesibilidad con aria-current="step" y soporte para modo claro/oscuro.
+ * - Tarjeta contenedora con soporte integral modo claro / oscuro.
+ * - Cabecera superior institucional:
+ *   * Izquierda: Insignia numérica del paso actual, título ("Etapa / Paso X de N: Título") y descripción explicativa.
+ *   * Derecha: Indicador de progreso general ("XX% Completado") con barra animada de gradiente.
+ * - Pista de nodos conectados con líneas continuas:
+ *   * Línea de fondo neutra.
+ *   * Línea activa con gradiente esmeralda a azul corporativo (#1D4ED8) con animación suave.
+ *   * PASO COMPLETADO: Círculo verde (bg-emerald-600) con palomita blanca (check), ring verde suave, título verde y badge "Listo".
+ *   * PASO ACTUAL: Círculo azul (#1D4ED8), escala 110%, ring azul claro, título azul y badge "En curso".
+ *   * PASO PENDIENTE: Círculo neutro con borde gris, número de paso, título y badge "Pendiente".
+ *   * PASO CON ERROR: Borde e indicador rojo semántico con badge "Revisar".
+ *   * PROCESO CONCLUIDO (isCompletedAll): Todos los nodos en verde con palomita y badge "Listo" / "Concluido".
+ * - Accesibilidad WCAG 2.2 AA (aria-current, tooltips, etiquetas legibles).
+ * - Diseño completamente responsivo en móviles, tablets y desktop.
  */
 export const Stepper: React.FC<StepperProps> = ({
   steps,
@@ -48,78 +55,153 @@ export const Stepper: React.FC<StepperProps> = ({
   isReadOnly = false,
   className = '',
   successBannerText,
+  showHeader = false,
+  stepLabelPrefix = 'Paso',
 }) => {
   const totalSteps = steps.length;
   const currentStepConfig = steps[currentStep - 1] || steps[0];
+
+  // Cálculo de porcentaje de progreso
   const progressPercent = isCompletedAll
     ? 100
-    : Math.round(((currentStep - 1) / (totalSteps - 1 || 1)) * 100);
+    : totalSteps <= 1
+    ? 100
+    : Math.min(
+        100,
+        Math.max(0, Math.round(((currentStep - 1) / (totalSteps - 1 || 1)) * 100))
+      );
+
+  // Cálculo de porcentaje para posicionamiento de líneas conectoras
+  const halfNodePercent = totalSteps > 0 ? 100 / (2 * totalSteps) : 0;
+  const activeLineWidthPercent = isCompletedAll
+    ? 100 - (100 / (totalSteps || 1))
+    : totalSteps <= 1
+    ? 100
+    : Math.max(
+        0,
+        ((currentStep - 1) / (totalSteps - 1 || 1)) * (100 - 100 / totalSteps)
+      );
 
   return (
     <div
-      className={`w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm transition-colors ${className}`}
+      className={`w-full bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl py-3 px-3 sm:px-6 shadow-xs transition-colors ${className}`}
       aria-label="Progreso del asistente por pasos"
     >
-      {/* ── BANNER DE ÉXITO DISCRETO CUANDO EL MÓDULO ESTÁ CONCLUIDO ── */}
+      {/* ── BANNER DISCRETO DE ÉXITO CUANDO TODO EL PROCESO ESTÁ CONCLUIDO ── */}
       {isCompletedAll && (
-        <div className="flex items-center gap-2 px-3.5 py-2 mb-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold animate-fadeIn">
-          <span className="material-symbols-outlined text-[19px] text-emerald-600 dark:text-emerald-400">
+        <div className="flex items-center gap-2 px-3.5 py-2 mb-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold animate-fadeIn">
+          <span className="material-symbols-outlined text-[18px] text-emerald-600 dark:text-emerald-400">
             check_circle
           </span>
-          <span>{successBannerText || 'Proceso completado exitosamente. Todos los pasos han sido concluidos.'}</span>
+          <span>
+            {successBannerText ||
+              'Proceso completado exitosamente. Todos los pasos han sido concluidos.'}
+          </span>
         </div>
       )}
 
-      {/* ── VISTA DESKTOP / TABLET (Círculos con líneas conectoras y badges de estado) ── */}
-      <div className="hidden sm:block relative pt-2 pb-1">
-        {/* Línea base de fondo (gris neutro) */}
-        <div className="absolute top-7 left-10 right-10 sm:left-14 sm:right-14 h-1 bg-slate-200 dark:bg-slate-700/80 z-0 rounded-full" />
+      {/* ── CABECERA SUPERIOR INSTITUCIONAL (OPCIONAL, OCULTA POR DEFECTO PARA MAXIMIZAR ESPACIO) ── */}
+      {showHeader && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-[#1D4ED8] dark:text-blue-300 text-[11px] font-black">
+                {currentStep}
+              </span>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                {stepLabelPrefix} {currentStep} de {totalSteps}:{' '}
+                {currentStepConfig?.shortTitle || currentStepConfig?.title}
+              </h2>
+            </div>
+            {currentStepConfig?.description && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {currentStepConfig.description}
+              </p>
+            )}
+          </div>
 
-        {/* Línea activa con degradado (verde a azul de marca #1D4ED8) o verde completo si está concluido */}
+          {/* Indicador de Progreso en la Derecha */}
+          <div className="flex items-center gap-3">
+            <div className="text-left sm:text-right">
+              <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Progreso General
+              </div>
+              <div className="text-[11px] font-bold text-[#1D4ED8] dark:text-blue-400">
+                {isCompletedAll ? '100%' : `${progressPercent}%`}{' '}
+                {isCompletedAll ? 'Concluido' : 'Completado'}
+              </div>
+            </div>
+            <div className="w-20 sm:w-28 bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden border border-slate-200/80 dark:border-slate-700">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-500 via-blue-600 to-[#1D4ED8] rounded-full transition-all duration-300"
+                style={{ width: `${isCompletedAll ? 100 : progressPercent}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── PISTA DE NODOS CONECTADOS (COMPACTO Y MODERNO) ── */}
+      <div className="relative px-1 sm:px-3 pt-1 pb-0.5">
+        {/* Línea base de fondo (gris neutro) */}
         <div
-          className={`absolute top-7 left-10 sm:left-14 h-1 z-0 rounded-full transition-all duration-500 ${
+          className="absolute top-4 h-0.5 bg-slate-200 dark:bg-slate-700/80 z-0 rounded-full"
+          style={{
+            left: `${halfNodePercent}%`,
+            right: `${halfNodePercent}%`,
+          }}
+        />
+
+        {/* Línea activa con degradado suave (verde a azul corporativo #1D4ED8) */}
+        <div
+          className={`absolute top-4 h-0.5 z-0 rounded-full transition-all duration-500 ${
             isCompletedAll
               ? 'bg-emerald-500'
               : 'bg-gradient-to-r from-emerald-500 to-[#1D4ED8]'
           }`}
           style={{
-            width: isCompletedAll
-              ? `calc(100% - 7rem)`
-              : `calc(${((currentStep - 1) / (totalSteps - 1 || 1)) * 100}% - ${
-                  currentStep === 1 ? '0rem' : '2.5rem'
-                })`,
+            left: `${halfNodePercent}%`,
+            width: `${activeLineWidthPercent}%`,
           }}
         />
 
-        {/* Nodos de Pasos */}
+        {/* Nodos de Pasos Distribuidos Equitativamente */}
         <div className="relative z-10 flex items-start justify-between">
           {steps.map((step, idx) => {
             const stepNum = step.number ?? idx + 1;
             const isCurrent = !isCompletedAll && stepNum === currentStep;
-            const isCompleted = isCompletedAll || completedSteps.includes(stepNum) || stepNum < currentStep;
+            const isCompleted =
+              isCompletedAll ||
+              (!isCurrent &&
+                (completedSteps.includes(stepNum) || stepNum < currentStep));
             const hasError = !isCompletedAll && errorSteps.includes(stepNum);
             const isLast = stepNum === totalSteps;
             const isConcluidoNode = isCompletedAll && isLast;
 
-            // Clickeable solo si fue completado, no es el actual y no estamos en solo lectura
-            const canClick = isCompleted && !isReadOnly && !isCurrent && !!onStepClick;
+            // Navegación interactiva por clic
+            const canClick = !isReadOnly && !isCurrent && !!onStepClick;
 
-            // Determinación de etiqueta de badge
+            // Determinación de etiqueta de estado
             let badgeText = 'Pendiente';
-            let badgeStyle = 'text-slate-400 dark:text-slate-500 bg-slate-100/70 dark:bg-slate-800/50';
+            let badgeStyle =
+              'text-slate-400 dark:text-slate-500 bg-slate-100/70 dark:bg-slate-800/50';
 
             if (isConcluidoNode) {
               badgeText = 'Concluido';
-              badgeStyle = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 font-bold';
+              badgeStyle =
+                'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 font-bold';
             } else if (hasError) {
               badgeText = 'Revisar';
-              badgeStyle = 'bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400 font-semibold';
+              badgeStyle =
+                'bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400 font-semibold';
             } else if (isCurrent) {
               badgeText = 'En curso';
-              badgeStyle = 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 font-semibold';
+              badgeStyle =
+                'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 font-semibold';
             } else if (isCompleted) {
               badgeText = 'Listo';
-              badgeStyle = 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 font-semibold';
+              badgeStyle =
+                'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 font-semibold';
             }
 
             return (
@@ -132,35 +214,29 @@ export const Stepper: React.FC<StepperProps> = ({
                 disabled={!canClick}
                 aria-current={isCurrent ? 'step' : undefined}
                 aria-label={`Paso ${stepNum}: ${step.title}. Estado: ${badgeText}`}
-                className={`group flex flex-col items-center focus:outline-none transition-all ${
-                  canClick ? 'cursor-pointer hover:scale-105' : 'cursor-default'
+                className={`group flex flex-col items-center focus:outline-none transition-transform ${
+                  canClick
+                    ? 'cursor-pointer hover:scale-105'
+                    : 'cursor-default'
                 }`}
                 style={{ width: `${100 / totalSteps}%` }}
-                title={
-                  canClick
-                    ? `Regresar a ${step.title}`
-                    : isCompletedAll
-                    ? 'Proceso concluido'
-                    : isCurrent
-                    ? 'Paso actual en curso'
-                    : step.title
-                }
+                title={canClick ? `Ir a ${step.title}` : step.title}
               >
-                {/* Círculo indicador */}
+                {/* Círculo indicador compacto */}
                 <div
-                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-black text-sm transition-all duration-300 shadow-md ${
-                    isConcluidoNode || (isCompleted && !isCurrent)
-                      ? 'bg-emerald-600 text-white ring-4 ring-emerald-50 dark:ring-emerald-950/50 shadow-emerald-500/20'
+                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-200 shadow-xs ${
+                    isCompleted
+                      ? 'bg-emerald-600 text-white ring-2 ring-emerald-50 dark:ring-emerald-950/50 shadow-emerald-500/20'
                       : isCurrent
-                      ? 'bg-[#1D4ED8] text-white ring-4 ring-blue-100 dark:ring-blue-900/50 ring-offset-2 dark:ring-offset-slate-900 scale-110 shadow-blue-500/30'
+                      ? 'bg-[#1D4ED8] text-white ring-2 ring-blue-100 dark:ring-blue-900/50 ring-offset-1 dark:ring-offset-slate-900 scale-105 shadow-blue-500/30'
                       : hasError
-                      ? 'bg-white dark:bg-slate-800 text-red-600 border-2 border-red-500 ring-4 ring-red-100 dark:ring-red-950/40'
-                      : 'bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-2 border-slate-300 dark:border-slate-700'
+                      ? 'bg-white dark:bg-slate-800 text-red-600 border border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
+                      : 'bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-slate-700 group-hover:border-slate-400 group-hover:text-slate-600'
                   }`}
                 >
                   {isCompleted ? (
                     <span
-                      className="material-symbols-outlined text-[20px] font-bold"
+                      className="material-symbols-outlined text-[16px] font-bold"
                       aria-hidden="true"
                     >
                       check
@@ -171,23 +247,23 @@ export const Stepper: React.FC<StepperProps> = ({
                 </div>
 
                 {/* Título y Badge del Paso */}
-                <div className="mt-2 text-center px-1 max-w-[130px]">
+                <div className="mt-1 text-center px-1 max-w-[140px]">
                   <span
-                    className={`block text-[11px] sm:text-xs font-bold leading-tight transition-colors line-clamp-2 ${
-                      isCompleted && !isCurrent
+                    className={`block text-[11px] sm:text-xs font-semibold leading-tight transition-colors line-clamp-1 ${
+                      isCompleted
                         ? 'text-emerald-700 dark:text-emerald-400'
                         : isCurrent
                         ? 'text-[#1D4ED8] dark:text-blue-400'
                         : hasError
                         ? 'text-red-600 dark:text-red-400'
-                        : 'text-slate-600 dark:text-slate-400'
+                        : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100'
                     }`}
                   >
                     {step.title}
                   </span>
 
                   <span
-                    className={`inline-block mt-1 text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full border border-transparent ${badgeStyle}`}
+                    className={`inline-block mt-0.5 text-[9px] font-medium px-1.5 py-0.2 rounded-full ${badgeStyle}`}
                   >
                     {badgeText}
                   </span>
@@ -196,66 +272,6 @@ export const Stepper: React.FC<StepperProps> = ({
             );
           })}
         </div>
-      </div>
-
-      {/* ── VISTA RESPONSIVA MÓVIL (Compacta: "Paso X de N" con círculo activo y progreso) ── */}
-      <div className="sm:hidden flex items-center justify-between gap-3 pt-1 pb-1">
-        <div className="flex items-center gap-3">
-          <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shadow-md ${
-              isCompletedAll
-                ? 'bg-emerald-600 text-white ring-4 ring-emerald-50 dark:ring-emerald-950/50'
-                : 'bg-[#1D4ED8] text-white ring-4 ring-blue-100 dark:ring-blue-900/50'
-            }`}
-          >
-            {isCompletedAll ? (
-              <span className="material-symbols-outlined text-[20px]">check</span>
-            ) : (
-              <span>{currentStep}</span>
-            )}
-          </div>
-          <div>
-            <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              {isCompletedAll ? 'Concluido' : `Paso ${currentStep} de ${totalSteps}`}
-            </div>
-            <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
-              {isCompletedAll ? 'Proceso Finalizado' : currentStepConfig?.title}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-end gap-1">
-          <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-              isCompletedAll
-                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                : 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-            }`}
-          >
-            {isCompletedAll ? '100% Completado' : `${progressPercent}%`}
-          </span>
-          <span className="text-[10px] text-slate-400">
-            {isCompletedAll ? 'Listo' : 'En curso'}
-          </span>
-        </div>
-      </div>
-
-      {/* Barra de progreso inferior fina */}
-      <div
-        className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-4 overflow-hidden"
-        role="progressbar"
-        aria-valuenow={progressPercent}
-        aria-valuemin={0}
-        aria-valuemax={100}
-      >
-        <div
-          className={`h-full transition-all duration-500 rounded-full ${
-            isCompletedAll
-              ? 'bg-emerald-500'
-              : 'bg-gradient-to-r from-emerald-500 to-[#1D4ED8]'
-          }`}
-          style={{ width: `${progressPercent}%` }}
-        />
       </div>
     </div>
   );

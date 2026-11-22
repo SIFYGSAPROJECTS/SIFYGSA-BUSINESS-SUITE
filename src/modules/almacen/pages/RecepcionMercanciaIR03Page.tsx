@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAlmacen } from '../context/AlmacenContext';
 import type { PartidaRecepcionIR03, RecepcionIR03Documento } from '../types';
 import { Stepper, type StepItem } from '@/components/ui/Stepper';
@@ -94,6 +94,10 @@ const PASOS_RECEPCION: StepItem[] = [
 
 export default function RecepcionMercanciaIR03Page() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const esOrigenServicios = searchParams?.get('origen') === 'servicios';
+  const rutaPadre = esOrigenServicios ? '/almacen/servicios' : '/almacen/articulos';
+  const etiquetaPadre = esOrigenServicios ? 'Servicios' : 'Artículos';
   const { recepciones, articulos, crearRecepcionIR03, eliminarRecepcionIR03, mostrarToast } = useAlmacen();
   const photoInputRef = useRef<HTMLInputElement>(null);
 
@@ -378,20 +382,32 @@ export default function RecepcionMercanciaIR03Page() {
               </span>
               <span className="material-symbols-outlined text-[14px]">chevron_right</span>
               <span
-                onClick={() => router.push('/almacen/articulos')}
+                onClick={() => router.push(rutaPadre)}
                 className="hover:text-blue-600 transition-colors cursor-pointer"
               >
-                Artículos
+                {etiquetaPadre}
               </span>
               <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-              <span className="font-semibold text-blue-600 dark:text-blue-400">Entrada a inventario (IR03)</span>
+              <span className="font-semibold text-blue-600 dark:text-blue-400">
+                {esOrigenServicios ? 'Entrada de servicio (IR03)' : 'Entrada a inventario (IR03)'}
+              </span>
             </nav>
             <h1 className="text-[26px] sm:text-[30px] font-bold tracking-tight flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
-              Nueva Recepción de Artículo
+              {esOrigenServicios ? 'Nueva Recepción de Servicio' : 'Nueva Recepción de Artículo'}
             </h1>
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => router.push(rutaPadre)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer"
+              style={{ background: 'var(--surface-alt)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+              title={`Volver a ${etiquetaPadre}`}
+            >
+              <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+              <span>Volver a {etiquetaPadre}</span>
+            </button>
             <button
               type="button"
               onClick={handleGuardarBorrador}
@@ -1039,7 +1055,7 @@ export default function RecepcionMercanciaIR03Page() {
       {/* ====================================================================
           BARRA INFERIOR FIJA (BOTTOM STICKY BAR)
          ==================================================================== */}
-      <div className="fixed bottom-0 left-0 right-0 px-6 py-3 z-30 transition-all" style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)', boxShadow: '0 -4px 20px rgba(0,0,0,0.15)' }}>
+      <div className="fixed bottom-0 left-0 right-0 px-6 py-3.5 z-30 transition-all bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 backdrop-blur-md shadow-[0_-4px_25px_rgba(0,0,0,0.15)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.5)]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           
           {/* Estatus */}
@@ -1058,7 +1074,7 @@ export default function RecepcionMercanciaIR03Page() {
             {currentStep === 1 ? (
               <button
                 type="button"
-                onClick={() => router.push('/almacen/inventarios')}
+                onClick={() => router.push(rutaPadre)}
                 className="px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer shadow-xs transition-colors"
                 style={{ background: 'var(--surface-alt)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
               >
@@ -1210,10 +1226,10 @@ export default function RecepcionMercanciaIR03Page() {
               </button>
               <button
                 type="button"
-                onClick={() => router.push('/almacen/inventarios')}
-                className="px-5 py-2 rounded-lg bg-[#1D4ED8] hover:bg-blue-700 text-white text-xs font-bold shadow-sm"
+                onClick={() => router.push(rutaPadre)}
+                className="px-5 py-2 rounded-lg bg-[#1D4ED8] hover:bg-blue-700 text-white text-xs font-bold shadow-sm cursor-pointer"
               >
-                Ver en Inventarios
+                Volver a {etiquetaPadre}
               </button>
             </div>
           </div>

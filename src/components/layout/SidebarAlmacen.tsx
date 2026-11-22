@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import type { RolUsuario } from '@/config/types';
 import {
   IconChevronDown,
@@ -35,26 +35,29 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
 }) => {
   const { t } = useLanguage();
   const pathname = usePathname() || '';
+  const searchParams = useSearchParams();
+  const origenParam = searchParams?.get('origen') || '';
   const [openSectionOperaciones, setOpenSectionOperaciones] = useState(true);
   const [openSectionCatalogo, setOpenSectionCatalogo] = useState(true);
-
-  const esArticulosActivo =
-    activeModuleId === 'almacen' &&
-    (activeSubItemId === 'articulos' ||
-      activeSubItemId === 'alta-articulo' ||
-      activeSubItemId === 'recepcion-ir03' ||
-      activeSubItemId === 'salida' ||
-      pathname.startsWith('/almacen/articulos') ||
-      pathname.startsWith('/almacen/alta-articulo') ||
-      pathname.startsWith('/almacen/recepcion-ir03') ||
-      pathname.startsWith('/almacen/salida'));
 
   const esServiciosActivo =
     activeModuleId === 'almacen' &&
     (activeSubItemId === 'servicios' ||
       activeSubItemId === 'alta-servicio' ||
       pathname.startsWith('/almacen/servicios') ||
-      pathname.startsWith('/almacen/alta-servicio'));
+      pathname.startsWith('/almacen/alta-servicio') ||
+      ((pathname.startsWith('/almacen/recepcion-ir03') || pathname.startsWith('/almacen/salida')) &&
+        origenParam === 'servicios'));
+
+  const esArticulosActivo =
+    activeModuleId === 'almacen' &&
+    !esServiciosActivo &&
+    (activeSubItemId === 'articulos' ||
+      activeSubItemId === 'alta-articulo' ||
+      pathname.startsWith('/almacen/articulos') ||
+      pathname.startsWith('/almacen/alta-articulo') ||
+      pathname.startsWith('/almacen/recepcion-ir03') ||
+      pathname.startsWith('/almacen/salida'));
 
   const esSubItemActivo = (subId: string): boolean => {
     if (activeModuleId !== 'almacen') return false;
@@ -166,41 +169,51 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
 
             <div className="collapsed-divider-line" />
 
-            {/* Iconos de Grupos de Navegación Almacén */}
+            {/* Iconos de Grupos de Navegación Almacén (Colapsado) */}
             <div className="collapsed-nav-icons">
-              {/* Grupo 1: Operaciones de Almacén */}
+              {/* Grupo 1: Dashboard Principal de Almacén (Home) */}
               <button
                 type="button"
-                className={`collapsed-nav-btn almacen-group-btn ${activeModuleId === 'almacen' &&
+                className={`collapsed-nav-btn almacen-group-btn ${
+                  pathname === '/almacen' ||
+                  (activeModuleId === 'almacen' &&
                     (!activeSubItemId ||
                       activeSubItemId === '' ||
-                      activeSubItemId === 'recepcion-ir03' ||
-                      activeSubItemId === 'salida' ||
-                      activeSubItemId === 'mantenimiento' ||
-                      activeSubItemId === 'asignaciones')
+                      activeSubItemId === 'almacen-dashboard'))
                     ? 'active-ops'
                     : ''
-                  }`}
-                title="Operaciones de Almacén (IR03 / SA / Asignaciones)"
+                }`}
+                title="Dashboard Principal Almacén (Home)"
+                aria-label="Dashboard Principal Almacén"
                 onClick={() => onSelectModule('almacen', '')}
               >
                 <IconAlmacen size={18} />
               </button>
 
-              {/* Grupo 2: Catálogo & Suministros */}
+              {/* Grupo 2: Artículos */}
               <button
                 type="button"
-                className={`collapsed-nav-btn almacen-ops-btn ${activeModuleId === 'almacen' &&
-                    (esArticulosActivo || esServiciosActivo)
-                    ? 'active-ops'
-                    : ''
-                  }`}
-                title="Catálogo & Suministros (Artículos / Servicios)"
+                className={`collapsed-nav-btn almacen-ops-btn ${esArticulosActivo ? 'active-ops' : ''}`}
+                title="Artículos (Catálogo y Movimientos)"
+                aria-label="Artículos"
                 onClick={() => onSelectModule('almacen', 'articulos')}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: 18, height: 18 }}>
-                  <path d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                  inventory_2
+                </span>
+              </button>
+
+              {/* Grupo 3: Servicios */}
+              <button
+                type="button"
+                className={`collapsed-nav-btn almacen-ops-btn ${esServiciosActivo ? 'active-ops' : ''}`}
+                title="Servicios (Catálogo y Asignaciones)"
+                aria-label="Servicios"
+                onClick={() => onSelectModule('almacen', 'servicios')}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                  extension
+                </span>
               </button>
             </div>
           </div>

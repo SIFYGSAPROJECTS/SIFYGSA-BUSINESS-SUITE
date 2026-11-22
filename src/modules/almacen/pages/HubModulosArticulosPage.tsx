@@ -15,7 +15,7 @@ const SUBMODULOS_ARTICULOS: SubmoduloCardItem[] = [
   },
   {
     id: 'entrada-inventario',
-    href: '/almacen/recepcion-ir03',
+    href: '/almacen/recepcion-ir03?origen=articulos',
     title: 'Entrada a inventario',
     description: 'Recepción de mercancía (IR03).',
     icon: 'move_to_inbox',
@@ -24,7 +24,7 @@ const SUBMODULOS_ARTICULOS: SubmoduloCardItem[] = [
   },
   {
     id: 'salida-inventario',
-    href: '/almacen/salida',
+    href: '/almacen/salida?origen=articulos',
     title: 'Salida de inventario',
     description: 'Vale de salida a proyecto (SA).',
     icon: 'outbox',

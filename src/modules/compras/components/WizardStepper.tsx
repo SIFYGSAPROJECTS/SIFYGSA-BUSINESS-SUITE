@@ -33,6 +33,7 @@ export const WizardStepper: React.FC<WizardStepperProps> = ({
     id: s.id,
     number: s.number,
     title: s.title,
+    shortTitle: s.shortTitle,
     description: s.description,
   }));
 
@@ -45,6 +46,7 @@ export const WizardStepper: React.FC<WizardStepperProps> = ({
       isCompletedAll={isCompletedAll}
       onStepClick={onStepClick}
       isReadOnly={isSaved}
+      stepLabelPrefix="Etapa"
       successBannerText={successBannerText}
       className="mb-6"
     />

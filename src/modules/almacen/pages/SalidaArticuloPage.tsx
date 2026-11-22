@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Stepper, type StepItem } from '@/components/ui/Stepper';
 import { useAlmacen } from '../context/AlmacenContext';
 import { PROYECTOS_UBICACIONES_CATALOG } from '../types';
@@ -48,17 +48,16 @@ const PASOS_VALE_SALIDA: StepItem[] = [
     title: 'Materiales & Despacho',
     description: 'Selección de partidas e inventario disponible',
   },
-  {
-    id: 3,
-    title: 'Verificación & Firma',
-    description: 'Firma de entrega y emisión del vale',
-  },
 ];
 
 export default function SalidaArticuloPage() {
   const { articulos, articulosActivos, valesSalida, devoluciones, crearValeSalidaSA, registrarDevolucion, mostrarToast } = useAlmacen();
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const esOrigenServicios = searchParams?.get('origen') === 'servicios';
+  const rutaPadre = esOrigenServicios ? '/almacen/servicios' : '/almacen/articulos';
+  const etiquetaPadre = esOrigenServicios ? 'Servicios' : 'Artículos';
 
   // Estados de Pasos (Stepper SIFYGSA)
   const [currentStep, setCurrentStep] = useState(1);
@@ -151,11 +150,6 @@ export default function SalidaArticuloPage() {
       setCompletedSteps((prev) => (prev.includes(1) ? prev : [...prev, 1]));
       setCurrentStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (currentStep === 2) {
-      if (!validarPaso2()) return;
-      setCompletedSteps((prev) => (prev.includes(2) ? prev : [...prev, 2]));
-      setCurrentStep(3);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -174,7 +168,6 @@ export default function SalidaArticuloPage() {
       return;
     }
     if (currentStep === 1 && !validarPaso1()) return;
-    if (currentStep === 2 && !validarPaso2()) return;
     setCurrentStep(stepNum);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -229,11 +222,23 @@ export default function SalidaArticuloPage() {
     setPartidasSalida((prev) => prev.filter((p) => p.id !== id));
   };
 
-  // Canvas de Firma
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [tieneFirma, setTieneFirma] = useState(false);
-  const [isDrawing, setIsDrawing] = useState(false);
   const [modalImpresionOpen, setModalImpresionOpen] = useState(false);
+  const [valeEmitidoActual, setValeEmitidoActual] = useState<ValeSalidaSA | null>(null);
+
+  const handleDescargarEImprimir = () => {
+    window.print();
+    setModalImpresionOpen(false);
+    mostrarToast(`✓ Vale ${valeEmitidoActual?.folio || folioSalida} emitido y descargado con éxito.`, 'success');
+    setTimeout(() => {
+      router.push(rutaPadre);
+    }, 500);
+  };
+
+  const handleFinalizarYRegresar = () => {
+    setModalImpresionOpen(false);
+    mostrarToast(`✓ Salida ${valeEmitidoActual?.folio || folioSalida} finalizada con éxito.`, 'success');
+    router.push(rutaPadre);
+  };
 
   // Estados de Devolución a Almacén Principal (Retorno de Obra)
   const [folioDevolucion] = useState(`DEV-2026-${String(devoluciones.length + 46).padStart(4, '0')}`);
@@ -270,72 +275,9 @@ export default function SalidaArticuloPage() {
     return RESPONSABLES_DISPONIBLES.find((r) => r.id === responsableId) || RESPONSABLES_DISPONIBLES[0];
   }, [responsableId]);
 
-  // Manejo de firma
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const rect = canvas.getBoundingClientRect();
-    ctx.beginPath();
-    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-    setIsDrawing(true);
-  };
-
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const rect = canvas.getBoundingClientRect();
-    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-    ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    setTieneFirma(true);
-  };
-
-  const stopDrawing = () => {
-    setIsDrawing(false);
-  };
-
-  const limpiarFirma = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    setTieneFirma(false);
-  };
-
   // Guardar Vale de Salida con estricta validación de stock
   const handleGuardarValeSalida = () => {
-    if (partidasSalida.length === 0) {
-      mostrarToast('Debes agregar al menos una partida de material o equipo al vale.', 'error');
-      return;
-    }
-
-    if (!tieneFirma) {
-      mostrarToast('Es obligatorio capturar la firma del responsable para validar la entrega física.', 'warning');
-      return;
-    }
-
-    // Validación de stock disponible por partida (bloquea negativos)
-    for (const p of partidasSalida) {
-      const disp = getStockDisponible(p.sku);
-      if (p.cantidad <= 0) {
-        mostrarToast(`La cantidad de la partida ${p.sku} debe ser mayor a 0.`, 'error');
-        return;
-      }
-      if (p.cantidad > disp) {
-        mostrarToast(
-          `Operación rechazada por falta de existencias: El artículo ${p.sku} solo dispone de ${disp} unidades en almacén y se solicitan ${p.cantidad}.`,
-          'error'
-        );
-        return;
-      }
-    }
+    if (!validarPaso2()) return;
 
     const nuevoVale: ValeSalidaSA = {
       id: `sa-${Date.now()}`,
@@ -354,8 +296,8 @@ export default function SalidaArticuloPage() {
     };
 
     crearValeSalidaSA(nuevoVale);
+    setValeEmitidoActual(nuevoVale);
     setModalImpresionOpen(true);
-    limpiarFirma();
     setPartidasSalida([]);
     setFolioSalida(`SA-2026-${String(valesSalida.length + 49).padStart(4, '0')}`);
   };
@@ -384,27 +326,41 @@ export default function SalidaArticuloPage() {
 
   return (
     <div className="almacen-module-container" style={{ minHeight: '100vh', background: 'var(--bg-almacen)' }}>
-      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 20px 80px' }}>
-        {/* Migas de pan */}
-        <nav aria-label="Migas de pan" className="flex items-center gap-1.5 text-xs mb-3 text-slate-500 dark:text-slate-400">
+      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 20px 140px' }}>
+        {/* Migas de pan y Botón Volver */}
+        <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+          <nav aria-label="Migas de pan" className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <button
+              type="button"
+              onClick={() => router.push('/almacen')}
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer bg-transparent border-none p-0 text-xs font-semibold text-slate-500 dark:text-slate-400"
+            >
+              Almacén
+            </button>
+            <span>/</span>
+            <button
+              type="button"
+              onClick={() => router.push(rutaPadre)}
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer bg-transparent border-none p-0 text-xs font-semibold text-slate-500 dark:text-slate-400"
+            >
+              {etiquetaPadre}
+            </button>
+            <span>/</span>
+            <span className="font-semibold text-blue-600 dark:text-blue-400">
+              {esOrigenServicios ? 'Salida de servicio (SA)' : 'Salida de inventario (SA)'}
+            </span>
+          </nav>
+
           <button
             type="button"
-            onClick={() => router.push('/almacen')}
-            className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer bg-transparent border-none p-0 text-xs font-semibold text-slate-500 dark:text-slate-400"
+            onClick={() => router.push(rutaPadre)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors shadow-xs cursor-pointer"
+            title={`Volver a ${etiquetaPadre}`}
           >
-            Almacén
+            <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+            <span>Volver a {etiquetaPadre}</span>
           </button>
-          <span>/</span>
-          <button
-            type="button"
-            onClick={() => router.push('/almacen/articulos')}
-            className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer bg-transparent border-none p-0 text-xs font-semibold text-slate-500 dark:text-slate-400"
-          >
-            Artículos
-          </button>
-          <span>/</span>
-          <span className="font-semibold text-blue-600 dark:text-blue-400">Salida de inventario (SA)</span>
-        </nav>
+        </div>
 
         {/* Cabecera Principal */}
         <div
@@ -841,211 +797,98 @@ export default function SalidaArticuloPage() {
                   </tbody>
                 </table>
               )}
-            </div>
-            )}
 
-            {/* Paso 3: Zona de Firma Física & Confirmación */}
-            {currentStep === 3 && (
-            <div
-              style={{
-                background: 'var(--card-bg, #ffffff)',
-                borderRadius: 16,
-                border: '1px solid var(--border-color, #e2e8f0)',
-                padding: 24,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-              }}
-            >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-                <div>
-                  <h3 style={{ fontSize: '0.98rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
-                    Firma de Recepción en Frente ({responsableActivo.nombreCompleto})
-                  </h3>
-                  <p style={{ margin: '0 0 12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    Dibuja la firma del responsable en el recuadro para validar la entrega física.
-                  </p>
-                  <div style={{ border: '2px dashed var(--border)', borderRadius: 8, background: 'var(--surface-alt)' }}>
-                    <canvas
-                      ref={canvasRef}
-                      width={480}
-                      height={140}
-                      onMouseDown={startDrawing}
-                      onMouseMove={draw}
-                      onMouseUp={stopDrawing}
-                      onMouseLeave={stopDrawing}
-                      style={{ display: 'block', width: '100%', cursor: 'crosshair' }}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-                    <button
-                      type="button"
-                      onClick={limpiarFirma}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text-secondary)',
-                        fontSize: '0.78rem',
-                        cursor: 'pointer',
-                        textDecoration: 'underline',
-                      }}
-                    >
-                      Limpiar Firma
-                    </button>
-                    {tieneFirma && (
-                      <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#16a34a' }}>
-                        ✓ Firma capturada
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 6 }}>
-                      Observaciones de Despacho:
-                    </label>
-                    <textarea
-                      rows={4}
-                      value={observacionesSalida}
-                      onChange={(e) => setObservacionesSalida(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        borderRadius: 8,
-                        border: '1.5px solid var(--border)',
-                        background: 'var(--surface)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.86rem',
-                      }}
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleGuardarValeSalida}
-                    style={{
-                      marginTop: 16,
-                      padding: '14px 20px',
-                      borderRadius: 10,
-                      background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
-                      color: '#ffffff',
-                      border: 'none',
-                      fontSize: '0.98rem',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 8,
-                    }}
-                  >
-                    <span className="material-symbols-outlined">print</span>
-                    Emitir Vale de Salida & Formato PDF para Firma
-                  </button>
-                </div>
+              {/* Observaciones de Despacho */}
+              <div style={{ marginTop: 24, paddingTop: 18, borderTop: '1px solid var(--border)' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 6 }}>
+                  Observaciones de Despacho:
+                </label>
+                <textarea
+                  rows={3}
+                  value={observacionesSalida}
+                  onChange={(e) => setObservacionesSalida(e.target.value)}
+                  placeholder="Detalles adicionales sobre el despacho de herramientas o consumibles para frente activo..."
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    border: '1.5px solid var(--border)',
+                    background: 'var(--surface)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.86rem',
+                    outline: 'none',
+                    resize: 'vertical',
+                  }}
+                />
               </div>
             </div>
             )}
 
-            {/* ── BARRA DE NAVEGACIÓN INFERIOR (STEP BUTTONS) ── */}
+            {/* ── BARRA DE NAVEGACIÓN INFERIOR FIJA (STICKY BOTTOM BAR) ── */}
             <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '16px 20px',
-                background: 'var(--card-bg, #ffffff)',
-                borderRadius: 14,
-                border: '1px solid var(--border-color, #e2e8f0)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                marginTop: 8,
-              }}
+              className="fixed bottom-0 left-0 right-0 z-40 px-4 sm:px-8 py-3.5 transition-all bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 backdrop-blur-md shadow-[0_-4px_25px_rgba(0,0,0,0.15)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.5)]"
             >
-              {currentStep === 1 ? (
-                <button
-                  type="button"
-                  onClick={() => router.push('/almacen')}
-                  style={{
-                    padding: '9px 18px',
-                    borderRadius: 8,
-                    background: 'var(--surface-alt)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.82rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancelar
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleAtras}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '9px 18px',
-                    borderRadius: 8,
-                    background: 'var(--surface-alt)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.82rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>arrow_back</span>
-                  <span>Atrás</span>
-                </button>
-              )}
+              <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+                {/* Lado izquierdo: Cancelar / Atrás */}
+                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-start">
+                  {currentStep === 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => router.push(rutaPadre)}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer shadow-xs transition-colors"
+                      style={{
+                        background: 'var(--surface-alt)',
+                        color: 'var(--text-secondary)',
+                        border: '1px solid var(--border)',
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleAtras}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer shadow-xs transition-colors"
+                      style={{
+                        background: 'var(--surface-alt)',
+                        color: 'var(--text-secondary)',
+                        border: '1px solid var(--border)',
+                      }}
+                    >
+                      <span className="material-symbols-outlined text-[17px]">arrow_back</span>
+                      <span>Atrás</span>
+                    </button>
+                  )}
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {currentStep < 3 ? (
-                  <button
-                    type="button"
-                    onClick={handleContinuar}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '10px 22px',
-                      borderRadius: 8,
-                      background: '#1D4ED8',
-                      color: '#ffffff',
-                      border: 'none',
-                      fontSize: '0.85rem',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 6px rgba(29, 78, 216, 0.25)',
-                    }}
-                  >
-                    <span>Continuar</span>
-                    <span className="material-symbols-outlined" style={{ fontSize: 18 }}>arrow_forward</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleGuardarValeSalida}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '10px 22px',
-                      borderRadius: 8,
-                      background: '#1D4ED8',
-                      color: '#ffffff',
-                      border: 'none',
-                      fontSize: '0.85rem',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 6px rgba(29, 78, 216, 0.25)',
-                    }}
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: 18 }}>check_circle</span>
-                    <span>Emitir Vale de Salida (SA)</span>
-                  </button>
-                )}
+                  {/* Estado / Guardado */}
+                  <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="hidden md:inline font-medium">Borrador de salida activo</span>
+                  </div>
+                </div>
+
+                {/* Lado derecho: Continuar / Emitir Vale */}
+                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                  {currentStep === 1 ? (
+                    <button
+                      type="button"
+                      onClick={handleContinuar}
+                      className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-[#1D4ED8] hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md cursor-pointer active:scale-98"
+                    >
+                      <span>Continuar</span>
+                      <span className="material-symbols-outlined text-[17px]">arrow_forward</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleGuardarValeSalida}
+                      className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-[#1D4ED8] hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md cursor-pointer active:scale-98"
+                    >
+                      <span className="material-symbols-outlined text-[17px]">verified</span>
+                      <span>Emitir Vale de Salida (SA)</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1345,23 +1188,39 @@ export default function SalidaArticuloPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid var(--border)', paddingBottom: 14, marginBottom: 16 }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: 'var(--primary)' }}>
-                  SIFYGSA FIRE & GAS S.A. DE C.V.
+                  SIFYGSA FIRE &amp; GAS S.A. DE C.V.
                 </h3>
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
                   VALE OFICIAL DE SALIDA DE MATERIALES Y EQUIPOS (ALMACÉN SGA)
                 </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <strong style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>{folioSalida}</strong>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Fecha: {fechaSalida}</div>
+              <div style={{ textAlign: 'right', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                <div>
+                  <strong style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>{valeEmitidoActual?.folio || folioSalida}</strong>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Fecha: {valeEmitidoActual?.fechaSalida || fechaSalida}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleFinalizarYRegresar}
+                  title="Cerrar y volver"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    padding: 4,
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 22 }}>close</span>
+                </button>
               </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: '0.82rem', marginBottom: 16, background: 'var(--surface-alt)', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
-              <div><strong>Proyecto Destino:</strong> {proyectoDestino}</div>
-              <div><strong>Solicitud Material:</strong> {solicitudMaterial}</div>
-              <div><strong>Recibe:</strong> {responsableActivo.nombreCompleto}</div>
-              <div><strong>Almacenista:</strong> {almacenistaDespacho}</div>
+              <div><strong>Proyecto Destino:</strong> {valeEmitidoActual?.contratoProyectoDestino || proyectoDestino}</div>
+              <div><strong>Solicitud Material:</strong> {valeEmitidoActual?.solicitudMaterialFolio || solicitudMaterial}</div>
+              <div><strong>Recibe:</strong> {valeEmitidoActual?.responsableRecibe || responsableActivo.nombreCompleto}</div>
+              <div><strong>Almacenista:</strong> {valeEmitidoActual?.almacenistaDespacho || almacenistaDespacho}</div>
             </div>
 
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', marginBottom: 20 }}>
@@ -1374,7 +1233,7 @@ export default function SalidaArticuloPage() {
                 </tr>
               </thead>
               <tbody>
-                {partidasSalida.map((p) => (
+                {(valeEmitidoActual?.partidas && valeEmitidoActual.partidas.length > 0 ? valeEmitidoActual.partidas : partidasSalida).map((p) => (
                   <tr key={p.id} style={{ borderBottom: '1px solid var(--border)' }}>
                     <td style={{ padding: '8px', fontFamily: 'monospace' }}>{p.sku}</td>
                     <td style={{ padding: '8px', color: 'var(--text-secondary)' }}>{p.descripcion}</td>
@@ -1389,15 +1248,15 @@ export default function SalidaArticuloPage() {
               <div>
                 <div style={{ height: 40 }}></div>
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: 6, fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  Entregó: {almacenistaDespacho}
+                  Entregó: {valeEmitidoActual?.almacenistaDespacho || almacenistaDespacho}
                 </div>
               </div>
               <div>
                 <div style={{ height: 40, color: '#16a34a', fontWeight: 800, fontSize: '0.85rem' }}>
-                  [ FIRMA FÍSICA / DIGITAL REGISTRADA ]
+                  [ FIRMA FÍSICA EN RECEPCIÓN ]
                 </div>
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: 6, fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  Recibió: {responsableActivo.nombreCompleto}
+                  Recibió: {valeEmitidoActual?.responsableRecibe || responsableActivo.nombreCompleto}
                 </div>
               </div>
             </div>
@@ -1405,38 +1264,42 @@ export default function SalidaArticuloPage() {
             <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
               <button
                 type="button"
-                onClick={() => setModalImpresionOpen(false)}
+                onClick={handleFinalizarYRegresar}
                 style={{
                   flex: 1,
-                  padding: '10px',
-                  borderRadius: 8,
+                  padding: '12px 16px',
+                  borderRadius: 10,
                   border: '1px solid var(--border)',
                   background: 'var(--surface-alt)',
                   color: 'var(--text-primary)',
                   fontWeight: 700,
                   cursor: 'pointer',
+                  fontSize: '0.86rem',
                 }}
               >
-                Cerrar
+                Finalizar y Volver a {etiquetaPadre}
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  window.print();
-                  setModalImpresionOpen(false);
-                }}
+                onClick={handleDescargarEImprimir}
                 style={{
-                  flex: 1,
-                  padding: '10px',
-                  borderRadius: 8,
+                  flex: 1.2,
+                  padding: '12px 18px',
+                  borderRadius: 10,
                   border: 'none',
                   background: '#1d4ed8',
                   color: '#ffffff',
                   fontWeight: 800,
                   cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  fontSize: '0.88rem',
                 }}
               >
-                Mandar a Imprimir (PDF)
+                <span className="material-symbols-outlined text-[18px]">download</span>
+                <span>Descargar / Imprimir Vale (PDF)</span>
               </button>
             </div>
           </div>
