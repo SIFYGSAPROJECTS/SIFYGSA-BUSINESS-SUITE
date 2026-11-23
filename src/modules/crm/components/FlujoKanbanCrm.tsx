@@ -726,9 +726,9 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 </button>
               </div>
 
-              {/* Botón Acceso Rápido Nueva Requisición */}
+              {/* Botón Acceso Rápido Nueva Requisición dentro de CRM */}
               <Link
-                href="/requisiciones?sub=compras-nueva"
+                href="/crm?sub=crm-nueva-requisicion"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 text-xs font-bold transition-all no-underline shadow-xs cursor-pointer"
                 title="Crear Nueva Requisición"
               >

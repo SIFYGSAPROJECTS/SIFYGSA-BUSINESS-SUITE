@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { RolUsuario, ZonaComercial } from '@/config/types';
 import { FlujoKanbanCrm } from '../components/FlujoKanbanCrm';
 import { LeadsCrm } from '../components/leadsCrm';
+import { ComprasRequisicion } from '@/modules/compras/pages/ComprasRequisicion';
 import type { StitchOpportunity } from '../components/stitchCrmData';
 import type { OportunidadCrm } from '../types';
 import '../crm.css';
@@ -56,7 +57,15 @@ export const HomeCRM: React.FC<HomeCRMProps> = ({
       className="sifygsa-crm-container"
       style={{ padding: 0, gap: 0, width: '100%', minHeight: '100vh' }}
     >
-      {activeModuleMode === 'leads' ? (
+      {subItemId === 'crm-nueva-requisicion' || subItemId === 'compras-nueva' ? (
+        <ComprasRequisicion
+          key="crm-nueva-requisicion"
+          subItemId="compras-nueva"
+          rolUsuario={rolUsuario}
+          moduloOrigen="crm"
+          alVolver={() => router.push('/crm?sub=crm-kanban')}
+        />
+      ) : activeModuleMode === 'leads' ? (
         <LeadsCrm
           rolUsuario={rolUsuario}
           zonaUsuario={zonaUsuario}

@@ -74,7 +74,7 @@ export const REGISTRO_MODULOS: readonly DefinicionModulo[] = [
         id: 'crm-nueva-requisicion',
         nombre: 'Nueva Requisición',
         nombreEn: 'New Requisition',
-        vista: 'compras-nueva',
+        vista: 'crm-nueva-requisicion',
         accionRequerida: 'crear',
       },
     ],

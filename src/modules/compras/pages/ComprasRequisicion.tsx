@@ -48,6 +48,8 @@ export interface ComprasRequisicionProps {
   nombreUsuario?: string;
   idUsuario?: string;
   alRecargarRequisiciones?: () => Promise<void>;
+  moduloOrigen?: 'crm' | 'compras' | 'almacen';
+  alVolver?: () => void;
 }
 
 const ARTICULO_POR_DEFECTO: ArticleItem = {
@@ -108,6 +110,8 @@ export const ComprasRequisicion: React.FC<ComprasRequisicionProps> = ({
   nombreUsuario = 'Pablo Vázquez Culebro',
   idUsuario,
   alRecargarRequisiciones,
+  moduloOrigen,
+  alVolver,
 }) => {
   // Accordion states
   const [clasificacionOpen, setClasificacionOpen] = useState(true);
@@ -672,7 +676,19 @@ export const ComprasRequisicion: React.FC<ComprasRequisicionProps> = ({
       </div>
 
       <div className="compras-header-actions">
-        <ModuleMenu />
+        {moduloOrigen === 'crm' && alVolver ? (
+          <button
+            type="button"
+            onClick={alVolver}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold cursor-pointer shadow-xs"
+            title="Volver al CRM"
+          >
+            <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+            <span>Volver a CRM</span>
+          </button>
+        ) : (
+          <ModuleMenu />
+        )}
 
         <div className="cp-view-mode-switch" role="group" aria-label="Vistas de Requisiciones">
           <button

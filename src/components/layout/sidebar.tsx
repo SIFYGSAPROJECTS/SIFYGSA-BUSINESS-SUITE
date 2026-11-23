@@ -69,9 +69,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const pathname = usePathname() || '';
   const searchParams = useSearchParams();
   const esNuevaRequisicionActiva =
-    (pathname === '/requisiciones' && searchParams?.get('sub') === 'compras-nueva') ||
-    (activeModuleId === 'requisiciones' && activeSubItemId === 'compras-nueva') ||
-    activeSubItemId === 'crm-nueva-requisicion';
+    (activeModuleId === 'crm' && activeSubItemId === 'crm-nueva-requisicion') ||
+    (pathname === '/crm' && searchParams?.get('sub') === 'crm-nueva-requisicion');
 
   const subItemsCrm = obtenerSubItemsPermitidosModulo('crm', rolUsuario);
   const subItemsAdmin = obtenerSubItemsPermitidosModulo('admin', rolUsuario);
@@ -248,13 +247,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 );
               })}
 
-              {/* Botón directo al submódulo Nueva Requisición */}
+              {/* Botón directo al submódulo Nueva Requisición dentro de CRM */}
               <Link
-                href="/requisiciones?sub=compras-nueva"
+                href="/crm?sub=crm-nueva-requisicion"
                 className={`collapsed-nav-btn ${esNuevaRequisicionActiva ? 'active-crm' : ''}`}
                 title={language === 'en' ? 'New Requisition' : 'Nueva Requisición'}
                 aria-label="Nueva Requisición"
-                onClick={() => onSelectModule('requisiciones', 'compras-nueva')}
+                onClick={() => onSelectModule('crm', 'crm-nueva-requisicion')}
               >
                 <span
                   className="material-symbols-outlined"
@@ -356,12 +355,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 );
               })}
 
-              {/* Acceso directo a Nueva Requisición en modo expandido */}
+              {/* Acceso directo a Nueva Requisición dentro de CRM en modo expandido */}
               <div className="accordion-entry">
                 <Link
-                  href="/requisiciones?sub=compras-nueva"
+                  href="/crm?sub=crm-nueva-requisicion"
                   className={`accordion-head-btn sidebar-module-trigger ${esNuevaRequisicionActiva ? 'is-active-module' : ''}`}
-                  onClick={() => onSelectModule('requisiciones', 'compras-nueva')}
+                  onClick={() => onSelectModule('crm', 'crm-nueva-requisicion')}
                   style={{ textDecoration: 'none' }}
                 >
                   <div className="head-left-content">

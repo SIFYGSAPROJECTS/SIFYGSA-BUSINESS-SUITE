@@ -473,8 +473,8 @@ export const MenuSelectivoModulo: React.FC<MenuSelectivoModuloProps> = ({
     },
     {
       id: 'crm-nueva-requisicion',
-      targetModule: 'requisiciones',
-      targetSubItem: 'compras-nueva',
+      targetModule: 'crm',
+      targetSubItem: 'crm-nueva-requisicion',
       title: 'Nueva Requisición',
       titleEn: 'New Requisition',
       description: 'Creación asistida de solicitud de compras, insumos y servicios',

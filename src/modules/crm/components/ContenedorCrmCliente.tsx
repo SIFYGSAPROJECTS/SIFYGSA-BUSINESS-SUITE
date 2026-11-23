@@ -24,14 +24,10 @@ export const ContenedorCrmCliente: React.FC<PropiedadesContenedorCrm> = ({
   const vistaParam = searchParams.get('vista');
   const folioParam = searchParams.get('folio') ?? undefined;
 
-  React.useEffect(() => {
-    if (subParam === 'crm-nueva-requisicion' || subParam === 'compras-nueva') {
-      router.replace('/requisiciones?sub=compras-nueva');
-    }
-  }, [subParam, router]);
-
   let subItemId = subParam ?? 'crm-kanban';
-  if (subParam === 'crm-avanzado') {
+  if (subParam === 'crm-nueva-requisicion' || subParam === 'compras-nueva') {
+    subItemId = 'crm-nueva-requisicion';
+  } else if (subParam === 'crm-avanzado') {
     if (vistaParam === 'reportes') subItemId = 'crm-reportes';
     else if (vistaParam === 'actividades') subItemId = 'crm-calendar';
     else if (vistaParam === 'clientes' || vistaParam === 'tabla' || vistaParam === 'oportunidades') subItemId = 'crm-opportunities';
