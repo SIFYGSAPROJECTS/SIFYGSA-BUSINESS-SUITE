@@ -106,6 +106,41 @@ export default function RecepcionMercanciaIR03Page() {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
+  // Estados de Cabecera y Datos de Entrada (Stitch Form)
+  const [noOrdenCompra, setNoOrdenCompra] = useState('PO OC-0006');
+  const [subsidiaria, setSubsidiaria] = useState('SIFYGSA');
+  const [proveedor, setProveedor] = useState('Corporativo SOS SA de CV');
+  const [fechaRecepcion, setFechaRecepcion] = useState('13/11/2026');
+  const [almacenDestino, setAlmacenDestino] = useState('Almacén Principal');
+  const [moneda, setMoneda] = useState('MXN');
+  const [nota, setNota] = useState(
+    'Entrega programada para 13/11/2026. Revisar contra PO y validar cantidad y número de serie previo a recepción.'
+  );
+
+  // Selector desplegable interactivo de fechas
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+
+  // Evidencia Fotográfica adjunta
+  const [evidenciaNombre, setEvidenciaNombre] = useState<string | null>(null);
+
+  // Partidas Operativas
+  const [partidas, setPartidas] = useState<ItemRecepcionStitch[]>(PARTIDAS_INICIALES_STITCH);
+
+  // Estados de retroalimentación
+  const [borradorGuardado, setBorradorGuardado] = useState(false);
+  const [modalExitoOpen, setModalExitoOpen] = useState(false);
+  const [recepcionCreada, setRecepcionCreada] = useState<RecepcionIR03Documento | null>(null);
+
+  // Modal para agregar artículo
+  const [modalAgregarArticuloOpen, setModalAgregarArticuloOpen] = useState(false);
+  const [skuSeleccionadoParaAgregar, setSkuSeleccionadoParaAgregar] = useState('');
+  const [filtroMarca, setFiltroMarca] = useState('');
+
+  // Modal para eliminar recepción con motivo de auditoría
+  const [modalEliminarOpen, setModalEliminarOpen] = useState(false);
+  const [recepcionAEliminar, setRecepcionAEliminar] = useState<string | null>(null);
+  const [motivoEliminacion, setMotivoEliminacion] = useState('');
+
   const validarPaso1 = (): boolean => {
     if (!noOrdenCompra.trim()) {
       mostrarToast('El número de orden de compra es obligatorio.', 'error');
@@ -193,41 +228,6 @@ export default function RecepcionMercanciaIR03Page() {
     setCurrentStep(stepNum);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  // Estados de Cabecera y Datos de Entrada (Stitch Form)
-  const [noOrdenCompra, setNoOrdenCompra] = useState('PO OC-0006');
-  const [subsidiaria, setSubsidiaria] = useState('SIFYGSA');
-  const [proveedor, setProveedor] = useState('Corporativo SOS SA de CV');
-  const [fechaRecepcion, setFechaRecepcion] = useState('13/11/2026');
-  const [almacenDestino, setAlmacenDestino] = useState('Almacén Principal');
-  const [moneda, setMoneda] = useState('MXN');
-  const [nota, setNota] = useState(
-    'Entrega programada para 13/11/2026. Revisar contra PO y validar cantidad y número de serie previo a recepción.'
-  );
-
-  // Selector desplegable interactivo de fechas
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
-
-  // Evidencia Fotográfica adjunta
-  const [evidenciaNombre, setEvidenciaNombre] = useState<string | null>(null);
-
-  // Partidas Operativas
-  const [partidas, setPartidas] = useState<ItemRecepcionStitch[]>(PARTIDAS_INICIALES_STITCH);
-
-  // Estados de retroalimentación
-  const [borradorGuardado, setBorradorGuardado] = useState(false);
-  const [modalExitoOpen, setModalExitoOpen] = useState(false);
-  const [recepcionCreada, setRecepcionCreada] = useState<RecepcionIR03Documento | null>(null);
-
-  // Modal para agregar artículo
-  const [modalAgregarArticuloOpen, setModalAgregarArticuloOpen] = useState(false);
-  const [skuSeleccionadoParaAgregar, setSkuSeleccionadoParaAgregar] = useState('');
-  const [filtroMarca, setFiltroMarca] = useState('');
-
-  // Modal para eliminar recepción con motivo de auditoría
-  const [modalEliminarOpen, setModalEliminarOpen] = useState(false);
-  const [recepcionAEliminar, setRecepcionAEliminar] = useState<string | null>(null);
-  const [motivoEliminacion, setMotivoEliminacion] = useState('');
 
   // Folio Provisional
   const folioProvisional = useMemo(() => {
