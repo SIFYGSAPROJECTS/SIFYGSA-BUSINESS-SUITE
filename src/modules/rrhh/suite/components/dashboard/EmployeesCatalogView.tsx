@@ -41,6 +41,7 @@ import {
   logHrAuditAction,
   getEmployeeProfileCompleteness,
   getDepartmentCode,
+  getDepartmentTheme,
   EmployeeCompletenessInfo
 } from '../../utils/formShield';
 import { HrAuditLogModal } from './HrAuditLogModal';
@@ -1797,20 +1798,26 @@ export const EmployeesCatalogView: React.FC<EmployeesCatalogViewProps> = ({
                           )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px', flexWrap: 'wrap' }}>
-                          <span
-                            style={{
-                              fontSize: '9.5px',
-                              fontWeight: 800,
-                              padding: '1px 5px',
-                              borderRadius: '4px',
-                              backgroundColor: 'var(--brand-50)',
-                              color: 'var(--primary)',
-                              border: '1px solid var(--brand-200)',
-                              letterSpacing: '0.03em'
-                            }}
-                          >
-                            {getDepartmentCode(emp.department, emp.location)}
-                          </span>
+                          {(() => {
+                            const dCode = getDepartmentCode(emp.department, emp.location);
+                            const dTheme = getDepartmentTheme(dCode, emp.location);
+                            return (
+                              <span
+                                style={{
+                                  fontSize: '9.5px',
+                                  fontWeight: 800,
+                                  padding: '1px 6px',
+                                  borderRadius: '4px',
+                                  backgroundColor: dTheme.softBg,
+                                  color: dTheme.accent,
+                                  border: `1px solid ${dTheme.softBorder}`,
+                                  letterSpacing: '0.03em'
+                                }}
+                              >
+                                {dCode}
+                              </span>
+                            );
+                          })()}
                           <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
                             {emp.id}
                           </span>

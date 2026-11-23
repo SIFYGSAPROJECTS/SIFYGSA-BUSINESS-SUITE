@@ -120,9 +120,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       : 'dashboard');
 
   const isModuleSelectorOpen =
-    (portalDeterminado === 'crm' || portalDeterminado === 'compras') &&
+    (portalDeterminado === 'crm' || portalDeterminado === 'compras' || portalDeterminado === 'rh') &&
     searchParams.get('menu') === '1' &&
-    (activeModuleId === 'crm' || activeModuleId === 'compras' || activeModuleId === 'admin');
+    (activeModuleId === 'crm' ||
+      activeModuleId === 'compras' ||
+      activeModuleId === 'admin' ||
+      activeModuleId === 'rh');
 
   const activeSubItemId =
     activeSubItemProp ??
@@ -209,7 +212,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           break;
         case 'rh':
         case 'rrhh':
-          router.push(subItemId ? `/rrhh?sub=${subItemId}` : '/rrhh');
+          router.push(
+            wantsMenu
+              ? '/rrhh?menu=1'
+              : subItemId
+              ? `/rrhh?sub=${subItemId}`
+              : '/rrhh'
+          );
           break;
         case 'admin':
           router.push(wantsMenu ? '/admin?menu=1' : subItemId ? `/admin?vista=${subItemId}` : '/admin');
@@ -234,7 +243,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   const handleBackToMenu = () => {
     const targetMod =
-      activeModuleId === 'compras' || activeModuleId === 'admin' ? activeModuleId : 'crm';
+      activeModuleId === 'compras' || activeModuleId === 'admin' || activeModuleId === 'rh'
+        ? activeModuleId
+        : portalDeterminado === 'rh'
+        ? 'rh'
+        : 'crm';
     if (targetMod === 'compras') {
       router.push('/compras');
       return;
@@ -244,6 +257,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         targetMod,
         targetMod === 'crm'
           ? 'crm-kanban'
+          : targetMod === 'rh'
+          ? 'rrhh-panel'
           : 'resumen'
       );
     } else {
@@ -299,6 +314,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               void handleLogout();
             }}
             rolUsuario={usuario?.rol ?? 'rrhh'}
+            modulosPermitidos={usuario?.modulosPermitidos}
           />
         ) : userData.portal === 'almacen' ? (
           <SidebarAlmacen
@@ -354,7 +370,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           <div className="content-inner-container">
             {isModuleSelectorOpen ? (
               <MenuSelectivoModulo
-                moduleId={activeModuleId as 'crm' | 'compras' | 'admin'}
+                moduleId={activeModuleId as 'crm' | 'compras' | 'admin' | 'rh'}
                 rolUsuario={usuario?.rol ?? 'administrador'}
                 onSelectSubmodule={handleModuleSelection}
               />

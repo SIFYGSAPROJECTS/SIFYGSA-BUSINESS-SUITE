@@ -534,6 +534,94 @@ const LEGACY_DEPARTMENT_CODES_MAP: Record<string, string> = {
   'DEP-014': 'GSAPE'
 };
 
+export interface DepartmentColorTheme {
+  accent: string;
+  softBg: string;
+  softBorder: string;
+  solidText: string;
+  label: string;
+}
+
+export const DEPARTMENT_COLOR_SWATCHES: readonly { hex: string; name: string }[] = [
+  { hex: '#1E3A8A', name: 'Azul Marino Dirección' },
+  { hex: '#1D4ED8', name: 'Azul SIFYGSA Ingeniería' },
+  { hex: '#0369A1', name: 'Azul Acero Infraestructura' },
+  { hex: '#0E7490', name: 'Petróleo Servicios' },
+  { hex: '#0F766E', name: 'Turquesa Calidad' },
+  { hex: '#15803D', name: 'Verde Seguridad HSE' },
+  { hex: '#047857', name: 'Esmeralda HSE' },
+  { hex: '#4338CA', name: 'Índigo Proyectos' },
+  { hex: '#6D28D9', name: 'Violeta Ventas' },
+  { hex: '#7E22CE', name: 'Púrpura GSAPE' },
+  { hex: '#BE185D', name: 'Vino RRHH' },
+  { hex: '#C2410C', name: 'Terracota Almacén' },
+  { hex: '#B45309', name: 'Ámbar Compras' },
+  { hex: '#475569', name: 'Pizarra Administración' }
+];
+
+const DEPARTMENT_DEFAULT_COLORS: Record<string, { hex: string; label: string }> = {
+  DIR: { hex: '#1E3A8A', label: 'Azul Marino Dirección' },
+  ADM: { hex: '#475569', label: 'Pizarra Administración' },
+  CAL: { hex: '#0F766E', label: 'Turquesa Calidad' },
+  COM: { hex: '#B45309', label: 'Ámbar Compras' },
+  'HSE-MIN': { hex: '#15803D', label: 'Verde Seguridad HSE' },
+  'HSE-COM': { hex: '#047857', label: 'Esmeralda HSE' },
+  ALM: { hex: '#C2410C', label: 'Terracota Almacén' },
+  INF: { hex: '#0369A1', label: 'Azul Acero Infraestructura' },
+  ING: { hex: '#1D4ED8', label: 'Azul SIFYGSA Ingeniería' },
+  MCP: { hex: '#4338CA', label: 'Índigo Proyectos' },
+  RH: { hex: '#BE185D', label: 'Vino RRHH' },
+  SRV: { hex: '#0E7490', label: 'Petróleo Servicios' },
+  VTA: { hex: '#6D28D9', label: 'Violeta Ventas' },
+  GSAPE: { hex: '#7E22CE', label: 'Púrpura GSAPE' }
+};
+
+export const getDepartmentTheme = (
+  codeOrName?: string,
+  location?: string,
+  customColor?: string
+): DepartmentColorTheme => {
+  const upperRaw = (codeOrName || '').trim().toUpperCase();
+  const resolvedCode = DEPARTMENT_DEFAULT_COLORS[upperRaw]
+    ? upperRaw
+    : getDepartmentCode(codeOrName, location);
+
+  const fallbackMeta = DEPARTMENT_DEFAULT_COLORS[resolvedCode] || {
+    hex: '#2563EB',
+    label: 'Azul Corporativo'
+  };
+  const accent =
+    customColor && /^#[0-9A-Fa-f]{6}$/.test(customColor.trim())
+      ? customColor.trim()
+      : fallbackMeta.hex;
+
+  return {
+    accent,
+    softBg: `color-mix(in srgb, ${accent} 10%, var(--surface))`,
+    softBorder: `color-mix(in srgb, ${accent} 26%, var(--border))`,
+    solidText: '#FFFFFF',
+    label: fallbackMeta.label
+  };
+};
+
+export const suggestDepartmentCode = (name: string): string => {
+  const clean = (name || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9\s]/g, ' ')
+    .trim();
+  if (!clean) return '';
+  const words = clean
+    .split(/\s+/)
+    .filter((w) => w.length > 0 && !['de', 'del', 'la', 'las', 'el', 'los', 'y', 'e', 'en', 'a'].includes(w.toLowerCase()));
+  if (words.length === 1) return words[0].slice(0, 3).toUpperCase();
+  return words
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 5)
+    .toUpperCase();
+};
+
 export const getDepartmentCode = (departmentName?: string, location?: string): string => {
   const clean = (departmentName || '').trim().toLowerCase();
   if (!clean) return 'GEN';

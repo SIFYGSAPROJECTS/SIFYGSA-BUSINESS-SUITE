@@ -139,7 +139,7 @@ export const Header: React.FC<HeaderProps> = ({
               onBackToMenu();
             } else if (onSelectModule) {
               onSelectModule(
-                activeModuleId === 'compras' || activeModuleId === 'admin'
+                activeModuleId === 'compras' || activeModuleId === 'admin' || activeModuleId === 'rh'
                   ? activeModuleId
                   : 'crm',
                 '__menu__'

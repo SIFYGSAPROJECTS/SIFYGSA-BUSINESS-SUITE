@@ -378,3 +378,1210 @@ button {
 .wizard-pill-btn:active:not(:disabled) {
   transform: translateY(0);
 }
+
+/* ==========================================================================
+   WIZARD CORPORATIVO RRHH (Alineado a Alta de Artículo · 100% Zoom-Proof)
+   ========================================================================== */
+.rrhh-wizard-shell {
+  container-type: inline-size;
+  container-name: rrhh-wizard;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-bottom: 1.5rem;
+}
+
+.rrhh-wizard-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.rrhh-wizard-breadcrumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.rrhh-wizard-breadcrumb-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-muted);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.rrhh-wizard-breadcrumb-btn:hover {
+  color: var(--primary);
+}
+
+.rrhh-wizard-title {
+  font-size: clamp(1.35rem, 2.2vw, 1.7rem);
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.22;
+  margin: 0;
+}
+
+.rrhh-wizard-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0 0;
+  line-height: 1.4;
+}
+
+.rrhh-folio-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: var(--surface);
+  padding: 0.6rem 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
+  flex-wrap: wrap;
+}
+
+.rrhh-folio-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.rrhh-folio-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.rrhh-folio-value {
+  font-family: var(--font-mono);
+  font-size: 1.08rem;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1.2;
+}
+
+.rrhh-folio-divider {
+  width: 1px;
+  height: 1.9rem;
+  background-color: var(--border);
+}
+
+.rrhh-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background-color: var(--brand-50);
+  color: var(--primary);
+  border: 1px solid var(--brand-200);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rrhh-status-pill.is-ready {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+  border-color: var(--success-border);
+}
+
+[data-theme="dark"] .rrhh-status-pill:not(.is-ready) {
+  background-color: rgba(29, 78, 216, 0.2);
+  color: var(--brand-300);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.rrhh-pulse-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: currentColor;
+  animation: rrhhPulseDot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes rrhhPulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+/* Stepper Corporativo SIFYGSA (Claro/Oscuro + Zoom-Proof) */
+.rrhh-stepper-card {
+  width: 100%;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.15rem 1.35rem 1rem 1.35rem;
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.rrhh-stepper-desktop {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-top: 0.35rem;
+}
+
+.rrhh-stepper-track-bg {
+  position: absolute;
+  top: 1.6rem;
+  left: 8%;
+  right: 8%;
+  height: 4px;
+  border-radius: 999px;
+  background-color: var(--border);
+  z-index: 0;
+}
+
+.rrhh-stepper-track-fill {
+  position: absolute;
+  top: 1.6rem;
+  left: 8%;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #059669 0%, #1D4ED8 100%);
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 0;
+}
+
+.rrhh-stepper-track-fill.all-done {
+  background: #059669;
+}
+
+.rrhh-stepper-node {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 0.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.18s ease;
+}
+
+.rrhh-stepper-node:hover {
+  transform: translateY(-2px);
+}
+
+.rrhh-stepper-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 800;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  background-color: var(--surface);
+  color: var(--text-muted);
+  border: 2px solid var(--border);
+}
+
+.rrhh-stepper-circle.is-current {
+  background-color: #1D4ED8;
+  color: #ffffff;
+  border-color: #1D4ED8;
+  transform: scale(1.08);
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px rgba(29, 78, 216, 0.25);
+}
+
+.rrhh-stepper-circle.is-done {
+  background-color: #059669;
+  color: #ffffff;
+  border-color: #059669;
+  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.22);
+}
+
+.rrhh-stepper-circle.is-done.is-current {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px rgba(5, 150, 105, 0.28);
+}
+
+.rrhh-stepper-circle.is-error {
+  background-color: var(--surface);
+  color: var(--danger);
+  border-color: var(--danger);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.16);
+}
+
+.rrhh-stepper-title {
+  margin-top: 0.55rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--text-secondary);
+  max-width: 122px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rrhh-stepper-title.is-current {
+  color: var(--primary);
+}
+
+.rrhh-stepper-title.is-done {
+  color: #059669;
+}
+
+[data-theme="dark"] .rrhh-stepper-title.is-done {
+  color: #34D399;
+}
+
+.rrhh-stepper-title.is-error {
+  color: var(--danger);
+}
+
+.rrhh-stepper-badge {
+  margin-top: 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
+  border-radius: 9999px;
+  background-color: var(--surface-alt);
+  color: var(--text-muted);
+}
+
+.rrhh-stepper-badge.is-current {
+  background-color: var(--brand-50);
+  color: var(--primary);
+}
+
+[data-theme="dark"] .rrhh-stepper-badge.is-current {
+  background-color: rgba(29, 78, 216, 0.25);
+  color: var(--brand-300);
+}
+
+.rrhh-stepper-badge.is-done {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+}
+
+.rrhh-stepper-badge.is-error {
+  background-color: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.rrhh-stepper-compact {
+  display: none;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.rrhh-stepper-progress-rail {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background-color: var(--surface-alt);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.rrhh-stepper-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #059669 0%, #1D4ED8 100%);
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.rrhh-stepper-progress-fill.all-done {
+  background: #059669;
+}
+
+/* Tarjeta de Etapa (Estándar Catálogo Maestro) */
+.rrhh-step-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  overflow: visible;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.rrhh-step-card-header {
+  background-color: var(--surface-alt);
+  padding: 0.9rem 1.35rem;
+  border-bottom: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.rrhh-step-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.rrhh-step-num-badge {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 0.55rem;
+  background-color: var(--primary);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-xs);
+}
+
+.rrhh-step-card-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.rrhh-step-card-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0.1rem 0 0 0;
+}
+
+.rrhh-step-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.7rem;
+  border-radius: 9999px;
+  background-color: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.rrhh-step-tag.primary {
+  background-color: var(--brand-50);
+  color: var(--primary);
+  border-color: var(--brand-200);
+}
+
+.rrhh-step-tag.done {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+  border-color: var(--success-border);
+}
+
+.rrhh-step-card-body {
+  padding: clamp(1rem, 2vw, 1.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+/* Etiquetas y Controles de Campo */
+.rrhh-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.rrhh-field-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.rrhh-field-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.rrhh-field-hint {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.rrhh-wizard-shell .input-text {
+  height: 40px;
+  border-radius: 10px;
+  background-color: var(--surface-alt);
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.8rem;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  min-width: 0;
+  width: 100%;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rrhh-wizard-shell textarea.input-text {
+  height: auto;
+  min-height: 70px;
+  padding: 0.6rem 0.8rem;
+}
+
+.rrhh-wizard-shell .input-text:focus {
+  background-color: var(--surface);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+}
+
+.rrhh-input-with-check {
+  position: relative;
+  width: 100%;
+}
+
+.rrhh-input-valid-icon {
+  position: absolute;
+  right: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #059669;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+/* Cuadrículas Adaptables (Container Queries para Zoom 50% - 200%) */
+.rrhh-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.rrhh-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.rrhh-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.9rem;
+  align-items: start;
+}
+
+.rrhh-grid-split-photo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(260px, 1fr);
+  gap: 1.35rem;
+  align-items: start;
+}
+
+.rrhh-grid-split-contact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 1.35rem;
+  align-items: start;
+}
+
+.rrhh-grid-folio-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: end;
+}
+
+.rrhh-grid-street {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.75fr) minmax(0, 0.75fr);
+  gap: 0.85rem;
+  align-items: end;
+}
+
+.rrhh-grid-zip {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.65fr);
+  gap: 0.85rem;
+  align-items: end;
+}
+
+.rrhh-grid-folders {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.rrhh-grid-3 > *,
+.rrhh-grid-2 > *,
+.rrhh-grid-4 > *,
+.rrhh-grid-split-photo > *,
+.rrhh-grid-split-contact > *,
+.rrhh-grid-folio-row > *,
+.rrhh-grid-street > *,
+.rrhh-grid-zip > *,
+.rrhh-grid-folders > * {
+  min-width: 0;
+}
+
+/* Barra Inferior Sticky (Nunca tapa el Sidebar y soporta cualquier nivel de Zoom) */
+.rrhh-sticky-bar {
+  position: sticky;
+  bottom: 0.75rem;
+  z-index: 30;
+  background-color: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px -8px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.06);
+  padding: 0.8rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.rrhh-sticky-status {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  min-width: 0;
+}
+
+.rrhh-sticky-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.rrhh-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 10px;
+  background-color: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.rrhh-btn-outline:hover {
+  background-color: var(--surface-alt);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.rrhh-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.2rem;
+  border-radius: 10px;
+  background-color: #1D4ED8;
+  color: #ffffff;
+  border: 1px solid #1D4ED8;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.28);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.rrhh-btn-primary:hover {
+  background-color: #1E40AF;
+  transform: translateY(-1px);
+}
+
+.rrhh-btn-success {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.25rem;
+  border-radius: 10px;
+  background-color: #059669;
+  color: #ffffff;
+  border: 1px solid #059669;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.28);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.rrhh-btn-success:hover {
+  background-color: #047857;
+  transform: translateY(-1px);
+}
+
+/* Modal de Confirmación Exitosa */
+.rrhh-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.rrhh-modal-card {
+  width: 100%;
+  max-width: 30rem;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 2rem 1.75rem;
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.3);
+  text-align: center;
+}
+
+/* Container Queries para Zoom In (125% - 200%) y Tablets/Móviles */
+@container rrhh-wizard (max-width: 980px) {
+  .rrhh-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .rrhh-grid-split-photo,
+  .rrhh-grid-split-contact,
+  .rrhh-grid-folders {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container rrhh-wizard (max-width: 840px) {
+  .rrhh-grid-3,
+  .rrhh-grid-folio-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container rrhh-wizard (max-width: 760px) {
+  .rrhh-stepper-desktop {
+    display: none;
+  }
+  .rrhh-stepper-compact {
+    display: flex;
+  }
+}
+
+@container rrhh-wizard (max-width: 620px) {
+  .rrhh-grid-3,
+  .rrhh-grid-2,
+  .rrhh-grid-4,
+  .rrhh-grid-folio-row,
+  .rrhh-grid-street,
+  .rrhh-grid-zip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rrhh-folio-badge {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .rrhh-folio-info {
+    align-items: flex-start;
+  }
+  .rrhh-sticky-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .rrhh-sticky-actions {
+    justify-content: stretch;
+  }
+  .rrhh-sticky-actions > button {
+    flex: 1 1 auto;
+  }
+}
+
+/* ==========================================================================
+   CATÁLOGO DE DEPARTAMENTOS (Paleta Corporativa por Área · Fluido y Zoom-Proof)
+   Usa el 100% del contenedor maestro de la Suite (.content-inner-container,
+   máx. 1720px) para evitar márgenes laterales vacíos entre laptops y monitores.
+   ========================================================================== */
+.rrhh-dept-shell {
+  container-type: inline-size;
+  container-name: rrhh-dept;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding-bottom: 2.25rem;
+}
+
+.rrhh-dept-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.rrhh-dept-kpi-card {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.95rem 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+  min-width: 0;
+}
+
+.rrhh-dept-kpi-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.rrhh-dept-toolbar {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.72rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.rrhh-dept-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.rrhh-dept-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+  min-width: 0;
+}
+
+.rrhh-dept-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--brand-300);
+}
+
+.rrhh-dept-icon-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.rrhh-dept-code-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 7px;
+  background-color: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.rrhh-dept-row {
+  transition: background-color 0.14s ease;
+}
+
+.rrhh-dept-row:hover {
+  background-color: var(--brand-50) !important;
+}
+
+[data-theme="dark"] .rrhh-dept-row:hover {
+  background-color: rgba(37, 99, 235, 0.14) !important;
+}
+
+.rrhh-dept-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.73rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.rrhh-dept-action-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background-color: var(--brand-50);
+}
+
+[data-theme="dark"] .rrhh-dept-action-btn:hover {
+  background-color: rgba(37, 99, 235, 0.18);
+  color: var(--brand-300);
+  border-color: var(--brand-400);
+}
+
+.rrhh-color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rrhh-color-swatch:hover {
+  transform: scale(1.1);
+}
+
+.rrhh-color-swatch.is-selected {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text-primary);
+}
+
+@container rrhh-dept (max-width: 1320px) {
+  .rrhh-dept-cards-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ==========================================================================
+   DEPARTAMENTOS — CONTENIDO CORPORATIVO, FILTROS Y PERSONALIZACIÓN DE USUARIO
+   ========================================================================== */
+.rrhh-dept-icon-badge.is-tonal {
+  color: var(--dept-accent);
+  background-color: color-mix(in srgb, var(--dept-accent) 11%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--dept-accent) 24%, var(--surface));
+  box-shadow: none;
+}
+
+[data-theme="dark"] .rrhh-dept-icon-badge.is-tonal {
+  color: color-mix(in srgb, var(--dept-accent) 52%, #ffffff);
+  background-color: color-mix(in srgb, var(--dept-accent) 24%, var(--surface));
+  border-color: color-mix(in srgb, var(--dept-accent) 45%, var(--surface));
+}
+
+.rrhh-dept-lead-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  color: var(--dept-accent);
+  background-color: color-mix(in srgb, var(--dept-accent) 11%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--dept-accent) 24%, var(--surface));
+}
+
+[data-theme="dark"] .rrhh-dept-lead-avatar {
+  color: color-mix(in srgb, var(--dept-accent) 55%, #ffffff);
+  background-color: color-mix(in srgb, var(--dept-accent) 22%, var(--surface));
+  border-color: color-mix(in srgb, var(--dept-accent) 42%, var(--surface));
+}
+
+/* Encabezado de tabla con acento corporativo sobrio */
+.rrhh-corp-thead {
+  background-color: color-mix(in srgb, var(--primary) 5%, var(--surface-alt));
+  color: var(--text-secondary);
+  border-bottom: 1.5px solid color-mix(in srgb, var(--primary) 24%, var(--border));
+}
+
+[data-theme="dark"] .rrhh-corp-thead {
+  background-color: color-mix(in srgb, var(--primary) 14%, var(--surface));
+  color: var(--brand-200);
+  border-bottom-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+}
+
+.rrhh-corp-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 20%, transparent);
+  flex-shrink: 0;
+}
+
+.rrhh-corp-table-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.68rem 1rem;
+  border-top: 1px solid var(--border);
+  background-color: var(--surface-alt);
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+}
+
+.rrhh-corp-table-footer strong {
+  color: var(--text-primary);
+}
+
+.rrhh-corp-table-footer-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.71rem;
+  color: var(--text-muted);
+}
+
+/* Barra de Vistas Personalizadas Guardadas */
+.rrhh-dept-views-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.48rem 0.85rem;
+  border-radius: 11px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
+}
+
+.rrhh-dept-view-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.28rem 0.72rem;
+  border-radius: 999px;
+  font-size: 0.73rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background-color: var(--surface-alt);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.rrhh-dept-view-pill:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background-color: var(--brand-50);
+}
+
+.rrhh-dept-view-pill.is-active {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .rrhh-dept-view-pill:hover:not(.is-active) {
+  background-color: rgba(37, 99, 235, 0.16);
+  color: var(--brand-200);
+}
+
+/* Panel desplegable de Filtros Avanzados y Personalización */
+.rrhh-dept-filter-panel {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.rrhh-dept-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.85rem;
+  align-items: end;
+}
+
+.rrhh-dept-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  min-width: 0;
+}
+
+.rrhh-dept-filter-label {
+  font-size: 0.67rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.rrhh-dept-filter-select {
+  height: 35px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background-color: var(--surface-alt);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0 0.65rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.rrhh-dept-filter-select:focus {
+  border-color: var(--primary);
+  background-color: var(--surface);
+}
+
+.rrhh-dept-active-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.22rem 0.62rem;
+  border-radius: 999px;
+  background-color: var(--brand-50);
+  color: var(--primary);
+  border: 1px solid var(--brand-200);
+  font-size: 0.71rem;
+  font-weight: 700;
+}
+
+[data-theme="dark"] .rrhh-dept-active-chip {
+  background-color: rgba(37, 99, 235, 0.2);
+  color: var(--brand-200);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.rrhh-dept-col-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.3rem 0.68rem;
+  border-radius: 8px;
+  font-size: 0.73rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background-color: var(--surface-alt);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rrhh-dept-col-pill.is-on {
+  border-color: var(--primary);
+  background-color: var(--brand-50);
+  color: var(--primary);
+}
+
+[data-theme="dark"] .rrhh-dept-col-pill.is-on {
+  background-color: rgba(37, 99, 235, 0.2);
+  color: var(--brand-200);
+  border-color: var(--brand-400);
+}
+
+@container rrhh-dept (max-width: 1180px) {
+  .rrhh-dept-filter-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container rrhh-dept (max-width: 760px) {
+  .rrhh-dept-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container rrhh-dept (max-width: 520px) {
+  .rrhh-dept-filter-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container rrhh-dept (max-width: 1020px) {
+  .rrhh-dept-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .rrhh-dept-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container rrhh-dept (max-width: 640px) {
+  .rrhh-dept-kpis,
+  .rrhh-dept-cards-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

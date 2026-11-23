@@ -107,7 +107,7 @@ export const ContenedorRrhhCliente: React.FC<PropiedadesContenedorRrhh> = ({
           initialCvDraft={pendingCvDraft}
           onConsumeCvDraft={() => setPendingCvDraft(null)}
           onSuccess={(newEmp) => {
-            savePersistedEmployees([newEmp, ...employeesList]);
+            savePersistedEmployees([newEmp, ...employeesList.filter((e) => e.id !== newEmp.id)]);
             setPendingCvDraft(null);
             router.push('/rrhh?sub=rrhh-catalogos');
           }}

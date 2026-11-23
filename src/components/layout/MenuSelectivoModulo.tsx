@@ -35,6 +35,22 @@ export function getSelectedMenuIconMeta(
         ),
       };
     }
+    if (activeModuleId === 'rh' || activeModuleId === 'rrhh') {
+      return {
+        id: 'menu-rh',
+        title: 'Menú de Recursos Humanos',
+        colorClass: 'brand',
+        icon: (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path
+              d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ),
+      };
+    }
     if (activeModuleId === 'admin') {
       return {
         id: 'menu-admin',
@@ -288,6 +304,143 @@ export function getSelectedMenuIconMeta(
     };
   }
 
+  // Submódulos de Recursos Humanos
+  if (activeModuleId === 'rh' || activeModuleId === 'rrhh') {
+    switch (activeSubItemId) {
+      case 'rrhh-alta':
+        return {
+          id: 'rrhh-alta',
+          title: 'Registro del Personal',
+          colorClass: 'blue',
+          icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path
+                d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M8.5 11a4 4 0 100-8 4 4 0 000 8zM20 8v6M23 11h-6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ),
+        };
+      case 'rrhh-catalogos':
+        return {
+          id: 'rrhh-catalogos',
+          title: 'Directorio de Personal',
+          colorClass: 'indigo',
+          icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ),
+        };
+      case 'rrhh-vacaciones':
+        return {
+          id: 'rrhh-vacaciones',
+          title: 'Vacaciones',
+          colorClass: 'emerald',
+          icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ),
+        };
+      case 'rrhh-formatos':
+        return {
+          id: 'rrhh-formatos',
+          title: 'Formatos SGI',
+          colorClass: 'amber',
+          icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ),
+        };
+      case 'rrhh-departamentos':
+        return {
+          id: 'rrhh-departamentos',
+          title: 'Departamentos',
+          colorClass: 'cyan',
+          icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path
+                d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01M9 18v.01"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ),
+        };
+      case 'rrhh-extensiones':
+        return {
+          id: 'rrhh-extensiones',
+          title: 'Extensiones Telefónicas',
+          colorClass: 'indigo',
+          icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path
+                d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ),
+        };
+      case 'rrhh-cumpleanos':
+        return {
+          id: 'rrhh-cumpleanos',
+          title: 'Cumpleaños',
+          colorClass: 'amber',
+          icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path
+                d="M20 21v-8a2 2 0 00-2-2H6a2 2 0 00-2 2v8M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1M2 21h20M7 8v3M12 8v3M17 8v3M7 4h.01M12 4h.01M17 4h.01"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ),
+        };
+      case 'rrhh-festivos':
+        return {
+          id: 'rrhh-festivos',
+          title: 'Días Festivos',
+          colorClass: 'slate',
+          icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ),
+        };
+      case 'rrhh-panel':
+      case 'rh-directorio':
+      default:
+        return {
+          id: 'rrhh-panel',
+          title: 'Menú Principal RH',
+          colorClass: 'brand',
+          icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path
+                d="M4 5a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h6a1 1 0 011 1v4a1 1 0 01-1 1h-6a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h6a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1h-6a1 1 0 01-1-1v-6z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ),
+        };
+    }
+  }
+
   // Ajustes
   if (activeModuleId === 'settings') {
     return {
@@ -320,7 +473,7 @@ export function getSelectedMenuIconMeta(
 }
 
 export interface MenuSelectivoModuloProps {
-  moduleId: 'crm' | 'compras' | 'admin';
+  moduleId: 'crm' | 'compras' | 'admin' | 'rh';
   rolUsuario: RolUsuario;
   onSelectSubmodule: (moduleId: string, subItemId?: string) => void;
 }
@@ -648,6 +801,77 @@ export const MenuSelectivoModulo: React.FC<MenuSelectivoModuloProps> = ({
     },
   };
 
+  const permittedRh = obtenerSubItemsPermitidosModulo('rrhh', rolUsuario);
+  const rhMeta: Record<string, Omit<LauncherTile, 'id' | 'targetModule' | 'targetSubItem' | 'title' | 'titleEn'>> = {
+    'rrhh-panel': {
+      description: 'Resumen de plantilla, indicadores KPI, directorio rápido y agenda semanal',
+      descriptionEn: 'Workforce overview, KPI summary, quick directory and weekly agenda',
+      colorClass: 'brand',
+      badge: 'Principal',
+      icon: getSelectedMenuIconMeta('rh', 'rrhh-panel').icon,
+    },
+    'rrhh-alta': {
+      description: 'Registro paso a paso de nuevos colaboradores con expediente digital en 6 etapas',
+      descriptionEn: '6-step onboarding wizard with digital employee dossier',
+      colorClass: 'blue',
+      icon: getSelectedMenuIconMeta('rh', 'rrhh-alta').icon,
+    },
+    'rrhh-catalogos': {
+      description: 'Directorio completo, Organigrama corporativo en árbol e importador Excel / CV',
+      descriptionEn: 'Full staff directory, interactive org chart and Excel / CV importer',
+      colorClass: 'indigo',
+      icon: getSelectedMenuIconMeta('rh', 'rrhh-catalogos').icon,
+    },
+    'rrhh-vacaciones': {
+      description: 'Control de saldos LFT, solicitudes SGI-FR-RH-06 y calendario de ausencias',
+      descriptionEn: 'Vacation balances, SGI-FR-RH-06 requests and leave tracking',
+      colorClass: 'emerald',
+      icon: getSelectedMenuIconMeta('rh', 'rrhh-vacaciones').icon,
+    },
+    'rrhh-formatos': {
+      description: 'Ciclo digital SGI: Requisición RH-01, Expediente RH-13/08, Capacitación RH-02 y No Adeudo RH-15',
+      descriptionEn: 'Digital SGI workflows: RH-01, RH-13/08, RH-02 Training and RH-15 Clearance',
+      colorClass: 'amber',
+      icon: getSelectedMenuIconMeta('rh', 'rrhh-formatos').icon,
+    },
+    'rrhh-departamentos': {
+      description: 'Catálogo de las 14 áreas oficiales SIFYGSA (DIR..GSAPE), responsables y ramas',
+      descriptionEn: 'Official SIFYGSA departments (DIR..GSAPE), managers and branches',
+      colorClass: 'cyan',
+      icon: getSelectedMenuIconMeta('rh', 'rrhh-departamentos').icon,
+    },
+    'rrhh-extensiones': {
+      description: 'Directorio corporativo de extensiones telefónicas internas por sede y área',
+      descriptionEn: 'Corporate directory of internal phone extensions by site and area',
+      colorClass: 'indigo',
+      icon: getSelectedMenuIconMeta('rh', 'rrhh-extensiones').icon,
+    },
+    'rrhh-cumpleanos': {
+      description: 'Calendario de cumpleaños del personal, felicitaciones y avisos automatizados',
+      descriptionEn: 'Staff birthday calendar, greeting cards and automated reminders',
+      colorClass: 'amber',
+      icon: getSelectedMenuIconMeta('rh', 'rrhh-cumpleanos').icon,
+    },
+    'rrhh-festivos': {
+      description: 'Calendario de días festivos oficiales LFT, puentes y avisos institucionales',
+      descriptionEn: 'Official LFT holiday calendar and institutional notices',
+      colorClass: 'slate',
+      icon: getSelectedMenuIconMeta('rh', 'rrhh-festivos').icon,
+    },
+  };
+
+  const rhTiles: LauncherTile[] = permittedRh.map((sub) => {
+    const meta = rhMeta[sub.id] ?? rhMeta['rrhh-panel'];
+    return {
+      id: sub.id,
+      targetModule: 'rh',
+      targetSubItem: sub.vista,
+      title: sub.nombre,
+      titleEn: sub.nombreEn,
+      ...meta,
+    };
+  });
+
   const adminTiles: LauncherTile[] = permittedAdmin.map((sub) => {
     const meta = adminMeta[sub.id] ?? adminMeta.resumen;
     return {
@@ -678,6 +902,15 @@ export const MenuSelectivoModulo: React.FC<MenuSelectivoModuloProps> = ({
             : 'Selecciona una herramienta operativa para gestionar requisiciones y aprobaciones',
           badge: 'OPERACIONES',
           tiles: comprasTiles,
+        }
+      : moduleId === 'rh'
+      ? {
+          title: isEn ? 'Human Resources · RH Suite' : 'Recursos Humanos · RH Suite',
+          subtitle: isEn
+            ? 'Select a Human Resources submodule to manage staff, org chart, vacations and SGI workflows'
+            : 'Selecciona un submódulo de Recursos Humanos para gestionar personal, organigrama, vacaciones y formatos SGI',
+          badge: 'RH SUITE',
+          tiles: rhTiles,
         }
       : {
           title: isEn ? 'System Administration' : 'Administración General',

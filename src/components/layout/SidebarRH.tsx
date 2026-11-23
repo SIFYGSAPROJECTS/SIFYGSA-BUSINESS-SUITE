@@ -1,7 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
-import type { RolUsuario } from '@/config/types';
+import { createPortal } from 'react-dom';
+import {
+  LayoutDashboard,
+  LayoutGrid,
+  UserPlus,
+  Users,
+  CalendarDays,
+  FileText,
+  Building2,
+  Phone,
+  Cake,
+  CalendarCheck,
+} from 'lucide-react';
+import type { IdModulo, RolUsuario } from '@/config/types';
 import { obtenerSubItemsPermitidosModulo } from '@/modules/registry';
 import {
   IconChevronDown,
@@ -23,6 +36,53 @@ interface SidebarRHProps {
   onSelectModule: (moduleId: string, subItemId?: string) => void;
   onLogout: () => void;
   rolUsuario?: RolUsuario;
+  modulosPermitidos?: IdModulo[];
+}
+
+interface FloatingTooltipState {
+  label: string;
+  top: number;
+  left: number;
+}
+
+function renderSubItemIcon(subId: string, active: boolean) {
+  const size = 18;
+  const strokeWidth = active ? 2.2 : 1.9;
+  const colorMap: Record<string, string> = {
+    'rrhh-panel': '#1D4ED8',
+    'rrhh-alta': '#2563EB',
+    'rrhh-catalogos': '#4F46E5',
+    'rrhh-vacaciones': '#059669',
+    'rrhh-formatos': '#D97706',
+    'rrhh-departamentos': '#0284C7',
+    'rrhh-extensiones': '#7C3AED',
+    'rrhh-cumpleanos': '#DB2777',
+    'rrhh-festivos': '#0D9488',
+  };
+  const style = active ? undefined : { color: colorMap[subId] ?? 'currentColor' };
+
+  switch (subId) {
+    case 'rrhh-panel':
+      return <LayoutDashboard size={size} strokeWidth={strokeWidth} style={style} />;
+    case 'rrhh-alta':
+      return <UserPlus size={size} strokeWidth={strokeWidth} style={style} />;
+    case 'rrhh-catalogos':
+      return <Users size={size} strokeWidth={strokeWidth} style={style} />;
+    case 'rrhh-vacaciones':
+      return <CalendarDays size={size} strokeWidth={strokeWidth} style={style} />;
+    case 'rrhh-formatos':
+      return <FileText size={size} strokeWidth={strokeWidth} style={style} />;
+    case 'rrhh-departamentos':
+      return <Building2 size={size} strokeWidth={strokeWidth} style={style} />;
+    case 'rrhh-extensiones':
+      return <Phone size={size} strokeWidth={strokeWidth} style={style} />;
+    case 'rrhh-cumpleanos':
+      return <Cake size={size} strokeWidth={strokeWidth} style={style} />;
+    case 'rrhh-festivos':
+      return <CalendarCheck size={size} strokeWidth={strokeWidth} style={style} />;
+    default:
+      return <IconUsers size={size} />;
+  }
 }
 
 export const SidebarRH: React.FC<SidebarRHProps> = ({
@@ -33,19 +93,37 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
   activeSubItemId,
   onSelectModule,
   rolUsuario = 'rrhh',
+  modulosPermitidos,
 }) => {
   const { language, t } = useLanguage();
   const [openSectionRh, setOpenSectionRh] = useState(true);
+  const [tooltip, setTooltip] = useState<FloatingTooltipState | null>(null);
 
-  const subItemsRrhh = obtenerSubItemsPermitidosModulo('rrhh', rolUsuario);
+  const subItemsRrhh = obtenerSubItemsPermitidosModulo('rrhh', rolUsuario, modulosPermitidos);
+  const navSubItemsRail = subItemsRrhh.filter((sub) => sub.id !== 'rrhh-panel');
 
   const esSubItemRrhhActivo = (idSubItem: string): boolean => {
     if (activeModuleId !== 'rh' && activeModuleId !== 'rrhh') return false;
+    if (activeSubItemId === '__menu__') return false;
     if (!activeSubItemId || activeSubItemId === 'rh-directorio') {
       return idSubItem === 'rrhh-panel';
     }
     return activeSubItemId === idSubItem;
   };
+
+  const esMenuSelectivoActivo =
+    (activeModuleId === 'rh' || activeModuleId === 'rrhh') && activeSubItemId === '__menu__';
+
+  const showFloatingTooltip = (e: React.MouseEvent<HTMLElement> | React.FocusEvent<HTMLElement>, label: string) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTooltip({
+      label,
+      top: rect.top + rect.height / 2,
+      left: rect.right + 10,
+    });
+  };
+
+  const hideFloatingTooltip = () => setTooltip(null);
 
   return (
     <aside
@@ -89,7 +167,7 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
 
       <div className="sidebar-top-container">
         {/* ====================================================================
-           MODO COLAPSADO / MINIMIZADO (Icon Rail Centrado para RH)
+           MODO COLAPSADO / MINIMIZADO (Icon Rail Completo para RRHH)
            ==================================================================== */}
         {isCollapsed ? (
           <div className="sidebar-collapsed-column">
@@ -98,10 +176,19 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
               <button
                 type="button"
                 className={`tool-icon-btn ${
-                  activeModuleId === 'rh' ? 'active-rh' : ''
+                  esSubItemRrhhActivo('rrhh-panel') ? 'active-rh' : ''
                 }`}
-                title="Menú Principal RH"
+                title={language === 'en' ? 'Main Menu (HR)' : 'Menú Principal RH'}
+                aria-label={language === 'en' ? 'Main Menu (HR)' : 'Menú Principal RH'}
                 onClick={() => onSelectModule('rh', 'rrhh-panel')}
+                onMouseEnter={(e) =>
+                  showFloatingTooltip(e, language === 'en' ? 'Main Menu' : 'Menú Principal')
+                }
+                onMouseLeave={hideFloatingTooltip}
+                onFocus={(e) =>
+                  showFloatingTooltip(e, language === 'en' ? 'Main Menu' : 'Menú Principal')
+                }
+                onBlur={hideFloatingTooltip}
               >
                 <svg
                   className="w-4 h-4"
@@ -115,11 +202,40 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
 
               <button
                 type="button"
+                className={`collapsed-nav-btn ${esMenuSelectivoActivo ? 'active-rh' : ''}`}
+                title={language === 'en' ? 'All HR Submodules' : 'Ver todos los submódulos RH'}
+                aria-label={language === 'en' ? 'All HR Submodules' : 'Ver todos los submódulos RH'}
+                onClick={() => onSelectModule('rh', '__menu__')}
+                onMouseEnter={(e) =>
+                  showFloatingTooltip(
+                    e,
+                    language === 'en' ? 'HR Submodules Menu' : 'Menú de Submódulos RH'
+                  )
+                }
+                onMouseLeave={hideFloatingTooltip}
+                onFocus={(e) =>
+                  showFloatingTooltip(
+                    e,
+                    language === 'en' ? 'HR Submodules Menu' : 'Menú de Submódulos RH'
+                  )
+                }
+                onBlur={hideFloatingTooltip}
+              >
+                <LayoutGrid size={17} strokeWidth={2} />
+              </button>
+
+              <button
+                type="button"
                 className={`tool-icon-btn ${
                   activeModuleId === 'settings' ? 'active-rh' : ''
                 }`}
                 title={t('nav.settings')}
+                aria-label={t('nav.settings')}
                 onClick={() => onSelectModule('settings')}
+                onMouseEnter={(e) => showFloatingTooltip(e, t('nav.settings'))}
+                onMouseLeave={hideFloatingTooltip}
+                onFocus={(e) => showFloatingTooltip(e, t('nav.settings'))}
+                onBlur={hideFloatingTooltip}
               >
                 <svg
                   className="w-4 h-4"
@@ -150,24 +266,36 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
 
             <div className="collapsed-divider-line" />
 
-            {/* Iconos de Grupos de Navegación RH */}
-            <div className="collapsed-nav-icons">
-              {/* Grupo 1: Recursos Humanos */}
-              <button
-                type="button"
-                className={`collapsed-nav-btn rh-group-btn ${
-                  activeModuleId === 'rh' ? 'active-rh' : ''
-                }`}
-                title="Recursos Humanos"
-                onClick={() => onSelectModule('rh', 'rrhh-panel')}
-              >
-                <IconUsers size={18} />
-              </button>
+            {/* Iconos de todos los submódulos de Recursos Humanos */}
+            <div className="collapsed-nav-icons" style={{ gap: '0.45rem' }}>
+              {navSubItemsRail.map((sub) => {
+                const activo = esSubItemRrhhActivo(sub.id);
+                const label = language === 'en' ? sub.nombreEn : sub.nombre;
+                return (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    className={`collapsed-nav-btn rh-group-btn ${activo ? 'active-rh' : ''}`}
+                    title={label}
+                    aria-label={label}
+                    onClick={() => {
+                      hideFloatingTooltip();
+                      onSelectModule('rh', sub.vista);
+                    }}
+                    onMouseEnter={(e) => showFloatingTooltip(e, label)}
+                    onMouseLeave={hideFloatingTooltip}
+                    onFocus={(e) => showFloatingTooltip(e, label)}
+                    onBlur={hideFloatingTooltip}
+                  >
+                    {renderSubItemIcon(sub.id, activo)}
+                  </button>
+                );
+              })}
             </div>
           </div>
         ) : (
           /* ====================================================================
-             MODO EXPANDIDO (Submódulos de Recursos Humanos + Requisiciones)
+             MODO EXPANDIDO / MÓVIL (Submódulos completos de Recursos Humanos)
              ==================================================================== */
           <>
             {/* Top Quick Tools Bar RH */}
@@ -175,7 +303,7 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
               <div className="quick-tools-left">
                 <button
                   type="button"
-                  className={`tool-icon-btn ${activeModuleId === 'rh' ? 'active-rh' : ''}`}
+                  className={`tool-icon-btn ${esSubItemRrhhActivo('rrhh-panel') ? 'active-rh' : ''}`}
                   title="Menú Principal RH"
                   onClick={() => onSelectModule('rh', 'rrhh-panel')}
                 >
@@ -238,9 +366,8 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
               </span>
             </div>
 
-            {/* Navigation Links Group (RECURSOS HUMANOS + REQUISICIONES) */}
+            {/* Navigation Links Group (RECURSOS HUMANOS - 9 submódulos) */}
             <nav className="sidebar-accordion-nav">
-              {/* Group 1: RECURSOS HUMANOS (8 submódulos) */}
               <div className="accordion-entry">
                 <button
                   type="button"
@@ -279,6 +406,36 @@ export const SidebarRH: React.FC<SidebarRHProps> = ({
           </>
         )}
       </div>
+
+      {/* Tooltip flotante instantáneo para el rail compacto (sin recorte de overflow) */}
+      {typeof document !== 'undefined' &&
+        isCollapsed &&
+        tooltip &&
+        createPortal(
+          <div
+            role="tooltip"
+            style={{
+              position: 'fixed',
+              top: `${tooltip.top}px`,
+              left: `${tooltip.left}px`,
+              transform: 'translateY(-50%)',
+              zIndex: 9999,
+              pointerEvents: 'none',
+              backgroundColor: 'var(--text-primary)',
+              color: 'var(--surface)',
+              fontSize: '0.76rem',
+              fontWeight: 600,
+              padding: '0.35rem 0.65rem',
+              borderRadius: '6px',
+              boxShadow: '0 6px 16px rgba(15, 23, 42, 0.22)',
+              whiteSpace: 'nowrap',
+              letterSpacing: '0.01em',
+            }}
+          >
+            {tooltip.label}
+          </div>,
+          document.body
+        )}
 
       {/* Tarjeta Inferior de Estado del Sistema RH */}
       <div className="sidebar-bottom-status-card">

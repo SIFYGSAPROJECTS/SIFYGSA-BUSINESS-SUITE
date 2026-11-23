@@ -8,10 +8,10 @@
 
 ## 1. Estado de Repositorios y Commits
 
-| Repositorio | URL | Rama Activa | Último Commit de Código | Estado |
-|---|---|---|---|---|
-| **Standalone RRHH (Personal)** | `https://github.com/Moy-Garcia/sifygsa_rrhh` | `dev` *(NO `main`)* | `962565b` | Subido a `origin/dev`, `npm run build` OK (Vite + React 19) |
-| **Suite Empresarial del Equipo** | `https://github.com/SIFYGSAPROJECTS/SIFYGSA-BUSINESS-SUITE` | `feat/rrhh-actualizacion` *(creada desde `dev`, NO `main`)* | `b9002e6` | Subido a `origin/feat/rrhh-actualizacion`, `npm run typecheck` y `next build` OK (61/61 rutas Next.js 16) |
+| Repositorio | URL | Rama Activa | Estado |
+|---|---|---|---|
+| **Standalone RRHH (Personal)** | `https://github.com/Moy-Garcia/sifygsa_rrhh` | `dev` *(NO `main`)* | Sincronizado con `origin/dev`, `npm run build` OK (Vite + React 19) |
+| **Suite Empresarial del Equipo** | `https://github.com/SIFYGSAPROJECTS/SIFYGSA-BUSINESS-SUITE` | `feat/rrhh-actualizacion` *(creada desde `dev`, NO `main`)* | Sincronizado con `origin/feat/rrhh-actualizacion`, `eslint` + `npm run typecheck` OK |
 
 - **Regla clave de integración en `SIFYGSA-BUSINESS-SUITE`:**
   - En `SIFYGSA-BUSINESS-SUITE`, la rama activa del equipo es **`dev`** (Next.js 16 + React 19 + App Router). La rama `main` es una versión anterior en Vite.
@@ -55,12 +55,19 @@
    - *Directorio Rápido de Colaboradores* filtrado por defecto en **`Minatitlán, Ver.`** + buscador rápido en vivo.
    - *Agenda Semanal* con creador `+ Nueva Actividad` funcional y persistente.
 2. **Registro del Personal (`EmployeeCreateView.tsx`):**
-   - Wizard limpio de 6 etapas con **stepper circular conectado** (igualando el estándar visual del equipo); eliminados el toggle *Paso a Paso / Ver Todo*, el botón *Guardar Borrador* y textos de relleno.
-   - Corregido el recorte de combos (`overflow: visible` en tarjetas).
-   - Uniformes EPP simplificados únicamente a **Calzado (MEX)** y **Overol**.
-   - Etapa 5 (**Nómina**): simplificada a una sola cuenta bajo la etiqueta limpia `Nómina`.
-   - Etapa 6 (**Expediente Digital**): sistema de **Subcarpetas personalizables** (`Documentos`, `Certificaciones`, `Contratos y Anexos` + `+ Nueva Carpeta`).
-3. **Directorio de Personal (`EmployeesCatalogView.tsx` — antes *Catálogo Personal*):**
+   - Wizard ejecutivo de 6 etapas alineado al estándar visual de *Alta de Artículo en Catálogo Maestro* (encabezado con migas de pan + tarjeta en vivo `FOLIO SUGERIDO · SFG-XXXX` y estatus, stepper circular conectado adaptable a claro/oscuro con modo compacto automático vía `@container rrhh-wizard` para zoom `50%–200%`).
+   - Tarjetas numeradas por etapa (`1..6`), etiquetas limpias con pistas, validación en vivo con palomita verde (`CheckCircle2`), cuadrículas fluidas sin recortes y barra inferior fija (`Guardar Borrador`, `Cancelar`, `Limpiar`, `Anterior`, `Continuar`, `+ Registrar Colaborador`) + modal de confirmación al concluir.
+   - Deduplicación preventiva al guardar en `ContenedorRrhhCliente.tsx`.
+   - Uniformes EPP simplificados a **Calzado (MEX)** y **Overol**, Etapa 5 **Nómina** simplificada y Etapa 6 **Expediente Digital** con subcarpetas personalizables.
+3. **Catálogo de Departamentos (`DepartmentsView.tsx` + `formShield.ts`):**
+   - Ancho fluido al `100%` del contenedor maestro de la suite (`max-width: 1720px` en `MainLayout.css`), eliminando bordes laterales vacíos entre laptops y monitores + responsive por `@container rrhh-dept`.
+   - Paleta corporativa sobria y centralizada por departamento (`getDepartmentTheme`, `DEPARTMENT_COLOR_SWATCHES`) sincronizada también en `OrgChartView.tsx` y `EmployeesCatalogView.tsx`, con selector de color en los modales de Crear/Editar.
+   - Plantilla real en vivo sincronizada con los **192 colaboradores** (`useSyncedEmployees`), eliminando conteos estáticos antiguos y el texto técnico `(CRUD)`.
+   - Tabla corporativa enriquecida: ícono semántico tonal único por departamento, resumen operativo por fila, sigla completa sin recortes (`GSAPE`, `HSE-MIN`, `HSE-COM`), avatar de iniciales del titular, barra clickeable de plantilla real (abre integrantes), columna de **Extensiones Telefónicas** y pie de tabla con fuente real.
+   - **Filtros avanzados y personalización por usuario (persistentes en `localStorage`):** barra de **Vistas Rápidas + `+ Guardar vista personal`**, panel multi-campo (`Sede Principal`, `Tamaño de Plantilla`, `Estado`, `Extensiones`, `Titular`, `Orden`), chips removibles de filtros activos, y panel **`Personalizar`** para prender/apagar columnas visibles y cambiar densidad (`Cómoda` / `Compacta`).
+4. **Sidebar y Menú Selectivo RRHH (`SidebarRH.tsx`, `MenuSelectivoModulo.tsx`, `MainLayout.tsx`, `Header.tsx`):**
+   - Todos los submódulos operativos de RRHH accesibles directamente desde la barra lateral colapsada por íconos con **tooltips flotantes vía React Portal** (sin recorte por `overflow`) + soporte completo del portal selectivo `/rrhh?menu=1` con las 9 tarjetas de RRHH desde el botón superior izquierdo del Header y el ícono de cuadrícula del Sidebar.
+5. **Directorio de Personal (`EmployeesCatalogView.tsx` — antes *Catálogo Personal*):**
    - Renombrado en toda la interfaz a **Directorio de Personal** (y *Alta de Empleado* → **Registro del Personal**).
    - **Botón unificado `Importar`** con 3 pestañas fluidas:
      - **Importar Excel (`.xlsx` / `.xls`) / CSV (`EmployeeBatchImportModal.tsx`):** lectura nativa con `xlsx`, separación automática de `Nombre` → `Nombre(s)`, `Ap. Paterno`, `Ap. Materno`, detección de `Nº de seguridad social` → `NSS`, resolución jerárquica de departamentos (`Dirección : Servicios` → `Servicios`), unión de `Ciudad` + `Estado/provincia`, actualización inteligente (*Smart Merge*) de datos faltantes en ya registrados, barra de columnas detectadas y filtro/buscador en vista previa.
@@ -119,10 +126,10 @@ database/
 
 ---
 
-## 4. Puntos Pendientes a Continuar en Residencias (`SIFYGSA-BUSINESS-SUITE`)
+## 4. Puntos Pendientes a Continuar (`SIFYGSA-BUSINESS-SUITE`)
 
-- [ ] **1. Revisar visibilidad de submódulos de RRHH en el menú lateral (`Sidebar`):**
-  - Al correr `npm run dev` en `SIFYGSA-BUSINESS-SUITE`, faltaron algunos submódulos de RRHH en el menú lateral. Revisar `src/components/layout/Sidebar.tsx`, `src/lib/permissions.ts`, `src/config/types.ts` y `src/modules/registry.ts` para asegurar que aparezcan todos (`Menú Principal`, `Registro del Personal`, `Directorio de Personal`, `Vacaciones`, `Formatos SGI`, `Departamentos`, `Extensiones Telefónicas`, `Cumpleaños`, `Días Festivos`).
+- [x] **1. Revisar visibilidad de submódulos de RRHH en el menú lateral (`Sidebar`):**
+  - **COMPLETADO:** Se integraron los 8 accesos operativos de RRHH en el icon-rail de `SidebarRH.tsx` con tooltips flotantes (React Portal) + botón de menú selectivo `/rrhh?menu=1` y soporte `'rh'` completo en `MenuSelectivoModulo.tsx`, `MainLayout.tsx` y `Header.tsx`.
 - [ ] **2. Revisar la BD en general (`database/`):**
   - Validar y probar la ejecución completa contra PostgreSQL + MongoDB + `npx prisma generate --schema=database/prisma/schema.prisma`.
 - [ ] **3. Crear una cuenta para cada Gerente de departamento (`VIPSALeaders`):**

@@ -142,6 +142,7 @@ interface CustomSelectOption {
 
 interface CustomSelectProps {
   label: string;
+  hint?: string;
   required?: boolean;
   value: string;
   onChange: (val: string) => void;
@@ -157,6 +158,7 @@ interface CustomSelectProps {
 
 const CustomSelect: React.FC<CustomSelectProps> = ({
   label,
+  hint,
   required,
   value,
   onChange,
@@ -245,10 +247,14 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%', zIndex: isOpen ? 60 : 1 }} ref={containerRef}>
-      <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-        {label} {required && <span style={{ color: 'var(--danger)' }}>*</span>}
-      </label>
+    <div className="rrhh-field" style={{ position: 'relative', width: '100%', zIndex: isOpen ? 60 : 1 }} ref={containerRef}>
+      <div className="rrhh-field-label-row">
+        <label className="rrhh-field-label">
+          <span>{label}</span>
+          {required && <span style={{ color: 'var(--danger)' }}>*</span>}
+        </label>
+        {hint && <span className="rrhh-field-hint">{hint}</span>}
+      </div>
 
       <button
         ref={buttonRef}
@@ -343,19 +349,20 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
         className="input-text"
         style={{
           width: '100%',
-          height: '38px',
+          height: '40px',
+          borderRadius: '10px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           cursor: disabled ? 'not-allowed' : 'pointer',
           padding: '0 12px',
           textAlign: 'left',
-          backgroundColor: disabled ? 'var(--surface-alt)' : 'var(--surface)',
+          backgroundColor: disabled ? 'var(--surface-alt)' : isOpen ? 'var(--surface)' : 'var(--surface-alt)',
           borderColor: hasError ? 'var(--danger)' : isOpen ? 'var(--primary)' : 'var(--border)',
           boxShadow: hasError
             ? '0 0 0 3px rgba(239, 68, 68, 0.2)'
             : isOpen
-            ? '0 0 0 3px var(--brand-100)'
+            ? '0 0 0 3px rgba(29, 78, 216, 0.15)'
             : 'none',
           transition: 'all var(--transition-fast)'
         }}
@@ -366,7 +373,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            fontSize: '12.5px',
+            fontSize: '0.85rem',
             color: selectedOption ? 'var(--text-primary)' : 'var(--text-muted)',
             fontWeight: selectedOption ? 600 : 400
           }}
@@ -534,9 +541,9 @@ const AutocompleteTextInput: React.FC<AutocompleteTextInputProps> = ({
         display: 'flex',
         alignItems: 'center',
         width: '100%',
-        height: '38px',
-        borderRadius: 'var(--radius-control)',
-        backgroundColor: hasError ? 'rgba(239, 68, 68, 0.03)' : 'var(--surface)'
+        height: '40px',
+        borderRadius: '10px',
+        backgroundColor: hasError ? 'rgba(239, 68, 68, 0.03)' : isFocused ? 'var(--surface)' : 'var(--surface-alt)'
       }}
     >
       {showSuggestion && remainingText && (
@@ -550,7 +557,7 @@ const AutocompleteTextInput: React.FC<AutocompleteTextInputProps> = ({
             alignItems: 'center',
             border: '1px solid transparent',
             padding: '7px 54px 7px 12px',
-            fontSize: '12.5px',
+            fontSize: '0.85rem',
             fontFamily: 'inherit',
             fontWeight: 400,
             lineHeight: '22px',
@@ -602,9 +609,10 @@ const AutocompleteTextInput: React.FC<AutocompleteTextInputProps> = ({
         className="input-text"
         style={{
           width: '100%',
-          height: '38px',
+          height: '40px',
+          borderRadius: '10px',
           padding: showSuggestion ? '7px 54px 7px 12px' : '7px 12px',
-          fontSize: '12.5px',
+          fontSize: '0.85rem',
           fontWeight: 400,
           lineHeight: '22px',
           letterSpacing: 'normal',
@@ -729,6 +737,10 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' } | null>(null);
   const [errorField, setErrorField] = useState<string | null>(null);
+  const [errorStepIndex, setErrorStepIndex] = useState<number | null>(null);
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  const [draftFeedback, setDraftFeedback] = useState(false);
+  const [savedEmployeeModal, setSavedEmployeeModal] = useState<Employee | null>(null);
   const toastTimerRef = useRef<number | null>(null);
 
   const triggerToast = (message: string, type: 'success' | 'warning' = 'warning', durationMs = 2600) => {
@@ -1251,108 +1263,59 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
     }
   };
 
-  const renderStepFooter = (stepIndex: number) => {
-    const isLast = stepIndex === steps.length - 1;
-    const isFirst = stepIndex === 0;
-    const nextStep = !isLast ? steps[stepIndex + 1] : null;
-    const currentStep = steps[stepIndex];
-    const isStepDone = currentStep.isDone;
+  const DRAFT_STORAGE_KEY = 'sifygsa_rrhh_employee_draft_v2';
 
-    return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          flexWrap: 'wrap',
-          gap: '10px',
-          padding: '16px 24px',
-          marginTop: '14px',
-          backgroundColor: 'var(--surface)',
-          borderTop: '1px solid var(--border-subtle)',
-          borderRadius: '0 0 16px 16px'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {!isFirst && (
-            <button
-              type="button"
-              onClick={handlePrevStep}
-              className="wizard-pill-btn"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '12.5px',
-                fontWeight: 700,
-                padding: '9px 20px',
-                borderRadius: '999px',
-                backgroundColor: '#FFFFFF',
-                color: '#334155',
-                border: '1.5px solid #CBD5E1',
-                boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)',
-                cursor: 'pointer'
-              }}
-              title="Anterior (Alt + ←)"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Anterior</span>
-            </button>
-          )}
-
-          {!isLast ? (
-            <button
-              type="button"
-              onClick={handleNextStep}
-              className={`wizard-pill-btn ${isStepDone ? 'step-continue-bounce' : ''}`}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '13px',
-                fontWeight: 700,
-                padding: '10px 24px',
-                borderRadius: '999px',
-                backgroundColor: '#2563EB',
-                color: '#FFFFFF',
-                border: 'none',
-                boxShadow: isStepDone
-                  ? '0 6px 18px rgba(37, 99, 235, 0.35)'
-                  : '0 2px 8px rgba(37, 99, 235, 0.22)',
-                cursor: 'pointer'
-              }}
-              title="Continuar (Ctrl + Enter)"
-            >
-              <span>Continuar a {nextStep?.label}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              type="submit"
-              className={`wizard-pill-btn ${completedCount >= 5 ? 'step-continue-bounce' : ''}`}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '13px',
-                fontWeight: 700,
-                padding: '10px 24px',
-                borderRadius: '999px',
-                backgroundColor: '#059669',
-                color: '#FFFFFF',
-                border: 'none',
-                boxShadow: '0 6px 18px rgba(5, 150, 105, 0.32)',
-                cursor: 'pointer'
-              }}
-              title="Guardar (Ctrl + S)"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Finalizar y Guardar Colaborador</span>
-            </button>
-          )}
-        </div>
-      </div>
-    );
+  const handleSaveDraft = () => {
+    try {
+      const payload = {
+        savedAt: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+        deptTecnico,
+        baseDespliegue,
+        tipoContrato,
+        salarioBruto,
+        proyectoAsignado,
+        categoriaLaboral,
+        puestoOficial,
+        nombrePila,
+        apellidoPaterno,
+        apellidoMaterno,
+        rfc,
+        curp,
+        nss,
+        supervisor,
+        notasContratacion,
+        telMovil,
+        telFijo,
+        emailPersonal,
+        emailInstitucional,
+        extOficina,
+        calle,
+        numeroDomicilio,
+        numeroInterior,
+        colonia,
+        codigoPostal,
+        municipio,
+        estadoDomicilio,
+        contactoEmergenciaNombre,
+        contactoEmergenciaParentesco,
+        contactoEmergenciaTel,
+        calzado,
+        overol,
+        tipoSangre,
+        discapacidad,
+        discapacidadDetalle,
+        padecimientos,
+        alergias,
+        bankAccounts
+      };
+      window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
+      setDraftSavedAt(payload.savedAt);
+      setDraftFeedback(true);
+      triggerToast('Borrador guardado localmente.', 'success', 2000);
+      window.setTimeout(() => setDraftFeedback(false), 2200);
+    } catch {
+      triggerToast('No se pudo guardar el borrador local.', 'warning', 2200);
+    }
   };
 
   // =========================================================================
@@ -1768,8 +1731,15 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
     setFotoPreview(null);
     setNotasContratacion('');
     setErrorField(null);
+    setErrorStepIndex(null);
+    setDraftSavedAt(null);
     setCurrentStepIndex(0);
     setStepDirection('next');
+    try {
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
     if (nextFolio && isAutoFolio) {
       setEmpId(nextFolio);
     }
@@ -1782,7 +1752,10 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
   };
 
   const focusErrorField = (sectionId: string, fieldKey: string, message: string) => {
+    const STEP_IDS = ['section1', 'section2', 'section3', 'section4', 'section5', 'section6'];
+    const idx = STEP_IDS.indexOf(sectionId);
     setErrorField(fieldKey);
+    if (idx !== -1) setErrorStepIndex(idx);
     scrollToSection(sectionId);
     triggerToast(message, 'warning', 2800);
     window.setTimeout(() => {
@@ -2076,8 +2049,9 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
     });
 
     const nextFolio = getNextEmployeeFolio(updatedList);
+    setSavedEmployeeModal(nuevoColaborador);
     resetAllFields(nextFolio);
-    triggerToast('¡Guardado!', 'success', 2800);
+    triggerToast(`Colaborador ${nuevoColaborador.id} registrado exitosamente.`, 'success', 3200);
   };
 
   const handleLimpiar = () => {
@@ -2085,8 +2059,14 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
     triggerToast('¡Campos limpios!', 'warning', 2000);
   };
 
+  const progressPercent = Math.round((completedCount / steps.length) * 100);
+  const currentStepObj = steps[currentStepIndex] || steps[0];
+  const nextStepObj = currentStepIndex < steps.length - 1 ? steps[currentStepIndex + 1] : null;
+  const isReadyToSave =
+    isSection1Done && isSection2Done && isSection3Done && isSection4Done && isSection5Done;
+
   return (
-    <form noValidate onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '40px' }}>
+    <form noValidate onSubmit={handleSubmit} className="rrhh-wizard-shell">
       {/* TOAST NOTIFICATION */}
       {toast && (
         <div
@@ -2094,19 +2074,19 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
           aria-live="polite"
           style={{
             position: 'fixed',
-            top: '22px',
+            top: '76px',
             right: '24px',
             zIndex: 9999,
             backgroundColor: toast.type === 'success' ? '#047857' : '#D97706',
             color: '#FFFFFF',
-            padding: '12px 22px',
+            padding: '11px 20px',
             borderRadius: '10px',
             boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.25)',
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            fontSize: '14px',
-            fontWeight: 800,
+            fontSize: '13.5px',
+            fontWeight: 700,
             letterSpacing: '0.01em',
             border: toast.type === 'success' ? '1px solid #34D399' : '1px solid #FBBF24',
             transition: 'all 0.25s ease'
@@ -2122,371 +2102,200 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       )}
 
       {/* ========================================================= */}
-      {/* 1. ENCABEZADO SUPERIOR: REGISTRO DEL PERSONAL             */}
+      {/* 1. ENCABEZADO SUPERIOR (ESTÁNDAR CATÁLOGO MAESTRO)        */}
       {/* ========================================================= */}
-      <div>
-        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-          <span>Recursos Humanos</span> <span style={{ margin: '0 4px' }}>/</span>{' '}
-          <strong style={{ color: 'var(--text-secondary)' }}>Registro del Personal</strong>
-        </div>
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '12px',
-                backgroundColor: 'var(--brand-50)',
-                color: 'var(--primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '1px solid var(--brand-200)',
-                flexShrink: 0
-              }}
-            >
-              <UserPlus className="w-5 h-5" />
-            </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
-                  Registro del Personal
-                </h1>
-                <span
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    padding: '2px 8px',
-                    borderRadius: '12px',
-                    backgroundColor: 'var(--brand-50)',
-                    color: 'var(--primary)',
-                    border: '1px solid var(--brand-200)'
-                  }}
-                >
-                  Nuevo Ingreso
-                </span>
-              </div>
-              <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                Captura de expediente laboral, fiscal y bancario.
-              </p>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            {onCancel && (
-              <button
-                type="button"
-                onClick={onCancel}
-                className="btn btn-secondary"
-                style={{ fontSize: '12.5px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                title="Volver al panel principal"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Volver</span>
-              </button>
-            )}
-
+      <div className="rrhh-wizard-header">
+        <div>
+          <nav aria-label="Migas de pan" className="rrhh-wizard-breadcrumbs">
             <button
               type="button"
-              onClick={handleLimpiar}
-              className="btn btn-secondary"
-              style={{ fontSize: '12.5px' }}
+              onClick={onCancel}
+              className="rrhh-wizard-breadcrumb-btn"
             >
-              Limpiar Formulario
+              Recursos Humanos
             </button>
-
+            <span>/</span>
             <button
-              type="submit"
-              className="btn btn-primary"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700 }}
-              title="Guardar Registro (Ctrl+S)"
+              type="button"
+              onClick={onCancel}
+              className="rrhh-wizard-breadcrumb-btn"
             >
-              <Save className="w-4 h-4" />
-              <span>Guardar Registro</span>
-              <span style={{ fontSize: '10.5px', backgroundColor: 'rgba(255,255,255,0.2)', padding: '1px 6px', borderRadius: '4px', marginLeft: '2px' }}>
-                Ctrl+S
-              </span>
+              Directorio de Personal
             </button>
+            <span>/</span>
+            <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+              Registro del Personal
+            </strong>
+          </nav>
+
+          <h1 className="rrhh-wizard-title">Registro del Personal</h1>
+          <p className="rrhh-wizard-subtitle">
+            Captura estructurada del expediente laboral, fiscal, médico y bancario del colaborador.
+          </p>
+        </div>
+
+        {/* Badge Folio Sugerido + Estatus Vivo */}
+        <div className="rrhh-folio-badge">
+          <div className="rrhh-folio-info">
+            <span className="rrhh-folio-label">Folio Sugerido</span>
+            <span className="rrhh-folio-value">{empId}</span>
           </div>
+          <div className="rrhh-folio-divider" />
+          <span className={`rrhh-status-pill ${isReadyToSave ? 'is-ready' : ''}`}>
+            <span className="rrhh-pulse-dot" />
+            {isReadyToSave
+              ? 'Listo para Guardar'
+              : draftSavedAt
+              ? `Borrador ${draftSavedAt}`
+              : 'Nuevo Ingreso'}
+          </span>
         </div>
       </div>
 
       {/* ========================================================= */}
-      {/* 2. ETAPA ACTIVA & TIMELINE CONECTADO (ESTÁNDAR SIFYGSA)   */}
+      {/* 2. STEPPER CORPORATIVO SIFYGSA (ZOOM-PROOF + DARK MODE)   */}
       {/* ========================================================= */}
-      <div
-        className="card"
-        style={{
-          padding: '22px 28px',
-          borderRadius: '18px',
-          backgroundColor: 'var(--surface)',
-          border: '1px solid var(--border)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '22px',
-          boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.04)'
-        }}
-      >
-        {/* Cabecera de Etapa Actual + Progreso General (Idéntico al estándar visual) */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '16px'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-            <div
-              style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: '50%',
-                backgroundColor: '#DBEAFE',
-                color: '#1D4ED8',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 800,
-                fontSize: '13px',
-                flexShrink: 0,
-                marginTop: '1px'
-              }}
-            >
-              {currentStepIndex + 1}
-            </div>
-            <div>
-              <h2 style={{ fontSize: '15.5px', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.01em' }}>
-                Etapa {currentStepIndex + 1} de {steps.length}: {steps[currentStepIndex]?.label}
-              </h2>
-              <p style={{ fontSize: '12.5px', color: '#64748B', margin: '3px 0 0 0' }}>
-                {steps[currentStepIndex]?.description}
-              </p>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1px' }}>
-              <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}>Progreso General</span>
-              <span
-                style={{
-                  fontSize: '12.5px',
-                  fontWeight: 800,
-                  color: completedCount === steps.length ? '#059669' : '#2563EB'
-                }}
-              >
-                {Math.round((completedCount / steps.length) * 100)}% Completado
-              </span>
-            </div>
-            <div
-              style={{
-                width: '120px',
-                height: '7px',
-                borderRadius: '999px',
-                backgroundColor: '#E2E8F0',
-                overflow: 'hidden'
-              }}
-            >
-              <div
-                style={{
-                  width: `${Math.max((completedCount / steps.length) * 100, currentStepIndex > 0 ? 12 : 6)}%`,
-                  height: '100%',
-                  borderRadius: '999px',
-                  background:
-                    completedCount === steps.length
-                      ? '#059669'
-                      : 'linear-gradient(90deg, #2563EB 0%, #0EA5E9 100%)',
-                  transition: 'width 0.4s cubic-bezier(0.22, 1, 0.36, 1)'
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Timeline Horizontal con Círculos Verdes/Azules, Extremos y Cola de Progreso */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            width: '100%',
-            overflowX: 'auto',
-            padding: '10px 8px 6px 8px'
-          }}
-        >
-          {/* Extremo inicial izquierdo de la línea */}
+      <div className="rrhh-stepper-card" aria-label="Progreso de registro en 6 etapas">
+        {/* Vista Desktop / Tablet amplia */}
+        <div className="rrhh-stepper-desktop">
+          <div className="rrhh-stepper-track-bg" />
           <div
+            className={`rrhh-stepper-track-fill ${completedCount === steps.length ? 'all-done' : ''}`}
             style={{
-              width: '32px',
-              height: '3.5px',
-              borderRadius: '999px 0 0 999px',
-              marginTop: '20.5px',
-              marginRight: '-6px',
-              backgroundColor: steps[0]?.isDone ? '#059669' : '#2563EB',
-              flexShrink: 0,
-              transition: 'background-color 0.3s ease'
+              width:
+                completedCount === steps.length
+                  ? '84%'
+                  : `${Math.max(0, (currentStepIndex / (steps.length - 1)) * 84)}%`
             }}
           />
 
           {steps.map((step, idx) => {
             const isDone = step.isDone;
             const isCurrent = currentStepIndex === idx;
-            const isNextCurrent = currentStepIndex === idx + 1;
+            const hasErr = errorStepIndex === idx && !isDone;
+            const statusText = hasErr
+              ? 'Revisar'
+              : isDone
+              ? 'Listo'
+              : isCurrent
+              ? 'En curso'
+              : 'Pendiente';
+
+            const stateClass = hasErr
+              ? 'is-error'
+              : isDone && isCurrent
+              ? 'is-done is-current'
+              : isDone
+              ? 'is-done'
+              : isCurrent
+              ? 'is-current'
+              : '';
 
             return (
-              <React.Fragment key={step.id}>
-                {/* Nodo de la etapa */}
-                <button
-                  type="button"
-                  onClick={() => handleSelectStep(idx)}
-                  className="stepper-node-btn"
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '0 4px',
-                    minWidth: '100px',
-                    flexShrink: 0,
-                    outline: 'none',
-                    position: 'relative',
-                    zIndex: 2
-                  }}
-                  title={`Ir a Etapa ${step.stepNumber}: ${step.label}`}
-                >
-                  {/* Círculo */}
-                  <div
-                    className={
-                      isCurrent && !isDone
-                        ? 'stepper-circle-active'
-                        : isDone
-                        ? 'stepper-circle-done'
-                        : 'stepper-circle-pending'
-                    }
-                    style={{
-                      width: '44px',
-                      height: '44px',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '15px',
-                      fontWeight: 800,
-                      backgroundColor: isDone
-                        ? '#059669' // Verde esmeralda cuando está listo
-                        : isCurrent
-                        ? '#2563EB' // Azul real cuando está en curso
-                        : '#F8FAFC',
-                      color: isDone || isCurrent ? '#FFFFFF' : '#94A3B8',
-                      border: isDone
-                        ? 'none'
-                        : isCurrent
-                        ? 'none'
-                        : '1.5px solid #CBD5E1',
-                      boxShadow:
-                        isDone && isCurrent
-                          ? '0 0 0 3px #ffffff, 0 0 0 6px rgba(5, 150, 105, 0.28)'
-                          : isDone
-                          ? '0 4px 10px rgba(5, 150, 105, 0.22)'
-                          : undefined,
-                      transition: 'all 0.25s cubic-bezier(0.22, 1, 0.36, 1)'
-                    }}
-                  >
-                    {isDone ? (
-                      <Check className="w-5 h-5 stroke-[3]" />
-                    ) : (
-                      step.stepNumber
-                    )}
-                  </div>
-
-                  {/* Etiqueta del paso */}
-                  <span
-                    style={{
-                      marginTop: '10px',
-                      fontSize: '12px',
-                      fontWeight: isCurrent || isDone ? 700 : 600,
-                      color: isCurrent
-                        ? '#1D4ED8'
-                        : isDone
-                        ? '#047857'
-                        : '#334155',
-                      textAlign: 'center',
-                      whiteSpace: 'nowrap',
-                      transition: 'color 0.2s ease'
-                    }}
-                  >
-                    {step.label}
-                  </span>
-
-                  {/* Estado textual */}
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: isCurrent ? 700 : 600,
-                      marginTop: '2px',
-                      color: isDone
-                        ? '#059669'
-                        : isCurrent
-                        ? '#2563EB'
-                        : '#94A3B8'
-                    }}
-                  >
-                    {isDone ? 'Listo' : isCurrent ? 'En curso' : 'Pendiente'}
-                  </span>
-                </button>
-
-                {/* Línea conectora entre círculos con cola activa azul */}
-                {idx < steps.length - 1 && (
-                  <div
-                    style={{
-                      flex: 1,
-                      height: '3.5px',
-                      marginTop: '20.5px',
-                      marginLeft: '-14px',
-                      marginRight: '-14px',
-                      backgroundColor: '#E2E8F0',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      minWidth: '28px',
-                      zIndex: 1
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: isDone ? '100%' : isCurrent ? '38%' : '0%',
-                        height: '100%',
-                        borderRadius: isCurrent && !isDone ? '0 999px 999px 0' : '0',
-                        background:
-                          isDone && isNextCurrent
-                            ? 'linear-gradient(90deg, #059669 0%, #1D4ED8 100%)'
-                            : isDone
-                            ? '#059669'
-                            : '#2563EB',
-                        transition: 'width 0.35s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s ease'
-                      }}
-                    />
-                  </div>
-                )}
-              </React.Fragment>
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => handleSelectStep(idx)}
+                className="rrhh-stepper-node"
+                aria-current={isCurrent ? 'step' : undefined}
+                title={`Ir a Etapa ${step.stepNumber}: ${step.label}`}
+              >
+                <div className={`rrhh-stepper-circle ${stateClass}`}>
+                  {isDone ? <Check className="w-5 h-5" strokeWidth={3} /> : step.stepNumber}
+                </div>
+                <span className={`rrhh-stepper-title ${stateClass}`}>
+                  {step.label}
+                </span>
+                <span className={`rrhh-stepper-badge ${stateClass}`}>
+                  {statusText}
+                </span>
+              </button>
             );
           })}
+        </div>
 
-          {/* Extremo final derecho de la línea */}
+        {/* Vista Compacta Automática (Móvil o Zoom 150%-200%) */}
+        <div className="rrhh-stepper-compact">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+              <div
+                className={`rrhh-stepper-circle ${
+                  currentStepObj.isDone ? 'is-done' : 'is-current'
+                }`}
+                style={{ width: '38px', height: '38px', flexShrink: 0, transform: 'none' }}
+              >
+                {currentStepObj.isDone ? <Check className="w-4 h-4" strokeWidth={3} /> : currentStepObj.stepNumber}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
+                  Etapa {currentStepIndex + 1} de {steps.length}
+                </div>
+                <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {currentStepObj.label}
+                </div>
+              </div>
+            </div>
+
+            <span
+              className={`rrhh-stepper-badge ${completedCount === steps.length ? 'is-done' : 'is-current'}`}
+              style={{ fontSize: '0.7rem', padding: '0.2rem 0.65rem', marginTop: 0, flexShrink: 0 }}
+            >
+              {progressPercent}% Completado
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+            {steps.map((step, idx) => {
+              const isCurrent = currentStepIndex === idx;
+              const isDone = step.isDone;
+              return (
+                <button
+                  key={step.id}
+                  type="button"
+                  onClick={() => handleSelectStep(idx)}
+                  style={{
+                    flex: '1 1 36px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    border: isCurrent
+                      ? '1.5px solid var(--primary)'
+                      : isDone
+                      ? '1px solid var(--success-border)'
+                      : '1px solid var(--border)',
+                    backgroundColor: isCurrent
+                      ? 'var(--primary)'
+                      : isDone
+                      ? 'var(--success-bg)'
+                      : 'var(--surface-alt)',
+                    color: isCurrent
+                      ? '#ffffff'
+                      : isDone
+                      ? 'var(--success-text)'
+                      : 'var(--text-secondary)',
+                    cursor: 'pointer'
+                  }}
+                  title={step.label}
+                >
+                  {isDone ? '✓' : step.stepNumber}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Barra de progreso fina inferior */}
+        <div
+          className="rrhh-stepper-progress-rail"
+          role="progressbar"
+          aria-valuenow={progressPercent}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
           <div
-            style={{
-              width: '32px',
-              height: '3.5px',
-              borderRadius: '0 999px 999px 0',
-              marginTop: '20.5px',
-              marginLeft: '-6px',
-              backgroundColor: steps[steps.length - 1]?.isDone ? '#059669' : '#E2E8F0',
-              flexShrink: 0,
-              transition: 'background-color 0.3s ease'
-            }}
+            className={`rrhh-stepper-progress-fill ${completedCount === steps.length ? 'all-done' : ''}`}
+            style={{ width: `${Math.max(progressPercent, currentStepIndex > 0 ? 14 : 6)}%` }}
           />
         </div>
       </div>
@@ -2501,66 +2310,31 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       {/* PROCESO 1: DATOS LABORALES                                */}
       {/* ========================================================= */}
       {currentStepIndex === 0 && (
-        <div id="section1" className="card" style={{ borderRadius: '16px', overflow: 'visible', boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.04)' }}>
-          <div
-            style={{
-              padding: '18px 24px',
-              backgroundColor: 'var(--surface)',
-              borderRadius: '16px 16px 0 0',
-              borderBottom: '1px solid var(--border-subtle)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '7px',
-                  backgroundColor: 'var(--brand-50)',
-                  color: 'var(--primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid var(--brand-200)',
-                  flexShrink: 0
-                }}
-              >
-                <Briefcase className="w-4 h-4" />
-              </div>
+        <div id="section1" className="rrhh-step-card">
+          <div className="rrhh-step-card-header">
+            <div className="rrhh-step-card-header-left">
+              <span className="rrhh-step-num-badge">1</span>
               <div>
-                <h3 style={{ fontSize: '13.5px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                  Asignación Laboral & Puesto
-                </h3>
-                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '1px 0 0 0' }}>
-                  Departamento, base, contrato y sueldo.
-                </p>
+                <h3 className="rrhh-step-card-title">Asignación Laboral &amp; Puesto</h3>
+                <p className="rrhh-step-card-sub">Empresa, departamento, base operativa, contrato y sueldo mensual.</p>
               </div>
             </div>
-            <span
-              style={{
-                fontSize: '10.5px',
-                fontWeight: 700,
-                backgroundColor: isSection1Done ? 'var(--success-bg)' : 'var(--surface)',
-                color: isSection1Done ? 'var(--success-text)' : 'var(--text-muted)',
-                padding: '3px 10px',
-                borderRadius: '6px',
-                border: isSection1Done ? '1px solid var(--success-border)' : '1px solid var(--border)'
-              }}
-            >
-              {isSection1Done ? '✓ Completado' : 'Pendiente'}
+            <span className={`rrhh-step-tag ${isSection1Done ? 'done' : 'primary'}`}>
+              {isSection1Done ? '✓ Completado' : 'Datos Principales'}
             </span>
           </div>
 
-          <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+          <div className="rrhh-step-card-body">
+            <div className="rrhh-grid-3">
               {/* 1. Empresa (Bloqueado con SIFYGSA) */}
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                  Empresa <span style={{ color: 'var(--danger)' }}>*</span>
-                </label>
+              <div className="rrhh-field">
+                <div className="rrhh-field-label-row">
+                  <label className="rrhh-field-label">
+                    <span>Empresa</span>
+                    <span style={{ color: 'var(--danger)' }}>*</span>
+                  </label>
+                  <span className="rrhh-field-hint">Razón Social</span>
+                </div>
                 <div style={{ position: 'relative' }}>
                   <input
                     type="text"
@@ -2569,13 +2343,10 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                     disabled
                     className="input-text"
                     style={{
-                      width: '100%',
-                      paddingLeft: '12px',
                       paddingRight: '34px',
-                      backgroundColor: 'var(--surface-alt)',
-                      color: 'var(--text-primary)',
                       fontWeight: 700,
-                      cursor: 'not-allowed'
+                      cursor: 'not-allowed',
+                      opacity: 0.9
                     }}
                   />
                   <Lock
@@ -2591,9 +2362,10 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
               </div>
 
               {/* 2. Departamento Asignado */}
-              <div>
+              <div className="rrhh-field">
                 <CustomSelect
                   label="Departamento Asignado"
+                  hint="Asigna jefe y ext."
                   dataField="deptTecnico"
                   required
                   placeholder="Seleccionar departamento..."
@@ -2690,6 +2462,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
               {/* 3. Base de Trabajo (Municipio, Est.) */}
               <CustomSelect
                 label="Base de Trabajo"
+                hint="Sede operativa"
                 value={baseDespliegue}
                 onChange={handleSelectBaseLocation}
                 options={WORK_LOCATIONS}
@@ -2697,13 +2470,15 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', alignItems: 'start' }}>
+            <div className="rrhh-grid-3">
               {/* 4. Tipo de Contrato (Campo de texto con autocompletado estilo placeholder y Tab) */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                    Tipo de Contrato <span style={{ color: 'var(--danger)' }}>*</span>
+              <div className="rrhh-field">
+                <div className="rrhh-field-label-row">
+                  <label className="rrhh-field-label">
+                    <span>Tipo de Contrato</span>
+                    <span style={{ color: 'var(--danger)' }}>*</span>
                   </label>
+                  <span className="rrhh-field-hint">Tab para completar</span>
                 </div>
 
                 <AutocompleteTextInput
@@ -2726,12 +2501,16 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
               </div>
 
               {/* 5. Sueldo Mensual Bruto */}
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                  Sueldo Mensual Bruto (MXN) <span style={{ color: 'var(--danger)' }}>*</span>
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: 'var(--text-muted)' }}>
+              <div className="rrhh-field">
+                <div className="rrhh-field-label-row">
+                  <label className="rrhh-field-label">
+                    <span>Sueldo Mensual Bruto (MXN)</span>
+                    <span style={{ color: 'var(--danger)' }}>*</span>
+                  </label>
+                  <span className="rrhh-field-hint">Antes de impuestos</span>
+                </div>
+                <div className="rrhh-input-with-check">
+                  <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: 'var(--text-muted)', pointerEvents: 'none' }}>
                     $
                   </span>
                   <input
@@ -2743,17 +2522,23 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                     onChange={handleSalarioChange}
                     onKeyDown={handleInputKeyDown}
                     className="input-text"
-                    style={getFieldStyle('salarioBruto', { paddingLeft: '26px', width: '100%', height: '38px', fontWeight: 700 })}
+                    style={getFieldStyle('salarioBruto', { paddingLeft: '26px', paddingRight: '34px', fontFamily: 'var(--font-mono)', fontWeight: 700 })}
                     required
                   />
+                  {salarioBruto.trim() && salarioBruto !== '0' && salarioBruto !== '0.00' && (
+                    <span className="rrhh-input-valid-icon" title="Monto válido">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </span>
+                  )}
                 </div>
               </div>
 
               {/* 6. Proyecto o Área Asignada */}
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                  Proyecto Asignado
-                </label>
+              <div className="rrhh-field">
+                <div className="rrhh-field-label-row">
+                  <label className="rrhh-field-label">Proyecto Asignado</label>
+                  <span className="rrhh-field-hint">Opcional</span>
+                </div>
                 <input
                   type="text"
                   placeholder="Ej. Mantenimiento Preventivo"
@@ -2761,12 +2546,10 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                   onChange={handleCleanTextChange(setProyectoAsignado, 'proyectoAsignado', 90)}
                   onKeyDown={handleInputKeyDown}
                   className="input-text"
-                  style={{ width: '100%', height: '38px', paddingLeft: '12px' }}
                 />
               </div>
             </div>
           </div>
-          {renderStepFooter(0)}
         </div>
       )}
 
@@ -2774,69 +2557,44 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       {/* PROCESO 2: DATOS PERSONALES                               */}
       {/* ========================================================= */}
       {currentStepIndex === 1 && (
-        <div id="section2" className="card" style={{ borderRadius: '16px', overflow: 'visible', boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.04)' }}>
-          <div
-            style={{
-              padding: '18px 24px',
-              backgroundColor: 'var(--surface)',
-              borderRadius: '16px 16px 0 0',
-              borderBottom: '1px solid var(--border-subtle)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '7px',
-                  backgroundColor: 'var(--brand-50)',
-                  color: 'var(--primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid var(--brand-200)',
-                  flexShrink: 0
-                }}
-              >
-                <User className="w-4 h-4" />
-              </div>
+        <div id="section2" className="rrhh-step-card">
+          <div className="rrhh-step-card-header">
+            <div className="rrhh-step-card-header-left">
+              <span className="rrhh-step-num-badge">2</span>
               <div>
-                <h3 style={{ fontSize: '13.5px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                  Identificación & Expediente Personal
-                </h3>
-                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '1px 0 0 0' }}>
-                  Nombre, RFC, CURP, NSS y fotografía.
-                </p>
+                <h3 className="rrhh-step-card-title">Identificación &amp; Expediente Personal</h3>
+                <p className="rrhh-step-card-sub">Matrícula SFG, puesto, nombre completo, RFC, CURP, NSS y fotografía.</p>
               </div>
             </div>
-            <span
-              style={{
-                fontSize: '10.5px',
-                fontWeight: 700,
-                backgroundColor: isSection2Done ? 'var(--success-bg)' : 'var(--surface)',
-                color: isSection2Done ? 'var(--success-text)' : 'var(--text-muted)',
-                padding: '3px 10px',
-                borderRadius: '6px',
-                border: isSection2Done ? '1px solid var(--success-border)' : '1px solid var(--border)'
-              }}
-            >
-              {isSection2Done ? '✓ Completado' : 'Pendiente'}
+            <span className={`rrhh-step-tag ${isSection2Done ? 'done' : 'primary'}`}>
+              {isSection2Done ? '✓ Completado' : 'Identidad y SAT'}
             </span>
           </div>
 
-          <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: '1.45fr 1fr', gap: '24px' }}>
-            {/* Formulario Izquierdo */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {/* Fila 1: Folio, Puesto de Trabajo y Categoría de Puesto */}
-              <div style={{ display: 'grid', gridTemplateColumns: '0.9fr 1.2fr 1fr', gap: '12px', alignItems: 'end' }}>
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    Folio de Empleado <span style={{ color: 'var(--danger)' }}>*</span>
-                  </label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="rrhh-step-card-body">
+            <div className="rrhh-grid-split-photo">
+              {/* Formulario Izquierdo */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: 0 }}>
+                {/* Fila 1: Folio, Puesto de Trabajo y Categoría de Puesto */}
+                <div className="rrhh-grid-folio-row">
+                  <div className="rrhh-field">
+                    <div className="rrhh-field-label-row">
+                      <label className="rrhh-field-label">
+                        <span>Folio</span>
+                        <span style={{ color: 'var(--danger)' }}>*</span>
+                      </label>
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer', color: 'var(--primary)', userSelect: 'none' }}>
+                        <input
+                          type="checkbox"
+                          checked={isAutoFolio}
+                          onChange={(e) => {
+                            setIsAutoFolio(e.target.checked);
+                            if (e.target.checked) setEmpId(getNextEmployeeFolio());
+                          }}
+                        />
+                        <span>AUTO</span>
+                      </label>
+                    </div>
                     <input
                       type="text"
                       value={empId}
@@ -2845,195 +2603,222 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                       disabled={isAutoFolio}
                       className="input-text"
                       style={{
-                        paddingLeft: '10px',
-                        flex: 1,
-                        height: '38px',
-                        backgroundColor: isAutoFolio ? 'var(--surface-alt)' : 'var(--surface)',
                         fontFamily: 'var(--font-mono)',
-                        fontWeight: 700
+                        fontWeight: 700,
+                        color: 'var(--primary)'
                       }}
                     />
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', userSelect: 'none' }}>
-                      <input
-                        type="checkbox"
-                        checked={isAutoFolio}
-                        onChange={(e) => {
-                          setIsAutoFolio(e.target.checked);
-                          if (e.target.checked) setEmpId(getNextEmployeeFolio());
-                        }}
-                      />
-                      <span>AUTO</span>
+                  </div>
+
+                  <div className="rrhh-field">
+                    <div className="rrhh-field-label-row">
+                      <label className="rrhh-field-label">
+                        <span>Puesto de Trabajo</span>
+                        <span style={{ color: 'var(--danger)' }}>*</span>
+                      </label>
+                      <span className="rrhh-field-hint">Tab completa</span>
+                    </div>
+                    <AutocompleteTextInput
+                      dataField="puestoOficial"
+                      value={puestoOficial}
+                      onChangeValue={(raw) => {
+                        setErrorField((prev) => (prev === 'puestoOficial' ? null : prev));
+                        const { value, hadInvalid } = sanitizeCleanText(raw, 70);
+                        if (hadInvalid) triggerToast('¡Carácter inválido!', 'warning', 2200);
+                        setPuestoOficial(value);
+                      }}
+                      suggestions={jobPositionSuggestions}
+                      placeholder="Ej. Analista de Operaciones"
+                      hasError={errorField === 'puestoOficial'}
+                      required
+                      onAdvanceNext={moveFocusNext}
+                      onAutoCompleted={() => triggerToast('Autocompletado', 'success', 1200)}
+                    />
+                  </div>
+
+                  <CustomSelect
+                    label="Categoría de Puesto"
+                    dataField="categoriaLaboral"
+                    required
+                    placeholder="Seleccionar categoría..."
+                    value={categoriaLaboral}
+                    onChange={(val) => {
+                      setErrorField((prev) => (prev === 'categoriaLaboral' ? null : prev));
+                      setCategoriaLaboral(val);
+                    }}
+                    options={[
+                      { value: 'Técnico Especialista', label: 'Técnico Especialista' },
+                      { value: 'Operativo de Campo', label: 'Operativo de Campo' },
+                      { value: 'Administrativo', label: 'Administrativo' },
+                      { value: 'Ingeniería', label: 'Ingeniería' },
+                      { value: 'Supervisión', label: 'Supervisión' },
+                      { value: 'Coordinación', label: 'Coordinación' },
+                      { value: 'Gerencia', label: 'Gerencia' },
+                      { value: 'Dirección', label: 'Dirección' }
+                    ]}
+                    hasError={errorField === 'categoriaLaboral'}
+                    onKeyDown={handleInputKeyDown}
+                  />
+                </div>
+
+                {/* Fila 2: Nombre(s) y Apellidos */}
+                <div className="rrhh-field">
+                  <div className="rrhh-field-label-row">
+                    <label className="rrhh-field-label">
+                      <span>Nombre(s) y Apellidos</span>
+                      <span style={{ color: 'var(--danger)' }}>*</span>
                     </label>
+                    <span className="rrhh-field-hint">Según acta o INE oficial</span>
+                  </div>
+                  <div className="rrhh-grid-3">
+                    <input
+                      data-field="nombrePila"
+                      type="text"
+                      placeholder="Nombre(s)"
+                      value={nombrePila}
+                      onChange={handlePersonNameChange(setNombrePila, 'nombrePila')}
+                      onKeyDown={handleInputKeyDown}
+                      className="input-text"
+                      style={getFieldStyle('nombrePila')}
+                      required
+                    />
+                    <input
+                      data-field="apellidoPaterno"
+                      type="text"
+                      placeholder="Apellido paterno"
+                      value={apellidoPaterno}
+                      onChange={handlePersonNameChange(setApellidoPaterno, 'apellidoPaterno')}
+                      onKeyDown={handleInputKeyDown}
+                      className="input-text"
+                      style={getFieldStyle('apellidoPaterno')}
+                      required
+                    />
+                    <input
+                      data-field="apellidoMaterno"
+                      type="text"
+                      placeholder="Apellido materno"
+                      value={apellidoMaterno}
+                      onChange={handlePersonNameChange(setApellidoMaterno, 'apellidoMaterno')}
+                      onKeyDown={handleInputKeyDown}
+                      className="input-text"
+                      style={getFieldStyle('apellidoMaterno')}
+                    />
                   </div>
                 </div>
 
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    Puesto de Trabajo <span style={{ color: 'var(--danger)' }}>*</span>
-                  </label>
-                  <AutocompleteTextInput
-                    dataField="puestoOficial"
-                    value={puestoOficial}
-                    onChangeValue={(raw) => {
-                      setErrorField((prev) => (prev === 'puestoOficial' ? null : prev));
-                      const { value, hadInvalid } = sanitizeCleanText(raw, 70);
-                      if (hadInvalid) triggerToast('¡Carácter inválido!', 'warning', 2200);
-                      setPuestoOficial(value);
-                    }}
-                    suggestions={jobPositionSuggestions}
-                    placeholder="Ej. Analista de Operaciones"
-                    hasError={errorField === 'puestoOficial'}
-                    required
-                    onAdvanceNext={moveFocusNext}
-                    onAutoCompleted={() => triggerToast('Autocompletado', 'success', 1200)}
-                  />
+                {/* Fila 3: RFC y CURP */}
+                <div className="rrhh-grid-2">
+                  <div className="rrhh-field">
+                    <div className="rrhh-field-label-row">
+                      <label className="rrhh-field-label">
+                        <span>RFC</span>
+                        <span style={{ color: 'var(--danger)' }}>*</span>
+                      </label>
+                      <span className="rrhh-field-hint">12-13 caracteres SAT</span>
+                    </div>
+                    <div className="rrhh-input-with-check">
+                      <input
+                        data-field="rfc"
+                        type="text"
+                        placeholder="Ej. GAVM950412H8A"
+                        value={rfc}
+                        onChange={handleRfcChange}
+                        onKeyDown={handleInputKeyDown}
+                        maxLength={13}
+                        className="input-text"
+                        style={getFieldStyle('rfc', { paddingRight: '34px', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', fontWeight: 600 })}
+                        required
+                      />
+                      {rfc.trim().length >= 12 && (
+                        <span className="rrhh-input-valid-icon" title="RFC completo">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rrhh-field">
+                    <div className="rrhh-field-label-row">
+                      <label className="rrhh-field-label">
+                        <span>CURP</span>
+                        <span style={{ color: 'var(--danger)' }}>*</span>
+                      </label>
+                      <span className="rrhh-field-hint">18 caracteres RENAPO</span>
+                    </div>
+                    <div className="rrhh-input-with-check">
+                      <input
+                        data-field="curp"
+                        type="text"
+                        placeholder="Ej. GAVM950412HVERRN01"
+                        value={curp}
+                        onChange={handleCurpChange}
+                        onKeyDown={handleInputKeyDown}
+                        maxLength={18}
+                        className="input-text"
+                        style={getFieldStyle('curp', { paddingRight: '34px', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', fontWeight: 600 })}
+                        required
+                      />
+                      {curp.trim().length === 18 && (
+                        <span className="rrhh-input-valid-icon" title="CURP completa">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <CustomSelect
-                  label="Categoría de Puesto"
-                  dataField="categoriaLaboral"
-                  required
-                  placeholder="Seleccionar categoría..."
-                  value={categoriaLaboral}
-                  onChange={(val) => {
-                    setErrorField((prev) => (prev === 'categoriaLaboral' ? null : prev));
-                    setCategoriaLaboral(val);
-                  }}
-                  options={[
-                    { value: 'Técnico Especialista', label: 'Técnico Especialista' },
-                    { value: 'Operativo de Campo', label: 'Operativo de Campo' },
-                    { value: 'Administrativo', label: 'Administrativo' },
-                    { value: 'Ingeniería', label: 'Ingeniería' },
-                    { value: 'Supervisión', label: 'Supervisión' },
-                    { value: 'Coordinación', label: 'Coordinación' },
-                    { value: 'Gerencia', label: 'Gerencia' },
-                    { value: 'Dirección', label: 'Dirección' }
-                  ]}
-                  hasError={errorField === 'categoriaLaboral'}
-                  onKeyDown={handleInputKeyDown}
-                />
-              </div>
+                {/* Fila 4: NSS y Jefe Asignado */}
+                <div className="rrhh-grid-2">
+                  <div className="rrhh-field">
+                    <div className="rrhh-field-label-row">
+                      <label className="rrhh-field-label">
+                        <span>NSS (IMSS)</span>
+                        <span style={{ color: 'var(--danger)' }}>*</span>
+                      </label>
+                      <span className="rrhh-field-hint">11 dígitos</span>
+                    </div>
+                    <div className="rrhh-input-with-check">
+                      <input
+                        data-field="nss"
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="Ej. 34-12-88-9412-1"
+                        value={nss}
+                        onChange={handleNssChange}
+                        onKeyDown={handleInputKeyDown}
+                        maxLength={15}
+                        className="input-text"
+                        style={getFieldStyle('nss', { paddingRight: '34px', fontFamily: 'var(--font-mono)', fontWeight: 600 })}
+                        required
+                      />
+                      {toRawDigits(nss).length === 11 && (
+                        <span className="rrhh-input-valid-icon" title="NSS completo">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-              {/* Fila 2: Nombre(s) y Apellidos (Sin texto repetido debajo ni "Nombre de pila") */}
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                  Nombre(s) y Apellidos <span style={{ color: 'var(--danger)' }}>*</span>
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                  <input
-                    data-field="nombrePila"
-                    type="text"
-                    placeholder="Nombre(s)"
-                    value={nombrePila}
-                    onChange={handlePersonNameChange(setNombrePila, 'nombrePila')}
-                    onKeyDown={handleInputKeyDown}
-                    className="input-text"
-                    style={getFieldStyle('nombrePila', { paddingLeft: '10px', width: '100%' })}
-                    required
-                  />
-                  <input
-                    data-field="apellidoPaterno"
-                    type="text"
-                    placeholder="Apellido paterno"
-                    value={apellidoPaterno}
-                    onChange={handlePersonNameChange(setApellidoPaterno, 'apellidoPaterno')}
-                    onKeyDown={handleInputKeyDown}
-                    className="input-text"
-                    style={getFieldStyle('apellidoPaterno', { paddingLeft: '10px', width: '100%' })}
-                    required
-                  />
-                  <input
-                    data-field="apellidoMaterno"
-                    type="text"
-                    placeholder="Apellido materno"
-                    value={apellidoMaterno}
-                    onChange={handlePersonNameChange(setApellidoMaterno, 'apellidoMaterno')}
-                    onKeyDown={handleInputKeyDown}
-                    className="input-text"
-                    style={getFieldStyle('apellidoMaterno', { paddingLeft: '10px', width: '100%' })}
-                  />
-                </div>
-              </div>
-
-              {/* Fila 3: RFC y CURP (Sin la palabra "Oficial" y con placeholders limpios) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    RFC <span style={{ color: 'var(--danger)' }}>*</span>
-                  </label>
-                  <input
-                    data-field="rfc"
-                    type="text"
-                    placeholder="Ej. GAVM950412H8A"
-                    value={rfc}
-                    onChange={handleRfcChange}
-                    onKeyDown={handleInputKeyDown}
-                    maxLength={13}
-                    className="input-text"
-                    style={getFieldStyle('rfc', { paddingLeft: '10px', width: '100%', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' })}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    CURP <span style={{ color: 'var(--danger)' }}>*</span>
-                  </label>
-                  <input
-                    data-field="curp"
-                    type="text"
-                    placeholder="Ej. GAVM950412HVERRN01"
-                    value={curp}
-                    onChange={handleCurpChange}
-                    onKeyDown={handleInputKeyDown}
-                    maxLength={18}
-                    className="input-text"
-                    style={getFieldStyle('curp', { paddingLeft: '10px', width: '100%', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' })}
-                    required
-                  />
+                  <div className="rrhh-field">
+                    <div className="rrhh-field-label-row">
+                      <label className="rrhh-field-label">Jefe Asignado</label>
+                      <span className="rrhh-field-hint">Auto por depto.</span>
+                    </div>
+                    <input
+                      data-field="supervisor"
+                      type="text"
+                      placeholder="Nombre del jefe directo"
+                      value={supervisor}
+                      onChange={handlePersonNameChange(setSupervisor, 'supervisor')}
+                      onKeyDown={handleInputKeyDown}
+                      className="input-text"
+                      style={{ fontWeight: supervisor ? 600 : 400 }}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Fila 4: NSS y Jefe Asignado */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignItems: 'end' }}>
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    Número de Seguro Social (NSS) <span style={{ color: 'var(--danger)' }}>*</span>
-                  </label>
-                  <input
-                    data-field="nss"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="Ej. 34-12-88-9412-1"
-                    value={nss}
-                    onChange={handleNssChange}
-                    onKeyDown={handleInputKeyDown}
-                    maxLength={15}
-                    className="input-text"
-                    style={getFieldStyle('nss', { paddingLeft: '10px', width: '100%', height: '38px', fontFamily: 'var(--font-mono)' })}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    Jefe Asignado
-                  </label>
-                  <input
-                    data-field="supervisor"
-                    type="text"
-                    placeholder="Nombre del jefe directo"
-                    value={supervisor}
-                    onChange={handlePersonNameChange(setSupervisor, 'supervisor')}
-                    onKeyDown={handleInputKeyDown}
-                    className="input-text"
-                    style={{ paddingLeft: '10px', width: '100%', height: '38px', fontWeight: supervisor ? 600 : 400 }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Zona Derecha: Fotografía */}
+              {/* Zona Derecha: Fotografía */}
             <div
               style={{
                 display: 'flex',
@@ -3160,12 +2945,12 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                   placeholder="Comentarios adicionales del expediente..."
                   rows={2}
                   className="input-text"
-                  style={{ width: '100%', fontSize: '11.5px', resize: 'vertical' }}
+                  style={{ fontSize: '0.8rem', resize: 'vertical' }}
                 />
               </div>
             </div>
+            </div>
           </div>
-          {renderStepFooter(1)}
         </div>
       )}
 
@@ -3173,438 +2958,445 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       {/* PROCESO 3: CONTACTO Y DOMICILIO                           */}
       {/* ========================================================= */}
       {currentStepIndex === 2 && (
-        <div id="section3" className="card" style={{ borderRadius: '16px', overflow: 'visible', boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.04)' }}>
-          <div
-            style={{
-              padding: '18px 24px',
-              backgroundColor: 'var(--surface)',
-              borderRadius: '16px 16px 0 0',
-              borderBottom: '1px solid var(--border-subtle)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '7px',
-                  backgroundColor: 'var(--brand-50)',
-                  color: 'var(--primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid var(--brand-200)',
-                  flexShrink: 0
-                }}
-              >
-                <MapPin className="w-4 h-4" />
-              </div>
+        <div id="section3" className="rrhh-step-card">
+          <div className="rrhh-step-card-header">
+            <div className="rrhh-step-card-header-left">
+              <span className="rrhh-step-num-badge">3</span>
               <div>
-                <h3 style={{ fontSize: '13.5px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                  Contacto & Domicilio Particular
-                </h3>
-                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '1px 0 0 0' }}>
-                  Teléfonos, correo, emergencia y dirección.
-                </p>
+                <h3 className="rrhh-step-card-title">Contacto &amp; Domicilio Particular</h3>
+                <p className="rrhh-step-card-sub">Teléfonos, correos, contacto de emergencia y domicilio con API SEPOMEX.</p>
               </div>
             </div>
-            <span
-              style={{
-                fontSize: '10.5px',
-                fontWeight: 700,
-                backgroundColor: isSection3Done ? 'var(--success-bg)' : 'var(--surface)',
-                color: isSection3Done ? 'var(--success-text)' : 'var(--text-muted)',
-                padding: '3px 10px',
-                borderRadius: '6px',
-                border: isSection3Done ? '1px solid var(--success-border)' : '1px solid var(--border)'
-              }}
-            >
-              {isSection3Done ? '✓ Completado' : 'Pendiente'}
+            <span className={`rrhh-step-tag ${isSection3Done ? 'done' : 'primary'}`}>
+              {isSection3Done ? '✓ Completado' : 'Localización'}
             </span>
           </div>
 
-          <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: '1fr 1.35fr', gap: '24px' }}>
-            {/* Columna Izquierda: Medios de Contacto + Contacto de Emergencia */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <h4 style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                  Medios de Contacto del Colaborador
-                </h4>
+          <div className="rrhh-step-card-body">
+            <div className="rrhh-grid-split-contact">
+              {/* Columna Izquierda: Medios de Contacto + Contacto de Emergencia */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: 0 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                    Medios de Contacto del Colaborador
+                  </h4>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                      Teléfono Celular <span style={{ color: 'var(--danger)' }}>*</span>
-                    </label>
-                    <input
-                      data-field="telMovil"
-                      type="tel"
-                      inputMode="numeric"
-                      placeholder="Ej. 922-145-8890"
-                      value={telMovil}
-                      onChange={handlePhoneChange(setTelMovil, 'telMovil')}
-                      onKeyDown={handleInputKeyDown}
-                      maxLength={12}
-                      className="input-text"
-                      style={getFieldStyle('telMovil', { paddingLeft: '10px', width: '100%', fontFamily: 'var(--font-mono)' })}
-                      required
-                    />
+                  <div className="rrhh-grid-2">
+                    <div className="rrhh-field">
+                      <div className="rrhh-field-label-row">
+                        <label className="rrhh-field-label">
+                          <span>Teléfono Celular</span>
+                          <span style={{ color: 'var(--danger)' }}>*</span>
+                        </label>
+                        <span className="rrhh-field-hint">10 dígitos</span>
+                      </div>
+                      <div className="rrhh-input-with-check">
+                        <input
+                          data-field="telMovil"
+                          type="tel"
+                          inputMode="numeric"
+                          placeholder="Ej. 922-145-8890"
+                          value={telMovil}
+                          onChange={handlePhoneChange(setTelMovil, 'telMovil')}
+                          onKeyDown={handleInputKeyDown}
+                          maxLength={12}
+                          className="input-text"
+                          style={getFieldStyle('telMovil', { paddingRight: '34px', fontFamily: 'var(--font-mono)' })}
+                          required
+                        />
+                        {toRawDigits(telMovil).length === 10 && (
+                          <span className="rrhh-input-valid-icon" title="Teléfono válido">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="rrhh-field">
+                      <div className="rrhh-field-label-row">
+                        <label className="rrhh-field-label">Teléfono Fijo</label>
+                        <span className="rrhh-field-hint">Opcional</span>
+                      </div>
+                      <input
+                        data-field="telFijo"
+                        type="tel"
+                        inputMode="numeric"
+                        placeholder="Ej. 921-213-4402"
+                        value={telFijo}
+                        onChange={handlePhoneChange(setTelFijo, 'telFijo')}
+                        onKeyDown={handleInputKeyDown}
+                        maxLength={12}
+                        className="input-text"
+                        style={getFieldStyle('telFijo', { fontFamily: 'var(--font-mono)' })}
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                      Teléfono Fijo
-                    </label>
+                  <div className="rrhh-grid-2">
+                    <div className="rrhh-field">
+                      <div className="rrhh-field-label-row">
+                        <label className="rrhh-field-label">
+                          <span>Correo Personal</span>
+                          <span style={{ color: 'var(--danger)' }}>*</span>
+                        </label>
+                      </div>
+                      <div className="rrhh-input-with-check">
+                        <input
+                          data-field="emailPersonal"
+                          type="email"
+                          placeholder="correo@ejemplo.com"
+                          value={emailPersonal}
+                          onChange={(e) => {
+                            setErrorField((prev) => (prev === 'emailPersonal' ? null : prev));
+                            setEmailPersonal(e.target.value.replace(/\s/g, '').toLowerCase());
+                          }}
+                          onKeyDown={handleInputKeyDown}
+                          className="input-text"
+                          style={getFieldStyle('emailPersonal', { paddingRight: '34px' })}
+                          required
+                        />
+                        {isValidEmail(emailPersonal) && (
+                          <span className="rrhh-input-valid-icon" title="Correo válido">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="rrhh-field">
+                      <div className="rrhh-field-label-row">
+                        <label className="rrhh-field-label">Correo Corporativo</label>
+                        <span className="rrhh-field-hint">Opcional</span>
+                      </div>
+                      <input
+                        data-field="emailInstitucional"
+                        type="email"
+                        placeholder="colaborador@sifygsa.com.mx"
+                        value={emailInstitucional}
+                        onChange={(e) => {
+                          setErrorField((prev) => (prev === 'emailInstitucional' ? null : prev));
+                          setEmailInstitucional(e.target.value.replace(/\s/g, '').toLowerCase());
+                        }}
+                        onKeyDown={handleInputKeyDown}
+                        className="input-text"
+                        style={getFieldStyle('emailInstitucional')}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rrhh-field">
+                    <div className="rrhh-field-label-row">
+                      <label className="rrhh-field-label">Extensión Telefónica</label>
+                      <span className="rrhh-field-hint">Auto por departamento</span>
+                    </div>
                     <input
-                      data-field="telFijo"
-                      type="tel"
+                      type="text"
                       inputMode="numeric"
-                      placeholder="Ej. 921-213-4402"
-                      value={telFijo}
-                      onChange={handlePhoneChange(setTelFijo, 'telFijo')}
+                      placeholder="Ej. 111"
+                      value={extOficina}
+                      onChange={handleExtChange}
                       onKeyDown={handleInputKeyDown}
-                      maxLength={12}
+                      maxLength={5}
                       className="input-text"
-                      style={getFieldStyle('telFijo', { paddingLeft: '10px', width: '100%', fontFamily: 'var(--font-mono)' })}
+                      style={{ fontFamily: 'var(--font-mono)', fontWeight: extOficina ? 700 : 400 }}
                     />
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                      Correo Personal <span style={{ color: 'var(--danger)' }}>*</span>
+                {/* Contacto de Emergencia integrado en Sección 3 */}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                    backgroundColor: 'var(--surface-alt)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '12px',
+                    padding: '1rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <PhoneCall className="w-3.5 h-3.5" style={{ color: 'var(--danger)' }} />
+                    <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                      Contacto en Caso de Emergencia
+                    </h4>
+                  </div>
+
+                  <div className="rrhh-field">
+                    <label className="rrhh-field-label">
+                      <span>Nombre Completo del Contacto</span>
+                      <span style={{ color: 'var(--danger)' }}>*</span>
                     </label>
                     <input
-                      data-field="emailPersonal"
-                      type="email"
-                      placeholder="correo@ejemplo.com"
-                      value={emailPersonal}
-                      onChange={(e) => {
-                        setErrorField((prev) => (prev === 'emailPersonal' ? null : prev));
-                        setEmailPersonal(e.target.value.replace(/\s/g, '').toLowerCase());
-                      }}
+                      data-field="contactoEmergenciaNombre"
+                      type="text"
+                      placeholder="Ej. María Elena Pérez Gómez"
+                      value={contactoEmergenciaNombre}
+                      onChange={handlePersonNameChange(setContactoEmergenciaNombre, 'contactoEmergenciaNombre')}
                       onKeyDown={handleInputKeyDown}
                       className="input-text"
-                      style={getFieldStyle('emailPersonal', { paddingLeft: '10px', width: '100%' })}
-                      required
+                      style={getFieldStyle('contactoEmergenciaNombre', { backgroundColor: 'var(--surface)' })}
                     />
                   </div>
 
-                  <div>
-                    <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                      Correo Corporativo
-                    </label>
-                    <input
-                      data-field="emailInstitucional"
-                      type="email"
-                      placeholder="colaborador@sifygsa.com.mx"
-                      value={emailInstitucional}
-                      onChange={(e) => {
-                        setErrorField((prev) => (prev === 'emailInstitucional' ? null : prev));
-                        setEmailInstitucional(e.target.value.replace(/\s/g, '').toLowerCase());
-                      }}
-                      onKeyDown={handleInputKeyDown}
-                      className="input-text"
-                      style={getFieldStyle('emailInstitucional', { paddingLeft: '10px', width: '100%' })}
-                    />
+                  <div className="rrhh-grid-2">
+                    <div className="rrhh-field">
+                      <label className="rrhh-field-label">Parentesco</label>
+                      <input
+                        type="text"
+                        placeholder="Ej. Cónyuge, Padre, Madre"
+                        value={contactoEmergenciaParentesco}
+                        onChange={handlePersonNameChange(setContactoEmergenciaParentesco, 'contactoEmergenciaParentesco')}
+                        onKeyDown={handleInputKeyDown}
+                        className="input-text"
+                        style={{ backgroundColor: 'var(--surface)' }}
+                      />
+                    </div>
+                    <div className="rrhh-field">
+                      <label className="rrhh-field-label">
+                        <span>Teléfono Emergencia</span>
+                        <span style={{ color: 'var(--danger)' }}>*</span>
+                      </label>
+                      <div className="rrhh-input-with-check">
+                        <input
+                          data-field="contactoEmergenciaTel"
+                          type="tel"
+                          inputMode="numeric"
+                          placeholder="Ej. 922-145-8890"
+                          value={contactoEmergenciaTel}
+                          onChange={handlePhoneChange(setContactoEmergenciaTel, 'contactoEmergenciaTel')}
+                          onKeyDown={handleInputKeyDown}
+                          maxLength={12}
+                          className="input-text"
+                          style={getFieldStyle('contactoEmergenciaTel', { paddingRight: '34px', fontFamily: 'var(--font-mono)', backgroundColor: 'var(--surface)' })}
+                        />
+                        {toRawDigits(contactoEmergenciaTel).length === 10 && (
+                          <span className="rrhh-input-valid-icon" title="Teléfono válido">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    Extensión Telefónica
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="Ej. 111"
-                    value={extOficina}
-                    onChange={handleExtChange}
-                    onKeyDown={handleInputKeyDown}
-                    maxLength={5}
-                    className="input-text"
-                    style={{ paddingLeft: '10px', width: '100%', fontFamily: 'var(--font-mono)', fontWeight: extOficina ? 700 : 400 }}
-                  />
                 </div>
               </div>
 
-              {/* Contacto de Emergencia integrado en Sección 3 */}
+              {/* Columna Derecha: Domicilio Particular Estructurado para Base de Datos con API de C.P. */}
               <div
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '10px',
-                  backgroundColor: 'var(--surface-alt)',
+                  gap: '0.85rem',
+                  backgroundColor: 'var(--surface)',
                   border: '1px solid var(--border)',
-                  borderRadius: '10px',
-                  padding: '14px'
+                  borderRadius: '12px',
+                  padding: '1rem',
+                  minWidth: 0
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <PhoneCall className="w-3.5 h-3.5" style={{ color: 'var(--danger)' }} />
-                  <h4 style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                    Contacto en Caso de Emergencia
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                  <h4 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                    Domicilio Particular
                   </h4>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--text-secondary)' }}>
-                    Nombre Completo del Contacto <span style={{ color: 'var(--danger)' }}>*</span>
-                  </label>
-                  <input
-                    data-field="contactoEmergenciaNombre"
-                    type="text"
-                    placeholder="Ej. María Elena Pérez Gómez"
-                    value={contactoEmergenciaNombre}
-                    onChange={handlePersonNameChange(setContactoEmergenciaNombre, 'contactoEmergenciaNombre')}
-                    onKeyDown={handleInputKeyDown}
-                    className="input-text"
-                    style={getFieldStyle('contactoEmergenciaNombre', { width: '100%', paddingLeft: '10px' })}
-                  />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <div>
-                    <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--text-secondary)' }}>
-                      Parentesco
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ej. Cónyuge, Padre, Madre"
-                      value={contactoEmergenciaParentesco}
-                      onChange={handlePersonNameChange(setContactoEmergenciaParentesco, 'contactoEmergenciaParentesco')}
-                      onKeyDown={handleInputKeyDown}
-                      className="input-text"
-                      style={{ width: '100%', paddingLeft: '10px' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--text-secondary)' }}>
-                      Teléfono de Emergencia <span style={{ color: 'var(--danger)' }}>*</span>
-                    </label>
-                    <input
-                      data-field="contactoEmergenciaTel"
-                      type="tel"
-                      inputMode="numeric"
-                      placeholder="Ej. 922-145-8890"
-                      value={contactoEmergenciaTel}
-                      onChange={handlePhoneChange(setContactoEmergenciaTel, 'contactoEmergenciaTel')}
-                      onKeyDown={handleInputKeyDown}
-                      maxLength={12}
-                      className="input-text"
-                      style={getFieldStyle('contactoEmergenciaTel', { width: '100%', paddingLeft: '10px', fontFamily: 'var(--font-mono)' })}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Columna Derecha: Domicilio Particular Estructurado para Base de Datos con API de C.P. */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-                backgroundColor: 'var(--surface)',
-                border: '1px solid var(--border)',
-                borderRadius: '12px',
-                padding: '16px'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h4 style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                  Domicilio Particular
-                </h4>
-                {isLoadingCp && (
-                  <span style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--primary)' }}>
-                    Consultando C.P. en SEPOMEX...
-                  </span>
-                )}
-              </div>
-
-              {/* Fila 1: Calle (*), Número Exterior (*) y Número Interior (Opcional) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 0.75fr 0.75fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    Calle <span style={{ color: 'var(--danger)' }}>*</span>
-                  </label>
-                  <input
-                    data-field="calle"
-                    type="text"
-                    placeholder="Ej. Av. Institutos Tecnológicos"
-                    value={calle}
-                    onChange={handleCleanTextChange(setCalle, 'calle', 90)}
-                    onKeyDown={handleInputKeyDown}
-                    className="input-text"
-                    style={getFieldStyle('calle', { paddingLeft: '10px', width: '100%', height: '38px' })}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    Número Exterior <span style={{ color: 'var(--danger)' }}>*</span>
-                  </label>
-                  <input
-                    data-field="numeroDomicilio"
-                    type="text"
-                    placeholder="Ej. 412"
-                    value={numeroDomicilio}
-                    onChange={handleCleanTextChange(setNumeroDomicilio, 'numeroDomicilio', 15)}
-                    onKeyDown={handleInputKeyDown}
-                    className="input-text"
-                    style={getFieldStyle('numeroDomicilio', { paddingLeft: '10px', width: '100%', height: '38px' })}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    Número Interior
-                  </label>
-                  <input
-                    data-field="numeroInterior"
-                    type="text"
-                    placeholder="Ej. Int. B"
-                    value={numeroInterior}
-                    onChange={handleCleanTextChange(setNumeroInterior, 'numeroInterior', 15)}
-                    onKeyDown={handleInputKeyDown}
-                    className="input-text"
-                    style={{ paddingLeft: '10px', width: '100%', height: '38px' }}
-                  />
-                </div>
-              </div>
-
-              {/* Fila 2: Código Postal + Colonia (Combo Box dinámico por C.P. o texto libre) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '0.85fr 1.65fr', gap: '12px', alignItems: 'end' }}>
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    Código Postal (C.P.) <span style={{ color: 'var(--danger)' }}>*</span>
-                  </label>
-                  <input
-                    data-field="codigoPostal"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="Ej. 96730"
-                    value={codigoPostal}
-                    onChange={handleZipChange}
-                    onKeyDown={handleInputKeyDown}
-                    maxLength={5}
-                    className="input-text"
-                    style={getFieldStyle('codigoPostal', { paddingLeft: '10px', width: '100%', height: '38px', fontFamily: 'var(--font-mono)', fontWeight: 700 })}
-                    required
-                  />
-                </div>
-
-                <div>
-                  {coloniasPorCp.length > 0 && !isCustomColonia ? (
-                    <CustomSelect
-                      label="Colonia o Fraccionamiento"
-                      required
-                      value={colonia}
-                      onChange={(val) => {
-                        setErrorField((prev) => (prev === 'colonia' ? null : prev));
-                        if (val === '__custom__') {
-                          setIsCustomColonia(true);
-                          setColonia('');
-                        } else {
-                          setColonia(val);
-                        }
-                      }}
-                      options={[
-                        ...coloniasPorCp.map((c) => ({ value: c, label: c })),
-                        { value: '__custom__', label: 'Otra colonia (escribir manualmente)...' }
-                      ]}
-                      onAfterSelect={(val, btnEl) => {
-                        if (val === '__custom__') {
-                          window.setTimeout(() => {
-                            document.querySelector<HTMLElement>('[data-field="colonia"]')?.focus();
-                          }, 40);
-                        } else {
-                          moveFocusNext(btnEl);
-                        }
-                      }}
-                      onKeyDown={handleInputKeyDown}
-                      hasError={errorField === 'colonia'}
-                    />
-                  ) : (
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                        <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                          Colonia o Fraccionamiento <span style={{ color: 'var(--danger)' }}>*</span>
-                        </label>
-                        {coloniasPorCp.length > 0 && isCustomColonia && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsCustomColonia(false);
-                              setColonia(coloniasPorCp[0]);
-                            }}
-                            style={{ fontSize: '10px', fontWeight: 700, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                          >
-                            Ver lista del C.P.
-                          </button>
-                        )}
-                      </div>
-                      <input
-                        data-field="colonia"
-                        type="text"
-                        placeholder="Ingresa el C.P. o escribe la colonia"
-                        value={colonia}
-                        onChange={handleCleanTextChange(setColonia, 'colonia', 70)}
-                        onKeyDown={handleInputKeyDown}
-                        className="input-text"
-                        style={getFieldStyle('colonia', { paddingLeft: '10px', width: '100%', height: '38px' })}
-                        required
-                      />
-                    </div>
+                  {isLoadingCp && (
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--primary)' }}>
+                      Consultando C.P. en SEPOMEX...
+                    </span>
                   )}
                 </div>
-              </div>
 
-              {/* Fila 3: Municipio / Localidad y Estado */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    Municipio / Localidad <span style={{ color: 'var(--danger)' }}>*</span>
-                  </label>
-                  <input
-                    data-field="municipio"
-                    type="text"
-                    placeholder="Ej. Minatitlán"
-                    value={municipio}
-                    onChange={handlePersonNameChange(setMunicipio, 'municipio')}
-                    onKeyDown={handleInputKeyDown}
-                    className="input-text"
-                    style={getFieldStyle('municipio', { paddingLeft: '10px', width: '100%', height: '38px' })}
-                    required
-                  />
+                {/* Fila 1: Calle (*), Número Exterior (*) y Número Interior (Opcional) */}
+                <div className="rrhh-grid-street">
+                  <div className="rrhh-field">
+                    <label className="rrhh-field-label">
+                      <span>Calle</span>
+                      <span style={{ color: 'var(--danger)' }}>*</span>
+                    </label>
+                    <input
+                      data-field="calle"
+                      type="text"
+                      placeholder="Ej. Av. Institutos Tecnológicos"
+                      value={calle}
+                      onChange={handleCleanTextChange(setCalle, 'calle', 90)}
+                      onKeyDown={handleInputKeyDown}
+                      className="input-text"
+                      style={getFieldStyle('calle')}
+                      required
+                    />
+                  </div>
+
+                  <div className="rrhh-field">
+                    <label className="rrhh-field-label">
+                      <span>Núm. Ext.</span>
+                      <span style={{ color: 'var(--danger)' }}>*</span>
+                    </label>
+                    <input
+                      data-field="numeroDomicilio"
+                      type="text"
+                      placeholder="Ej. 412"
+                      value={numeroDomicilio}
+                      onChange={handleCleanTextChange(setNumeroDomicilio, 'numeroDomicilio', 15)}
+                      onKeyDown={handleInputKeyDown}
+                      className="input-text"
+                      style={getFieldStyle('numeroDomicilio')}
+                      required
+                    />
+                  </div>
+
+                  <div className="rrhh-field">
+                    <label className="rrhh-field-label">Núm. Int.</label>
+                    <input
+                      data-field="numeroInterior"
+                      type="text"
+                      placeholder="Ej. Int. B"
+                      value={numeroInterior}
+                      onChange={handleCleanTextChange(setNumeroInterior, 'numeroInterior', 15)}
+                      onKeyDown={handleInputKeyDown}
+                      className="input-text"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    Estado <span style={{ color: 'var(--danger)' }}>*</span>
-                  </label>
-                  <input
-                    data-field="estadoDomicilio"
-                    type="text"
-                    placeholder="Ej. Veracruz"
-                    value={estadoDomicilio}
-                    onChange={handlePersonNameChange(setEstadoDomicilio, 'estadoDomicilio')}
-                    onKeyDown={handleInputKeyDown}
-                    className="input-text"
-                    style={getFieldStyle('estadoDomicilio', { paddingLeft: '10px', width: '100%', height: '38px' })}
-                    required
-                  />
+                {/* Fila 2: Código Postal + Colonia (Combo Box dinámico por C.P. o texto libre) */}
+                <div className="rrhh-grid-zip">
+                  <div className="rrhh-field">
+                    <div className="rrhh-field-label-row">
+                      <label className="rrhh-field-label">
+                        <span>C.P.</span>
+                        <span style={{ color: 'var(--danger)' }}>*</span>
+                      </label>
+                      <span className="rrhh-field-hint">5 dígitos</span>
+                    </div>
+                    <div className="rrhh-input-with-check">
+                      <input
+                        data-field="codigoPostal"
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="Ej. 96730"
+                        value={codigoPostal}
+                        onChange={handleZipChange}
+                        onKeyDown={handleInputKeyDown}
+                        maxLength={5}
+                        className="input-text"
+                        style={getFieldStyle('codigoPostal', { paddingRight: '32px', fontFamily: 'var(--font-mono)', fontWeight: 700 })}
+                        required
+                      />
+                      {codigoPostal.trim().length === 5 && (
+                        <span className="rrhh-input-valid-icon" title="C.P. válido">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    {coloniasPorCp.length > 0 && !isCustomColonia ? (
+                      <CustomSelect
+                        label="Colonia o Fraccionamiento"
+                        required
+                        value={colonia}
+                        onChange={(val) => {
+                          setErrorField((prev) => (prev === 'colonia' ? null : prev));
+                          if (val === '__custom__') {
+                            setIsCustomColonia(true);
+                            setColonia('');
+                          } else {
+                            setColonia(val);
+                          }
+                        }}
+                        options={[
+                          ...coloniasPorCp.map((c) => ({ value: c, label: c })),
+                          { value: '__custom__', label: 'Otra colonia (escribir manualmente)...' }
+                        ]}
+                        onAfterSelect={(val, btnEl) => {
+                          if (val === '__custom__') {
+                            window.setTimeout(() => {
+                              document.querySelector<HTMLElement>('[data-field="colonia"]')?.focus();
+                            }, 40);
+                          } else {
+                            moveFocusNext(btnEl);
+                          }
+                        }}
+                        onKeyDown={handleInputKeyDown}
+                        hasError={errorField === 'colonia'}
+                      />
+                    ) : (
+                      <div className="rrhh-field">
+                        <div className="rrhh-field-label-row">
+                          <label className="rrhh-field-label">
+                            <span>Colonia / Fracc.</span>
+                            <span style={{ color: 'var(--danger)' }}>*</span>
+                          </label>
+                          {coloniasPorCp.length > 0 && isCustomColonia && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsCustomColonia(false);
+                                setColonia(coloniasPorCp[0]);
+                              }}
+                              style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                            >
+                              Ver lista del C.P.
+                            </button>
+                          )}
+                        </div>
+                        <input
+                          data-field="colonia"
+                          type="text"
+                          placeholder="Ingresa el C.P. o escribe la colonia"
+                          value={colonia}
+                          onChange={handleCleanTextChange(setColonia, 'colonia', 70)}
+                          onKeyDown={handleInputKeyDown}
+                          className="input-text"
+                          style={getFieldStyle('colonia')}
+                          required
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Fila 3: Municipio / Localidad y Estado */}
+                <div className="rrhh-grid-2">
+                  <div className="rrhh-field">
+                    <label className="rrhh-field-label">
+                      <span>Municipio / Localidad</span>
+                      <span style={{ color: 'var(--danger)' }}>*</span>
+                    </label>
+                    <input
+                      data-field="municipio"
+                      type="text"
+                      placeholder="Ej. Minatitlán"
+                      value={municipio}
+                      onChange={handlePersonNameChange(setMunicipio, 'municipio')}
+                      onKeyDown={handleInputKeyDown}
+                      className="input-text"
+                      style={getFieldStyle('municipio')}
+                      required
+                    />
+                  </div>
+
+                  <div className="rrhh-field">
+                    <label className="rrhh-field-label">
+                      <span>Estado</span>
+                      <span style={{ color: 'var(--danger)' }}>*</span>
+                    </label>
+                    <input
+                      data-field="estadoDomicilio"
+                      type="text"
+                      placeholder="Ej. Veracruz"
+                      value={estadoDomicilio}
+                      onChange={handlePersonNameChange(setEstadoDomicilio, 'estadoDomicilio')}
+                      onKeyDown={handleInputKeyDown}
+                      className="input-text"
+                      style={getFieldStyle('estadoDomicilio')}
+                      required
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-          {renderStepFooter(2)}
         </div>
       )}
 
@@ -3612,82 +3404,43 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       {/* PROCESO 4: SALUD Y UNIFORMES                              */}
       {/* ========================================================= */}
       {currentStepIndex === 3 && (
-        <div id="section4" className="card" style={{ borderRadius: '16px', overflow: 'visible', boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.04)' }}>
-          <div
-            style={{
-              padding: '18px 24px',
-              backgroundColor: 'var(--surface)',
-              borderRadius: '16px 16px 0 0',
-              borderBottom: '1px solid var(--border-subtle)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '7px',
-                  backgroundColor: 'var(--brand-50)',
-                  color: 'var(--primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid var(--brand-200)',
-                  flexShrink: 0
-                }}
-              >
-                <HeartPulse className="w-4 h-4" />
-              </div>
+        <div id="section4" className="rrhh-step-card">
+          <div className="rrhh-step-card-header">
+            <div className="rrhh-step-card-header-left">
+              <span className="rrhh-step-num-badge">4</span>
               <div>
-                <h3 style={{ fontSize: '13.5px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                  Salud & Uniformes
-                </h3>
-                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '1px 0 0 0' }}>
-                  Tallas de EPP, tipo de sangre y alergias.
-                </p>
+                <h3 className="rrhh-step-card-title">Salud &amp; Uniformes (EPP)</h3>
+                <p className="rrhh-step-card-sub">Tallas de calzado y overol, tipo sanguíneo, alergias y datos médicos.</p>
               </div>
             </div>
-            <span
-              style={{
-                fontSize: '10.5px',
-                fontWeight: 700,
-                backgroundColor: isSection4Done ? 'var(--success-bg)' : 'var(--surface)',
-                color: isSection4Done ? 'var(--success-text)' : 'var(--text-muted)',
-                padding: '3px 10px',
-                borderRadius: '6px',
-                border: isSection4Done ? '1px solid var(--success-border)' : '1px solid var(--border)'
-              }}
-            >
-              {isSection4Done ? '✓ Completado' : 'Pendiente'}
+            <span className={`rrhh-step-tag ${isSection4Done ? 'done' : 'primary'}`}>
+              {isSection4Done ? '✓ Completado' : 'Salud y Seguridad'}
             </span>
           </div>
 
-          <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <div className="rrhh-step-card-body">
             {/* Sub-bloque 1: Tallas de Calzado y Overol (No obligatorias) */}
             <div
               style={{
-                padding: '14px 16px',
+                padding: '1rem',
                 backgroundColor: 'var(--surface-alt)',
-                borderRadius: '10px',
+                borderRadius: '12px',
                 border: '1px solid var(--border)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '12px'
+                gap: '0.85rem'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                   Uniformes y Equipo de Protección Personal (EPP)
                 </span>
-                <span style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-muted)' }}>
+                <span className="rrhh-step-tag" style={{ fontSize: '0.66rem' }}>
                   Opcional
                 </span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+              <div className="rrhh-grid-2">
                 {/* 1. Talla de Calzado (MEX) con Combo Box o entrada manual */}
                 <div>
                   {!isCustomCalzado ? (
@@ -3820,7 +3573,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
             </div>
 
             {/* Sub-bloque 2: Información Médica, Discapacidad y Alergias Detalladas */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', alignItems: 'start' }}>
+            <div className="rrhh-grid-3">
               <CustomSelect
                 label="Tipo de Sangre"
                 dataField="tipoSangre"
@@ -3885,10 +3638,11 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                 )}
               </div>
 
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                  Padecimientos Crónicos / Medicación Continua
-                </label>
+              <div className="rrhh-field">
+                <div className="rrhh-field-label-row">
+                  <label className="rrhh-field-label">Padecimientos Crónicos / Medicación</label>
+                  <span className="rrhh-field-hint">Opcional</span>
+                </div>
                 <input
                   type="text"
                   placeholder="Ej. Ninguno, Hipertensión controlada, Diabetes, Asma..."
@@ -3896,15 +3650,14 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                   onChange={handleCleanTextChange(setPadecimientos, 'padecimientos', 140)}
                   onKeyDown={handleInputKeyDown}
                   className="input-text"
-                  style={{ width: '100%', paddingLeft: '10px', height: '38px' }}
                 />
               </div>
             </div>
 
             {/* Campo amplio para múltiples alergias con etiquetas rápidas */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '6px' }}>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)' }}>
+            <div className="rrhh-field">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap', gap: '6px' }}>
+                <label className="rrhh-field-label">
                   Alergias (Medicamentos, Alimentos o Ambientales)
                 </label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
@@ -3924,9 +3677,9 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                         type="button"
                         onClick={() => toggleAllergyChip(chip)}
                         style={{
-                          fontSize: '10px',
+                          fontSize: '10.5px',
                           fontWeight: 700,
-                          padding: '2px 8px',
+                          padding: '2px 9px',
                           borderRadius: '999px',
                           border: isSelected ? '1px solid var(--primary)' : '1px solid var(--border)',
                           backgroundColor: isSelected ? 'var(--brand-50)' : 'var(--surface)',
@@ -3948,11 +3701,10 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                 onKeyDown={handleInputKeyDown}
                 rows={2}
                 className="input-text"
-                style={{ width: '100%', padding: '8px 12px', fontSize: '12px', resize: 'vertical' }}
+                style={{ fontSize: '0.82rem', resize: 'vertical' }}
               />
             </div>
           </div>
-          {renderStepFooter(3)}
         </div>
       )}
 
@@ -3960,60 +3712,21 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       {/* PROCESO 5: NÓMINA Y BANCO                                 */}
       {/* ========================================================= */}
       {currentStepIndex === 4 && (
-        <div id="section5" className="card" style={{ borderRadius: '16px', overflow: 'visible', boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.04)' }}>
-          <div
-            style={{
-              padding: '18px 24px',
-              backgroundColor: 'var(--surface)',
-              borderRadius: '16px 16px 0 0',
-              borderBottom: '1px solid var(--border-subtle)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '7px',
-                  backgroundColor: 'var(--brand-50)',
-                  color: 'var(--primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid var(--brand-200)',
-                  flexShrink: 0
-                }}
-              >
-                <CreditCard className="w-4 h-4" />
-              </div>
+        <div id="section5" className="rrhh-step-card">
+          <div className="rrhh-step-card-header">
+            <div className="rrhh-step-card-header-left">
+              <span className="rrhh-step-num-badge">5</span>
               <div>
-                <h3 style={{ fontSize: '13.5px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                  Nómina & Banco
-                </h3>
-                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '1px 0 0 0' }}>
-                  Cuenta bancaria y CLABE de 18 dígitos.
-                </p>
+                <h3 className="rrhh-step-card-title">Nómina &amp; Banco</h3>
+                <p className="rrhh-step-card-sub">Institución bancaria, CLABE interbancaria de 18 dígitos y tarjeta opcional.</p>
               </div>
             </div>
-            <span
-              style={{
-                fontSize: '10.5px',
-                fontWeight: 700,
-                backgroundColor: isSection5Done ? 'var(--success-bg)' : 'var(--surface)',
-                color: isSection5Done ? 'var(--success-text)' : 'var(--text-muted)',
-                padding: '3px 10px',
-                borderRadius: '6px',
-                border: isSection5Done ? '1px solid var(--success-border)' : '1px solid var(--border)'
-              }}
-            >
-              {isSection5Done ? '✓ Completado' : 'Pendiente'}
+            <span className={`rrhh-step-tag ${isSection5Done ? 'done' : 'primary'}`}>
+              {isSection5Done ? '✓ Completado' : 'Dispersión SPEI'}
             </span>
           </div>
 
-          <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="rrhh-step-card-body">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {bankAccounts.slice(0, 1).map((acc) => (
                 <div
@@ -4021,21 +3734,21 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                   style={{
                     border: '1px solid var(--border)',
                     borderRadius: '12px',
-                    padding: '16px',
+                    padding: '1rem',
                     backgroundColor: 'var(--surface)',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '12px'
+                    gap: '0.85rem'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <CreditCard className="w-4 h-4" style={{ color: 'var(--primary)' }} />
-                    <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                      Nómina
+                    <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                      Cuenta Principal de Nómina
                     </span>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(215px, 1fr))', gap: '12px', alignItems: 'start' }}>
+                  <div className="rrhh-grid-4">
                     {/* Institución Bancaria + Opción de Agregar Nuevo Banco */}
                     <div>
                       <CustomSelect
@@ -4085,7 +3798,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                               }
                             }}
                             className="input-text"
-                            style={{ flex: 1, height: '34px', fontSize: '11.5px', paddingLeft: '8px' }}
+                            style={{ flex: 1, height: '34px', fontSize: '0.78rem' }}
                             autoFocus
                           />
                           <button
@@ -4109,62 +3822,77 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                     </div>
 
                     {/* CLABE Interbancaria (18 dígitos) */}
-                    <div>
-                      <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                        CLABE Interbancaria (18 dígitos) {acc.isPrimary && <span style={{ color: 'var(--danger)' }}>*</span>}
-                      </label>
-                      <input
-                        data-field={`clabe-${acc.id}`}
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="Ej. 0121-8000-1234-5678-90"
-                        value={acc.clabe}
-                        onChange={(e) => {
-                          setErrorField((prev) => (prev === `clabe-${acc.id}` ? null : prev));
-                          const { formatted, hadInvalid } = formatClabeMask(e.target.value);
-                          if (hadInvalid) triggerToast('¡Solo dígitos!', 'warning', 2200);
-                          updateBankAccount(acc.id, { clabe: formatted });
-                        }}
-                        onKeyDown={handleInputKeyDown}
-                        maxLength={22}
-                        className="input-text"
-                        style={getFieldStyle(`clabe-${acc.id}`, {
-                          width: '100%',
-                          height: '38px',
-                          paddingLeft: '10px',
-                          fontFamily: 'var(--font-mono)',
-                          fontWeight: 600
-                        })}
-                      />
+                    <div className="rrhh-field">
+                      <div className="rrhh-field-label-row">
+                        <label className="rrhh-field-label">
+                          <span>CLABE Interbancaria</span>
+                          {acc.isPrimary && <span style={{ color: 'var(--danger)' }}>*</span>}
+                        </label>
+                        <span className="rrhh-field-hint">18 dígitos</span>
+                      </div>
+                      <div className="rrhh-input-with-check">
+                        <input
+                          data-field={`clabe-${acc.id}`}
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="0121-8000-1234-5678-90"
+                          value={acc.clabe}
+                          onChange={(e) => {
+                            setErrorField((prev) => (prev === `clabe-${acc.id}` ? null : prev));
+                            const { formatted, hadInvalid } = formatClabeMask(e.target.value);
+                            if (hadInvalid) triggerToast('¡Solo dígitos!', 'warning', 2200);
+                            updateBankAccount(acc.id, { clabe: formatted });
+                          }}
+                          onKeyDown={handleInputKeyDown}
+                          maxLength={22}
+                          className="input-text"
+                          style={getFieldStyle(`clabe-${acc.id}`, {
+                            paddingRight: '34px',
+                            fontFamily: 'var(--font-mono)',
+                            fontWeight: 600
+                          })}
+                        />
+                        {toRawDigits(acc.clabe).length === 18 && (
+                          <span className="rrhh-input-valid-icon" title="CLABE completa">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Número de Tarjeta (16 dígitos) */}
-                    <div>
-                      <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                        Número de Tarjeta / Débito (16 dígitos)
-                      </label>
-                      <input
-                        data-field={`card-${acc.id}`}
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="Opcional · 1234-5678-9012-3456"
-                        value={acc.cardNumber || ''}
-                        onChange={(e) => {
-                          setErrorField((prev) => (prev === `card-${acc.id}` ? null : prev));
-                          const { formatted, hadInvalid } = formatCardMask(e.target.value);
-                          if (hadInvalid) triggerToast('¡Solo dígitos!', 'warning', 2200);
-                          updateBankAccount(acc.id, { cardNumber: formatted });
-                        }}
-                        onKeyDown={handleInputKeyDown}
-                        maxLength={19}
-                        className="input-text"
-                        style={getFieldStyle(`card-${acc.id}`, {
-                          width: '100%',
-                          height: '38px',
-                          paddingLeft: '10px',
-                          fontFamily: 'var(--font-mono)'
-                        })}
-                      />
+                    <div className="rrhh-field">
+                      <div className="rrhh-field-label-row">
+                        <label className="rrhh-field-label">Tarjeta / Débito</label>
+                        <span className="rrhh-field-hint">16 dígitos · Opc.</span>
+                      </div>
+                      <div className="rrhh-input-with-check">
+                        <input
+                          data-field={`card-${acc.id}`}
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="1234-5678-9012-3456"
+                          value={acc.cardNumber || ''}
+                          onChange={(e) => {
+                            setErrorField((prev) => (prev === `card-${acc.id}` ? null : prev));
+                            const { formatted, hadInvalid } = formatCardMask(e.target.value);
+                            if (hadInvalid) triggerToast('¡Solo dígitos!', 'warning', 2200);
+                            updateBankAccount(acc.id, { cardNumber: formatted });
+                          }}
+                          onKeyDown={handleInputKeyDown}
+                          maxLength={19}
+                          className="input-text"
+                          style={getFieldStyle(`card-${acc.id}`, {
+                            paddingRight: '34px',
+                            fontFamily: 'var(--font-mono)'
+                          })}
+                        />
+                        {toRawDigits(acc.cardNumber || '').length === 16 && (
+                          <span className="rrhh-input-valid-icon" title="Tarjeta válida">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Uso de la Cuenta: Fijo en Nómina */}
@@ -4182,7 +3910,6 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
               ))}
             </div>
           </div>
-          {renderStepFooter(4)}
         </div>
       )}
 
@@ -4190,62 +3917,22 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       {/* PROCESO 6: CONSTANCIA Y CURSOS                            */}
       {/* ========================================================= */}
       {currentStepIndex === 5 && (
-        <div id="section6" className="card" style={{ borderRadius: '16px', overflow: 'visible', boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.04)' }}>
-          <div
-            style={{
-              padding: '18px 24px',
-              backgroundColor: 'var(--surface)',
-              borderRadius: '16px 16px 0 0',
-              borderBottom: '1px solid var(--border-subtle)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '7px',
-                  backgroundColor: 'var(--brand-50)',
-                  color: 'var(--primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid var(--brand-200)',
-                  flexShrink: 0
-                }}
-              >
-                <Award className="w-4 h-4" />
-              </div>
+        <div id="section6" className="rrhh-step-card">
+          <div className="rrhh-step-card-header">
+            <div className="rrhh-step-card-header-left">
+              <span className="rrhh-step-num-badge">6</span>
               <div>
-                <h3 style={{ fontSize: '13.5px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                  Expediente Digital &amp; Certificaciones
-                </h3>
-                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '1px 0 0 0' }}>
-                  Organización por subcarpetas (Documentos, Certificaciones y anexos).
-                </p>
+                <h3 className="rrhh-step-card-title">Expediente Digital &amp; Certificaciones</h3>
+                <p className="rrhh-step-card-sub">Organización por subcarpetas (Documentos, Certificaciones y anexos).</p>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span
-                style={{
-                  fontSize: '10.5px',
-                  fontWeight: 700,
-                  backgroundColor: isSection6Done ? 'var(--success-bg)' : 'var(--surface)',
-                  color: isSection6Done ? 'var(--success-text)' : 'var(--text-muted)',
-                  padding: '3px 10px',
-                  borderRadius: '6px',
-                  border: isSection6Done ? '1px solid var(--success-border)' : '1px solid var(--border)'
-                }}
-              >
-                {isSection6Done ? `✓ ${documents.length} Archivo${documents.length === 1 ? '' : 's'}` : 'Opcional'}
-              </span>
-            </div>
+            <span className={`rrhh-step-tag ${isSection6Done ? 'done' : 'primary'}`}>
+              {isSection6Done ? `✓ ${documents.length} Archivo${documents.length === 1 ? '' : 's'}` : 'Opcional'}
+            </span>
           </div>
 
-          <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(330px, 1fr))', gap: '20px' }}>
+          <div className="rrhh-step-card-body">
+            <div className="rrhh-grid-folders">
             {/* Sub-bloque Izquierdo: Subcarpetas del Expediente (Creables y Seleccionables) */}
             <div
               style={{
@@ -4579,7 +4266,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                 </span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div className="rrhh-grid-2">
                 <CustomSelect
                   label="Subcarpeta Destino"
                   value={activeFolder}
@@ -4595,11 +4282,9 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 1fr', gap: '10px' }}>
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--text-secondary)' }}>
-                    Nombre o Descripción
-                  </label>
+              <div className="rrhh-grid-2">
+                <div className="rrhh-field">
+                  <label className="rrhh-field-label">Nombre o Descripción</label>
                   <input
                     type="text"
                     placeholder={
@@ -4613,14 +4298,11 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                     onChange={(e) => setNewDocTitle(e.target.value)}
                     onKeyDown={handleInputKeyDown}
                     className="input-text"
-                    style={{ width: '100%', paddingLeft: '10px', height: '38px' }}
                   />
                 </div>
 
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--text-secondary)' }}>
-                    Institución / Emisor (Opcional)
-                  </label>
+                <div className="rrhh-field">
+                  <label className="rrhh-field-label">Institución / Emisor</label>
                   <input
                     type="text"
                     placeholder={
@@ -4632,7 +4314,6 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                     onChange={(e) => setNewDocIssuer(e.target.value)}
                     onKeyDown={handleInputKeyDown}
                     className="input-text"
-                    style={{ width: '100%', paddingLeft: '10px', height: '38px' }}
                   />
                 </div>
               </div>
@@ -4691,8 +4372,8 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                 <span>Guardar en &ldquo;{activeFolder}&rdquo;</span>
               </button>
             </div>
+            </div>
           </div>
-          {renderStepFooter(5)}
         </div>
       )}
 
@@ -5204,6 +4885,176 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       </div>
     )}
       </div>
+
+      {/* ========================================================= */}
+      {/* BARRA INFERIOR STICKY DE ACCIONES (ZOOM-PROOF)            */}
+      {/* ========================================================= */}
+      <div className="rrhh-sticky-bar" role="region" aria-label="Acciones de navegación y guardado">
+        <div className="rrhh-sticky-status">
+          <span
+            className="rrhh-pulse-dot"
+            style={{
+              backgroundColor: isReadyToSave ? '#059669' : '#1D4ED8',
+              flexShrink: 0
+            }}
+          />
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {draftFeedback
+              ? 'Borrador guardado localmente de forma segura'
+              : draftSavedAt
+              ? `Borrador guardado (${draftSavedAt}) · Etapa ${currentStepIndex + 1} de ${steps.length}`
+              : `Etapa ${currentStepIndex + 1} de ${steps.length}: ${currentStepObj.label} · ${progressPercent}% completado`}
+          </span>
+        </div>
+
+        <div className="rrhh-sticky-actions">
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="rrhh-btn-outline"
+              title="Cancelar y volver al Directorio de Personal"
+            >
+              Cancelar
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={handleLimpiar}
+            className="rrhh-btn-outline"
+            title="Vaciar todos los campos del formulario"
+          >
+            Limpiar
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSaveDraft}
+            className="rrhh-btn-outline"
+            style={{ color: draftFeedback ? '#059669' : 'var(--text-primary)' }}
+            title="Guardar borrador local en este navegador"
+          >
+            {draftFeedback ? (
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Guardado</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+                <span>Guardar Borrador</span>
+              </>
+            )}
+          </button>
+
+          {currentStepIndex > 0 && (
+            <button
+              type="button"
+              onClick={handlePrevStep}
+              className="rrhh-btn-outline"
+              title="Etapa anterior (Alt + ←)"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Anterior</span>
+            </button>
+          )}
+
+          {currentStepIndex < steps.length - 1 ? (
+            <button
+              type="button"
+              onClick={handleNextStep}
+              className={`rrhh-btn-primary ${currentStepObj.isDone ? 'step-continue-bounce' : ''}`}
+              title={`Ir a ${nextStepObj?.label} (Ctrl + Enter)`}
+            >
+              <span>Continuar</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              className={`rrhh-btn-success ${isReadyToSave ? 'step-continue-bounce' : ''}`}
+              title="Finalizar y registrar colaborador (Ctrl + S)"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>+ Registrar Colaborador</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ========================================================= */}
+      {/* MODAL DE CONFIRMACIÓN DE REGISTRO EXITOSO                 */}
+      {/* ========================================================= */}
+      {savedEmployeeModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="rrhh-modal-backdrop"
+          onClick={() => setSavedEmployeeModal(null)}
+        >
+          <div className="rrhh-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div
+              style={{
+                width: '3.75rem',
+                height: '3.75rem',
+                borderRadius: '50%',
+                backgroundColor: 'var(--success-bg)',
+                border: '1px solid var(--success-border)',
+                color: 'var(--success-text)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.15rem auto'
+              }}
+            >
+              <CheckCircle2 className="w-9 h-9" />
+            </div>
+
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 0.45rem 0' }}>
+              ¡Colaborador Registrado Exitosamente!
+            </h3>
+
+            <p
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.88rem',
+                fontWeight: 800,
+                color: 'var(--primary)',
+                margin: '0 0 0.5rem 0'
+              }}
+            >
+              {savedEmployeeModal.id} — {savedEmployeeModal.name}
+            </p>
+
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 1.5rem 0' }}>
+              Incorporado al Directorio de Personal en <strong>{savedEmployeeModal.department}</strong> ({savedEmployeeModal.location}) bajo el puesto de <strong>{savedEmployeeModal.position}</strong>.
+            </p>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setSavedEmployeeModal(null)}
+                className="rrhh-btn-outline"
+                style={{ padding: '0.6rem 1.1rem' }}
+              >
+                + Registrar Otro Colaborador
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSavedEmployeeModal(null);
+                  onCancel();
+                }}
+                className="rrhh-btn-primary"
+                style={{ padding: '0.6rem 1.2rem' }}
+              >
+                Ver en Directorio de Personal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 };

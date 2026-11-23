@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useSyncExternalStore } from 'react';
 import {
   Building2,
   Plus,
@@ -9,7 +9,6 @@ import {
   FileSpreadsheet,
   FileText,
   Printer,
-  ChevronDown,
   Edit2,
   Eye,
   X,
@@ -17,18 +16,42 @@ import {
   CheckCircle2,
   AlertTriangle,
   ArrowUpDown,
-  History,
   LayoutGrid,
   List as ListIcon,
-  PhoneCall
+  PhoneCall,
+  MapPin,
+  Check,
+  Palette,
+  Award,
+  SlidersHorizontal,
+  BookmarkPlus,
+  RotateCcw,
+  Briefcase,
+  Package,
+  ShoppingCart,
+  Compass,
+  ShieldCheck,
+  Server,
+  Cpu,
+  BarChart3,
+  Wrench,
+  TrendingUp,
+  Layers
 } from 'lucide-react';
-import { DepartmentItem } from '../../types';
+import { DepartmentItem, Employee } from '../../types';
+import { EMPLOYEES } from '../../data/mockData';
 import { ExtensionsCatalogView } from './ExtensionsCatalogView';
 import {
   sanitizeCleanText,
   sanitizePersonName,
   savePersistedDepartments,
   useSyncedDepartments,
+  useSyncedEmployees,
+  useSyncedExtensions,
+  getDepartmentCode,
+  getDepartmentTheme,
+  suggestDepartmentCode,
+  DEPARTMENT_COLOR_SWATCHES,
   downloadCsvFile,
   logHrAuditAction
 } from '../../utils/formShield';
@@ -40,22 +63,317 @@ interface DepartmentsViewProps {
   onDeleteDepartment?: (id: string) => void;
 }
 
+const SITE_OPTIONS = [
+  'Minatitlán, Ver.',
+  'Mapachapa, Ver.',
+  'Comalcalco, Tab.',
+  'Xalapa, Ver.',
+  'Ciudad del Carmen, Camp.',
+  'Mérida, Yuc.'
+];
+
+const normalizeText = (value?: string): string =>
+  (value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+
+type HeadcountFilter = 'todos' | 'sin_personal' | 'pequeno' | 'mediano' | 'grande';
+type ExtensionFilter = 'todas' | 'con_ext' | 'sin_ext';
+type StatusFilter = 'active' | 'inactive' | 'all';
+type SortField = 'name' | 'code' | 'employeeCount' | 'location';
+type TableDensity = 'comfortable' | 'compact';
+
+interface DeptColumnVisibility {
+  code: boolean;
+  lead: boolean;
+  headcount: boolean;
+  extensions: boolean;
+  location: boolean;
+  status: boolean;
+}
+
+interface DeptSavedView {
+  id: string;
+  name: string;
+  builtIn?: boolean;
+  filters: {
+    site: string;
+    headcount: HeadcountFilter;
+    extension: ExtensionFilter;
+    status: StatusFilter;
+    lead: string;
+    sortField: SortField;
+    sortAsc: boolean;
+  };
+}
+
+interface DeptUserPrefs {
+  columns: DeptColumnVisibility;
+  density: TableDensity;
+  savedViews: DeptSavedView[];
+}
+
+const DEPT_PREFS_STORAGE_KEY = 'sifygsa_dept_user_prefs_v1';
+
+const DEFAULT_COLUMNS: DeptColumnVisibility = {
+  code: true,
+  lead: true,
+  headcount: true,
+  extensions: true,
+  location: true,
+  status: true
+};
+
+const BUILTIN_VIEWS: DeptSavedView[] = [
+  {
+    id: 'all-active',
+    name: 'Todas las áreas',
+    builtIn: true,
+    filters: {
+      site: 'todas',
+      headcount: 'todos',
+      extension: 'todas',
+      status: 'active',
+      lead: 'todos',
+      sortField: 'code',
+      sortAsc: true
+    }
+  },
+  {
+    id: 'top-headcount',
+    name: 'Mayor plantilla',
+    builtIn: true,
+    filters: {
+      site: 'todas',
+      headcount: 'todos',
+      extension: 'todas',
+      status: 'active',
+      lead: 'todos',
+      sortField: 'employeeCount',
+      sortAsc: false
+    }
+  },
+  {
+    id: 'with-extensions',
+    name: 'Con extensiones',
+    builtIn: true,
+    filters: {
+      site: 'todas',
+      headcount: 'todos',
+      extension: 'con_ext',
+      status: 'active',
+      lead: 'todos',
+      sortField: 'code',
+      sortAsc: true
+    }
+  },
+  {
+    id: 'empty-areas',
+    name: 'Sin personal (0)',
+    builtIn: true,
+    filters: {
+      site: 'todas',
+      headcount: 'sin_personal',
+      extension: 'todas',
+      status: 'active',
+      lead: 'todos',
+      sortField: 'name',
+      sortAsc: true
+    }
+  }
+];
+
+const DEFAULT_DEPT_PREFS: DeptUserPrefs = {
+  columns: DEFAULT_COLUMNS,
+  density: 'comfortable',
+  savedViews: []
+};
+
+let cachedPrefsRaw: string | null = null;
+let cachedPrefsObj: DeptUserPrefs = DEFAULT_DEPT_PREFS;
+
+const subscribeDeptPrefs = (cb: () => void): (() => void) => {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener('sifygsa-dept-prefs-update', cb);
+  window.addEventListener('storage', cb);
+  return () => {
+    window.removeEventListener('sifygsa-dept-prefs-update', cb);
+    window.removeEventListener('storage', cb);
+  };
+};
+
+const getDeptPrefsSnapshot = (): DeptUserPrefs => {
+  if (typeof window === 'undefined') return DEFAULT_DEPT_PREFS;
+  try {
+    const raw = window.localStorage.getItem(DEPT_PREFS_STORAGE_KEY);
+    if (!raw) return DEFAULT_DEPT_PREFS;
+    if (raw === cachedPrefsRaw) return cachedPrefsObj;
+    const parsed = JSON.parse(raw) as Partial<DeptUserPrefs>;
+    cachedPrefsRaw = raw;
+    cachedPrefsObj = {
+      columns: { ...DEFAULT_COLUMNS, ...(parsed.columns || {}) },
+      density: parsed.density === 'compact' ? 'compact' : 'comfortable',
+      savedViews: Array.isArray(parsed.savedViews) ? parsed.savedViews : []
+    };
+    return cachedPrefsObj;
+  } catch {
+    return DEFAULT_DEPT_PREFS;
+  }
+};
+
+const saveDeptPrefs = (next: DeptUserPrefs): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = JSON.stringify(next);
+    cachedPrefsRaw = raw;
+    cachedPrefsObj = next;
+    window.localStorage.setItem(DEPT_PREFS_STORAGE_KEY, raw);
+    window.dispatchEvent(new Event('sifygsa-dept-prefs-update'));
+  } catch {
+    // ignore storage quota errors
+  }
+};
+
+const getLeadInitials = (lead?: string): string => {
+  const cleaned = (lead || '')
+    .replace(/\b(Ing|Lic|Mtra|Mtro|Dr|Dra|Arq|C\.P\.|CP|Téc|Tec)\.?\s+/gi, '')
+    .trim();
+  if (!cleaned || cleaned.toLowerCase() === 'por asignar') return '—';
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase();
+};
+
+const HEADCOUNT_LABELS: Record<HeadcountFilter, string> = {
+  todos: 'Todos los tamaños',
+  sin_personal: 'Sin personal (0)',
+  pequeno: 'Pequeño (1–5)',
+  mediano: 'Mediano (6–15)',
+  grande: 'Frente grande (16+)'
+};
+
+const EXTENSION_LABELS: Record<ExtensionFilter, string> = {
+  todas: 'Todas',
+  con_ext: 'Con extensión',
+  sin_ext: 'Sin extensión'
+};
+
+const STATUS_LABELS: Record<StatusFilter, string> = {
+  active: 'Solo activos',
+  inactive: 'Solo inactivos',
+  all: 'Activos e inactivos'
+};
+
+const COLUMN_META: readonly { key: keyof DeptColumnVisibility; label: string }[] = [
+  { key: 'code', label: 'Código' },
+  { key: 'lead', label: 'Titular / Responsable' },
+  { key: 'headcount', label: 'Plantilla Real' },
+  { key: 'extensions', label: 'Extensiones' },
+  { key: 'location', label: 'Sede Principal' },
+  { key: 'status', label: 'Estado' }
+];
+
+const renderDepartmentIcon = (codeOrName?: string, className = 'w-4 h-4'): React.ReactNode => {
+  const code = getDepartmentCode(codeOrName).toUpperCase();
+  switch (code) {
+    case 'DIR':
+      return <Compass className={className} />;
+    case 'ADM':
+      return <Briefcase className={className} />;
+    case 'ALM':
+      return <Package className={className} />;
+    case 'CAL':
+      return <Award className={className} />;
+    case 'COM':
+      return <ShoppingCart className={className} />;
+    case 'HSE-MIN':
+    case 'HSE-COM':
+      return <ShieldCheck className={className} />;
+    case 'INF':
+      return <Server className={className} />;
+    case 'ING':
+      return <Cpu className={className} />;
+    case 'MCP':
+      return <BarChart3 className={className} />;
+    case 'RH':
+      return <Users className={className} />;
+    case 'SRV':
+      return <Wrench className={className} />;
+    case 'VTA':
+      return <TrendingUp className={className} />;
+    case 'GSAPE':
+      return <Layers className={className} />;
+    default:
+      return <Building2 className={className} />;
+  }
+};
+
 export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
   departments: initialDepartments,
   onAddDepartment,
   onUpdateDepartment
 }) => {
   const departments = useSyncedDepartments(initialDepartments);
+  const allEmployees = useSyncedEmployees(EMPLOYEES);
+  const allExtensions = useSyncedExtensions();
+  const userPrefs = useSyncExternalStore(
+    subscribeDeptPrefs,
+    getDeptPrefsSnapshot,
+    () => DEFAULT_DEPT_PREFS
+  );
 
-  // Estados de Vista y Filtros
+  // Estados de Vista y Filtros Personalizables
   const [activeCatalogTab, setActiveCatalogTab] = useState<'departamentos' | 'extensiones'>('departamentos');
   const [viewMode, setViewMode] = useState<'list' | 'cards'>('list');
   const [searchQuery, setSearchQuery] = useState('');
-  const [showInactives, setShowInactives] = useState(false);
-  const [selectedView, setSelectedView] = useState('Vista predeterminada de departamento');
-  const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
-  const [sortField, setSortField] = useState<'name' | 'code' | 'employeeCount'>('code');
+  const [showFiltersPanel, setShowFiltersPanel] = useState(false);
+  const [showColumnsPanel, setShowColumnsPanel] = useState(false);
+  const [selectedSite, setSelectedSite] = useState<string>('todas');
+  const [headcountFilter, setHeadcountFilter] = useState<HeadcountFilter>('todos');
+  const [extensionFilter, setExtensionFilter] = useState<ExtensionFilter>('todas');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('active');
+  const [selectedLead, setSelectedLead] = useState<string>('todos');
+  const [sortField, setSortField] = useState<SortField>('code');
   const [sortAsc, setSortAsc] = useState(true);
+  const [activeSavedViewId, setActiveSavedViewId] = useState<string>('all-active');
+  const [isSavingView, setIsSavingView] = useState(false);
+  const [newViewName, setNewViewName] = useState('');
+
+  const visibleCols = userPrefs.columns;
+  const density = userPrefs.density;
+  const allSavedViews = useMemo(
+    () => [...BUILTIN_VIEWS, ...userPrefs.savedViews],
+    [userPrefs.savedViews]
+  );
+
+  // Estados de Modal (Crear / Editar / Ver)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [currentDepartment, setCurrentDepartment] = useState<DepartmentItem | null>(null);
+
+  // Formulario de Crear / Editar
+  const [formName, setFormName] = useState('');
+  const [formCode, setFormCode] = useState('');
+  const [formCodeTouched, setFormCodeTouched] = useState(false);
+  const [formLead, setFormLead] = useState('');
+  const [formLocation, setFormLocation] = useState('Minatitlán, Ver.');
+  const [formSubsidiary, setFormSubsidiary] = useState('SIFYGSA');
+  const [formDescription, setFormDescription] = useState('');
+  const [formColor, setFormColor] = useState<string>(DEPARTMENT_COLOR_SWATCHES[0].hex);
+  const [formActive, setFormActive] = useState(true);
+
+  // Toast de confirmación / advertencia
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<'success' | 'warning'>('success');
+
+  const showToast = (msg: string, type: 'success' | 'warning' = 'success') => {
+    setToastType(type);
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 2800);
+  };
 
   const getDepartmentBranchLabel = (dept: DepartmentItem): string | null => {
     const cleanName = dept.name.trim().toLowerCase();
@@ -72,77 +390,256 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
     return null;
   };
 
-  // Estados de Modal (Crear / Editar / Ver)
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [currentDepartment, setCurrentDepartment] = useState<DepartmentItem | null>(null);
+  // Colaboradores activos reales agrupados por departamento
+  const activeEmployees = useMemo(
+    () => allEmployees.filter((e) => (e.employmentStatus || 'Activo') === 'Activo'),
+    [allEmployees]
+  );
 
-  // Formulario de Crear / Editar
-  const [formName, setFormName] = useState('');
-  const [formCode, setFormCode] = useState('');
-  const [formLead, setFormLead] = useState('');
-  const [formLocation, setFormLocation] = useState('Minatitlán, Ver.');
-  const [formSubsidiary, setFormSubsidiary] = useState('SIFYGSA');
-  const [formDescription, setFormDescription] = useState('');
-  const [formActive, setFormActive] = useState(true);
+  const employeesByDeptId = useMemo(() => {
+    const map = new Map<string, Employee[]>();
+    departments.forEach((d) => map.set(d.id, []));
 
-  // Toast de confirmación / advertencia (1 a 3 palabras)
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [toastType, setToastType] = useState<'success' | 'warning'>('success');
+    activeEmployees.forEach((emp) => {
+      const empCode = getDepartmentCode(emp.department, emp.location);
+      const empDeptNorm = normalizeText(emp.department);
 
-  const showToast = (msg: string, type: 'success' | 'warning' = 'success') => {
-    setToastType(type);
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 2800);
-  };
+      // 1. Coincidencia exacta por código (distingue HSE-MIN vs HSE-COM)
+      let matched = departments.find((d) => d.code.toUpperCase() === empCode.toUpperCase());
 
-  // Filtrado y ordenación
+      // 2. Respaldo por nombre normalizado
+      if (!matched) {
+        matched = departments.find((d) => normalizeText(d.name) === empDeptNorm);
+      }
+
+      if (matched) {
+        const list = map.get(matched.id) || [];
+        list.push(emp);
+        map.set(matched.id, list);
+      }
+    });
+
+    return map;
+  }, [departments, activeEmployees]);
+
+  // Enriquecer departamentos con conteo real y tema de color
+  const enrichedDepartments = useMemo(() => {
+    return departments.map((dept) => {
+      const members = employeesByDeptId.get(dept.id) || [];
+      const liveCount = members.length;
+      const theme = getDepartmentTheme(dept.code || dept.name, dept.location, dept.color);
+      const deptExts = allExtensions.filter(
+        (ext) =>
+          ext.status === 'active' &&
+          (getDepartmentCode(ext.department, ext.location) === dept.code.toUpperCase() ||
+            normalizeText(ext.department) === normalizeText(dept.name))
+      );
+      return {
+        ...dept,
+        liveEmployeeCount: liveCount,
+        members,
+        theme,
+        extensions: deptExts
+      };
+    });
+  }, [departments, employeesByDeptId, allExtensions]);
+
+  const availableSites = useMemo(() => {
+    const set = new Set<string>();
+    departments.forEach((d) => {
+      if (d.location?.trim()) set.add(d.location.trim());
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'es'));
+  }, [departments]);
+
+  const availableLeads = useMemo(() => {
+    const set = new Set<string>();
+    departments.forEach((d) => {
+      if (d.lead?.trim()) set.add(d.lead.trim());
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'es'));
+  }, [departments]);
+
+  // Filtrado y ordenación multi-campo
   const filteredDepartments = useMemo(() => {
-    return departments
+    const q = searchQuery.trim().toLowerCase();
+    return enrichedDepartments
       .filter((dept) => {
-        const matchesStatus = showInactives ? true : dept.status === 'active';
+        const matchesStatus =
+          statusFilter === 'all'
+            ? true
+            : statusFilter === 'active'
+              ? dept.status === 'active'
+              : dept.status !== 'active';
+        const matchesSite = selectedSite === 'todas' || dept.location === selectedSite;
+        const matchesLead = selectedLead === 'todos' || dept.lead === selectedLead;
+        const matchesHeadcount =
+          headcountFilter === 'todos'
+            ? true
+            : headcountFilter === 'sin_personal'
+              ? dept.liveEmployeeCount === 0
+              : headcountFilter === 'pequeno'
+                ? dept.liveEmployeeCount >= 1 && dept.liveEmployeeCount <= 5
+                : headcountFilter === 'mediano'
+                  ? dept.liveEmployeeCount >= 6 && dept.liveEmployeeCount <= 15
+                  : dept.liveEmployeeCount >= 16;
+        const matchesExt =
+          extensionFilter === 'todas'
+            ? true
+            : extensionFilter === 'con_ext'
+              ? dept.extensions.length > 0
+              : dept.extensions.length === 0;
         const matchesSearch =
-          dept.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          dept.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          dept.lead.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          dept.location.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesStatus && matchesSearch;
+          !q ||
+          dept.name.toLowerCase().includes(q) ||
+          dept.code.toLowerCase().includes(q) ||
+          dept.lead.toLowerCase().includes(q) ||
+          dept.location.toLowerCase().includes(q) ||
+          (dept.description || '').toLowerCase().includes(q) ||
+          dept.extensions.some((ext) => ext.extension.includes(q));
+        return matchesStatus && matchesSite && matchesLead && matchesHeadcount && matchesExt && matchesSearch;
       })
       .sort((a, b) => {
         let comp = 0;
-        if (sortField === 'name') comp = a.name.localeCompare(b.name);
-        if (sortField === 'code') comp = a.code.localeCompare(b.code);
-        if (sortField === 'employeeCount') comp = a.employeeCount - b.employeeCount;
+        if (sortField === 'name') comp = a.name.localeCompare(b.name, 'es');
+        if (sortField === 'code') comp = a.code.localeCompare(b.code, 'es');
+        if (sortField === 'employeeCount') comp = a.liveEmployeeCount - b.liveEmployeeCount;
+        if (sortField === 'location') comp = a.location.localeCompare(b.location, 'es');
         return sortAsc ? comp : -comp;
       });
-  }, [departments, searchQuery, showInactives, sortField, sortAsc]);
+  }, [
+    enrichedDepartments,
+    searchQuery,
+    statusFilter,
+    selectedSite,
+    selectedLead,
+    headcountFilter,
+    extensionFilter,
+    sortField,
+    sortAsc
+  ]);
 
-  const totalEmployees = useMemo(() => {
-    return departments.reduce((acc, d) => acc + d.employeeCount, 0);
-  }, [departments]);
+  // KPIs 100% reales y dinámicos
+  const activeDepartmentsCount = useMemo(
+    () => enrichedDepartments.filter((d) => d.status === 'active').length,
+    [enrichedDepartments]
+  );
+
+  const totalLiveEmployees = activeEmployees.length;
+
+  const largestDepartment = useMemo(() => {
+    if (enrichedDepartments.length === 0) return null;
+    return enrichedDepartments.reduce((top, cur) =>
+      cur.liveEmployeeCount > top.liveEmployeeCount ? cur : top
+    );
+  }, [enrichedDepartments]);
+
+  const maxDeptCount = Math.max(largestDepartment?.liveEmployeeCount || 1, 1);
+
+  const activeFiltersCount =
+    (selectedSite !== 'todas' ? 1 : 0) +
+    (headcountFilter !== 'todos' ? 1 : 0) +
+    (extensionFilter !== 'todas' ? 1 : 0) +
+    (statusFilter !== 'active' ? 1 : 0) +
+    (selectedLead !== 'todos' ? 1 : 0);
+
+  const resetAllFilters = () => {
+    setSelectedSite('todas');
+    setHeadcountFilter('todos');
+    setExtensionFilter('todas');
+    setStatusFilter('active');
+    setSelectedLead('todos');
+    setSortField('code');
+    setSortAsc(true);
+    setSearchQuery('');
+    setActiveSavedViewId('all-active');
+  };
+
+  const applySavedView = (view: DeptSavedView) => {
+    setSelectedSite(view.filters.site);
+    setHeadcountFilter(view.filters.headcount);
+    setExtensionFilter(view.filters.extension);
+    setStatusFilter(view.filters.status);
+    setSelectedLead(view.filters.lead);
+    setSortField(view.filters.sortField);
+    setSortAsc(view.filters.sortAsc);
+    setActiveSavedViewId(view.id);
+  };
+
+  const handleSaveCustomView = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanName = newViewName.trim();
+    if (cleanName.length < 2) {
+      showToast('Escribe un nombre para tu vista personalizada', 'warning');
+      return;
+    }
+    const created: DeptSavedView = {
+      id: `custom-${Date.now()}`,
+      name: cleanName.slice(0, 32),
+      filters: {
+        site: selectedSite,
+        headcount: headcountFilter,
+        extension: extensionFilter,
+        status: statusFilter,
+        lead: selectedLead,
+        sortField,
+        sortAsc
+      }
+    };
+    saveDeptPrefs({
+      ...userPrefs,
+      savedViews: [...userPrefs.savedViews, created]
+    });
+    setActiveSavedViewId(created.id);
+    setNewViewName('');
+    setIsSavingView(false);
+    showToast(`Vista "${created.name}" guardada`, 'success');
+  };
+
+  const handleDeleteCustomView = (viewId: string) => {
+    const remaining = userPrefs.savedViews.filter((v) => v.id !== viewId);
+    saveDeptPrefs({ ...userPrefs, savedViews: remaining });
+    if (activeSavedViewId === viewId) {
+      setActiveSavedViewId('custom');
+    }
+    showToast('Vista personalizada eliminada', 'success');
+  };
+
+  const toggleColumnVisibility = (key: keyof DeptColumnVisibility) => {
+    saveDeptPrefs({
+      ...userPrefs,
+      columns: { ...visibleCols, [key]: !visibleCols[key] }
+    });
+  };
+
+  const setTableDensity = (nextDensity: TableDensity) => {
+    saveDeptPrefs({ ...userPrefs, density: nextDensity });
+  };
 
   const handleOpenCreate = () => {
-    const nextNum = departments.length + 1;
-    const formattedNum = String(nextNum).padStart(3, '0');
     setFormName('');
-    setFormCode(`DEP-${formattedNum}`);
+    setFormCode('');
+    setFormCodeTouched(false);
     setFormLead('');
     setFormLocation('Minatitlán, Ver.');
     setFormSubsidiary('SIFYGSA');
     setFormDescription('');
+    setFormColor(DEPARTMENT_COLOR_SWATCHES[departments.length % DEPARTMENT_COLOR_SWATCHES.length].hex);
     setFormActive(true);
     setIsCreateModalOpen(true);
   };
 
   const handleOpenEdit = (dept: DepartmentItem) => {
+    const currentTheme = getDepartmentTheme(dept.code || dept.name, dept.location, dept.color);
     setCurrentDepartment(dept);
     setFormName(dept.name);
     setFormCode(dept.code);
+    setFormCodeTouched(true);
     setFormLead(dept.lead);
     setFormLocation(dept.location);
     setFormSubsidiary(dept.subsidiary);
     setFormDescription(dept.description || '');
+    setFormColor(dept.color || currentTheme.accent);
     setFormActive(dept.status === 'active');
     setIsEditModalOpen(true);
   };
@@ -155,20 +652,26 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
   const handleSaveNew = (e: React.FormEvent) => {
     e.preventDefault();
     if (formName.trim().length < 2) {
-      showToast('¡Falta nombre!', 'warning');
+      showToast('¡Falta nombre del departamento!', 'warning');
       return;
     }
+
+    const finalCode =
+      formCode.trim() ||
+      suggestDepartmentCode(formName.trim()) ||
+      `AREA-${departments.length + 1}`;
 
     const newDept: DepartmentItem = {
       id: `dep-${Date.now()}`,
       name: formName.trim(),
-      code: formCode.trim() || `DEP-${String(departments.length + 1).padStart(3, '0')}`,
+      code: finalCode.toUpperCase(),
       lead: formLead.trim() || 'Por Asignar',
       employeeCount: 0,
       subsidiary: formSubsidiary,
       location: formLocation,
       status: formActive ? 'active' : 'inactive',
       description: formDescription.trim(),
+      color: formColor,
       createdAt: new Date().toLocaleDateString('es-MX')
     };
 
@@ -183,47 +686,49 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
     });
     onAddDepartment(newDept);
     setIsCreateModalOpen(false);
-    showToast('¡Guardado!', 'success');
+    showToast('¡Departamento creado!', 'success');
   };
 
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentDepartment || formName.trim().length < 2) {
-      showToast('¡Falta nombre!', 'warning');
+      showToast('¡Falta nombre del departamento!', 'warning');
       return;
     }
 
     const updated: DepartmentItem = {
       ...currentDepartment,
       name: formName.trim(),
-      code: formCode.trim(),
+      code: formCode.trim().toUpperCase() || currentDepartment.code,
       lead: formLead.trim() || 'Por Asignar',
       location: formLocation,
       subsidiary: formSubsidiary,
       status: formActive ? 'active' : 'inactive',
-      description: formDescription.trim()
+      description: formDescription.trim(),
+      color: formColor
     };
 
     savePersistedDepartments(departments.map((d) => (d.id === updated.id ? updated : d)));
     logHrAuditAction({
       actionType: 'Catálogo Departamentos',
       targetRecord: `${updated.code} · ${updated.name}`,
-      details: 'Actualización de departamento y titular de área.',
+      details: 'Actualización de departamento, color corporativo y titular de área.',
       previousValue: `${currentDepartment.name} · ${currentDepartment.lead}`,
       newValue: `${updated.name} · ${updated.lead}`,
       severity: 'normal'
     });
     onUpdateDepartment(updated);
     setIsEditModalOpen(false);
-    showToast('¡Guardado!', 'success');
+    showToast('¡Cambios guardados!', 'success');
   };
 
-  const toggleSort = (field: 'name' | 'code' | 'employeeCount') => {
+  const toggleSort = (field: SortField) => {
+    setActiveSavedViewId('custom');
     if (sortField === field) {
       setSortAsc(!sortAsc);
     } else {
       setSortField(field);
-      setSortAsc(true);
+      setSortAsc(field !== 'employeeCount');
     }
   };
 
@@ -237,16 +742,16 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
           'Código',
           'Nombre del Departamento',
           'Titular / Responsable',
-          'Colaboradores Asignados',
+          'Colaboradores Activos',
           'Empresa',
-          'Ubicación / Sede',
+          'Sede Principal',
           'Estatus'
         ],
         filteredDepartments.map((d) => [
           d.code,
           d.name,
           d.lead,
-          d.employeeCount,
+          d.liveEmployeeCount,
           d.subsidiary,
           d.location,
           d.status === 'active' ? 'Activo' : 'Inactivo'
@@ -263,154 +768,120 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
     }
   };
 
+  const selectedDetailEnriched = useMemo(() => {
+    if (!currentDepartment) return null;
+    return enrichedDepartments.find((d) => d.id === currentDepartment.id) || null;
+  }, [currentDepartment, enrichedDepartments]);
+
+  const previewTheme = getDepartmentTheme(formCode || formName, formLocation, formColor);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '40px' }}>
-      {/* Toast Notification (Microcopy 1 a 3 palabras) */}
+    <div className="rrhh-dept-shell">
+      {/* Toast Notification */}
       {toastMessage && (
         <div
+          role="status"
+          aria-live="polite"
           style={{
             position: 'fixed',
-            top: '22px',
+            top: '76px',
             right: '24px',
             zIndex: 9999,
             backgroundColor: toastType === 'success' ? '#047857' : '#D97706',
             color: '#FFFFFF',
-            padding: '12px 22px',
+            padding: '11px 20px',
             borderRadius: '10px',
-            boxShadow: 'var(--shadow-xl)',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.25)',
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            fontSize: '14px',
-            fontWeight: 800,
+            fontSize: '13.5px',
+            fontWeight: 700,
             border: toastType === 'success' ? '1px solid #34D399' : '1px solid #FBBF24'
           }}
         >
           {toastType === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-white" />
+            <CheckCircle2 className="w-5 h-5" style={{ flexShrink: 0 }} />
           ) : (
-            <AlertTriangle className="w-5 h-5 text-white" />
+            <AlertTriangle className="w-5 h-5" style={{ flexShrink: 0 }} />
           )}
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* 1. ENCABEZADO TIPO ORACLE NETSUITE / SIFYGSA ENTERPRISE                   */}
+      {/* 1. ENCABEZADO EJECUTIVO LIMPIO (ESTÁNDAR SIFYGSA SUITE)                   */}
       {/* ========================================================================= */}
-      <div>
-        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-          <span>Recursos Humanos</span> <span style={{ margin: '0 4px' }}>/</span> <span>Catálogos</span> <span style={{ margin: '0 4px' }}>/</span> <strong style={{ color: 'var(--text-secondary)' }}>Departamentos</strong>
-        </div>
+      <div className="rrhh-wizard-header">
+        <div>
+          <nav aria-label="Migas de pan" className="rrhh-wizard-breadcrumbs">
+            <span>Recursos Humanos</span>
+            <span>/</span>
+            <span>Catálogos</span>
+            <span>/</span>
+            <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+              {activeCatalogTab === 'extensiones' ? 'Extensiones Telefónicas' : 'Departamentos'}
+            </strong>
+          </nav>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
             <div
+              className="rrhh-dept-icon-badge is-tonal"
               style={{
                 width: '42px',
                 height: '42px',
-                borderRadius: '10px',
-                backgroundColor: 'var(--brand-50)',
-                color: 'var(--primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '1px solid var(--brand-200)'
-              }}
+                borderRadius: '11px',
+                '--dept-accent': '#1D4ED8'
+              } as React.CSSProperties}
             >
-              <Building2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
-                Departamentos
-              </h1>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                Estructura organizacional y centros de costo operativos SIFYGSA
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* Selector de Vista NetSuite */}
-            <div style={{ position: 'relative' }}>
-              <button
-                type="button"
-                onClick={() => setIsViewDropdownOpen(!isViewDropdownOpen)}
-                className="btn btn-secondary"
-                style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <span style={{ color: 'var(--text-muted)' }}>VER:</span>
-                <span style={{ fontWeight: 700 }}>{selectedView}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-muted" />
-              </button>
-
-              {isViewDropdownOpen && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 4px)',
-                    left: 0,
-                    zIndex: 50,
-                    minWidth: '280px',
-                    backgroundColor: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '8px',
-                    boxShadow: 'var(--shadow-lg)',
-                    padding: '4px'
-                  }}
-                >
-                  {[
-                    'Vista predeterminada de departamento',
-                    'Vista operativa con plantilla de puestos',
-                    'Vista resumida de centros de costos',
-                    'Vista de auditoría y responsables'
-                  ].map((v) => (
-                    <div
-                      key={v}
-                      onClick={() => {
-                        setSelectedView(v);
-                        setIsViewDropdownOpen(false);
-                      }}
-                      style={{
-                        padding: '8px 12px',
-                        fontSize: '12px',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        color: selectedView === v ? 'var(--primary)' : 'var(--text-primary)',
-                        backgroundColor: selectedView === v ? 'var(--brand-50)' : 'transparent',
-                        fontWeight: selectedView === v ? 700 : 500
-                      }}
-                    >
-                      {v}
-                    </div>
-                  ))}
-                </div>
+              {activeCatalogTab === 'extensiones' ? (
+                <PhoneCall className="w-5 h-5" />
+              ) : (
+                <Building2 className="w-5 h-5" />
               )}
             </div>
-
-            <button
-              type="button"
-              onClick={() => setActiveCatalogTab(activeCatalogTab === 'departamentos' ? 'extensiones' : 'departamentos')}
-              className={activeCatalogTab === 'extensiones' ? 'btn btn-primary' : 'btn btn-secondary'}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700 }}
-            >
-              <PhoneCall className="w-4 h-4" />
-              <span>{activeCatalogTab === 'extensiones' ? 'Volver a Departamentos' : 'Extensiones Telefónicas (CRUD)'}</span>
-            </button>
-
-            {/* Botón Principal Crear Departamento */}
-            {activeCatalogTab === 'departamentos' && (
-              <button
-                type="button"
-                onClick={handleOpenCreate}
-                className="btn btn-primary"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 700 }}
-              >
-                <Plus className="w-4 h-4" />
-                <span>Crear Departamento</span>
-              </button>
-            )}
+            <div>
+              <h1 className="rrhh-wizard-title">
+                {activeCatalogTab === 'extensiones' ? 'Extensiones Telefónicas' : 'Departamentos'}
+              </h1>
+              <p className="rrhh-wizard-subtitle">
+                {activeCatalogTab === 'extensiones'
+                  ? 'Directorio corporativo de extensiones internas por área y sede.'
+                  : 'Estructura organizacional, códigos oficiales, titulares y plantilla real por área.'}
+              </p>
+            </div>
           </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() =>
+              setActiveCatalogTab(activeCatalogTab === 'departamentos' ? 'extensiones' : 'departamentos')
+            }
+            className="rrhh-btn-outline"
+            style={
+              activeCatalogTab === 'extensiones'
+                ? {
+                    borderColor: 'var(--primary)',
+                    color: 'var(--primary)',
+                    backgroundColor: 'var(--brand-50)'
+                  }
+                : undefined
+            }
+          >
+            <PhoneCall className="w-4 h-4" />
+            <span>
+              {activeCatalogTab === 'extensiones' ? 'Volver a Departamentos' : 'Extensiones Telefónicas'}
+            </span>
+          </button>
+
+          {activeCatalogTab === 'departamentos' && (
+            <button type="button" onClick={handleOpenCreate} className="rrhh-btn-primary">
+              <Plus className="w-4 h-4" />
+              <span>Crear Departamento</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -418,484 +889,1326 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
         <ExtensionsCatalogView departments={departments.map((d) => d.name)} />
       ) : (
         <>
+          {/* ========================================================================= */}
+          {/* 2. TARJETAS KPI SOBRIAS Y SINCRONIZADAS CON LA PLANTILLA REAL             */}
+          {/* ========================================================================= */}
+          <div className="rrhh-dept-kpis">
+            <div className="rrhh-dept-kpi-card">
+              <div
+                className="rrhh-dept-icon-badge is-tonal"
+                style={{ width: '40px', height: '40px', borderRadius: '10px', '--dept-accent': '#1D4ED8' } as React.CSSProperties}
+              >
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Total Departamentos
+                </div>
+                <div style={{ fontSize: '1.22rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                  {departments.length} Áreas
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  {activeDepartmentsCount} activas en operación
+                </div>
+              </div>
+            </div>
 
-      {/* ========================================================================= */}
-      {/* 2. TARJETAS DE MÉTRICAS RÁPIDAS (KPIs DEPARTAMENTALES)                    */}
-      {/* ========================================================================= */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
-        <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'var(--brand-50)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Building2 className="w-5 h-5" />
-          </div>
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Total Departamentos</div>
-            <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)' }}>{departments.length} Áreas</div>
-          </div>
-        </div>
+            <div className="rrhh-dept-kpi-card">
+              <div
+                className="rrhh-dept-icon-badge is-tonal"
+                style={{ width: '40px', height: '40px', borderRadius: '10px', '--dept-accent': '#059669' } as React.CSSProperties}
+              >
+                <Users className="w-5 h-5" />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Plantilla Activa Real
+                </div>
+                <div style={{ fontSize: '1.22rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                  {totalLiveEmployees} Personas
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--success-text)', fontWeight: 600, marginTop: '2px' }}>
+                  Sincronizado con Directorio
+                </div>
+              </div>
+            </div>
 
-        <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Colaboradores Adscritos</div>
-            <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)' }}>{totalEmployees} Colaboradores</div>
-          </div>
-        </div>
+            <div className="rrhh-dept-kpi-card">
+              <div
+                className="rrhh-dept-icon-badge is-tonal"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  '--dept-accent': largestDepartment?.theme.accent || '#0E7490'
+                } as React.CSSProperties}
+              >
+                <Award className="w-5 h-5" />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Área con Mayor Frente
+                </div>
+                <div
+                  style={{
+                    fontSize: '1.02rem',
+                    fontWeight: 800,
+                    color: 'var(--text-primary)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    lineHeight: 1.25
+                  }}
+                >
+                  {largestDepartment
+                    ? `${largestDepartment.name} (${largestDepartment.liveEmployeeCount})`
+                    : 'Sin datos'}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  {largestDepartment && totalLiveEmployees > 0
+                    ? `${Math.round((largestDepartment.liveEmployeeCount / totalLiveEmployees) * 100)}% de la plantilla total`
+                    : '—'}
+                </div>
+              </div>
+            </div>
 
-        <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#FEF3C7', color: '#B45309', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Área con Mayor Frente</div>
-            <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              Ingeniería (22)
+            <div className="rrhh-dept-kpi-card">
+              <div
+                className="rrhh-dept-icon-badge is-tonal"
+                style={{ width: '40px', height: '40px', borderRadius: '10px', '--dept-accent': '#475569' } as React.CSSProperties}
+              >
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Cobertura de Sedes
+                </div>
+                <div style={{ fontSize: '1.22rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                  {availableSites.length} {availableSites.length === 1 ? 'Sede' : 'Sedes'}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {availableSites.slice(0, 3).join(' · ')}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'var(--surface-alt)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <History className="w-5 h-5" />
-          </div>
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Estado de Catálogo</div>
-            <div style={{ fontSize: '15px', fontWeight: 800, color: '#047857' }}>100% Sincronizado</div>
-          </div>
-        </div>
-      </div>
+          {/* ========================================================================= */}
+          {/* 3. BARRA DE VISTAS RÁPIDAS Y PERSONALIZADAS POR USUARIO                   */}
+          {/* ========================================================================= */}
+          <div className="rrhh-dept-views-bar">
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.4rem' }}>
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '2px' }}>
+                Vistas:
+              </span>
+              {allSavedViews.map((view) => {
+                const isActive = activeSavedViewId === view.id;
+                return (
+                  <span key={view.id} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => applySavedView(view)}
+                      className={`rrhh-dept-view-pill ${isActive ? 'is-active' : ''}`}
+                    >
+                      <span>{view.name}</span>
+                      {!view.builtIn && (
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Eliminar vista ${view.name}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCustomView(view.id);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.stopPropagation();
+                              handleDeleteCustomView(view.id);
+                            }
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            opacity: 0.78,
+                            marginLeft: '2px'
+                          }}
+                        >
+                          <X className="w-3 h-3" />
+                        </span>
+                      )}
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
 
-      {/* ========================================================================= */}
-      {/* 3. BARRA DE HERRAMIENTAS, FILTROS Y ACCIONES DE EXPORTACIÓN (NETSUITE)   */}
-      {/* ========================================================================= */}
-      <div
-        className="card"
-        style={{
-          padding: '10px 16px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '12px',
-          backgroundColor: 'var(--surface)'
-        }}
-      >
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px' }}>
-          {/* Botón Filtros */}
-          <button
-            type="button"
-            className="btn btn-secondary"
-            style={{ fontSize: '11.5px', display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 10px' }}
-          >
-            <Filter className="w-3.5 h-3.5 text-muted" />
-            <span>+ FILTROS</span>
-          </button>
-
-          {/* Iconos de Exportación tipo NetSuite */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', borderLeft: '1px solid var(--border)', borderRight: '1px solid var(--border)', padding: '0 8px' }}>
-            <button
-              type="button"
-              className="btn-icon"
-              onClick={() => handleExport('excel')}
-              title="Exportar a CSV / Excel"
-              style={{ color: '#047857' }}
-            >
-              <FileSpreadsheet className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              className="btn-icon"
-              onClick={() => handleExport('pdf')}
-              title="Exportar a PDF"
-              style={{ color: '#DC2626' }}
-            >
-              <FileText className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              className="btn-icon"
-              onClick={() => handleExport('print')}
-              title="Imprimir Catálogo"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              <Printer className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Checkbox Mostrar Inactivos */}
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-secondary)', cursor: 'pointer', userSelect: 'none' }}>
-            <input
-              type="checkbox"
-              checked={showInactives}
-              onChange={(e) => setShowInactives(e.target.checked)}
-              style={{ cursor: 'pointer' }}
-            />
-            <span>MOSTRAR INACTIVOS</span>
-          </label>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          {/* Buscador Rápido */}
-          <div style={{ position: 'relative', width: '220px' }}>
-            <Search className="w-3.5 h-3.5 text-muted" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
-            <input
-              type="text"
-              placeholder="Buscar departamento..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="input-text"
-              style={{ paddingLeft: '30px', height: '32px', fontSize: '11.5px', width: '100%' }}
-            />
-            {searchQuery && (
+            {isSavingView ? (
+              <form
+                onSubmit={handleSaveCustomView}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}
+              >
+                <input
+                  type="text"
+                  value={newViewName}
+                  onChange={(e) => setNewViewName(e.target.value)}
+                  placeholder="Nombre de tu vista (ej. Sede Mina)..."
+                  className="input-text"
+                  style={{ height: '30px', fontSize: '0.74rem', width: '210px', padding: '0 8px' }}
+                  autoFocus
+                />
+                <button type="submit" className="rrhh-btn-primary" style={{ padding: '0.32rem 0.7rem', fontSize: '0.73rem' }}>
+                  Guardar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSavingView(false);
+                    setNewViewName('');
+                  }}
+                  className="rrhh-btn-outline"
+                  style={{ padding: '0.3rem 0.55rem', fontSize: '0.73rem' }}
+                >
+                  Cancelar
+                </button>
+              </form>
+            ) : (
               <button
                 type="button"
-                onClick={() => setSearchQuery('')}
-                style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                onClick={() => setIsSavingView(true)}
+                className="rrhh-dept-action-btn"
+                style={{ fontSize: '0.72rem', padding: '4px 10px' }}
+                title="Guarda tu combinación actual de filtros y ordenamiento"
               >
-                <X className="w-3 h-3" />
+                <BookmarkPlus className="w-3.5 h-3.5" />
+                <span>Guardar vista personal</span>
               </button>
             )}
           </div>
 
-          {/* Toggle Vista Lista / Tarjetas */}
-          <div style={{ display: 'flex', gap: '2px', backgroundColor: 'var(--surface-alt)', padding: '2px', borderRadius: '6px' }}>
-            <button
-              type="button"
-              className="btn-icon"
-              onClick={() => setViewMode('list')}
-              style={{
-                width: '28px',
-                height: '28px',
-                backgroundColor: viewMode === 'list' ? 'var(--surface)' : 'transparent',
-                boxShadow: viewMode === 'list' ? 'var(--shadow-sm)' : 'none'
-              }}
-              title="Vista Lista"
-            >
-              <ListIcon className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              className="btn-icon"
-              onClick={() => setViewMode('cards')}
-              style={{
-                width: '28px',
-                height: '28px',
-                backgroundColor: viewMode === 'cards' ? 'var(--surface)' : 'transparent',
-                boxShadow: viewMode === 'cards' ? 'var(--shadow-sm)' : 'none'
-              }}
-              title="Vista Cuadrícula / Tarjetas"
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-            </button>
+          {/* ========================================================================= */}
+          {/* 4. BARRA DE HERRAMIENTAS, FILTROS ACTIVOS Y PERSONALIZACIÓN               */}
+          {/* ========================================================================= */}
+          <div className="rrhh-dept-toolbar">
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.55rem' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowFiltersPanel((prev) => !prev);
+                  setShowColumnsPanel(false);
+                }}
+                className="rrhh-btn-outline"
+                style={{
+                  padding: '0.4rem 0.78rem',
+                  fontSize: '0.76rem',
+                  ...(showFiltersPanel || activeFiltersCount > 0
+                    ? {
+                        borderColor: 'var(--primary)',
+                        color: 'var(--primary)',
+                        backgroundColor: 'var(--brand-50)'
+                      }
+                    : {})
+                }}
+              >
+                <Filter className="w-3.5 h-3.5" />
+                <span>Filtros{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowColumnsPanel((prev) => !prev);
+                  setShowFiltersPanel(false);
+                }}
+                className="rrhh-btn-outline"
+                style={{
+                  padding: '0.4rem 0.78rem',
+                  fontSize: '0.76rem',
+                  ...(showColumnsPanel
+                    ? {
+                        borderColor: 'var(--primary)',
+                        color: 'var(--primary)',
+                        backgroundColor: 'var(--brand-50)'
+                      }
+                    : {})
+                }}
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>Personalizar</span>
+              </button>
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '2px',
+                  borderLeft: '1px solid var(--border)',
+                  borderRight: '1px solid var(--border)',
+                  padding: '0 0.45rem'
+                }}
+              >
+                <button
+                  type="button"
+                  className="btn-icon"
+                  onClick={() => handleExport('excel')}
+                  title="Exportar a CSV / Excel"
+                  style={{ color: '#059669' }}
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  className="btn-icon"
+                  onClick={() => handleExport('pdf')}
+                  title="Exportar / Imprimir PDF"
+                  style={{ color: '#DC2626' }}
+                >
+                  <FileText className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  className="btn-icon"
+                  onClick={() => handleExport('print')}
+                  title="Imprimir Catálogo"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  <Printer className="w-4 h-4" />
+                </button>
+              </div>
+
+              <label
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  userSelect: 'none'
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={statusFilter === 'all'}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.checked ? 'all' : 'active');
+                    setActiveSavedViewId('custom');
+                  }}
+                  style={{ cursor: 'pointer' }}
+                />
+                <span>Mostrar inactivos</span>
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.7rem' }}>
+              {/* Buscador */}
+              <div style={{ position: 'relative', width: '250px', maxWidth: '100%' }}>
+                <Search
+                  className="w-3.5 h-3.5 text-muted"
+                  style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }}
+                />
+                <input
+                  type="text"
+                  placeholder="Buscar área, código, titular o ext..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="input-text"
+                  style={{ paddingLeft: '30px', paddingRight: searchQuery ? '26px' : '10px', height: '34px', fontSize: '0.78rem', width: '100%' }}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--text-muted)'
+                    }}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Toggle Lista / Tarjetas */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '2px',
+                  backgroundColor: 'var(--surface-alt)',
+                  padding: '3px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border)'
+                }}
+              >
+                <button
+                  type="button"
+                  className="btn-icon"
+                  onClick={() => setViewMode('list')}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    backgroundColor: viewMode === 'list' ? 'var(--surface)' : 'transparent',
+                    color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-muted)',
+                    boxShadow: viewMode === 'list' ? 'var(--shadow-xs)' : 'none'
+                  }}
+                  title="Vista Tabla"
+                >
+                  <ListIcon className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  className="btn-icon"
+                  onClick={() => setViewMode('cards')}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    backgroundColor: viewMode === 'cards' ? 'var(--surface)' : 'transparent',
+                    color: viewMode === 'cards' ? 'var(--primary)' : 'var(--text-muted)',
+                    boxShadow: viewMode === 'cards' ? 'var(--shadow-xs)' : 'none'
+                  }}
+                  title="Vista Tarjetas"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  color: 'var(--text-secondary)',
+                  letterSpacing: '0.03em'
+                }}
+              >
+                TOTAL: <span style={{ color: 'var(--primary)' }}>{filteredDepartments.length}</span>
+              </div>
+            </div>
           </div>
 
-          {/* Contador Total tipo NetSuite */}
-          <div style={{ fontSize: '11.5px', fontWeight: 800, color: 'var(--text-secondary)', letterSpacing: '0.04em' }}>
-            TOTAL: <span style={{ color: 'var(--primary)' }}>{filteredDepartments.length}</span>
-          </div>
-        </div>
-      </div>
+          {/* Panel desplegable de Filtros Multi-Campo */}
+          {showFiltersPanel && (
+            <div className="rrhh-dept-filter-panel">
+              <div className="rrhh-dept-filter-grid">
+                <div className="rrhh-dept-filter-field">
+                  <label className="rrhh-dept-filter-label" htmlFor="dept-filter-site">
+                    Sede Principal
+                  </label>
+                  <select
+                    id="dept-filter-site"
+                    value={selectedSite}
+                    onChange={(e) => {
+                      setSelectedSite(e.target.value);
+                      setActiveSavedViewId('custom');
+                    }}
+                    className="rrhh-dept-filter-select"
+                  >
+                    <option value="todas">Todas las sedes ({availableSites.length})</option>
+                    {availableSites.map((site) => (
+                      <option key={site} value={site}>
+                        {site}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-      {/* ========================================================================= */}
-      {/* 4. TABLA PRINCIPAL DE DEPARTAMENTOS (REPLICANDO LA TABLA NETSUITE)       */}
-      {/* ========================================================================= */}
-      {viewMode === 'list' ? (
-        <div className="card" style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '12.5px' }}>
-              <thead>
-                <tr style={{ backgroundColor: 'var(--surface-alt)', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  <th style={{ padding: '12px 16px', width: '110px' }}>EDITAR | VER</th>
-                  <th
-                    style={{ padding: '12px 16px', cursor: 'pointer', userSelect: 'none' }}
-                    onClick={() => toggleSort('name')}
+                <div className="rrhh-dept-filter-field">
+                  <label className="rrhh-dept-filter-label" htmlFor="dept-filter-headcount">
+                    Tamaño de Plantilla
+                  </label>
+                  <select
+                    id="dept-filter-headcount"
+                    value={headcountFilter}
+                    onChange={(e) => {
+                      setHeadcountFilter(e.target.value as HeadcountFilter);
+                      setActiveSavedViewId('custom');
+                    }}
+                    className="rrhh-dept-filter-select"
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>NOMBRE</span>
-                      <ArrowUpDown className="w-3.5 h-3.5 text-muted" />
-                    </div>
-                  </th>
-                  <th
-                    style={{ padding: '12px 16px', width: '120px', cursor: 'pointer', userSelect: 'none' }}
-                    onClick={() => toggleSort('code')}
+                    {(Object.keys(HEADCOUNT_LABELS) as HeadcountFilter[]).map((key) => (
+                      <option key={key} value={key}>
+                        {HEADCOUNT_LABELS[key]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="rrhh-dept-filter-field">
+                  <label className="rrhh-dept-filter-label" htmlFor="dept-filter-status">
+                    Estado Operativo
+                  </label>
+                  <select
+                    id="dept-filter-status"
+                    value={statusFilter}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value as StatusFilter);
+                      setActiveSavedViewId('custom');
+                    }}
+                    className="rrhh-dept-filter-select"
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>CÓDIGO</span>
-                      <ArrowUpDown className="w-3.5 h-3.5 text-muted" />
-                    </div>
-                  </th>
-                  <th style={{ padding: '12px 16px' }}>TITULAR / RESPONSABLE</th>
-                  <th
-                    style={{ padding: '12px 16px', width: '140px', cursor: 'pointer', userSelect: 'none', textAlign: 'center' }}
-                    onClick={() => toggleSort('employeeCount')}
+                    {(Object.keys(STATUS_LABELS) as StatusFilter[]).map((key) => (
+                      <option key={key} value={key}>
+                        {STATUS_LABELS[key]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="rrhh-dept-filter-field">
+                  <label className="rrhh-dept-filter-label" htmlFor="dept-filter-ext">
+                    Extensiones Telefónicas
+                  </label>
+                  <select
+                    id="dept-filter-ext"
+                    value={extensionFilter}
+                    onChange={(e) => {
+                      setExtensionFilter(e.target.value as ExtensionFilter);
+                      setActiveSavedViewId('custom');
+                    }}
+                    className="rrhh-dept-filter-select"
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                      <span>PERSONAL</span>
-                      <ArrowUpDown className="w-3.5 h-3.5 text-muted" />
-                    </div>
-                  </th>
-                  <th style={{ padding: '12px 16px', width: '160px' }}>SEDE PRINCIPAL</th>
-                  <th style={{ padding: '12px 16px', width: '100px', textAlign: 'center' }}>ESTADO</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDepartments.map((dept, index) => {
-                  const isEven = index % 2 === 0;
-                  return (
+                    {(Object.keys(EXTENSION_LABELS) as ExtensionFilter[]).map((key) => (
+                      <option key={key} value={key}>
+                        {EXTENSION_LABELS[key]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="rrhh-dept-filter-field">
+                  <label className="rrhh-dept-filter-label" htmlFor="dept-filter-lead">
+                    Titular / Responsable
+                  </label>
+                  <select
+                    id="dept-filter-lead"
+                    value={selectedLead}
+                    onChange={(e) => {
+                      setSelectedLead(e.target.value);
+                      setActiveSavedViewId('custom');
+                    }}
+                    className="rrhh-dept-filter-select"
+                  >
+                    <option value="todos">Todos los titulares</option>
+                    {availableLeads.map((lead) => (
+                      <option key={lead} value={lead}>
+                        {lead}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.75rem',
+                  paddingTop: '0.75rem',
+                  borderTop: '1px solid var(--border-subtle)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Ordenar por:
+                  </span>
+                  {(
+                    [
+                      { key: 'code', label: 'Código' },
+                      { key: 'name', label: 'Nombre' },
+                      { key: 'employeeCount', label: 'Plantilla' },
+                      { key: 'location', label: 'Sede' }
+                    ] as const
+                  ).map((opt) => {
+                    const active = sortField === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => toggleSort(opt.key)}
+                        className={`rrhh-dept-col-pill ${active ? 'is-on' : ''}`}
+                      >
+                        {opt.label} {active ? (sortAsc ? '↑' : '↓') : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsSavingView(true)}
+                    className="rrhh-dept-action-btn"
+                  >
+                    <BookmarkPlus className="w-3.5 h-3.5" />
+                    <span>Guardar como vista</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetAllFilters}
+                    className="rrhh-dept-action-btn"
+                    style={{ color: 'var(--danger)' }}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Restablecer</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Panel de Personalización de Columnas y Densidad (persistente por usuario) */}
+          {showColumnsPanel && (
+            <div className="rrhh-dept-filter-panel">
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.85rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                  <span className="rrhh-dept-filter-label">Columnas visibles en tabla</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+                    {COLUMN_META.map((col) => {
+                      const on = visibleCols[col.key];
+                      return (
+                        <button
+                          key={col.key}
+                          type="button"
+                          onClick={() => toggleColumnVisibility(col.key)}
+                          className={`rrhh-dept-col-pill ${on ? 'is-on' : ''}`}
+                        >
+                          {on && <Check className="w-3.5 h-3.5" />}
+                          <span>{col.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                  <span className="rrhh-dept-filter-label">Densidad de filas</span>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => setTableDensity('comfortable')}
+                      className={`rrhh-dept-col-pill ${density === 'comfortable' ? 'is-on' : ''}`}
+                    >
+                      Cómoda (con resumen)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTableDensity('compact')}
+                      className={`rrhh-dept-col-pill ${density === 'compact' ? 'is-on' : ''}`}
+                    >
+                      Compacta
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Chips de filtros activos (siempre visibles al filtrar) */}
+          {activeFiltersCount > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.45rem' }}>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                Filtros activos:
+              </span>
+              {selectedSite !== 'todas' && (
+                <span className="rrhh-dept-active-chip">
+                  Sede: {selectedSite}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedSite('todas');
+                      setActiveSavedViewId('custom');
+                    }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'inline-flex', padding: 0 }}
+                    aria-label="Quitar filtro de sede"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {headcountFilter !== 'todos' && (
+                <span className="rrhh-dept-active-chip">
+                  Plantilla: {HEADCOUNT_LABELS[headcountFilter]}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHeadcountFilter('todos');
+                      setActiveSavedViewId('custom');
+                    }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'inline-flex', padding: 0 }}
+                    aria-label="Quitar filtro de plantilla"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {extensionFilter !== 'todas' && (
+                <span className="rrhh-dept-active-chip">
+                  Extensiones: {EXTENSION_LABELS[extensionFilter]}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExtensionFilter('todas');
+                      setActiveSavedViewId('custom');
+                    }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'inline-flex', padding: 0 }}
+                    aria-label="Quitar filtro de extensiones"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {statusFilter !== 'active' && (
+                <span className="rrhh-dept-active-chip">
+                  Estado: {STATUS_LABELS[statusFilter]}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter('active');
+                      setActiveSavedViewId('custom');
+                    }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'inline-flex', padding: 0 }}
+                    aria-label="Quitar filtro de estado"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {selectedLead !== 'todos' && (
+                <span className="rrhh-dept-active-chip">
+                  Titular: {selectedLead}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedLead('todos');
+                      setActiveSavedViewId('custom');
+                    }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'inline-flex', padding: 0 }}
+                    aria-label="Quitar filtro de titular"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={resetAllFilters}
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  color: 'var(--danger)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '2px 6px'
+                }}
+              >
+                Limpiar todo
+              </button>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 5. TABLA O CUADRÍCULA DE DEPARTAMENTOS CON CONTENIDO CORPORATIVO          */}
+          {/* ========================================================================= */}
+          {viewMode === 'list' ? (
+            <div
+              className="card"
+              style={{
+                borderRadius: '14px',
+                overflow: 'hidden',
+                border: '1px solid var(--border)',
+                boxShadow: 'var(--shadow-sm)',
+                padding: 0
+              }}
+            >
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
+                  <thead>
                     <tr
-                      key={dept.id}
+                      className="rrhh-corp-thead"
                       style={{
-                        backgroundColor: isEven ? 'var(--surface)' : 'var(--surface-alt)',
-                        borderBottom: '1px solid var(--border-subtle)',
-                        transition: 'background-color var(--transition-fast)'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'var(--brand-50)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = isEven ? 'var(--surface)' : 'var(--surface-alt)';
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em'
                       }}
                     >
-                      {/* Acciones Editar | Ver tipo NetSuite */}
-                      <td style={{ padding: '10px 16px', whiteSpace: 'nowrap' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px' }}>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEdit(dept)}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: 'var(--primary)',
-                              cursor: 'pointer',
-                              fontWeight: 700,
-                              padding: 0
-                            }}
-                          >
-                            Editar
-                          </button>
-                          <span style={{ color: 'var(--text-muted)' }}>|</span>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenDetail(dept)}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: 'var(--text-secondary)',
-                              cursor: 'pointer',
-                              fontWeight: 600,
-                              padding: 0
-                            }}
-                          >
-                            Ver
-                          </button>
+                      <th
+                        style={{ padding: '12px 16px', cursor: 'pointer', userSelect: 'none' }}
+                        onClick={() => toggleSort('name')}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>Departamento</span>
+                          <ArrowUpDown className="w-3.5 h-3.5 text-muted" />
                         </div>
-                      </td>
-
-                      {/* Nombre del Departamento */}
-                      <td style={{ padding: '10px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                          <div
-                            style={{
-                              width: '28px',
-                              height: '28px',
-                              borderRadius: '6px',
-                              backgroundColor: 'var(--brand-50)',
-                              color: 'var(--primary)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: 800,
-                              fontSize: '11px',
-                              flexShrink: 0
-                            }}
-                          >
-                            {dept.name.slice(0, 2).toUpperCase()}
+                      </th>
+                      {visibleCols.code && (
+                        <th
+                          style={{ padding: '12px 14px', width: '115px', cursor: 'pointer', userSelect: 'none' }}
+                          onClick={() => toggleSort('code')}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>Código</span>
+                            <ArrowUpDown className="w-3.5 h-3.5 text-muted" />
                           </div>
-                          <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                            {dept.name}
+                        </th>
+                      )}
+                      {visibleCols.lead && <th style={{ padding: '12px 14px' }}>Titular / Responsable</th>}
+                      {visibleCols.headcount && (
+                        <th
+                          style={{ padding: '12px 14px', width: '185px', cursor: 'pointer', userSelect: 'none' }}
+                          onClick={() => toggleSort('employeeCount')}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>Plantilla Real</span>
+                            <ArrowUpDown className="w-3.5 h-3.5 text-muted" />
+                          </div>
+                        </th>
+                      )}
+                      {visibleCols.extensions && (
+                        <th style={{ padding: '12px 14px', width: '130px' }}>Extensiones</th>
+                      )}
+                      {visibleCols.location && (
+                        <th
+                          style={{ padding: '12px 14px', width: '160px', cursor: 'pointer', userSelect: 'none' }}
+                          onClick={() => toggleSort('location')}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>Sede Principal</span>
+                            <ArrowUpDown className="w-3.5 h-3.5 text-muted" />
+                          </div>
+                        </th>
+                      )}
+                      {visibleCols.status && (
+                        <th style={{ padding: '12px 14px', width: '92px', textAlign: 'center' }}>Estado</th>
+                      )}
+                      <th style={{ padding: '12px 16px', width: '142px', textAlign: 'right' }}>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredDepartments.map((dept, index) => {
+                      const isEven = index % 2 === 0;
+                      const barPct = Math.max(
+                        dept.liveEmployeeCount > 0 ? 8 : 0,
+                        Math.round((dept.liveEmployeeCount / maxDeptCount) * 100)
+                      );
+                      const branchLabel = getDepartmentBranchLabel(dept);
+                      const cellPadY = density === 'compact' ? '8px' : '12px';
+
+                      return (
+                        <tr
+                          key={dept.id}
+                          className="rrhh-dept-row"
+                          style={{
+                            backgroundColor: isEven ? 'var(--surface)' : 'var(--surface-alt)',
+                            borderBottom: '1px solid var(--border-subtle)'
+                          }}
+                        >
+                          {/* Departamento + Insignia tonal + Resumen operativo */}
+                          <td style={{ padding: `${cellPadY} 16px`, minWidth: '220px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div
+                                className="rrhh-dept-icon-badge is-tonal"
+                                style={{
+                                  width: density === 'compact' ? '30px' : '36px',
+                                  height: density === 'compact' ? '30px' : '36px',
+                                  '--dept-accent': dept.theme.accent
+                                } as React.CSSProperties}
+                                title={dept.theme.label}
+                              >
+                                {renderDepartmentIcon(dept.code || dept.name, 'w-4 h-4')}
+                              </div>
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' }}>
+                                  <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.84rem' }}>
+                                    {dept.name}
+                                  </span>
+                                  {branchLabel && (
+                                    <span
+                                      style={{
+                                        fontSize: '0.66rem',
+                                        fontWeight: 600,
+                                        padding: '1px 7px',
+                                        borderRadius: '999px',
+                                        backgroundColor: 'var(--surface-alt)',
+                                        color: 'var(--text-secondary)',
+                                        border: '1px solid var(--border)'
+                                      }}
+                                    >
+                                      {branchLabel}
+                                    </span>
+                                  )}
+                                </div>
+                                {density === 'comfortable' && (
+                                  <div
+                                    style={{
+                                      fontSize: '0.71rem',
+                                      color: 'var(--text-muted)',
+                                      marginTop: '2px',
+                                      maxWidth: '340px',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
+                                    }}
+                                  >
+                                    {dept.description || `${dept.subsidiary} · Área operativa oficial`}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Código Oficial completo con punto de color */}
+                          {visibleCols.code && (
+                            <td style={{ padding: `${cellPadY} 14px`, whiteSpace: 'nowrap' }}>
+                              <span className="rrhh-dept-code-chip">
+                                <span
+                                  style={{
+                                    width: '7px',
+                                    height: '7px',
+                                    borderRadius: '50%',
+                                    backgroundColor: dept.theme.accent,
+                                    flexShrink: 0
+                                  }}
+                                />
+                                {dept.code}
+                              </span>
+                            </td>
+                          )}
+
+                          {/* Titular / Responsable con avatar de iniciales */}
+                          {visibleCols.lead && (
+                            <td style={{ padding: `${cellPadY} 14px` }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0 }}>
+                                <span
+                                  className="rrhh-dept-lead-avatar"
+                                  style={{ '--dept-accent': dept.theme.accent } as React.CSSProperties}
+                                >
+                                  {getLeadInitials(dept.lead)}
+                                </span>
+                                <span
+                                  style={{
+                                    color: 'var(--text-primary)',
+                                    fontWeight: 500,
+                                    fontSize: '0.8rem',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                  }}
+                                >
+                                  {dept.lead}
+                                </span>
+                              </div>
+                            </td>
+                          )}
+
+                          {/* Plantilla Real clickeable + Barra proporcional */}
+                          {visibleCols.headcount && (
+                            <td
+                              style={{ padding: `${cellPadY} 14px`, cursor: 'pointer' }}
+                              onClick={() => handleOpenDetail(dept)}
+                              title="Clic para ver integrantes de esta área"
+                            >
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                                  <span
+                                    style={{
+                                      fontWeight: 700,
+                                      fontSize: '0.78rem',
+                                      color: dept.liveEmployeeCount > 0 ? 'var(--text-primary)' : 'var(--text-muted)'
+                                    }}
+                                  >
+                                    {dept.liveEmployeeCount} {dept.liveEmployeeCount === 1 ? 'persona' : 'personas'}
+                                  </span>
+                                  {totalLiveEmployees > 0 && (
+                                    <span style={{ fontSize: '0.67rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                                      {Math.round((dept.liveEmployeeCount / totalLiveEmployees) * 100)}%
+                                    </span>
+                                  )}
+                                </div>
+                                <div
+                                  style={{
+                                    width: '100%',
+                                    height: '5px',
+                                    borderRadius: '999px',
+                                    backgroundColor: 'var(--divider)',
+                                    overflow: 'hidden'
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      width: `${barPct}%`,
+                                      height: '100%',
+                                      borderRadius: '999px',
+                                      backgroundColor: dept.theme.accent,
+                                      transition: 'width 0.35s ease'
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            </td>
+                          )}
+
+                          {/* Extensiones Telefónicas del área */}
+                          {visibleCols.extensions && (
+                            <td style={{ padding: `${cellPadY} 14px`, whiteSpace: 'nowrap' }}>
+                              {dept.extensions.length > 0 ? (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                  <span
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      padding: '2px 7px',
+                                      borderRadius: '6px',
+                                      backgroundColor: 'var(--surface-alt)',
+                                      border: '1px solid var(--border)',
+                                      fontFamily: 'var(--font-mono)',
+                                      fontSize: '0.71rem',
+                                      fontWeight: 700,
+                                      color: 'var(--text-primary)'
+                                    }}
+                                  >
+                                    <PhoneCall className="w-3 h-3" style={{ color: dept.theme.accent }} />
+                                    {dept.extensions[0].extension}
+                                  </span>
+                                  {dept.extensions.length > 1 && (
+                                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                                      +{dept.extensions.length - 1}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>—</span>
+                              )}
+                            </td>
+                          )}
+
+                          {/* Sede Principal */}
+                          {visibleCols.location && (
+                            <td style={{ padding: `${cellPadY} 14px`, whiteSpace: 'nowrap' }}>
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  color: 'var(--text-secondary)',
+                                  fontSize: '0.77rem'
+                                }}
+                              >
+                                <MapPin className="w-3.5 h-3.5 text-muted" style={{ flexShrink: 0 }} />
+                                {dept.location}
+                              </span>
+                            </td>
+                          )}
+
+                          {/* Estado */}
+                          {visibleCols.status && (
+                            <td style={{ padding: `${cellPadY} 14px`, textAlign: 'center' }}>
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  padding: '2px 9px',
+                                  borderRadius: '999px',
+                                  fontSize: '0.69rem',
+                                  fontWeight: 700,
+                                  backgroundColor: dept.status === 'active' ? 'var(--success-bg)' : 'var(--surface-alt)',
+                                  color: dept.status === 'active' ? 'var(--success-text)' : 'var(--text-secondary)',
+                                  border: dept.status === 'active' ? '1px solid var(--success-border)' : '1px solid var(--border)'
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    width: '5px',
+                                    height: '5px',
+                                    borderRadius: '50%',
+                                    backgroundColor: dept.status === 'active' ? 'var(--success)' : 'var(--text-muted)'
+                                  }}
+                                />
+                                {dept.status === 'active' ? 'Activo' : 'Inactivo'}
+                              </span>
+                            </td>
+                          )}
+
+                          {/* Acciones limpias */}
+                          <td style={{ padding: `${cellPadY} 16px`, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenDetail(dept)}
+                                className="rrhh-dept-action-btn"
+                                title="Ver detalle y equipo asignado"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Ver</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEdit(dept)}
+                                className="rrhh-dept-action-btn"
+                                title="Editar departamento y color"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                                <span>Editar</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {filteredDepartments.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={2 + Object.values(visibleCols).filter(Boolean).length}
+                          style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}
+                        >
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6rem' }}>
+                            <span>No se encontraron departamentos con los filtros aplicados.</span>
+                            <button type="button" onClick={resetAllFilters} className="rrhh-dept-action-btn">
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              <span>Restablecer filtros</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <div className="rrhh-corp-table-footer">
+                <span>
+                  Mostrando <strong>{filteredDepartments.length}</strong> de <strong>{departments.length}</strong>{' '}
+                  departamentos
+                </span>
+                <span className="rrhh-corp-table-footer-meta">
+                  <span className="rrhh-corp-live-dot" />
+                  Fuente: Directorio de Personal · {totalLiveEmployees} colaboradores activos · SIFYGSA S.A. de C.V.
+                </span>
+              </div>
+            </div>
+          ) : (
+            /* Vista en Cuadrícula / Tarjetas con Franja Superior de Color */
+            <div className="rrhh-dept-cards-grid">
+              {filteredDepartments.map((dept) => {
+                const branchLabel = getDepartmentBranchLabel(dept);
+                const barPct = Math.max(
+                  dept.liveEmployeeCount > 0 ? 8 : 0,
+                  Math.round((dept.liveEmployeeCount / maxDeptCount) * 100)
+                );
+
+                return (
+                  <div key={dept.id} className="rrhh-dept-card">
+                    {/* Franja superior con color oficial */}
+                    <div style={{ height: '4px', backgroundColor: dept.theme.accent }} />
+
+                    <div style={{ padding: '1rem 1.1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div
+                            className="rrhh-dept-icon-badge is-tonal"
+                            style={{ width: '32px', height: '32px', '--dept-accent': dept.theme.accent } as React.CSSProperties}
+                          >
+                            {renderDepartmentIcon(dept.code || dept.name, 'w-4 h-4')}
+                          </div>
+                          <span className="rrhh-dept-code-chip">
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: dept.theme.accent }} />
+                            {dept.code}
                           </span>
-                          {getDepartmentBranchLabel(dept) && (
+                        </div>
+                        <span
+                          style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            color: dept.status === 'active' ? 'var(--success-text)' : 'var(--text-muted)'
+                          }}
+                        >
+                          ● {dept.status === 'active' ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </div>
+
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                          <h3 style={{ fontSize: '0.96rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                            {dept.name}
+                          </h3>
+                          {branchLabel && (
                             <span
                               style={{
-                                fontSize: '10px',
-                                fontWeight: 700,
-                                padding: '2px 7px',
+                                fontSize: '0.66rem',
+                                fontWeight: 600,
+                                padding: '2px 8px',
                                 borderRadius: '999px',
                                 backgroundColor: 'var(--surface-alt)',
                                 color: 'var(--text-secondary)',
                                 border: '1px solid var(--border)'
                               }}
                             >
-                              {getDepartmentBranchLabel(dept)}
+                              {branchLabel}
                             </span>
                           )}
                         </div>
-                      </td>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.45, minHeight: '2.15rem' }}>
+                          {dept.description || 'Área operativa adscrita a la estructura organizacional SIFYGSA.'}
+                        </p>
+                      </div>
 
-                      {/* Código */}
-                      <td style={{ padding: '10px 16px', fontFamily: 'var(--font-mono)', fontSize: '11.5px', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                        {dept.code}
-                      </td>
+                      {/* Barra de plantilla real */}
+                      <div
+                        style={{
+                          padding: '0.6rem 0.75rem',
+                          borderRadius: '10px',
+                          backgroundColor: 'var(--surface-alt)',
+                          border: '1px solid var(--border)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '5px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.74rem' }}>
+                          <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                            {dept.liveEmployeeCount} {dept.liveEmployeeCount === 1 ? 'colaborador' : 'colaboradores'}
+                          </span>
+                          <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                            {dept.location}
+                          </span>
+                        </div>
+                        <div style={{ width: '100%', height: '5px', borderRadius: '999px', backgroundColor: 'var(--border)', overflow: 'hidden' }}>
+                          <div style={{ width: `${barPct}%`, height: '100%', borderRadius: '999px', backgroundColor: dept.theme.accent }} />
+                        </div>
+                      </div>
 
-                      {/* Responsable */}
-                      <td style={{ padding: '10px 16px', color: 'var(--text-secondary)' }}>
-                        {dept.lead}
-                      </td>
+                      <div
+                        style={{
+                          borderTop: '1px solid var(--border-subtle)',
+                          paddingTop: '0.75rem',
+                          marginTop: 'auto',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '8px'
+                        }}
+                      >
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: '0.64rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+                            Titular
+                          </div>
+                          <div style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {dept.lead}
+                          </div>
+                        </div>
 
-                      {/* Conteo de Colaboradores */}
-                      <td style={{ padding: '10px 16px', textAlign: 'center' }}>
-                        <span
-                          style={{
-                            display: 'inline-block',
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            backgroundColor: dept.employeeCount > 0 ? 'var(--brand-50)' : 'var(--surface-alt)',
-                            color: dept.employeeCount > 0 ? 'var(--primary)' : 'var(--text-muted)',
-                            fontWeight: 700,
-                            fontSize: '11px'
-                          }}
-                        >
-                          {dept.employeeCount} {dept.employeeCount === 1 ? 'persona' : 'personas'}
-                        </span>
-                      </td>
-
-                      {/* Ubicación */}
-                      <td style={{ padding: '10px 16px', color: 'var(--text-muted)', fontSize: '11.5px' }}>
-                        {dept.location}
-                      </td>
-
-                      {/* Estado */}
-                      <td style={{ padding: '10px 16px', textAlign: 'center' }}>
-                        <span
-                          style={{
-                            display: 'inline-block',
-                            padding: '2px 8px',
-                            borderRadius: '10px',
-                            fontSize: '10.5px',
-                            fontWeight: 700,
-                            backgroundColor: dept.status === 'active' ? 'var(--success-bg)' : 'var(--surface-alt)',
-                            color: dept.status === 'active' ? 'var(--success-text)' : 'var(--text-secondary)',
-                            border: dept.status === 'active' ? '1px solid var(--success-border)' : '1px solid var(--border)'
-                          }}
-                        >
-                          {dept.status === 'active' ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : (
-        /* Vista en Cuadrícula / Tarjetas */
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-          {filteredDepartments.map((dept) => (
-            <div
-              key={dept.id}
-              className="card card-hoverable"
-              style={{
-                padding: '16px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                gap: '12px'
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--primary)', fontWeight: 700, backgroundColor: 'var(--brand-50)', padding: '2px 6px', borderRadius: '4px' }}>
-                    {dept.code}
-                  </span>
-                  <span style={{ fontSize: '10.5px', fontWeight: 700, color: dept.status === 'active' ? 'var(--success-text)' : 'var(--text-muted)' }}>
-                    ● {dept.status === 'active' ? 'Activo' : 'Inactivo'}
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
-                  <h3 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                    {dept.name}
-                  </h3>
-                  {getDepartmentBranchLabel(dept) && (
-                    <span
-                      style={{
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        padding: '1px 7px',
-                        borderRadius: '999px',
-                        backgroundColor: 'var(--surface-alt)',
-                        color: 'var(--text-secondary)',
-                        border: '1px solid var(--border)'
-                      }}
-                    >
-                      {getDepartmentBranchLabel(dept)}
-                    </span>
-                  )}
-                </div>
-                <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: 0, minHeight: '34px', lineHeight: 1.4 }}>
-                  {dept.description || 'Departamento operativo central de SIFYGSA.'}
-                </p>
-              </div>
-
-              <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 700 }}>TITULAR</div>
-                  <div style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)' }}>{dept.lead}</div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenEdit(dept)}
-                    className="btn btn-secondary"
-                    style={{ padding: '4px 8px', fontSize: '11px' }}
-                  >
-                    <Edit2 className="w-3 h-3" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenDetail(dept)}
-                    className="btn btn-secondary"
-                    style={{ padding: '4px 8px', fontSize: '11px' }}
-                  >
-                    <Eye className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
+                        <div style={{ display: 'flex', gap: '5px', flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenDetail(dept)}
+                            className="rrhh-dept-action-btn"
+                            title="Ver equipo"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Ver</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(dept)}
+                            className="rrhh-dept-action-btn"
+                            title="Editar"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      )}
+          )}
         </>
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL: CREAR DEPARTAMENTO                                                 */}
+      {/* MODAL: CREAR / EDITAR DEPARTAMENTO (CON SELECTOR DE COLOR CORPORATIVO)    */}
       {/* ========================================================================= */}
-      {isCreateModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsCreateModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
-            <div className="modal-header">
+      {(isCreateModalOpen || (isEditModalOpen && currentDepartment)) && (
+        <div
+          className="rrhh-modal-backdrop"
+          onClick={() => {
+            setIsCreateModalOpen(false);
+            setIsEditModalOpen(false);
+          }}
+        >
+          <div
+            className="rrhh-modal-card"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '540px', padding: 0, textAlign: 'left', overflow: 'hidden' }}
+          >
+            {/* Franja superior con color elegido en vivo */}
+            <div style={{ height: '6px', backgroundColor: previewTheme.accent }} />
+
+            <div
+              style={{
+                padding: '1rem 1.35rem',
+                borderBottom: '1px solid var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '10px',
+                backgroundColor: 'var(--surface-alt)'
+              }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'var(--brand-50)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Building2 className="w-5 h-5" />
+                <div
+                  className="rrhh-dept-icon-badge"
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '10px',
+                    backgroundColor: previewTheme.accent
+                  }}
+                >
+                  {renderDepartmentIcon(formCode || formName, 'w-5 h-5')}
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>Crear Departamento</h3>
-                  <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Se sincronizará en todos los selectores de la suite</div>
+                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                    {isCreateModalOpen ? 'Crear Departamento' : 'Editar Departamento'}
+                  </h3>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                    {isCreateModalOpen
+                      ? 'Sincronizado automáticamente con Registro, Organigrama y Directorio.'
+                      : currentDepartment?.name}
+                  </div>
                 </div>
               </div>
-              <button type="button" className="btn-icon" onClick={() => setIsCreateModalOpen(false)}>
+              <button
+                type="button"
+                className="btn-icon"
+                onClick={() => {
+                  setIsCreateModalOpen(false);
+                  setIsEditModalOpen(false);
+                }}
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form noValidate onSubmit={handleSaveNew} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px' }}>
-                  Nombre del Departamento <span style={{ color: 'var(--danger)' }}>*</span>
+            <form
+              noValidate
+              onSubmit={isCreateModalOpen ? handleSaveNew : handleSaveEdit}
+              style={{ padding: '1.25rem 1.35rem', display: 'flex', flexDirection: 'column', gap: '0.95rem' }}
+            >
+              <div className="rrhh-field">
+                <label className="rrhh-field-label">
+                  <span>Nombre del Departamento</span>
+                  <span style={{ color: 'var(--danger)' }}>*</span>
                 </label>
                 <input
                   type="text"
@@ -905,51 +2218,54 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
                     const { value, hadInvalid } = sanitizeCleanText(e.target.value, 65);
                     if (hadInvalid) showToast('¡Carácter inválido!', 'warning');
                     setFormName(value);
+                    if (isCreateModalOpen && !formCodeTouched) {
+                      setFormCode(suggestDepartmentCode(value));
+                    }
                   }}
                   className="input-text"
-                  style={{ width: '100%' }}
                   required
                   autoFocus
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px' }}>
-                    Código Interno
-                  </label>
+              <div className="rrhh-grid-2">
+                <div className="rrhh-field">
+                  <div className="rrhh-field-label-row">
+                    <label className="rrhh-field-label">Código / Sigla</label>
+                    <span className="rrhh-field-hint">Nemotécnico</span>
+                  </div>
                   <input
                     type="text"
+                    placeholder="Ej. AUTO"
                     value={formCode}
-                    onChange={(e) => setFormCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 12))}
+                    onChange={(e) => {
+                      setFormCodeTouched(true);
+                      setFormCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 10));
+                    }}
                     className="input-text"
-                    style={{ width: '100%', fontFamily: 'var(--font-mono)' }}
+                    style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: previewTheme.accent }}
                   />
                 </div>
 
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px' }}>
-                    Sede Principal
-                  </label>
+                <div className="rrhh-field">
+                  <label className="rrhh-field-label">Sede Principal</label>
                   <select
                     value={formLocation}
                     onChange={(e) => setFormLocation(e.target.value)}
                     className="select-control"
                     style={{ width: '100%', height: '38px' }}
                   >
-                    <option value="Minatitlán, Ver.">Minatitlán, Ver.</option>
-                    <option value="Comalcalco, Tab.">Comalcalco, Tab.</option>
-                    <option value="Base Mapachapa Km 18">Base Mapachapa Km 18</option>
-                    <option value="Xalapa, Ver.">Xalapa, Ver.</option>
-                    <option value="Ciudad del Carmen, Camp.">Ciudad del Carmen, Camp.</option>
+                    {SITE_OPTIONS.map((site) => (
+                      <option key={site} value={site}>
+                        {site}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
 
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px' }}>
-                  Titular / Responsable del Área
-                </label>
+              <div className="rrhh-field">
+                <label className="rrhh-field-label">Titular / Responsable del Área</label>
                 <input
                   type="text"
                   placeholder="Ej. Ing. Carlos Hernández Vega"
@@ -960,39 +2276,95 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
                     setFormLead(value);
                   }}
                   className="input-text"
-                  style={{ width: '100%' }}
                 />
               </div>
 
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px' }}>
-                  Descripción u Objetivo Operativo
-                </label>
+              {/* Selector de Color Corporativo del Departamento */}
+              <div className="rrhh-field">
+                <div className="rrhh-field-label-row">
+                  <label className="rrhh-field-label" style={{ gap: '5px' }}>
+                    <Palette className="w-3.5 h-3.5" style={{ color: previewTheme.accent }} />
+                    <span>Color Identificador del Área</span>
+                  </label>
+                  <span className="rrhh-field-hint" style={{ fontFamily: 'var(--font-mono)' }}>
+                    {formColor}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '7px',
+                    padding: '0.6rem 0.7rem',
+                    borderRadius: '10px',
+                    backgroundColor: 'var(--surface-alt)',
+                    border: '1px solid var(--border)'
+                  }}
+                >
+                  {DEPARTMENT_COLOR_SWATCHES.map((swatch) => {
+                    const selected = formColor.toUpperCase() === swatch.hex.toUpperCase();
+                    return (
+                      <button
+                        key={swatch.hex}
+                        type="button"
+                        onClick={() => setFormColor(swatch.hex)}
+                        className={`rrhh-color-swatch ${selected ? 'is-selected' : ''}`}
+                        style={{ backgroundColor: swatch.hex }}
+                        title={swatch.name}
+                        aria-label={`Color ${swatch.name}`}
+                      >
+                        {selected && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="rrhh-field">
+                <label className="rrhh-field-label">Descripción u Objetivo Operativo</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   placeholder="Funciones clave, alcance técnico o cuadrillas a su cargo..."
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                   className="input-text"
-                  style={{ width: '100%', resize: 'vertical' }}
+                  style={{ resize: 'vertical' }}
                 />
               </div>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none', fontSize: '12px', fontWeight: 600 }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)'
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={formActive}
                   onChange={(e) => setFormActive(e.target.checked)}
                 />
-                <span>Departamento Activo (visible en captura de empleados)</span>
+                <span>Departamento activo (disponible en Registro del Personal)</span>
               </label>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsCreateModalOpen(false)}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', marginTop: '0.25rem' }}>
+                <button
+                  type="button"
+                  className="rrhh-btn-outline"
+                  onClick={() => {
+                    setIsCreateModalOpen(false);
+                    setIsEditModalOpen(false);
+                  }}
+                >
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary" style={{ fontWeight: 700 }}>
-                  Guardar Departamento
+                <button type="submit" className="rrhh-btn-primary">
+                  {isCreateModalOpen ? 'Guardar Departamento' : 'Actualizar Departamento'}
                 </button>
               </div>
             </form>
@@ -1001,144 +2373,53 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL: EDITAR DEPARTAMENTO                                                */}
+      {/* MODAL: VER DETALLE DEL DEPARTAMENTO + PLANTILLA REAL                      */}
       {/* ========================================================================= */}
-      {isEditModalOpen && currentDepartment && (
-        <div className="modal-backdrop" onClick={() => setIsEditModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
-            <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'var(--brand-50)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Edit2 className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>Editar Departamento</h3>
-                  <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>{currentDepartment.name}</div>
-                </div>
-              </div>
-              <button type="button" className="btn-icon" onClick={() => setIsEditModalOpen(false)}>
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form noValidate onSubmit={handleSaveEdit} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px' }}>
-                  Nombre del Departamento <span style={{ color: 'var(--danger)' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formName}
-                  onChange={(e) => {
-                    const { value, hadInvalid } = sanitizeCleanText(e.target.value, 65);
-                    if (hadInvalid) showToast('¡Carácter inválido!', 'warning');
-                    setFormName(value);
+      {isDetailModalOpen && selectedDetailEnriched && (
+        <div className="rrhh-modal-backdrop" onClick={() => setIsDetailModalOpen(false)}>
+          <div
+            className="rrhh-modal-card"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '580px', padding: 0, textAlign: 'left', overflow: 'hidden' }}
+          >
+            {/* Cabecera con color del departamento */}
+            <div style={{ height: '6px', backgroundColor: selectedDetailEnriched.theme.accent }} />
+            <div
+              style={{
+                padding: '1rem 1.35rem',
+                borderBottom: '1px solid var(--border)',
+                backgroundColor: 'var(--surface-alt)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '10px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div
+                  className="rrhh-dept-icon-badge"
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '11px',
+                    backgroundColor: selectedDetailEnriched.theme.accent
                   }}
-                  className="input-text"
-                  style={{ width: '100%' }}
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px' }}>
-                    Código Interno
-                  </label>
-                  <input
-                    type="text"
-                    value={formCode}
-                    onChange={(e) => setFormCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 12))}
-                    className="input-text"
-                    style={{ width: '100%', fontFamily: 'var(--font-mono)' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px' }}>
-                    Sede Principal
-                  </label>
-                  <select
-                    value={formLocation}
-                    onChange={(e) => setFormLocation(e.target.value)}
-                    className="select-control"
-                    style={{ width: '100%', height: '38px' }}
-                  >
-                    <option value="Minatitlán, Ver.">Minatitlán, Ver.</option>
-                    <option value="Comalcalco, Tab.">Comalcalco, Tab.</option>
-                    <option value="Base Mapachapa Km 18">Base Mapachapa Km 18</option>
-                    <option value="Xalapa, Ver.">Xalapa, Ver.</option>
-                    <option value="Ciudad del Carmen, Camp.">Ciudad del Carmen, Camp.</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px' }}>
-                  Titular / Responsable del Área
-                </label>
-                <input
-                  type="text"
-                  value={formLead}
-                  onChange={(e) => {
-                    const { value, hadInvalid } = sanitizePersonName(e.target.value);
-                    if (hadInvalid) showToast('¡Solo letras!', 'warning');
-                    setFormLead(value);
-                  }}
-                  className="input-text"
-                  style={{ width: '100%' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px' }}>
-                  Descripción u Objetivo Operativo
-                </label>
-                <textarea
-                  rows={3}
-                  value={formDescription}
-                  onChange={(e) => setFormDescription(e.target.value)}
-                  className="input-text"
-                  style={{ width: '100%', resize: 'vertical' }}
-                />
-              </div>
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none', fontSize: '12px', fontWeight: 600 }}>
-                <input
-                  type="checkbox"
-                  checked={formActive}
-                  onChange={(e) => setFormActive(e.target.checked)}
-                />
-                <span>Departamento Activo</span>
-              </label>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsEditModalOpen(false)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn btn-primary" style={{ fontWeight: 700 }}>
-                  Actualizar Departamento
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL: VER DETALLE DEL DEPARTAMENTO                                       */}
-      {/* ========================================================================= */}
-      {isDetailModalOpen && currentDepartment && (
-        <div className="modal-backdrop" onClick={() => setIsDetailModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
-            <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'var(--brand-50)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Building2 className="w-5 h-5" />
+                >
+                  {renderDepartmentIcon(selectedDetailEnriched.code || selectedDetailEnriched.name, 'w-5 h-5')}
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>{currentDepartment.name}</h3>
-                  <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Código {currentDepartment.code}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                      {selectedDetailEnriched.name}
+                    </h3>
+                    <span className="rrhh-dept-code-chip">
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: selectedDetailEnriched.theme.accent }} />
+                      {selectedDetailEnriched.code}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    {selectedDetailEnriched.subsidiary} · {selectedDetailEnriched.location}
+                  </div>
                 </div>
               </div>
               <button type="button" className="btn-icon" onClick={() => setIsDetailModalOpen(false)}>
@@ -1146,49 +2427,158 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
               </button>
             </div>
 
-            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div style={{ backgroundColor: 'var(--surface-alt)', padding: '10px 14px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', fontWeight: 700 }}>TITULAR / JEFE</div>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px' }}>{currentDepartment.lead}</div>
+            <div style={{ padding: '1.25rem 1.35rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="rrhh-grid-2">
+                <div style={{ backgroundColor: 'var(--surface-alt)', padding: '0.7rem 0.9rem', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+                    Titular / Responsable
+                  </div>
+                  <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '3px' }}>
+                    {selectedDetailEnriched.lead}
+                  </div>
                 </div>
-                <div style={{ backgroundColor: 'var(--surface-alt)', padding: '10px 14px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', fontWeight: 700 }}>PLANTILLA ACTIVA</div>
-                  <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--primary)', marginTop: '2px' }}>{currentDepartment.employeeCount} Colaboradores</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>Sede Operativa</div>
-                  <div style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-secondary)' }}>{currentDepartment.location}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>Subsidiaria</div>
-                  <div style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-secondary)' }}>{currentDepartment.subsidiary}</div>
+                <div style={{ backgroundColor: 'var(--surface-alt)', padding: '0.7rem 0.9rem', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+                    Plantilla Activa Real
+                  </div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 800, color: selectedDetailEnriched.theme.accent, marginTop: '3px' }}>
+                    {selectedDetailEnriched.liveEmployeeCount}{' '}
+                    {selectedDetailEnriched.liveEmployeeCount === 1 ? 'Colaborador' : 'Colaboradores'}
+                  </div>
                 </div>
               </div>
 
+              {selectedDetailEnriched.description && (
+                <div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+                    Misión / Alcance Operativo
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0 0', lineHeight: 1.5 }}>
+                    {selectedDetailEnriched.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Extensiones telefónicas del área */}
+              {selectedDetailEnriched.extensions.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '6px' }}>
+                    Extensiones Telefónicas ({selectedDetailEnriched.extensions.length})
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {selectedDetailEnriched.extensions.map((ext) => (
+                      <span
+                        key={ext.id}
+                        style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          padding: '3px 9px',
+                          borderRadius: '8px',
+                          backgroundColor: selectedDetailEnriched.theme.softBg,
+                          color: selectedDetailEnriched.theme.accent,
+                          border: `1px solid ${selectedDetailEnriched.theme.softBorder}`,
+                          fontFamily: 'var(--font-mono)'
+                        }}
+                      >
+                        Ext. {ext.extension} · {ext.assignedTo || ext.areaLabel}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Lista real de integrantes del departamento */}
               <div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>Descripción / Misión</div>
-                <div style={{ fontSize: '12.5px', color: 'var(--text-primary)', marginTop: '4px', lineHeight: 1.5 }}>
-                  {currentDepartment.description || 'Departamento operativo adscrito a la estructura corporativa de SIFYGSA Fire & Gas Safety Systems.'}
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '6px' }}>
+                  Integrantes Adscritos ({selectedDetailEnriched.members.length})
                 </div>
+                {selectedDetailEnriched.members.length > 0 ? (
+                  <div
+                    style={{
+                      maxHeight: '210px',
+                      overflowY: 'auto',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px',
+                      paddingRight: '4px'
+                    }}
+                  >
+                    {selectedDetailEnriched.members.map((emp) => (
+                      <div
+                        key={emp.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '10px',
+                          padding: '7px 10px',
+                          borderRadius: '9px',
+                          backgroundColor: 'var(--surface-alt)',
+                          border: '1px solid var(--border)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0 }}>
+                          <div
+                            style={{
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '8px',
+                              backgroundColor: selectedDetailEnriched.theme.accent,
+                              color: '#ffffff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.68rem',
+                              fontWeight: 800,
+                              flexShrink: 0
+                            }}
+                          >
+                            {emp.initials}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {emp.name}
+                            </div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {emp.position}
+                            </div>
+                          </div>
+                        </div>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            color: 'var(--text-muted)',
+                            flexShrink: 0
+                          }}
+                        >
+                          {emp.id}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', padding: '12px', borderRadius: '8px', border: '1px dashed var(--border)', textAlign: 'center' }}>
+                    Sin colaboradores adscritos actualmente en esta área.
+                  </div>
+                )}
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsDetailModalOpen(false)}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', paddingTop: '4px' }}>
+                <button type="button" className="rrhh-btn-outline" onClick={() => setIsDetailModalOpen(false)}>
                   Cerrar
                 </button>
                 <button
                   type="button"
-                  className="btn btn-primary"
+                  className="rrhh-btn-primary"
                   onClick={() => {
                     setIsDetailModalOpen(false);
-                    handleOpenEdit(currentDepartment);
+                    handleOpenEdit(selectedDetailEnriched);
                   }}
                 >
-                  Editar Información
+                  <Edit2 className="w-3.5 h-3.5" />
+                  <span>Editar Departamento</span>
                 </button>
               </div>
             </div>

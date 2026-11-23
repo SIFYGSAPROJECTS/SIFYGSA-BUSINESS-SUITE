@@ -173,6 +173,7 @@ export interface DepartmentItem {
   location: string;
   status: 'active' | 'inactive';
   description?: string;
+  color?: string;
   createdAt: string;
 }
 

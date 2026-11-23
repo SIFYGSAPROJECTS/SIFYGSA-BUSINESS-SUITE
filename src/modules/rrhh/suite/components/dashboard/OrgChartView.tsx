@@ -16,7 +16,7 @@ import {
   GitBranch
 } from 'lucide-react';
 import { Employee } from '../../types';
-import { getDepartmentCode } from '../../utils/formShield';
+import { getDepartmentCode, getDepartmentTheme } from '../../utils/formShield';
 
 interface OrgChartViewProps {
   employees: Employee[];
@@ -275,6 +275,7 @@ export const OrgChartView: React.FC<OrgChartViewProps> = ({
   const renderNodeCard = (node: OrgNode, variant: 'root' | 'leader' | 'member') => {
     const { employee, children, totalDescendants } = node;
     const deptCode = getDepartmentCode(employee.department, employee.location);
+    const deptTheme = getDepartmentTheme(deptCode, employee.location);
     const expanded = isExpanded(employee.id);
     const isHighlighted = matchedIds.has(employee.id);
     const isRoot = variant === 'root';
@@ -289,7 +290,7 @@ export const OrgChartView: React.FC<OrgChartViewProps> = ({
           border: isHighlighted
             ? '2px solid var(--primary)'
             : isRoot
-            ? '1.5px solid var(--brand-300)'
+            ? `1.5px solid ${deptTheme.softBorder}`
             : '1px solid var(--border)',
           boxShadow: isHighlighted
             ? '0 0 0 4px rgba(29, 78, 216, 0.16), var(--shadow-md)'
@@ -301,15 +302,15 @@ export const OrgChartView: React.FC<OrgChartViewProps> = ({
           position: 'relative'
         }}
       >
-        {/* Franja superior de jerarquía */}
+        {/* Franja superior con color oficial del departamento */}
         <div
           style={{
             height: isRoot ? '5px' : isMember ? '3px' : '4px',
             background: isRoot
-              ? 'linear-gradient(90deg, #0F172A 0%, #1D4ED8 55%, #3B82F6 100%)'
+              ? `linear-gradient(90deg, #0F172A 0%, ${deptTheme.accent} 60%, #3B82F6 100%)`
               : isMember
-              ? 'var(--brand-200)'
-              : 'linear-gradient(90deg, #1D4ED8 0%, #60A5FA 100%)'
+              ? deptTheme.softBorder
+              : deptTheme.accent
           }}
         />
 
@@ -377,9 +378,9 @@ export const OrgChartView: React.FC<OrgChartViewProps> = ({
                   fontWeight: 800,
                   padding: '1px 6px',
                   borderRadius: '5px',
-                  backgroundColor: isRoot ? 'var(--primary)' : 'var(--brand-50)',
-                  color: isRoot ? '#FFFFFF' : 'var(--primary)',
-                  border: isRoot ? 'none' : '1px solid var(--brand-200)',
+                  backgroundColor: isRoot ? deptTheme.accent : deptTheme.softBg,
+                  color: isRoot ? '#FFFFFF' : deptTheme.accent,
+                  border: isRoot ? 'none' : `1px solid ${deptTheme.softBorder}`,
                   letterSpacing: '0.03em'
                 }}
               >
