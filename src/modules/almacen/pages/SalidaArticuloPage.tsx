@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Stepper, type StepItem } from '@/components/ui/Stepper';
+import { FormWizardFooter } from '../components/FormWizardFooter';
 import { useAlmacen } from '../context/AlmacenContext';
 import { PROYECTOS_UBICACIONES_CATALOG } from '../types';
 import type { ValeSalidaSA, PartidaValeSalida, DevolucionAlmacen } from '../types';
@@ -144,9 +145,42 @@ export default function SalidaArticuloPage() {
     return true;
   };
 
+  const obtenerEstadoValidacionPaso = (paso: number) => {
+    const faltantes: string[] = [];
+    if (paso === 1) {
+      if (!folioSalida.trim()) faltantes.push('Folio del Vale de Salida');
+      if (!responsableId.trim()) faltantes.push('Responsable del Frente de Obra');
+      if (!proyectoDestino.trim()) faltantes.push('Proyecto de Destino');
+    } else if (paso === 2) {
+      if (partidasSalida.length === 0) {
+        faltantes.push('Al menos una partida de material o equipo');
+      }
+      for (const p of partidasSalida) {
+        const disp = getStockDisponible(p.sku);
+        if (p.cantidad <= 0 || p.cantidad > disp) {
+          faltantes.push(`Cantidad válida de partida ${p.sku}`);
+        }
+      }
+    }
+    return { valido: faltantes.length === 0, camposFaltantes: faltantes };
+  };
+
+  const estadoPasoActual = useMemo(() => {
+    return obtenerEstadoValidacionPaso(currentStep);
+  }, [currentStep, folioSalida, responsableId, proyectoDestino, partidasSalida, articulos]);
+
+  const handleIntentoAvanzarInvalido = () => {
+    if (currentStep === 1) validarPaso1();
+    else if (currentStep === 2) validarPaso2();
+    mostrarToast(`Faltan ${estadoPasoActual.camposFaltantes.length} campos obligatorios para continuar.`, 'error');
+  };
+
   const handleContinuar = () => {
+    if (!estadoPasoActual.valido) {
+      handleIntentoAvanzarInvalido();
+      return;
+    }
     if (currentStep === 1) {
-      if (!validarPaso1()) return;
       setCompletedSteps((prev) => (prev.includes(1) ? prev : [...prev, 1]));
       setCurrentStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -167,7 +201,10 @@ export default function SalidaArticuloPage() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    if (currentStep === 1 && !validarPaso1()) return;
+    if (!estadoPasoActual.valido) {
+      handleIntentoAvanzarInvalido();
+      return;
+    }
     setCurrentStep(stepNum);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -469,428 +506,387 @@ export default function SalidaArticuloPage() {
               steps={PASOS_VALE_SALIDA}
               currentStep={currentStep}
               completedSteps={completedSteps}
-              onStepClick={handleStepClick}
+              isCurrentStepValid={estadoPasoActual.valido}
+              onStepClick={(step) => {
+                if (step > currentStep && !estadoPasoActual.valido) {
+                  handleIntentoAvanzarInvalido();
+                  return;
+                }
+                handleStepClick(step);
+              }}
             />
             {/* Paso 1: Datos Maestros */}
             {currentStep === 1 && (
-            <div
-              style={{
-                background: 'var(--card-bg, #ffffff)',
-                borderRadius: 16,
-                border: '1px solid var(--border-color, #e2e8f0)',
-                padding: 24,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-              }}
-            >
-              <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 16 }}>
-                Datos de Emisión del Vale de Salida
-              </h2>
+              <div
+                style={{
+                  background: 'var(--card-bg, #ffffff)',
+                  borderRadius: 16,
+                  border: '1px solid var(--border-color, #e2e8f0)',
+                  padding: 24,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                }}
+              >
+                <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 16 }}>
+                  Datos de Emisión del Vale de Salida
+                </h2>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
-                    Folio de Salida Institucional:
-                  </label>
-                  <input
-                    type="text"
-                    readOnly
-                    value={folioSalida}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      borderRadius: 8,
-                      border: '1.5px solid var(--primary)',
-                      background: 'var(--brand-tonal-bg)',
-                      fontWeight: 800,
-                      color: 'var(--brand-tonal-text)',
-                      fontSize: '0.92rem',
-                    }}
-                  />
-                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                      Folio de Salida Institucional:
+                    </label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={folioSalida}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: 8,
+                        border: '1.5px solid var(--primary)',
+                        background: 'var(--brand-tonal-bg)',
+                        fontWeight: 800,
+                        color: 'var(--brand-tonal-text)',
+                        fontSize: '0.92rem',
+                      }}
+                    />
+                  </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
-                    Proyecto / Contrato Destino:
-                  </label>
-                  <select
-                    value={proyectoDestino}
-                    onChange={(e) => setProyectoDestino(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      borderRadius: 8,
-                      border: '1.5px solid var(--border)',
-                      background: 'var(--surface)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.88rem',
-                      fontWeight: 700,
-                    }}
-                  >
-                    {PROYECTOS_UBICACIONES_CATALOG.filter((p) => p.codigo !== 'Almacén Principal').map((p) => (
-                      <option key={p.codigo} value={p.codigo}>
-                        {p.codigo} - {p.nombreProyecto}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                      Proyecto / Contrato Destino:
+                    </label>
+                    <select
+                      value={proyectoDestino}
+                      onChange={(e) => setProyectoDestino(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: 8,
+                        border: '1.5px solid var(--border)',
+                        background: 'var(--surface)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.88rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {PROYECTOS_UBICACIONES_CATALOG.filter((p) => p.codigo !== 'Almacén Principal').map((p) => (
+                        <option key={p.codigo} value={p.codigo}>
+                          {p.codigo} - {p.nombreProyecto}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
-                    Responsable que Recibe en Obra:
-                  </label>
-                  <select
-                    value={responsableId}
-                    onChange={(e) => setResponsableId(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      borderRadius: 8,
-                      border: '1.5px solid var(--border)',
-                      background: 'var(--surface)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.88rem',
-                      fontWeight: 700,
-                    }}
-                  >
-                    {RESPONSABLES_DISPONIBLES.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.nombreCompleto} ({r.numeroEmpleado})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                      Responsable que Recibe en Obra:
+                    </label>
+                    <select
+                      value={responsableId}
+                      onChange={(e) => setResponsableId(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: 8,
+                        border: '1.5px solid var(--border)',
+                        background: 'var(--surface)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.88rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {RESPONSABLES_DISPONIBLES.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.nombreCompleto} ({r.numeroEmpleado})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
-                    Solicitud de Material (SM):
-                  </label>
-                  <input
-                    type="text"
-                    value={solicitudMaterial}
-                    onChange={(e) => setSolicitudMaterial(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      borderRadius: 8,
-                      border: '1.5px solid var(--border)',
-                      background: 'var(--surface)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.9rem',
-                    }}
-                  />
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                      Solicitud de Material (SM):
+                    </label>
+                    <input
+                      type="text"
+                      value={solicitudMaterial}
+                      onChange={(e) => setSolicitudMaterial(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: 8,
+                        border: '1.5px solid var(--border)',
+                        background: 'var(--surface)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.9rem',
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
             )}
 
             {/* Paso 2: Partidas Despachadas */}
             {currentStep === 2 && (
-            <div
-              style={{
-                background: 'var(--card-bg, #ffffff)',
-                borderRadius: 16,
-                border: '1px solid var(--border-color, #e2e8f0)',
-                padding: 24,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-                <div>
-                  <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                    Materiales, Equipos y Herramientas Despachadas
-                  </h2>
-                  <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    Verifica que las partidas cuenten con stock disponible suficiente antes de emitir el vale.
-                  </p>
-                </div>
-              </div>
-
-              {/* Selector Rápido para Añadir Partidas al Vale */}
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  gap: 12,
-                  padding: '14px 16px',
-                  background: 'var(--surface-alt)',
-                  borderRadius: 12,
-                  border: '1px solid var(--border)',
-                  marginBottom: 16,
-                  flexWrap: 'wrap',
+                  background: 'var(--card-bg, #ffffff)',
+                  borderRadius: 16,
+                  border: '1px solid var(--border-color, #e2e8f0)',
+                  padding: 24,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
                 }}
               >
-                <div style={{ flex: '1 1 320px' }}>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
-                    Seleccionar Artículo del Catálogo:
-                  </label>
-                  <select
-                    value={articuloSeleccionadoSku}
-                    onChange={(e) => setArticuloSeleccionadoSku(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      borderRadius: 8,
-                      border: '1.5px solid var(--border)',
-                      background: 'var(--surface)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.88rem',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {articulosActivos.map((a) => (
-                      <option key={a.sku} value={a.sku}>
-                        {a.sku} - {a.descripcionCorta || a.nombre} (Disp: {a.stockDisponible} uds)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div style={{ width: 120 }}>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
-                    Cantidad:
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={cantidadAgregar}
-                    onChange={(e) => setCantidadAgregar(Math.max(1, parseInt(e.target.value) || 1))}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      borderRadius: 8,
-                      border: '1.5px solid var(--border)',
-                      background: 'var(--surface)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.9rem',
-                      fontWeight: 700,
-                    }}
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleAgregarPartida}
-                  style={{
-                    padding: '10px 18px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: '#1d4ed8',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    fontSize: '0.86rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>
-                  <span>Agregar Partida</span>
-                </button>
-              </div>
-
-              {partidasSalida.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '30px 20px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                  No hay partidas agregadas al vale. Utiliza el selector superior para agregar insumos o herramientas.
-                </div>
-              ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.86rem' }}>
-                  <thead>
-                    <tr style={{ background: 'var(--surface-alt)', borderBottom: '2px solid var(--border)', color: 'var(--text-secondary)', textAlign: 'left' }}>
-                      <th style={{ padding: '10px 12px' }}>SKU &amp; Descripción</th>
-                      <th style={{ padding: '10px 12px', textAlign: 'center' }}>Stock Disponible</th>
-                      <th style={{ padding: '10px 12px', textAlign: 'center' }}>Cantidad a Salir</th>
-                      <th style={{ padding: '10px 12px' }}>Clasificación Custodia</th>
-                      <th style={{ padding: '10px 12px' }}>Series Asignadas</th>
-                      <th style={{ padding: '10px 12px', textAlign: 'center' }}>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {partidasSalida.map((p) => {
-                      const disponible = getStockDisponible(p.sku);
-                      const excedeStock = p.cantidad > disponible;
-
-                      return (
-                        <tr key={p.id} style={{ borderBottom: '1px solid var(--divider)', background: excedeStock ? 'rgba(239, 68, 68, 0.15)' : 'transparent' }}>
-                          <td style={{ padding: '12px' }}>
-                            <strong style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{p.sku}</strong>
-                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{p.descripcion}</div>
-                          </td>
-                          <td style={{ padding: '12px', textAlign: 'center', fontWeight: 700, color: disponible === 0 ? '#dc2626' : '#16a34a' }}>
-                            {disponible} {p.unidad}
-                          </td>
-                          <td style={{ padding: '12px', textAlign: 'center' }}>
-                            <input
-                              type="number"
-                              min={1}
-                              value={p.cantidad}
-                              onChange={(e) => {
-                                const val = Math.max(1, parseInt(e.target.value) || 1);
-                                setPartidasSalida((prev) =>
-                                    prev.map((item) => (item.id === p.id ? { ...item, cantidad: val } : item))
-                                );
-                              }}
-                              style={{
-                                width: 75,
-                                padding: '6px 8px',
-                                textAlign: 'center',
-                                borderRadius: 6,
-                                border: `1.5px solid ${excedeStock ? '#dc2626' : 'var(--primary)'}`,
-                                fontWeight: 800,
-                                color: excedeStock ? '#dc2626' : 'var(--text-primary)',
-                                background: excedeStock ? 'rgba(239, 68, 68, 0.2)' : 'var(--surface)',
-                              }}
-                            />
-                            {excedeStock && (
-                              <div style={{ fontSize: '0.72rem', color: '#dc2626', fontWeight: 700, marginTop: 2 }}>
-                                ¡Excede stock!
-                              </div>
-                            )}
-                          </td>
-                          <td style={{ padding: '12px' }}>
-                            <span
-                              style={{
-                                padding: '3px 8px',
-                                borderRadius: 6,
-                                fontSize: '0.78rem',
-                                fontWeight: 700,
-                                background:
-                                  p.custodia === 'Consumible'
-                                    ? 'var(--surface-alt)'
-                                    : p.custodia.includes('Calibración')
-                                    ? 'var(--warning-bg)'
-                                    : 'var(--brand-tonal-bg)',
-                                color:
-                                  p.custodia === 'Consumible'
-                                    ? 'var(--text-secondary)'
-                                    : p.custodia.includes('Calibración')
-                                    ? 'var(--warning-text)'
-                                    : 'var(--brand-tonal-text)',
-                              }}
-                            >
-                              {p.custodia}
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px', fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                            {p.numerosSerie?.join(', ') || 'N/A'}
-                          </td>
-                          <td style={{ padding: '12px', textAlign: 'center' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleEliminarPartida(p.id)}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                color: '#dc2626',
-                                cursor: 'pointer',
-                                padding: 4,
-                                borderRadius: 4,
-                              }}
-                              title="Eliminar partida del vale"
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: 20 }}>delete</span>
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
-
-              {/* Observaciones de Despacho */}
-              <div style={{ marginTop: 24, paddingTop: 18, borderTop: '1px solid var(--border)' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 6 }}>
-                  Observaciones de Despacho:
-                </label>
-                <textarea
-                  rows={3}
-                  value={observacionesSalida}
-                  onChange={(e) => setObservacionesSalida(e.target.value)}
-                  placeholder="Detalles adicionales sobre el despacho de herramientas o consumibles para frente activo..."
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: 10,
-                    border: '1.5px solid var(--border)',
-                    background: 'var(--surface)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.86rem',
-                    outline: 'none',
-                    resize: 'vertical',
-                  }}
-                />
-              </div>
-            </div>
-            )}
-
-            {/* ── BARRA DE NAVEGACIÓN INFERIOR FIJA (STICKY BOTTOM BAR) ── */}
-            <div
-              className="fixed bottom-0 left-0 right-0 z-40 px-4 sm:px-8 py-3.5 transition-all bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 backdrop-blur-md shadow-[0_-4px_25px_rgba(0,0,0,0.15)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.5)]"
-            >
-              <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-                {/* Lado izquierdo: Cancelar / Atrás */}
-                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-start">
-                  {currentStep === 1 ? (
-                    <button
-                      type="button"
-                      onClick={() => router.push(rutaPadre)}
-                      className="px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer shadow-xs transition-colors"
-                      style={{
-                        background: 'var(--surface-alt)',
-                        color: 'var(--text-secondary)',
-                        border: '1px solid var(--border)',
-                      }}
-                    >
-                      Cancelar
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleAtras}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer shadow-xs transition-colors"
-                      style={{
-                        background: 'var(--surface-alt)',
-                        color: 'var(--text-secondary)',
-                        border: '1px solid var(--border)',
-                      }}
-                    >
-                      <span className="material-symbols-outlined text-[17px]">arrow_back</span>
-                      <span>Atrás</span>
-                    </button>
-                  )}
-
-                  {/* Estado / Guardado */}
-                  <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="hidden md:inline font-medium">Borrador de salida activo</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                      Materiales, Equipos y Herramientas Despachadas
+                    </h2>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      Verifica que las partidas cuenten con stock disponible suficiente antes de emitir el vale.
+                    </p>
                   </div>
                 </div>
 
-                {/* Lado derecho: Continuar / Emitir Vale */}
-                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-                  {currentStep === 1 ? (
-                    <button
-                      type="button"
-                      onClick={handleContinuar}
-                      className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-[#1D4ED8] hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md cursor-pointer active:scale-98"
+                {/* Selector Rápido para Añadir Partidas al Vale */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    gap: 12,
+                    padding: '14px 16px',
+                    background: 'var(--surface-alt)',
+                    borderRadius: 12,
+                    border: '1px solid var(--border)',
+                    marginBottom: 16,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <div style={{ flex: '1 1 320px' }}>
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                      Seleccionar Artículo del Catálogo:
+                    </label>
+                    <select
+                      value={articuloSeleccionadoSku}
+                      onChange={(e) => setArticuloSeleccionadoSku(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: 8,
+                        border: '1.5px solid var(--border)',
+                        background: 'var(--surface)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.88rem',
+                        fontWeight: 600,
+                      }}
                     >
-                      <span>Continuar</span>
-                      <span className="material-symbols-outlined text-[17px]">arrow_forward</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleGuardarValeSalida}
-                      className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-[#1D4ED8] hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md cursor-pointer active:scale-98"
-                    >
-                      <span className="material-symbols-outlined text-[17px]">verified</span>
-                      <span>Emitir Vale de Salida (SA)</span>
-                    </button>
-                  )}
+                      {articulosActivos.map((a) => (
+                        <option key={a.sku} value={a.sku}>
+                          {a.sku} - {a.descripcionCorta || a.nombre} (Disp: {a.stockDisponible} uds)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={{ width: 120 }}>
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                      Cantidad:
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={cantidadAgregar}
+                      onChange={(e) => setCantidadAgregar(Math.max(1, parseInt(e.target.value) || 1))}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: 8,
+                        border: '1.5px solid var(--border)',
+                        background: 'var(--surface)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.9rem',
+                        fontWeight: 700,
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAgregarPartida}
+                    style={{
+                      padding: '10px 18px',
+                      borderRadius: 8,
+                      border: 'none',
+                      background: '#1d4ed8',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      fontSize: '0.86rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>
+                    <span>Agregar Partida</span>
+                  </button>
+                </div>
+
+                {partidasSalida.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '30px 20px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                    No hay partidas agregadas al vale. Utiliza el selector superior para agregar insumos o herramientas.
+                  </div>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.86rem' }}>
+                    <thead>
+                      <tr style={{ background: 'var(--surface-alt)', borderBottom: '2px solid var(--border)', color: 'var(--text-secondary)', textAlign: 'left' }}>
+                        <th style={{ padding: '10px 12px' }}>SKU &amp; Descripción</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'center' }}>Stock Disponible</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'center' }}>Cantidad a Salir</th>
+                        <th style={{ padding: '10px 12px' }}>Clasificación Custodia</th>
+                        <th style={{ padding: '10px 12px' }}>Series Asignadas</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'center' }}>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {partidasSalida.map((p) => {
+                        const disponible = getStockDisponible(p.sku);
+                        const excedeStock = p.cantidad > disponible;
+
+                        return (
+                          <tr key={p.id} style={{ borderBottom: '1px solid var(--divider)', background: excedeStock ? 'rgba(239, 68, 68, 0.15)' : 'transparent' }}>
+                            <td style={{ padding: '12px' }}>
+                              <strong style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{p.sku}</strong>
+                              <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{p.descripcion}</div>
+                            </td>
+                            <td style={{ padding: '12px', textAlign: 'center', fontWeight: 700, color: disponible === 0 ? '#dc2626' : '#16a34a' }}>
+                              {disponible} {p.unidad}
+                            </td>
+                            <td style={{ padding: '12px', textAlign: 'center' }}>
+                              <input
+                                type="number"
+                                min={1}
+                                value={p.cantidad}
+                                onChange={(e) => {
+                                  const val = Math.max(1, parseInt(e.target.value) || 1);
+                                  setPartidasSalida((prev) =>
+                                    prev.map((item) => (item.id === p.id ? { ...item, cantidad: val } : item))
+                                  );
+                                }}
+                                style={{
+                                  width: 75,
+                                  padding: '6px 8px',
+                                  textAlign: 'center',
+                                  borderRadius: 6,
+                                  border: `1.5px solid ${excedeStock ? '#dc2626' : 'var(--primary)'}`,
+                                  fontWeight: 800,
+                                  color: excedeStock ? '#dc2626' : 'var(--text-primary)',
+                                  background: excedeStock ? 'rgba(239, 68, 68, 0.2)' : 'var(--surface)',
+                                }}
+                              />
+                              {excedeStock && (
+                                <div style={{ fontSize: '0.72rem', color: '#dc2626', fontWeight: 700, marginTop: 2 }}>
+                                  ¡Excede stock!
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ padding: '12px' }}>
+                              <span
+                                style={{
+                                  padding: '3px 8px',
+                                  borderRadius: 6,
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
+                                  background:
+                                    p.custodia === 'Consumible'
+                                      ? 'var(--surface-alt)'
+                                      : p.custodia.includes('Calibración')
+                                        ? 'var(--warning-bg)'
+                                        : 'var(--brand-tonal-bg)',
+                                  color:
+                                    p.custodia === 'Consumible'
+                                      ? 'var(--text-secondary)'
+                                      : p.custodia.includes('Calibración')
+                                        ? 'var(--warning-text)'
+                                        : 'var(--brand-tonal-text)',
+                                }}
+                              >
+                                {p.custodia}
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px', fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                              {p.numerosSerie?.join(', ') || 'N/A'}
+                            </td>
+                            <td style={{ padding: '12px', textAlign: 'center' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleEliminarPartida(p.id)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#dc2626',
+                                  cursor: 'pointer',
+                                  padding: 4,
+                                  borderRadius: 4,
+                                }}
+                                title="Eliminar partida del vale"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: 20 }}>delete</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+
+                {/* Observaciones de Despacho */}
+                <div style={{ marginTop: 24, paddingTop: 18, borderTop: '1px solid var(--border)' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 6 }}>
+                    Observaciones de Despacho:
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={observacionesSalida}
+                    onChange={(e) => setObservacionesSalida(e.target.value)}
+                    placeholder="Detalles adicionales sobre el despacho de herramientas o consumibles para frente activo..."
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: 10,
+                      border: '1.5px solid var(--border)',
+                      background: 'var(--surface)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.86rem',
+                      outline: 'none',
+                      resize: 'vertical',
+                    }}
+                  />
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* ── BARRA DE NAVEGACIÓN INFERIOR FIJA REUTILIZABLE (NORMATIVO SIFYGSA) ── */}
+            <FormWizardFooter
+              currentStep={currentStep}
+              totalSteps={2}
+              isValid={estadoPasoActual.valido}
+              missingFields={estadoPasoActual.camposFaltantes}
+              onContinue={currentStep === 1 ? handleContinuar : handleGuardarValeSalida}
+              onPrevious={handleAtras}
+              onCancel={() => router.push(rutaPadre)}
+              continueText="Continuar"
+              finalText="Emitir Vale de Salida (SA)"
+              continueIcon="arrow_forward"
+              finalIcon="verified"
+              onInvalidClick={handleIntentoAvanzarInvalido}
+              helperText="Completa los campos obligatorios (*) para continuar"
+              cancelText="Cancelar"
+              showCancel={true}
+              isLastStep={currentStep === 2}
+            />
           </div>
         )}
 

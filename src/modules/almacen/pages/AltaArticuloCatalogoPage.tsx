@@ -6,6 +6,7 @@ import { useAlmacen } from '../context/AlmacenContext';
 import type { Articulo, ClasificacionCustodia, TipoArticuloCatalogo, UnidadMedidaArticulo } from '../types';
 import AlmacenCombobox, { type AlmacenComboboxOption } from '../components/ui/AlmacenCombobox';
 import { Stepper, type StepItem } from '@/components/ui/Stepper';
+import { FormWizardFooter } from '../components/FormWizardFooter';
 import '../almacen.css';
 
 interface TipoArticuloOpcion {
@@ -427,14 +428,99 @@ export default function AltaArticuloCatalogoPage() {
     return true;
   };
 
+  const obtenerEstadoValidacionPaso = (paso: number) => {
+    const faltantes: string[] = [];
+    const idsFaltantes: string[] = [];
+    if (paso === 1) {
+      if (!codigoArticulo.trim()) {
+        faltantes.push('Código de Artículo (SKU)');
+        idsFaltantes.push('codigoArticulo');
+      }
+      if (codigoExiste) {
+        faltantes.push('Código SKU no duplicado');
+        idsFaltantes.push('codigoArticulo');
+      }
+      if (!nombreArticulo.trim() || nombreArticulo.trim().length < 3) {
+        faltantes.push('Nombre del Artículo (mínimo 3 caracteres)');
+        idsFaltantes.push('nombreArticulo');
+      }
+      if (!descArticulo.trim()) {
+        faltantes.push('Descripción Técnica');
+        idsFaltantes.push('descArticulo');
+      }
+      if (!marcaFabricante.trim()) {
+        faltantes.push('Marca o Fabricante');
+        idsFaltantes.push('marcaFabricante');
+      }
+      if (!unidadBase.trim() || !unidadCompra.trim() || !unidadVentas.trim()) {
+        faltantes.push('Unidades de Medida (Base, Compra, Ventas)');
+        idsFaltantes.push('unidadBase');
+      }
+    } else if (paso === 2) {
+      if (!subsidiaria.trim()) {
+        faltantes.push('Subsidiaria');
+        idsFaltantes.push('subsidiaria');
+      }
+      if (!departamento.trim()) {
+        faltantes.push('Departamento');
+        idsFaltantes.push('departamento');
+      }
+      if (!ubicacionSugerida.trim()) {
+        faltantes.push('Ubicación Sugerida');
+        idsFaltantes.push('ubicacionSugerida');
+      }
+    } else if (paso === 3) {
+      if (!satClave.trim()) {
+        faltantes.push('Clave SAT CFDI 4.0');
+        idsFaltantes.push('satClave');
+      }
+    }
+    return { valido: faltantes.length === 0, camposFaltantes: faltantes, idsFaltantes };
+  };
+
+  const estadoPasoActual = useMemo(() => {
+    return obtenerEstadoValidacionPaso(currentStep);
+  }, [
+    currentStep,
+    codigoArticulo,
+    codigoExiste,
+    nombreArticulo,
+    descArticulo,
+    marcaFabricante,
+    unidadBase,
+    unidadCompra,
+    unidadVentas,
+    subsidiaria,
+    departamento,
+    ubicacionSugerida,
+    satClave,
+  ]);
+
+  const handleIntentoAvanzarInvalido = () => {
+    if (currentStep === 1) validarPaso1();
+    else if (currentStep === 2) validarPaso2();
+    else if (currentStep === 3) validarPaso3();
+    mostrarToast(`Faltan ${estadoPasoActual.camposFaltantes.length} campos obligatorios para continuar.`, 'error');
+    const primerId = estadoPasoActual.idsFaltantes[0];
+    if (primerId) {
+      const el = document.getElementById(primerId) || document.querySelector(`[name="${primerId}"]`);
+      if (el) {
+        (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        (el as HTMLElement).focus();
+      }
+    }
+  };
+
   const handleContinuar = () => {
+    if (!estadoPasoActual.valido) {
+      handleIntentoAvanzarInvalido();
+      return;
+    }
     if (currentStep === 1) {
-      if (!validarPaso1()) return;
       setCompletedSteps((prev) => (prev.includes(1) ? prev : [...prev, 1]));
       setCurrentStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (currentStep === 2) {
-      if (!validarPaso2()) return;
       setCompletedSteps((prev) => (prev.includes(2) ? prev : [...prev, 2]));
       setCurrentStep(3);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -455,8 +541,10 @@ export default function AltaArticuloCatalogoPage() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    if (currentStep === 1 && !validarPaso1()) return;
-    if (currentStep === 2 && !validarPaso2()) return;
+    if (!estadoPasoActual.valido) {
+      handleIntentoAvanzarInvalido();
+      return;
+    }
     setCurrentStep(stepNum);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -643,7 +731,14 @@ export default function AltaArticuloCatalogoPage() {
           steps={PASOS_ARTICULO}
           currentStep={currentStep}
           completedSteps={completedSteps}
-          onStepClick={handleStepClick}
+          isCurrentStepValid={estadoPasoActual.valido}
+          onStepClick={(stepNum) => {
+            if (stepNum > currentStep && !estadoPasoActual.valido) {
+              handleIntentoAvanzarInvalido();
+              return;
+            }
+            handleStepClick(stepNum);
+          }}
         />
       </div>
 
@@ -1249,107 +1344,28 @@ export default function AltaArticuloCatalogoPage() {
       </form>
 
       {/* ====================================================================
-          BARRA INFERIOR FIJA DE ACCIONES (STICKY BOTTOM ACTION BAR)
+          BARRA INFERIOR FIJA DE ACCIONES REUTILIZABLE (NORMATIVO SIFYGSA)
          ==================================================================== */}
-      <div className="alta-articulo-bottom-bar fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 backdrop-blur-md shadow-[0_-4px_25px_rgba(0,0,0,0.15)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.5)]" style={{ left: 0 }}>
-        <div className="alta-articulo-bottom-inner">
-          
-          {/* Indicador guardado automático */}
-          <div className="alta-articulo-autosave-indicator">
-            <span className="alta-articulo-pulse-blue" />
-            <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              Guardado automático en borrador (hace unos segundos)
-            </span>
-          </div>
-
-          {/* Botones de Acción */}
-          <div className="alta-articulo-bottom-actions">
-            {currentStep === 1 ? (
-              <button
-                type="button"
-                onClick={() => router.push('/almacen/articulos')}
-                className="alta-articulo-btn-cancel"
-              >
-                Cancelar
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleAtras}
-                className="alta-articulo-btn-cancel"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                  arrow_back
-                </span>
-                <span>Atrás</span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={handleGuardarBorrador}
-              className="alta-articulo-btn-draft"
-            >
-              {borradorGuardado ? (
-                <>
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--success)' }}>
-                    check_circle
-                  </span>
-                  <span style={{ color: 'var(--success)', fontWeight: 700 }}>Borrador Guardado</span>
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--text-muted)' }}>
-                    save
-                  </span>
-                  <span>Guardar Borrador</span>
-                </>
-              )}
-            </button>
-
-            {currentStep < 3 ? (
-              <button
-                type="button"
-                onClick={handleContinuar}
-                className="alta-articulo-btn-submit"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  backgroundColor: '#1D4ED8',
-                  color: '#ffffff',
-                }}
-              >
-                <span>Continuar</span>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                  arrow_forward
-                </span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => handleCrearArticulo()}
-                disabled={!isFormValid}
-                className="alta-articulo-btn-submit"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  backgroundColor: '#1D4ED8',
-                  color: '#ffffff',
-                }}
-                title={!isFormValid ? 'Complete los campos obligatorios para registrar el artículo' : 'Crear artículo en catálogo'}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                  add_box
-                </span>
-                <span>+ Crear Artículo en Catálogo</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      <FormWizardFooter
+        currentStep={currentStep}
+        totalSteps={3}
+        isValid={estadoPasoActual.valido}
+        missingFields={estadoPasoActual.camposFaltantes}
+        onContinue={currentStep < 3 ? handleContinuar : () => handleCrearArticulo()}
+        onPrevious={handleAtras}
+        onSaveDraft={handleGuardarBorrador}
+        isSavingDraft={borradorGuardado}
+        onCancel={() => router.push('/almacen/articulos')}
+        continueText="Continuar"
+        finalText="Guardar en Catálogo Maestro"
+        continueIcon="arrow_forward"
+        finalIcon="check_circle"
+        onInvalidClick={handleIntentoAvanzarInvalido}
+        helperText="Completa los campos obligatorios (*) para continuar"
+        cancelText="Cancelar"
+        showCancel={true}
+        isLastStep={currentStep === 3}
+      />
 
       {/* ====================================================================
           MODAL PARA AMPLIAR IMAGEN
