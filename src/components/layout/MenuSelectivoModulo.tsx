@@ -226,13 +226,13 @@ export function getSelectedMenuIconMeta(
       };
     }
     return {
-      id: 'compras-suite',
-      title: 'Compras & Procura',
-      colorClass: 'brand',
+      id: 'compras-requisicion',
+      title: 'Requisiciones',
+      colorClass: 'amber',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path
-            d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
+            d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -471,51 +471,51 @@ export const MenuSelectivoModulo: React.FC<MenuSelectivoModuloProps> = ({
         </svg>
       ),
     },
-    {
-      id: 'crm-nueva-requisicion',
-      targetModule: 'crm',
-      targetSubItem: 'crm-nueva-requisicion',
-      title: 'Nueva Requisición',
-      titleEn: 'New Requisition',
-      description: 'Creación asistida de solicitud de compras, insumos y servicios',
-      descriptionEn: 'Assisted creation of purchase, supplies and services request',
-      colorClass: 'amber',
+  ];
+
+  const permittedRequisiciones = obtenerSubItemsPermitidosModulo('requisiciones', rolUsuario);
+  const comprasMeta: Record<string, Omit<LauncherTile, 'id' | 'targetModule' | 'targetSubItem' | 'title' | 'titleEn'>> = {
+    'compras-nueva': {
+      description: 'Captura y envío de solicitud de compra o servicio',
+      descriptionEn: 'Create and submit purchase or service requests',
+      colorClass: 'brand',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       ),
     },
-  ];
-
-  const comprasTiles: LauncherTile[] = [
-    {
-      id: 'compras-ordenes',
-      targetModule: 'compras',
-      targetSubItem: 'ordenes',
-      title: 'Órdenes de Compra',
-      titleEn: 'Purchase Orders',
-      description: 'Control ejecutivo, listado y seguimiento de adquisiciones',
-      descriptionEn: 'Executive control, listing and purchase tracking',
-      colorClass: 'cyan',
+    'compras-mis-requisiciones': {
+      description: 'Seguimiento de tus solicitudes emitidas',
+      descriptionEn: 'Track requisitions created by your account',
+      colorClass: 'blue',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
         </svg>
       ),
     },
-    {
-      id: 'compras-autorizar-oc',
-      targetModule: 'compras',
-      targetSubItem: 'autorizar-ordenes',
-      title: 'Autorizar Órdenes',
-      titleEn: 'Authorize POs',
-      description: 'Validación gerencial, firma digital y liberación de ODC',
-      descriptionEn: 'Executive approval, digital sign-off and PO release',
+    'compras-requisicion': {
+      description: 'Control completo y catálogo de requisiciones',
+      descriptionEn: 'Full requisition catalog and folio tracking',
+      colorClass: 'amber',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path
+            d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+    },
+    'compras-aprobaciones': {
+      description: 'Validación multinivel, autorización y atención',
+      descriptionEn: 'Multi-level approval and fulfillment center',
       colorClass: 'emerald',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -527,113 +527,19 @@ export const MenuSelectivoModulo: React.FC<MenuSelectivoModuloProps> = ({
         </svg>
       ),
     },
-    {
-      id: 'compras-nueva-oc',
+  };
+
+  const comprasTiles: LauncherTile[] = permittedRequisiciones.map((sub) => {
+    const meta = comprasMeta[sub.id] ?? comprasMeta['compras-requisicion'];
+    return {
+      id: sub.id,
       targetModule: 'compras',
-      targetSubItem: 'nueva-orden',
-      title: 'Nueva Orden (ODC)',
-      titleEn: 'New Purchase Order',
-      description: 'Asistente multietapa para emitir nueva orden de compra',
-      descriptionEn: 'Multi-step wizard to issue a new purchase order',
-      colorClass: 'brand',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-    },
-    {
-      id: 'compras-proveedores',
-      targetModule: 'compras',
-      targetSubItem: 'proveedores',
-      title: 'Proveedores',
-      titleEn: 'Suppliers',
-      description: 'Padrón maestro, líneas de crédito y opinión SAT 32-D',
-      descriptionEn: 'Master directory, credit limits and tax compliance',
-      colorClass: 'indigo',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: 'compras-requisiciones',
-      targetModule: 'compras',
-      targetSubItem: 'requisiciones',
-      title: 'Requisiciones',
-      titleEn: 'Requisitions',
-      description: 'Catálogo de solicitudes internas y control de obra',
-      descriptionEn: 'Internal requisitions catalog and project tracking',
-      colorClass: 'amber',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path
-            d="M13 10V3L4 14h7v7l9-11h-7z"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: 'compras-aprobar-req',
-      targetModule: 'compras',
-      targetSubItem: 'aprobar-requisiciones',
-      title: 'Aprobar Requisiciones',
-      titleEn: 'Approve Requisitions',
-      description: 'Bandeja de aprobación multinivel y conversión a ODC',
-      descriptionEn: 'Multi-level approval inbox and conversion to PO',
-      colorClass: 'slate',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path
-            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: 'compras-facturas',
-      targetModule: 'compras',
-      targetSubItem: 'facturas',
-      title: 'Facturas CFDI 4.0',
-      titleEn: 'CFDI 4.0 Invoices',
-      description: 'Recepción fiscal XML/PDF, validación y programación de pago',
-      descriptionEn: 'XML/PDF invoice reception, validation and payment',
-      colorClass: 'cyan',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path
-            d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: 'compras-nueva-requisicion',
-      targetModule: 'requisiciones',
-      targetSubItem: 'compras-nueva',
-      title: 'Nueva Requisición',
-      titleEn: 'New Requisition',
-      description: 'Creación asistida de solicitud de compras, insumos y servicios',
-      descriptionEn: 'Assisted creation of purchase, supplies and services request',
-      colorClass: 'amber',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-    },
-  ];
+      targetSubItem: sub.vista,
+      title: sub.nombre,
+      titleEn: sub.nombreEn,
+      ...meta,
+    };
+  });
 
   const permittedAdmin = obtenerSubItemsPermitidosModulo('admin', rolUsuario);
   const adminMeta: Record<string, Omit<LauncherTile, 'id' | 'targetModule' | 'targetSubItem' | 'title' | 'titleEn'>> = {

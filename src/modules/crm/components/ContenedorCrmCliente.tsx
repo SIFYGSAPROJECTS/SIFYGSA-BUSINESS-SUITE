@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { RolUsuario, ZonaComercial } from '@/config/types';
 import type { DatosCrm, MetricasReporteCrm } from '../types';
 import { HomeCRM } from '../pages/HomeCRM';
+import { CalendarioActividadesCrm } from './CalendarioActividadesCrm';
 
 export interface PropiedadesContenedorCrm {
   datosIniciales: DatosCrm;
@@ -24,10 +25,8 @@ export const ContenedorCrmCliente: React.FC<PropiedadesContenedorCrm> = ({
   const vistaParam = searchParams.get('vista');
   const folioParam = searchParams.get('folio') ?? undefined;
 
-  let subItemId = subParam ?? 'crm-kanban';
-  if (subParam === 'crm-nueva-requisicion' || subParam === 'compras-nueva') {
-    subItemId = 'crm-nueva-requisicion';
-  } else if (subParam === 'crm-avanzado') {
+  let subItemId = subParam ?? vistaParam ?? 'crm-kanban';
+  if (subParam === 'crm-avanzado') {
     if (vistaParam === 'reportes') subItemId = 'crm-reportes';
     else if (vistaParam === 'actividades') subItemId = 'crm-calendar';
     else if (vistaParam === 'clientes' || vistaParam === 'tabla' || vistaParam === 'oportunidades') subItemId = 'crm-opportunities';
@@ -42,9 +41,18 @@ export const ContenedorCrmCliente: React.FC<PropiedadesContenedorCrm> = ({
     router.push('/crm?sub=crm-kanban');
   };
 
+  if (subItemId === 'crm-calendar') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+        <CalendarioActividadesCrm />
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
       <HomeCRM
+        key={subItemId}
         subItemId={subItemId}
         folioInicial={folioParam}
         oportunidadesExtra={datosIniciales.oportunidades}

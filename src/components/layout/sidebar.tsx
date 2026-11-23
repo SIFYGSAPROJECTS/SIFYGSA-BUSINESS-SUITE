@@ -1,8 +1,6 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
 import type { RolUsuario } from '@/config/types';
 import { obtenerSubItemsPermitidosModulo, type SubItemModulo } from '@/modules/registry';
 import { IconChevronRight, IconClose, IconShieldCheck } from '../ui/Icons';
@@ -10,7 +8,7 @@ import { SfgLogoSymbol } from '../ui/Logo';
 import { useLanguage } from '../../context/LanguageContext';
 import { SubsidebarFavoritos } from './subsidebarFavoritos';
 
-type CrmSidebarModuleKey = 'crm' | 'admin';
+type CrmSidebarModuleKey = 'crm' | 'compras' | 'admin';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -52,6 +50,24 @@ function renderModuleIcon(key: CrmSidebarModuleKey, size: number = 16) {
       </svg>
     );
   }
+  if (key === 'compras') {
+    return (
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+        style={{ width: size, height: size }}
+      >
+        <path
+          d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
   return <IconShieldCheck size={size} />;
 }
 
@@ -66,14 +82,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   rolUsuario = 'administrador',
 }) => {
   const { language, t } = useLanguage();
-  const pathname = usePathname() || '';
-  const searchParams = useSearchParams();
-  const esNuevaRequisicionActiva =
-    (activeModuleId === 'crm' && activeSubItemId === 'crm-nueva-requisicion') ||
-    (pathname === '/crm' && searchParams?.get('sub') === 'crm-nueva-requisicion');
 
   const subItemsCrm = obtenerSubItemsPermitidosModulo('crm', rolUsuario);
+  const subItemsRequisiciones = obtenerSubItemsPermitidosModulo('requisiciones', rolUsuario);
   const subItemsAdmin = obtenerSubItemsPermitidosModulo('admin', rolUsuario);
+
+  const subItemInicialCompras =
+    subItemsRequisiciones.find((s) => s.id === 'compras-requisicion')?.id ??
+    subItemsRequisiciones[0]?.id ??
+    'compras-mis-requisiciones';
 
   const esSubItemCrmActivo = (idSubItem: string): boolean => {
     if (activeModuleId !== 'crm') return false;
@@ -94,6 +111,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return activeSubItemId === idSubItem;
   };
 
+  const esSubItemComprasActivo = (idSubItem: string): boolean => {
+    if (activeModuleId !== 'compras') return false;
+    if (!activeSubItemId) {
+      return idSubItem === subItemInicialCompras;
+    }
+    return activeSubItemId === idSubItem;
+  };
+
   const esSubItemAdminActivo = (idSubItem: string): boolean => {
     if (activeModuleId !== 'admin') return false;
     return (!activeSubItemId && idSubItem === 'resumen') || activeSubItemId === idSubItem;
@@ -106,6 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
     const found = mod.subItems.find((sub) => {
       if (mod.key === 'crm') return esSubItemCrmActivo(sub.id);
+      if (mod.key === 'compras') return esSubItemComprasActivo(sub.id);
       return esSubItemAdminActivo(sub.id);
     });
     if (!found) return null;
@@ -120,6 +146,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       titleEn: 'CRM & Sales',
       subItems: subItemsCrm,
       activeCollapsedClass: 'active-crm',
+    });
+  }
+  if (subItemsRequisiciones.length > 0) {
+    modulesList.push({
+      key: 'compras',
+      title: t('nav.operations'),
+      titleEn: 'Operations',
+      subItems: subItemsRequisiciones,
+      activeCollapsedClass: 'active-ops',
     });
   }
   if (showAdmin && subItemsAdmin.length > 0) {
@@ -246,25 +281,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </button>
                 );
               })}
-
-              {/* Botón directo al submódulo Nueva Requisición dentro de CRM */}
-              <Link
-                href="/crm?sub=crm-nueva-requisicion"
-                className={`collapsed-nav-btn ${esNuevaRequisicionActiva ? 'active-crm' : ''}`}
-                title={language === 'en' ? 'New Requisition' : 'Nueva Requisición'}
-                aria-label="Nueva Requisición"
-                onClick={() => onSelectModule('crm', 'crm-nueva-requisicion')}
-              >
-                <span
-                  className="material-symbols-outlined"
-                  style={{
-                    fontSize: 18,
-                    color: esNuevaRequisicionActiva ? '#ffffff' : '#f59e0b',
-                  }}
-                >
-                  post_add
-                </span>
-              </Link>
             </div>
           </div>
         ) : (
@@ -354,34 +370,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                 );
               })}
-
-              {/* Acceso directo a Nueva Requisición dentro de CRM en modo expandido */}
-              <div className="accordion-entry">
-                <Link
-                  href="/crm?sub=crm-nueva-requisicion"
-                  className={`accordion-head-btn sidebar-module-trigger ${esNuevaRequisicionActiva ? 'is-active-module' : ''}`}
-                  onClick={() => onSelectModule('crm', 'crm-nueva-requisicion')}
-                  style={{ textDecoration: 'none' }}
-                >
-                  <div className="head-left-content">
-                    <span
-                      className="material-symbols-outlined"
-                      style={{ fontSize: 16, color: '#f59e0b' }}
-                    >
-                      post_add
-                    </span>
-                    <div className="sidebar-module-label-group">
-                      <span className="group-title-label">
-                        {language === 'en' ? 'New Requisition' : 'Nueva Requisición'}
-                      </span>
-                      <span className="sidebar-active-sub-hint">
-                        {language === 'en' ? 'Direct request' : 'Solicitud directa'}
-                      </span>
-                    </div>
-                  </div>
-                  <IconChevronRight size={14} className="sidebar-module-chevron" />
-                </Link>
-              </div>
             </nav>
           </>
         )}

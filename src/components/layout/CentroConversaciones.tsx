@@ -90,7 +90,7 @@ const INITIAL_CONVERSATIONS: ConversationThread[] = [
     name: 'SIFYGSA-OPP-2026-041',
     subtitle: 'Licitación Sistema Fuego y Gas',
     badgeText: '#41',
-    badgeColor: 'slate',
+    badgeColor: 'red',
     lastTime: 'Nuevo',
     unread: 1,
     isThread: true,
@@ -139,7 +139,7 @@ const INITIAL_NOTICES: SystemNotice[] = [
   {
     id: 'n2',
     title: 'Recordatorio de seguimiento comercial',
-    detail: 'Llamada programada con Gerencia de Ingeniería PEMEX a las 16:00',
+    detail: 'Seguimiento programado con Gerencia de Ingeniería PEMEX a las 16:00',
     time: 'Hace 1 hora',
     read: false,
   },
@@ -162,21 +162,30 @@ export const CentroConversaciones: React.FC<CentroConversacionesProps> = ({
 }) => {
   const [conversations, setConversations] = useState<ConversationThread[]>(INITIAL_CONVERSATIONS);
   const [notices, setNotices] = useState<SystemNotice[]>(INITIAL_NOTICES);
-  const [activeTab, setActiveTab] = useState<'chats' | 'canales' | 'reuniones' | 'avisos'>('canales');
+  const [activeTab, setActiveTab] = useState<'chats' | 'canales' | 'avisos'>('canales');
   const [filterMode, setFilterMode] = useState<'todos' | 'no_leido' | 'hilo'>('todos');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeThreadId, setActiveThreadId] = useState<string>('general');
+  const [activeThreadId, setActiveThreadId] = useState<string>('opp-041');
+  // Pila vertical acumulada de chats abiertos/minimizados en la esquina inferior derecha
+  const [dockedThreadIds, setDockedThreadIds] = useState<string[]>([
+    'opp-041',
+    'general',
+    'administrators',
+  ]);
   const [isChatWindowOpen, setIsChatWindowOpen] = useState(false);
-  const [showBubbles, setShowBubbles] = useState(true);
   const [messageDraft, setMessageDraft] = useState('');
   const [pendingAttachment, setPendingAttachment] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [activeCallMode, setActiveCallMode] = useState<'video' | 'audio' | null>(null);
   const [isCreatingChannel, setIsCreatingChannel] = useState(false);
   const [newChannelName, setNewChannelName] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
 
   const popoverRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const totalUnread = conversations.reduce((acc, c) => acc + c.unread, 0);
   const unreadNoticesCount = notices.filter((n) => !n.read).length;
@@ -222,14 +231,30 @@ export const CentroConversaciones: React.FC<CentroConversacionesProps> = ({
   const activeThread =
     conversations.find((c) => c.id === activeThreadId) ?? conversations[0];
 
+  // Al abrir un chat desde el popover o desde una burbuja, se acumula en la columna derecha
   const handleOpenThread = (threadId: string) => {
     setActiveThreadId(threadId);
+    setDockedThreadIds((prev) => (prev.includes(threadId) ? prev : [...prev, threadId]));
     setConversations((prev) =>
       prev.map((c) => (c.id === threadId ? { ...c, unread: 0 } : c))
     );
     setIsChatWindowOpen(true);
-    setShowBubbles(true);
-    setActiveCallMode(null);
+    onClosePopover();
+  };
+
+  const handleDismissBubble = (threadId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDockedThreadIds((prev) => {
+      const next = prev.filter((id) => id !== threadId);
+      if (activeThreadId === threadId) {
+        if (next.length > 0) {
+          setActiveThreadId(next[next.length - 1]);
+        } else {
+          setIsChatWindowOpen(false);
+        }
+      }
+      return next;
+    });
   };
 
   const handleSendMessage = (e?: React.FormEvent) => {
@@ -349,12 +374,16 @@ export const CentroConversaciones: React.FC<CentroConversacionesProps> = ({
     return conv.name.toLowerCase().includes(q) || lastMsg.includes(q);
   });
 
-  if (typeof document === 'undefined') return null;
+  const dockedConversations = dockedThreadIds
+    .map((id) => conversations.find((c) => c.id === id))
+    .filter((c): c is ConversationThread => Boolean(c));
+
+  if (!isMounted || typeof document === 'undefined') return null;
 
   return createPortal(
     <>
       {/* ====================================================================
-          1. PANEL GLOBAL DEL CENTRO DE CONVERSACIONES
+          1. PANEL GLOBAL DEL CENTRO DE CONVERSACIONES (Sin pestaña Reuniones ni llamadas)
          ==================================================================== */}
       {isPopoverOpen && (
         <aside
@@ -403,23 +432,6 @@ export const CentroConversaciones: React.FC<CentroConversacionesProps> = ({
                 </svg>
               </div>
               <span className="chat-rail-label">Canales</span>
-            </button>
-
-            <button
-              type="button"
-              className={`chat-rail-tab ${activeTab === 'reuniones' ? 'is-active' : ''}`}
-              onClick={() => setActiveTab('reuniones')}
-            >
-              <div className="chat-rail-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path
-                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              <span className="chat-rail-label">Reuniones</span>
             </button>
 
             <button
@@ -530,13 +542,15 @@ export const CentroConversaciones: React.FC<CentroConversacionesProps> = ({
                 (filteredConversations.length > 0 ? (
                   filteredConversations.map((conv) => {
                     const lastMsg = conv.messages[conv.messages.length - 1];
-                    const isActive = conv.id === activeThreadId && isChatWindowOpen;
+                    const isDocked = dockedThreadIds.includes(conv.id);
 
                     return (
                       <button
                         key={conv.id}
                         type="button"
-                        className={`chat-thread-item ${isActive ? 'is-active' : ''}`}
+                        className={`chat-thread-item ${
+                          conv.id === activeThreadId && isChatWindowOpen ? 'is-active' : ''
+                        }`}
                         onClick={() => handleOpenThread(conv.id)}
                       >
                         <div className={`chat-thread-avatar avatar-${conv.badgeColor}`}>
@@ -548,7 +562,10 @@ export const CentroConversaciones: React.FC<CentroConversacionesProps> = ({
                             {conv.isNewTag && conv.unread > 0 ? (
                               <span className="chat-thread-new-tag">Nuevo</span>
                             ) : (
-                              <span className="chat-thread-time">{conv.lastTime}</span>
+                              <span className="chat-thread-time">
+                                {isDocked ? 'En barra • ' : ''}
+                                {conv.lastTime}
+                              </span>
                             )}
                           </div>
                           <p className="chat-thread-preview">
@@ -573,46 +590,6 @@ export const CentroConversaciones: React.FC<CentroConversacionesProps> = ({
                     No hay conversaciones que coincidan con el filtro actual.
                   </div>
                 ))}
-
-              {activeTab === 'reuniones' && (
-                <div className="chat-meetings-panel">
-                  <div className="chat-meeting-card">
-                    <span className="chat-meeting-tag">HOY · 16:00 HRS</span>
-                    <h4 className="chat-meeting-title">Revisión Técnica Licitación #41</h4>
-                    <p className="chat-meeting-desc">
-                      Canal #SIFYGSA-OPP-2026-041 · Ing. Valdez y Ventas
-                    </p>
-                    <button
-                      type="button"
-                      className="chat-meeting-join-btn"
-                      onClick={() => {
-                        handleOpenThread('opp-041');
-                        setActiveCallMode('video');
-                      }}
-                    >
-                      Unirse a videollamada
-                    </button>
-                  </div>
-
-                  <div className="chat-meeting-card">
-                    <span className="chat-meeting-tag">DISPONIBLE</span>
-                    <h4 className="chat-meeting-title">Sala Rápida #General</h4>
-                    <p className="chat-meeting-desc">
-                      Inicia una llamada instantánea con todo el equipo comercial
-                    </p>
-                    <button
-                      type="button"
-                      className="chat-meeting-join-btn secondary"
-                      onClick={() => {
-                        handleOpenThread('general');
-                        setActiveCallMode('audio');
-                      }}
-                    >
-                      Iniciar audio rápido
-                    </button>
-                  </div>
-                </div>
-              )}
 
               {activeTab === 'avisos' && (
                 <div className="chat-notices-list">
@@ -642,13 +619,15 @@ export const CentroConversaciones: React.FC<CentroConversacionesProps> = ({
             <footer className="chat-center-footer">
               <span className="chat-status-live">
                 <span className="green-pulse-dot" />
-                SIFYGSA Connect Activo
+                SIFYGSA Connect Activo ({dockedConversations.length} chats en barra)
               </span>
               <button
                 type="button"
                 className="chat-expand-link-btn"
                 onClick={() => {
-                  setShowBubbles(true);
+                  setDockedThreadIds((prev) =>
+                    prev.includes(activeThreadId) ? prev : [...prev, activeThreadId]
+                  );
                   setIsChatWindowOpen(true);
                   onClosePopover();
                 }}
@@ -661,12 +640,14 @@ export const CentroConversaciones: React.FC<CentroConversacionesProps> = ({
       )}
 
       {/* ====================================================================
-          2. VENTANA FLOTANTE DE CHAT & BURBUJAS CIRCULARES (Bottom-Right Dock)
+          2. VENTANA FLOTANTE DE CHAT & COLUMNA VERTICAL ACUMULADA DE BURBUJAS
+             (Sin burbuja de carita sonriente y sin botones de llamadas)
          ==================================================================== */}
       <div className="floating-chat-dock" data-purpose="dock-chat-container">
-        {isChatWindowOpen && activeThread && (
+        {/* Ventana de Chat Activa (se oculta si el popover superior está abierto para no encimarse) */}
+        {isChatWindowOpen && !isPopoverOpen && activeThread && (
           <section className="floating-chat-window" aria-label={`Chat ${activeThread.name}`}>
-            {/* Chat Header */}
+            {/* Chat Header (Sin botones de llamada ni videollamada) */}
             <header className="floating-chat-header">
               <div className="floating-chat-identity">
                 <div className={`chat-thread-avatar sm avatar-${activeThread.badgeColor}`}>
@@ -681,32 +662,8 @@ export const CentroConversaciones: React.FC<CentroConversacionesProps> = ({
               <div className="floating-chat-controls">
                 <button
                   type="button"
-                  className={`floating-chat-ctrl-btn call ${activeCallMode === 'video' ? 'active' : ''}`}
-                  title="Videollamada"
-                  onClick={() =>
-                    setActiveCallMode((prev) => (prev === 'video' ? null : 'video'))
-                  }
-                >
-                  <svg viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  className={`floating-chat-ctrl-btn call ${activeCallMode === 'audio' ? 'active' : ''}`}
-                  title="Llamada de voz"
-                  onClick={() =>
-                    setActiveCallMode((prev) => (prev === 'audio' ? null : 'audio'))
-                  }
-                >
-                  <svg viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
                   className="floating-chat-ctrl-btn"
-                  title="Minimizar a burbuja flotante"
+                  title="Minimizar a burbuja lateral"
                   onClick={() => setIsChatWindowOpen(false)}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -716,30 +673,13 @@ export const CentroConversaciones: React.FC<CentroConversacionesProps> = ({
                 <button
                   type="button"
                   className="floating-chat-ctrl-btn"
-                  title="Cerrar conversación"
-                  onClick={() => setIsChatWindowOpen(false)}
+                  title="Cerrar esta conversación"
+                  onClick={(e) => handleDismissBubble(activeThread.id, e)}
                 >
                   <IconClose size={14} />
                 </button>
               </div>
             </header>
-
-            {activeCallMode && (
-              <div className="floating-call-banner">
-                <span>
-                  {activeCallMode === 'video'
-                    ? `Videollamada activa en #${activeThread.name}`
-                    : `Llamada de voz conectada en #${activeThread.name}`}
-                </span>
-                <button
-                  type="button"
-                  className="floating-call-end-btn"
-                  onClick={() => setActiveCallMode(null)}
-                >
-                  Colgar
-                </button>
-              </div>
-            )}
 
             {/* Messages Feed */}
             <div className="floating-chat-messages">
@@ -776,7 +716,7 @@ export const CentroConversaciones: React.FC<CentroConversacionesProps> = ({
                 ) : (
                   <div key={msg.id} className="chat-bubble-other-row">
                     <div className="chat-other-avatar">
-                      {msg.isBot ? '🤖' : msg.sender.charAt(0).toUpperCase()}
+                      {msg.isBot ? 'SB' : msg.sender.charAt(0).toUpperCase()}
                     </div>
                     <div className="chat-other-content">
                       <div className="chat-other-meta">
@@ -884,59 +824,44 @@ export const CentroConversaciones: React.FC<CentroConversacionesProps> = ({
           </section>
         )}
 
-        {/* Burbujas Circulares Flotantes */}
-        {showBubbles && (
-          <div className="floating-bubbles-row">
-            {/* Burbuja Secundaria: Soporte / SIFYGSA Bot */}
-            <button
-              type="button"
-              className="floating-bubble-secondary"
-              title="Asistente SIFYGSA · Soporte Activo"
-              onClick={() => handleOpenThread('soporte')}
-            >
-              <span className="bubble-bot-inner">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path
-                    d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-              <span className="bubble-online-dot" />
-            </button>
-
-            {/* Burbuja Principal: Canal Activo */}
-            <div className="floating-bubble-primary-wrap">
-              <button
-                type="button"
-                className="floating-bubble-primary"
-                title="Abrir / Minimizar Chat #General"
-                onClick={() => {
-                  if (isChatWindowOpen) {
-                    setIsChatWindowOpen(false);
-                  } else {
-                    handleOpenThread(activeThreadId);
-                  }
-                }}
-              >
-                <span>{activeThread?.badgeText ?? 'G'}</span>
-              </button>
-              {totalUnread > 0 && <span className="floating-bubble-unread">{totalUnread}</span>}
-              <span className="bubble-online-dot lg" />
-              <button
-                type="button"
-                className="floating-bubble-dismiss"
-                title="Ocultar burbujas"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsChatWindowOpen(false);
-                  setShowBubbles(false);
-                }}
-              >
-                ✕
-              </button>
-            </div>
+        {/* Columna Vertical Acumulada de Burbujas de Chat (apiladas hacia arriba en el borde derecho) */}
+        {dockedConversations.length > 0 && (
+          <div className="floating-bubbles-column" aria-label="Chats activos acumulados">
+            {dockedConversations.map((conv) => {
+              const isCurrentOpen = isChatWindowOpen && activeThreadId === conv.id;
+              return (
+                <div key={conv.id} className="floating-bubble-primary-wrap">
+                  <button
+                    type="button"
+                    className={`floating-bubble-primary bubble-color-${conv.badgeColor} ${
+                      isCurrentOpen ? 'is-open-bubble' : ''
+                    }`}
+                    title={`${conv.name} — ${conv.subtitle}`}
+                    onClick={() => {
+                      if (isCurrentOpen) {
+                        setIsChatWindowOpen(false);
+                      } else {
+                        handleOpenThread(conv.id);
+                      }
+                    }}
+                  >
+                    <span>{conv.badgeText}</span>
+                  </button>
+                  {conv.unread > 0 && (
+                    <span className="floating-bubble-unread">{conv.unread}</span>
+                  )}
+                  <span className="bubble-online-dot lg" />
+                  <button
+                    type="button"
+                    className="floating-bubble-dismiss"
+                    title={`Cerrar burbuja ${conv.name}`}
+                    onClick={(e) => handleDismissBubble(conv.id, e)}
+                  >
+                    ✕
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -946,4 +871,3 @@ export const CentroConversaciones: React.FC<CentroConversacionesProps> = ({
 };
 
 export default CentroConversaciones;
-

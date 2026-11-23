@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import Link from 'next/link';
 import {
   INITIAL_STITCH_OPPORTUNITIES,
   INITIAL_STITCH_STAGES,
@@ -240,43 +239,131 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
     currentTargetCard: string | null;
   } | null>(null);
 
-  // Selected Opportunity for Detail View
+  // Selected Opportunity for Detail View & Audit/Movement Tracker
   const [selectedFolio, setSelectedFolio] = useState<string>(
     initialFolio || 'OPP-2026-041'
   );
   const [detailTab, setDetailTab] = useState<'notas' | 'info' | 'lead'>('notas');
-  const [chatterTab, setChatterTab] = useState<'mensaje' | 'nota' | 'actividad'>('nota');
+  const [chatterTab, setChatterTab] = useState<'movimientos' | 'nota' | 'mensaje' | 'actividad'>('movimientos');
+  const [chatterFilter, setChatterFilter] = useState<'todos' | 'movimientos' | 'notas'>('todos');
   const [chatterInput, setChatterInput] = useState('');
-  const [chatterLog, setChatterLog] = useState<
-    Array<{
-      id: string;
-      author: string;
-      initials: string;
-      time: string;
-      title?: string;
-      text: string;
-      isBot?: boolean;
-    }>
-  >([
-    {
-      id: 'log-1',
-      author: 'SIFYGSA Bot',
-      initials: 'BOT',
-      time: '9:06 a.m.',
-      title: 'Enriquecimiento de Lead (basado en dominio de correo)',
-      text: 'No se encontraron datos corporativos adicionales para el dominio proporcionado. No se consumieron créditos IA.',
-      isBot: true,
-    },
-    {
-      id: 'log-2',
-      author: 'Ivan Alexei Gamboa Bernal',
-      initials: 'IA',
-      time: '9:04 a.m.',
-      text: 'Lead / oportunidad comercial creada en el flujo industrial SIFYGSA.',
-    },
-  ]);
+  const [newTagInput, setNewTagInput] = useState('');
+  const [showAddTagInput, setShowAddTagInput] = useState(false);
+  const [detailTeamName, setDetailTeamName] = useState('Ingeniería Fire & Gas Golfo-Sur');
+  const [detailCampaignName, setDetailCampaignName] = useState('Licitación Industrial Pemex / CFE');
 
-  // Calendar states
+  // Local draft states for editable fields in Detail View so user can type freely and commit on blur/Enter
+  const [editDraftTitle, setEditDraftTitle] = useState('');
+  const [editDraftAmount, setEditDraftAmount] = useState('');
+  const [editDraftProb, setEditDraftProb] = useState('');
+  const [editDraftContact, setEditDraftContact] = useState('');
+  const [editDraftEmail, setEditDraftEmail] = useState('');
+  const [editDraftClose, setEditDraftClose] = useState('');
+  const [editDraftPhone, setEditDraftPhone] = useState('');
+  const [editDraftNotes, setEditDraftNotes] = useState('');
+
+  type AuditLogEntry = {
+    id: string;
+    author: string;
+    roleLabel?: string;
+    initials: string;
+    time: string;
+    title?: string;
+    text: string;
+    isBot?: boolean;
+    kind: 'movement' | 'modification' | 'note' | 'message' | 'activity' | 'system';
+    fieldLabel?: string;
+    oldValue?: string;
+    newValue?: string;
+  };
+
+  const [chatterLogsByFolio, setChatterLogsByFolio] = useState<
+    Record<string, AuditLogEntry[]>
+  >({
+    'OPP-2026-041': [
+      {
+        id: 'log-init-0',
+        author: 'Ing. Carlos Rodríguez',
+        roleLabel: 'Director Comercial & CRM',
+        initials: 'CR',
+        time: '10:15 a.m.',
+        title: 'Verificación de Alcance Técnico',
+        text: 'Se validó con CFE Generación VI el listado de detectores H2S en Refinería Dos Bocas.',
+        kind: 'movement',
+        fieldLabel: 'Estado Operativo',
+        oldValue: 'Borrador inicial',
+        newValue: 'Prospección inicial (10%)',
+      },
+      {
+        id: 'log-1',
+        author: 'SIFYGSA Bot',
+        roleLabel: 'Auditoría Automática',
+        initials: 'BOT',
+        time: '9:06 a.m.',
+        title: 'Registro en Checador de Movimientos',
+        text: 'Trazabilidad activa: cualquier cambio de etapa, monto, responsable o datos técnicos queda registrado con usuario y hora.',
+        isBot: true,
+        kind: 'system',
+      },
+      {
+        id: 'log-2',
+        author: 'Ivan Alexei Gamboa Bernal',
+        roleLabel: 'Ingeniería de Ventas',
+        initials: 'IA',
+        time: '9:04 a.m.',
+        text: 'Lead / oportunidad comercial creada en el flujo industrial SIFYGSA.',
+        kind: 'system',
+      },
+    ],
+  });
+
+  const recordAuditMovement = (
+    folio: string,
+    entry: Omit<AuditLogEntry, 'id' | 'time' | 'author' | 'initials' | 'roleLabel'> & {
+      author?: string;
+      initials?: string;
+      roleLabel?: string;
+    }
+  ) => {
+    const nowTime = new Date().toLocaleTimeString('es-MX', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const newEntry: AuditLogEntry = {
+      id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      author: entry.author || 'Ing. Carlos Rodríguez',
+      roleLabel: entry.roleLabel || 'Director Comercial & CRM',
+      initials: entry.initials || 'CR',
+      time: nowTime,
+      title: entry.title,
+      text: entry.text,
+      isBot: entry.isBot,
+      kind: entry.kind,
+      fieldLabel: entry.fieldLabel,
+      oldValue: entry.oldValue,
+      newValue: entry.newValue,
+    };
+
+    setChatterLogsByFolio((prev) => {
+      const existing = prev[folio] || [
+        {
+          id: `init-${folio}`,
+          author: 'Ing. Carlos Rodríguez',
+          roleLabel: 'Director Comercial & CRM',
+          initials: 'CR',
+          time: '09:00 a.m.',
+          text: `Oportunidad ${folio} registrada en el flujo industrial SIFYGSA.`,
+          kind: 'system',
+        },
+      ];
+      return {
+        ...prev,
+        [folio]: [newEntry, ...existing],
+      };
+    });
+  };
+
+  // Calendar states (dentro de CRM con Kanban, Lista, Gráfica, etc.)
   const [calendarScale, setCalendarScale] = useState<'Día' | 'Semana' | 'Mes' | 'Año'>('Semana');
   const [calendarEvents, setCalendarEvents] = useState<CalendarEventItem[]>(
     INITIAL_CALENDAR_EVENTS
@@ -288,6 +375,22 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
   const [newEventFolio, setNewEventFolio] = useState(
     'OPP-2026-074 • Pemex Logística Tanques'
   );
+
+  const handleSaveCalendarEvent = () => {
+    if (!newEventTitle.trim()) return;
+    const newEv: CalendarEventItem = {
+      id: `ev-${Date.now()}`,
+      dayCol: 3,
+      topPx: 390,
+      heightPx: 90,
+      timeRange: '13:30 - 15:00',
+      title: newEventTitle,
+      folioBadge: newEventFolio.split('•')[0]?.trim() || 'OPP-2026-074',
+      colorType: 'blue',
+    };
+    setCalendarEvents((prev) => [...prev, newEv]);
+    setShowSchedulePopover(false);
+  };
 
   // Graph states
   const [graphType, setGraphType] = useState<'bar' | 'line' | 'pie'>('bar');
@@ -349,6 +452,45 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
       opportunities.find((o) => o.folio === selectedFolio) || opportunities[0]
     );
   }, [opportunities, selectedFolio]);
+
+  // Sincronizar campos editables cuando cambia la oportunidad seleccionada
+  useEffect(() => {
+    if (!selectedOpportunity) return;
+    setEditDraftTitle(selectedOpportunity.title);
+    setEditDraftAmount(selectedOpportunity.amount.toLocaleString('es-MX'));
+    setEditDraftProb(String(selectedOpportunity.probability));
+    setEditDraftContact(selectedOpportunity.contactName);
+    setEditDraftEmail(selectedOpportunity.email);
+    setEditDraftClose(selectedOpportunity.expectedClose);
+    setEditDraftPhone(selectedOpportunity.phone);
+    setEditDraftNotes(selectedOpportunity.notes);
+  }, [selectedOpportunity?.folio]);
+
+  // Actualizar cualquier campo de la oportunidad seleccionada y registrar en el Checador de Movimientos
+  const updateSelectedOpportunityField = (
+    patch: Partial<StitchOpportunity>,
+    fieldLabel: string,
+    oldVal: string,
+    newVal: string,
+    kind: 'movement' | 'modification' = 'modification'
+  ) => {
+    if (!selectedOpportunity || oldVal.trim() === newVal.trim()) return;
+    const targetFolio = selectedOpportunity.folio;
+    setOpportunities((prev) =>
+      prev.map((o) => (o.folio === targetFolio ? { ...o, ...patch } : o))
+    );
+    recordAuditMovement(targetFolio, {
+      kind,
+      title:
+        kind === 'movement'
+          ? 'Movimiento de Etapa en Pipeline'
+          : `Modificación de ${fieldLabel}`,
+      fieldLabel,
+      oldValue: oldVal,
+      newValue: newVal,
+      text: `Actualizó ${fieldLabel.toLowerCase()} en la ficha técnica de la oportunidad.`,
+    });
+  };
 
   // Filtered registered clients for the NUEVA OPORTUNIDAD dropdown
   const matchingClientsForDropdown = useMemo(() => {
@@ -518,13 +660,27 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
     setTimeout(() => setJustDroppedFolio(null), 650);
   };
 
-  // Move opportunity between stages or positions
+  // Move opportunity between stages or positions (also logs in Checador de Movimientos)
   const moveOpportunityToStage = (
     folioToMove: string,
     targetStageName: string,
     insertBeforeFolio?: string | null
   ) => {
     const stageObj = stages.find((s) => s.name === targetStageName);
+    const currentOpp = opportunities.find((o) => o.folio === folioToMove);
+    const newProb = stageObj?.probability ?? currentOpp?.probability ?? 10;
+
+    if (currentOpp && currentOpp.stage !== targetStageName) {
+      recordAuditMovement(folioToMove, {
+        kind: 'movement',
+        title: 'Movimiento de Etapa en Tablero Kanban',
+        fieldLabel: 'Etapa del Pipeline',
+        oldValue: `${currentOpp.stage} (${currentOpp.probability}%)`,
+        newValue: `${targetStageName} (${newProb}%)`,
+        text: `Desplazó la oportunidad en el tablero hacia la etapa "${targetStageName}".`,
+      });
+    }
+
     setOpportunities((prev) => {
       const targetOpp = prev.find((o) => o.folio === folioToMove);
       if (!targetOpp) return prev;
@@ -658,22 +814,6 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
     };
   });
 
-  const handleSaveCalendarEvent = () => {
-    if (!newEventTitle.trim()) return;
-    const newEv: CalendarEventItem = {
-      id: `ev-${Date.now()}`,
-      dayCol: 3,
-      topPx: 390,
-      heightPx: 90,
-      timeRange: '13:30 - 15:00',
-      title: newEventTitle,
-      folioBadge: newEventFolio.split('•')[0]?.trim() || 'OPP-2026-074',
-      colorType: 'blue',
-    };
-    setCalendarEvents((prev) => [...prev, newEv]);
-    setShowSchedulePopover(false);
-  };
-
   return (
     <div className="sifygsa-tailwind-scope w-full min-h-[calc(100vh-64px)] bg-surface text-on-surface flex flex-col select-none">
       {/* =====================================================================
@@ -681,18 +821,25 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
           ===================================================================== */}
       {viewMode !== 'detail' && (
         <section className="bg-surface-container-lowest border-b border-outline-variant/25 px-6 py-3 flex flex-col gap-3 shrink-0">
-          {/* Fila 1: Acciones Izquierda + Switcher de 7 Vistas Derecha */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Fila 1: Acciones Izquierda + Switcher de 7 Vistas Derecha (fijo a la derecha, sin envolver al centro) */}
+          <div
+            className="flex items-center justify-between gap-3 flex-nowrap"
+            style={{
+              display: 'flex',
+              flexWrap: 'nowrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+            }}
+          >
             {/* Left Group */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
               {/* Primary Action: + Nuevo */}
-              <div className="inline-flex rounded-lg shadow-sm">
+              <div className="inline-flex rounded-lg shadow-sm shrink-0">
                 <button
                   type="button"
                   onClick={() => {
-                    if (viewMode === 'calendar') {
-                      setShowSchedulePopover(true);
-                    } else if (viewMode === 'contacts') {
+                    if (viewMode === 'contacts') {
                       handleOpenNewClientModal('');
                     } else {
                       setQuickCreateStage('Prospección inicial');
@@ -703,11 +850,7 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 >
                   <span className="material-symbols-outlined text-[16px]">add</span>
                   <span>
-                    {viewMode === 'calendar'
-                      ? 'Nuevo Evento'
-                      : viewMode === 'contacts'
-                      ? 'Nuevo Cliente'
-                      : 'Nuevo'}
+                    {viewMode === 'contacts' ? 'Nuevo Cliente' : 'Nuevo'}
                   </span>
                 </button>
                 <button
@@ -717,6 +860,7 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                       handleOpenNewClientModal('');
                     } else {
                       setQuickCreateStage('Prospección inicial');
+                      if (viewMode !== 'kanban') switchView('kanban');
                     }
                   }}
                   className="bg-primary hover:bg-blue-800 text-on-primary px-2 py-2 rounded-r-lg border-l border-blue-500/40 flex items-center cursor-pointer"
@@ -726,41 +870,38 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 </button>
               </div>
 
-              {/* Botón Acceso Rápido Nueva Requisición dentro de CRM */}
-              <Link
-                href="/crm?sub=crm-nueva-requisicion"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 text-xs font-bold transition-all no-underline shadow-xs cursor-pointer"
-                title="Crear Nueva Requisición"
-              >
-                <span className="material-symbols-outlined text-[16px]">post_add</span>
-                <span className="hidden md:inline">Nueva Requisición</span>
-              </Link>
-
-              <div className="h-5 w-[1px] bg-outline-variant/30 mx-1" />
+              <div className="h-5 w-[1px] bg-outline-variant/30 mx-0.5 shrink-0" />
 
               {/* Module Title & Context */}
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold text-on-surface tracking-tight">
-                  {viewMode === 'calendar'
-                    ? 'Calendario de Actividades'
-                    : viewMode === 'contacts'
+              <div className="flex items-center gap-2 min-w-0">
+                <h1 className="text-lg font-bold text-on-surface tracking-tight truncate">
+                  {viewMode === 'contacts'
                     ? 'Contactos y Clientes'
                     : viewMode === 'graph'
                     ? 'Análisis de Flujo'
                     : 'Flujo'}
                 </h1>
-                <span className="font-mono text-[11px] bg-surface-container-high text-on-surface-variant px-2 py-0.5 rounded font-medium">
-                  {viewMode === 'calendar'
-                    ? 'Noviembre 2026 • Sem 46'
-                    : viewMode === 'contacts'
+                <span className="hidden lg:inline-flex font-mono text-[11px] bg-surface-container-high text-on-surface-variant px-2 py-0.5 rounded font-medium truncate">
+                  {viewMode === 'contacts'
                     ? `${registeredClients.length} empresas registradas`
+                    : viewMode === 'calendar'
+                    ? 'Calendario de Promesas y Oportunidades'
                     : 'Pipeline Industrial Q4-2026'}
                 </span>
               </div>
             </div>
 
-            {/* Right Group: Paginador compacto + View Switcher (7 Vistas SIFYGSA) */}
-            <div className="flex items-center gap-3">
+            {/* Right Group: Paginador compacto + View Switcher (7 Vistas SIFYGSA, siempre fijo a la derecha) */}
+            <div
+              className="flex items-center gap-2.5 shrink-0 ml-auto"
+              style={{
+                marginLeft: 'auto',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.65rem',
+              }}
+            >
               {/* Compact Paginator */}
               <div className="hidden xl:flex items-center gap-2 text-xs font-mono text-on-surface-variant bg-surface-container-low px-2.5 py-1 rounded-lg border border-outline-variant/25">
                 <span className="font-semibold text-on-surface">
@@ -1911,7 +2052,7 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
       )}
 
       {/* =====================================================================
-          VISTA 3: CALENDARIO SEMANAL M365 + POPOVER PROGRAMAR EVENTO (STITCH)
+          VISTA 3: CALENDARIO SEMANAL DE OPORTUNIDADES EN CRM (CON KANBAN/LISTA/GRÁFICA)
           ===================================================================== */}
       {viewMode === 'calendar' && (
         <div className="flex-1 flex flex-col overflow-hidden bg-surface">
@@ -1969,7 +2110,7 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 ))}
               </div>
 
-              {/* Badges de Sincronización Microsoft 365 & Google */}
+              {/* Badges de Sincronización Microsoft 365 */}
               <div className="hidden lg:flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-medium bg-surface-container-low border border-outline-variant/30 px-2.5 py-1 rounded-lg text-on-surface-variant">
                   <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -2147,7 +2288,7 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                     <div className="flex-1 h-[2px] bg-error" />
                   </div>
 
-                  {/* Popover Flotante: Programar Evento (Stitch Reference) */}
+                  {/* Popover Flotante: Programar Evento Comercial */}
                   {showSchedulePopover && (
                     <div
                       onClick={(e) => e.stopPropagation()}
@@ -2309,7 +2450,7 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 ))}
               </div>
 
-              {/* Próximo SLA Crítico */}
+              {/* Próximo Compromiso */}
               <div className="mt-auto bg-surface-container-low p-3 rounded-xl border border-outline-variant/30 flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase text-primary">
@@ -3119,18 +3260,20 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    setOpportunities((prev) =>
-                      prev.map((o) =>
-                        o.folio === selectedOpportunity.folio
-                          ? {
-                              ...o,
-                              stage: 'Ganada / Adjudicada',
-                              probability: 100,
-                              wonBadge: 'ADJUDICADA',
-                            }
-                          : o
-                      )
+                    updateSelectedOpportunityField(
+                      {
+                        stage: 'Ganada / Adjudicada',
+                        probability: 100,
+                        wonBadge: 'ADJUDICADA',
+                        statusType: 'won',
+                        statusText: 'Adjudicada hoy',
+                      },
+                      'Etapa del Pipeline',
+                      `${selectedOpportunity.stage} (${selectedOpportunity.probability}%)`,
+                      'Ganada / Adjudicada (100%)',
+                      'movement'
                     );
+                    setEditDraftProb('100');
                   }}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-1.5 rounded-lg shadow-sm cursor-pointer"
                 >
@@ -3138,6 +3281,16 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 </button>
                 <button
                   type="button"
+                  onClick={() => {
+                    recordAuditMovement(selectedOpportunity.folio, {
+                      kind: 'modification',
+                      title: 'Enriquecimiento Técnico de Datos',
+                      fieldLabel: 'Validación Corporativa',
+                      oldValue: 'Datos base',
+                      newValue: `Verificado (${selectedOpportunity.client})`,
+                      text: 'Ejecutó enriquecimiento de datos corporativos y validación de dominio del cliente.',
+                    });
+                  }}
                   className="bg-primary-container hover:bg-primary text-on-primary font-semibold text-xs px-3.5 py-1.5 rounded-lg shadow-sm flex items-center gap-1 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[15px]">
@@ -3147,6 +3300,20 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 </button>
                 <button
                   type="button"
+                  onClick={() => {
+                    updateSelectedOpportunityField(
+                      {
+                        probability: 0,
+                        statusType: 'overdue',
+                        statusText: 'Marcada como Perdida',
+                      },
+                      'Estado de Oportunidad',
+                      `${selectedOpportunity.stage} (${selectedOpportunity.probability}%)`,
+                      'Perdida / Descartada (0%)',
+                      'movement'
+                    );
+                    setEditDraftProb('0');
+                  }}
                   className="bg-surface-container-low hover:bg-error-container hover:text-on-error-container text-on-surface-variant font-semibold text-xs px-3.5 py-1.5 rounded-lg border border-outline-variant/30 cursor-pointer"
                 >
                   Perdido
@@ -3162,17 +3329,17 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                       key={st.id}
                       type="button"
                       onClick={() => {
-                        setOpportunities((prev) =>
-                          prev.map((o) =>
-                            o.folio === selectedOpportunity.folio
-                              ? {
-                                  ...o,
-                                  stage: st.name,
-                                  probability: st.probability,
-                                }
-                              : o
-                          )
+                        updateSelectedOpportunityField(
+                          {
+                            stage: st.name,
+                            probability: st.probability,
+                          },
+                          'Etapa del Pipeline',
+                          `${selectedOpportunity.stage} (${selectedOpportunity.probability}%)`,
+                          `${st.name} (${st.probability}%)`,
+                          'movement'
                         );
+                        setEditDraftProb(String(st.probability));
                       }}
                       className={`px-3 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                         isCurrent
@@ -3183,7 +3350,7 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                       <span>{st.name}</span>
                       {isCurrent && (
                         <span className="font-mono text-[10px] bg-white/20 px-1.5 py-0.2 rounded">
-                          2h y 7min
+                          Activa
                         </span>
                       )}
                     </button>
@@ -3193,188 +3360,574 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
             </div>
           </div>
 
-          {/* Cuerpo Dividido: 60% Hoja de Formulario | 40% Chatter Colaborativo */}
+          {/* Cuerpo Dividido: 60% Hoja de Formulario Editable en Todo Momento | 40% Checador de Movimientos y Bitácora */}
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6">
-            {/* Columna Izquierda (7 cols ~ 60%): Hoja de Oportunidad */}
+            {/* Columna Izquierda (7 cols ~ 60%): Hoja de Oportunidad 100% Editable en Tiempo Real */}
             <div className="lg:col-span-7 bg-surface-container-lowest rounded-xl border border-outline-variant/30 shadow-sm p-6 flex flex-col gap-6">
-              {/* Título y Métricas Principales */}
+              {/* Título, Prioridad y Métricas Principales (Editables en todo momento) */}
               <div className="flex flex-col gap-4 border-b border-outline-variant/25 pb-5">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-primary bg-primary-fixed px-2.5 py-0.5 rounded">
-                    {selectedOpportunity.folio}
-                  </span>
-                  <div className="flex items-center gap-1 text-amber-400">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-primary bg-primary-fixed px-2.5 py-0.5 rounded">
+                      {selectedOpportunity.folio}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Edición activa • Auditable
+                    </span>
+                  </div>
+
+                  {/* Estrellas de Prioridad Clickables */}
+                  <div className="flex items-center gap-1 text-amber-400" title="Cambiar prioridad de la oportunidad">
                     {[1, 2, 3].map((s) => (
-                      <span
+                      <button
                         key={s}
-                        className="material-symbols-outlined text-[18px]"
-                        style={{
-                          fontVariationSettings:
-                            s <= selectedOpportunity.stars
-                              ? "'FILL' 1"
-                              : "'FILL' 0",
+                        type="button"
+                        onClick={() => {
+                          if (selectedOpportunity.stars === s) return;
+                          updateSelectedOpportunityField(
+                            { stars: s as 1 | 2 | 3 },
+                            'Prioridad Comercial',
+                            `${'★'.repeat(selectedOpportunity.stars)}${'☆'.repeat(3 - selectedOpportunity.stars)} (${selectedOpportunity.stars}/3)`,
+                            `${'★'.repeat(s)}${'☆'.repeat(3 - s)} (${s}/3)`
+                          );
                         }}
+                        className="hover:scale-110 transition-transform cursor-pointer"
                       >
-                        star
-                      </span>
+                        <span
+                          className="material-symbols-outlined text-[20px]"
+                          style={{
+                            fontVariationSettings:
+                              s <= selectedOpportunity.stars
+                                ? "'FILL' 1"
+                                : "'FILL' 0",
+                          }}
+                        >
+                          star
+                        </span>
+                      </button>
                     ))}
                   </div>
                 </div>
 
-                <h1 className="text-xl font-bold text-on-surface leading-snug">
-                  {selectedOpportunity.title}
-                </h1>
+                {/* Título de la oportunidad editable en todo momento */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+                    Título / Nombre de la Oportunidad (Editable)
+                  </label>
+                  <input
+                    type="text"
+                    value={editDraftTitle}
+                    onChange={(e) => setEditDraftTitle(e.target.value)}
+                    onBlur={() => {
+                      const clean = editDraftTitle.trim();
+                      if (clean && clean !== selectedOpportunity.title) {
+                        updateSelectedOpportunityField(
+                          { title: clean },
+                          'Título de la Oportunidad',
+                          selectedOpportunity.title,
+                          clean
+                        );
+                      } else {
+                        setEditDraftTitle(selectedOpportunity.title);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        (e.target as HTMLInputElement).blur();
+                      }
+                    }}
+                    className="text-lg font-bold text-on-surface bg-surface-container-low/60 hover:bg-surface-container-low focus:bg-surface-container-lowest border border-transparent hover:border-outline-variant/40 focus:border-primary rounded-lg px-3 py-1.5 transition-all focus:outline-none"
+                  />
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                  <div className="bg-surface-container-low p-3.5 rounded-xl border border-outline-variant/25">
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">
-                      Ingreso Esperado
+                  {/* Ingreso Esperado Editable */}
+                  <div className="bg-surface-container-low p-3.5 rounded-xl border border-outline-variant/25 focus-within:border-primary transition-colors">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant flex items-center justify-between">
+                      <span>Ingreso Esperado</span>
+                      <span className="material-symbols-outlined text-[13px] text-outline">edit</span>
                     </span>
-                    <div className="font-mono text-2xl font-bold text-on-surface mt-1">
-                      {selectedOpportunity.amountFormatted}{' '}
-                      <span className="text-xs font-normal text-outline">
+                    <div className="flex items-baseline gap-1.5 mt-1">
+                      <span className="font-mono text-2xl font-bold text-on-surface">$</span>
+                      <input
+                        type="text"
+                        value={editDraftAmount}
+                        onChange={(e) => setEditDraftAmount(e.target.value)}
+                        onBlur={() => {
+                          const numeric =
+                            parseInt(editDraftAmount.replace(/[^0-9]/g, ''), 10) ||
+                            selectedOpportunity.amount;
+                          const formatted = `$${numeric.toLocaleString('es-MX')}`;
+                          setEditDraftAmount(numeric.toLocaleString('es-MX'));
+                          if (numeric !== selectedOpportunity.amount) {
+                            updateSelectedOpportunityField(
+                              { amount: numeric, amountFormatted: formatted },
+                              'Ingreso Esperado',
+                              `${selectedOpportunity.amountFormatted} MXN`,
+                              `${formatted} MXN`
+                            );
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                        }}
+                        className="w-full font-mono text-2xl font-bold text-on-surface bg-transparent border-b border-dashed border-outline-variant/50 focus:border-primary focus:outline-none"
+                      />
+                      <span className="text-xs font-mono text-outline shrink-0">
                         MXN
                       </span>
                     </div>
                   </div>
 
-                  <div className="bg-surface-container-low p-3.5 rounded-xl border border-outline-variant/25">
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant flex items-center gap-1">
-                      <span>Probabilidad de Éxito</span>
-                      <span className="material-symbols-outlined text-[14px] text-amber-500">
-                        auto_awesome
+                  {/* Probabilidad de Éxito Editable */}
+                  <div className="bg-surface-container-low p-3.5 rounded-xl border border-outline-variant/25 focus-within:border-primary transition-colors">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <span>Probabilidad de Éxito</span>
+                        <span className="material-symbols-outlined text-[14px] text-amber-500">
+                          auto_awesome
+                        </span>
                       </span>
+                      <span className="material-symbols-outlined text-[13px] text-outline">edit</span>
                     </span>
-                    <div className="font-mono text-2xl font-bold text-primary mt-1">
-                      en {selectedOpportunity.probability}.00 %
+                    <div className="flex items-baseline gap-1.5 mt-1">
+                      <span className="font-mono text-lg font-bold text-primary">en</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={editDraftProb}
+                        onChange={(e) => setEditDraftProb(e.target.value)}
+                        onBlur={() => {
+                          const num = Math.min(
+                            100,
+                            Math.max(0, parseInt(editDraftProb, 10) || 0)
+                          );
+                          setEditDraftProb(String(num));
+                          if (num !== selectedOpportunity.probability) {
+                            updateSelectedOpportunityField(
+                              { probability: num },
+                              'Probabilidad de Éxito',
+                              `${selectedOpportunity.probability}.00 %`,
+                              `${num}.00 %`
+                            );
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                        }}
+                        className="w-24 font-mono text-2xl font-bold text-primary bg-transparent border-b border-dashed border-primary/40 focus:border-primary focus:outline-none"
+                      />
+                      <span className="font-mono text-xl font-bold text-primary">.00 %</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Campos en 2 Columnas */}
+              {/* Campos en 2 Columnas (Todos Editables en Todo Momento) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                {/* Contacto / Cliente Industrial Editable + Selector de Clientes Registrados */}
                 <div className="flex flex-col gap-1">
-                  <label className="text-on-surface-variant font-semibold">
-                    Contacto / Cliente Industrial
+                  <label className="text-on-surface-variant font-semibold flex items-center justify-between">
+                    <span>Contacto / Cliente Industrial</span>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenNewClientModal('')}
+                      className="text-[10px] text-primary hover:underline font-bold cursor-pointer"
+                    >
+                      + Nuevo cliente
+                    </button>
                   </label>
-                  <div className="bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 font-medium text-on-surface">
-                    {selectedOpportunity.contactName} —{' '}
-                    {selectedOpportunity.client}
+                  <div className="grid grid-cols-1 gap-1.5">
+                    <select
+                      aria-label="Seleccionar cliente registrado"
+                      value={selectedOpportunity.client}
+                      onChange={(e) => {
+                        const chosen = registeredClients.find(
+                          (c) => c.companyName === e.target.value
+                        );
+                        if (chosen) {
+                          const prevLabel = `${selectedOpportunity.contactName} — ${selectedOpportunity.client}`;
+                          const nextLabel = `${chosen.contactName} — ${chosen.companyName}`;
+                          setEditDraftContact(chosen.contactName);
+                          setEditDraftEmail(chosen.email);
+                          setEditDraftPhone(chosen.phone);
+                          updateSelectedOpportunityField(
+                            {
+                              client: chosen.companyName,
+                              contactName: chosen.contactName,
+                              tagCode: chosen.tagCode,
+                              email: chosen.email,
+                              phone: chosen.phone,
+                            },
+                            'Contacto / Cliente Industrial',
+                            prevLabel,
+                            nextLabel
+                          );
+                        }
+                      }}
+                      className="bg-surface-container-low border border-outline-variant/40 rounded-lg px-3 py-1.5 font-semibold text-on-surface focus:outline-none focus:border-primary"
+                    >
+                      {!registeredClients.some(
+                        (c) => c.companyName === selectedOpportunity.client
+                      ) && (
+                        <option value={selectedOpportunity.client}>
+                          {selectedOpportunity.client}
+                        </option>
+                      )}
+                      {registeredClients.map((c) => (
+                        <option key={c.id} value={c.companyName}>
+                          {c.contactName} — {c.companyName}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={editDraftContact}
+                      onChange={(e) => setEditDraftContact(e.target.value)}
+                      onBlur={() => {
+                        const clean = editDraftContact.trim();
+                        if (clean && clean !== selectedOpportunity.contactName) {
+                          updateSelectedOpportunityField(
+                            { contactName: clean },
+                            'Nombre del Contacto',
+                            selectedOpportunity.contactName,
+                            clean
+                          );
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                      }}
+                      placeholder="Nombre del contacto..."
+                      className="bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-1.5 font-medium text-on-surface focus:outline-none focus:border-primary"
+                    />
                   </div>
                 </div>
 
+                {/* Vendedor Asignado Editable */}
                 <div className="flex flex-col gap-1">
                   <label className="text-on-surface-variant font-semibold">
                     Vendedor Asignado
                   </label>
-                  <div className="bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-1.5 flex items-center gap-2">
+                  <div className="bg-surface-container-low border border-outline-variant/40 rounded-lg px-3 py-1.5 flex items-center gap-2 focus-within:border-primary">
                     <span
-                      className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${selectedOpportunity.ownerAvatarClass}`}
+                      className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 ${selectedOpportunity.ownerAvatarClass}`}
                     >
                       {selectedOpportunity.ownerInitials}
                     </span>
-                    <span className="font-medium text-on-surface">
-                      {selectedOpportunity.ownerName}
-                    </span>
+                    <select
+                      aria-label="Vendedor Asignado"
+                      value={selectedOpportunity.ownerName}
+                      onChange={(e) => {
+                        const sellers = [
+                          {
+                            name: 'Ing. Carlos Rodríguez',
+                            initials: 'CR',
+                            cls: 'bg-primary-container text-on-primary',
+                          },
+                          {
+                            name: 'Ing. Manuel Valdez',
+                            initials: 'MV',
+                            cls: 'bg-secondary text-on-secondary',
+                          },
+                          {
+                            name: 'Ing. Jorge Garza',
+                            initials: 'JG',
+                            cls: 'bg-tertiary-container text-on-tertiary',
+                          },
+                          {
+                            name: 'Dra. Elena Alarcón',
+                            initials: 'EA',
+                            cls: 'bg-amber-600 text-white',
+                          },
+                        ];
+                        const picked =
+                          sellers.find((s) => s.name === e.target.value) || sellers[0];
+                        updateSelectedOpportunityField(
+                          {
+                            ownerName: picked.name,
+                            ownerInitials: picked.initials,
+                            ownerAvatarClass: picked.cls,
+                          },
+                          'Vendedor Asignado',
+                          selectedOpportunity.ownerName,
+                          picked.name
+                        );
+                      }}
+                      className="w-full bg-transparent font-medium text-on-surface focus:outline-none cursor-pointer"
+                    >
+                      <option value="Ing. Carlos Rodríguez">Ing. Carlos Rodríguez</option>
+                      <option value="Ing. Manuel Valdez">Ing. Manuel Valdez</option>
+                      <option value="Ing. Jorge Garza">Ing. Jorge Garza</option>
+                      <option value="Dra. Elena Alarcón">Dra. Elena Alarcón</option>
+                    </select>
                   </div>
                 </div>
 
+                {/* Correo Electrónico Editable */}
                 <div className="flex flex-col gap-1">
                   <label className="text-on-surface-variant font-semibold">
                     Correo Electrónico
                   </label>
-                  <div className="bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 font-mono text-on-surface">
-                    {selectedOpportunity.email}
-                  </div>
+                  <input
+                    type="email"
+                    value={editDraftEmail}
+                    onChange={(e) => setEditDraftEmail(e.target.value)}
+                    onBlur={() => {
+                      const clean = editDraftEmail.trim();
+                      if (clean && clean !== selectedOpportunity.email) {
+                        updateSelectedOpportunityField(
+                          { email: clean },
+                          'Correo Electrónico',
+                          selectedOpportunity.email,
+                          clean
+                        );
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                    }}
+                    className="bg-surface-container-low border border-outline-variant/30 focus:border-primary rounded-lg px-3 py-2 font-mono text-on-surface focus:outline-none"
+                  />
                 </div>
 
+                {/* Cierre Esperado Editable */}
                 <div className="flex flex-col gap-1">
                   <label className="text-on-surface-variant font-semibold">
                     Cierre Esperado
                   </label>
-                  <div className="bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 font-mono text-on-surface">
-                    {selectedOpportunity.expectedClose}
-                  </div>
+                  <input
+                    type="text"
+                    value={editDraftClose}
+                    onChange={(e) => setEditDraftClose(e.target.value)}
+                    onBlur={() => {
+                      const clean = editDraftClose.trim();
+                      if (clean && clean !== selectedOpportunity.expectedClose) {
+                        updateSelectedOpportunityField(
+                          { expectedClose: clean },
+                          'Fecha de Cierre Esperado',
+                          selectedOpportunity.expectedClose,
+                          clean
+                        );
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                    }}
+                    placeholder="Ej. 15 Nov 2026"
+                    className="bg-surface-container-low border border-outline-variant/30 focus:border-primary rounded-lg px-3 py-2 font-mono text-on-surface focus:outline-none"
+                  />
                 </div>
 
+                {/* Teléfono Editable */}
                 <div className="flex flex-col gap-1">
                   <label className="text-on-surface-variant font-semibold">
                     Teléfono
                   </label>
-                  <div className="bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 font-mono text-on-surface">
-                    {selectedOpportunity.phone}
-                  </div>
+                  <input
+                    type="text"
+                    value={editDraftPhone}
+                    onChange={(e) => setEditDraftPhone(e.target.value)}
+                    onBlur={() => {
+                      const clean = editDraftPhone.trim();
+                      if (clean && clean !== selectedOpportunity.phone) {
+                        updateSelectedOpportunityField(
+                          { phone: clean },
+                          'Teléfono de Contacto',
+                          selectedOpportunity.phone,
+                          clean
+                        );
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                    }}
+                    className="bg-surface-container-low border border-outline-variant/30 focus:border-primary rounded-lg px-3 py-2 font-mono text-on-surface focus:outline-none"
+                  />
                 </div>
 
+                {/* Etiquetas Técnicas Editables (Agregar / Quitar) */}
                 <div className="flex flex-col gap-1">
-                  <label className="text-on-surface-variant font-semibold">
-                    Etiquetas Técnicas
+                  <label className="text-on-surface-variant font-semibold flex items-center justify-between">
+                    <span>Etiquetas Técnicas</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddTagInput((v) => !v)}
+                      className="text-[10px] text-primary hover:underline font-bold cursor-pointer"
+                    >
+                      + Agregar etiqueta
+                    </button>
                   </label>
-                  <div className="bg-surface-container-low border border-outline-variant/30 rounded-lg px-2.5 py-1.5 flex flex-wrap gap-1">
+                  <div className="bg-surface-container-low border border-outline-variant/30 rounded-lg px-2.5 py-1.5 flex flex-wrap items-center gap-1.5 min-h-[36px]">
                     {selectedOpportunity.tags.map((t) => (
                       <span
                         key={t}
-                        className="text-[10px] font-mono bg-primary-fixed text-on-primary-fixed px-2 py-0.5 rounded font-semibold"
+                        className="inline-flex items-center gap-1 text-[10px] font-mono bg-primary-fixed text-on-primary-fixed px-2 py-0.5 rounded font-semibold"
                       >
-                        {t}
+                        <span>{t}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextTags = selectedOpportunity.tags.filter((x) => x !== t);
+                            updateSelectedOpportunityField(
+                              { tags: nextTags },
+                              'Etiquetas Técnicas',
+                              selectedOpportunity.tags.join(', '),
+                              nextTags.join(', ') || 'Sin etiquetas'
+                            );
+                          }}
+                          className="hover:text-error font-bold cursor-pointer"
+                          title={`Quitar etiqueta ${t}`}
+                        >
+                          ×
+                        </button>
                       </span>
                     ))}
+                    {showAddTagInput && (
+                      <input
+                        type="text"
+                        value={newTagInput}
+                        onChange={(e) => setNewTagInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const clean = newTagInput.trim();
+                            if (clean && !selectedOpportunity.tags.includes(clean)) {
+                              const nextTags = [...selectedOpportunity.tags, clean];
+                              updateSelectedOpportunityField(
+                                { tags: nextTags },
+                                'Etiquetas Técnicas',
+                                selectedOpportunity.tags.join(', '),
+                                nextTags.join(', ')
+                              );
+                            }
+                            setNewTagInput('');
+                            setShowAddTagInput(false);
+                          }
+                        }}
+                        placeholder="Nueva tag + Enter"
+                        autoFocus
+                        className="text-[11px] font-mono bg-surface-container-lowest border border-primary/50 rounded px-2 py-0.5 text-on-surface focus:outline-none w-28"
+                      />
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Pestañas Inferiores: Notas Internas | Información Adicional | Asignación */}
+              {/* Pestañas Inferiores: Notas Internas (Editable) | Información Adicional (Editable) | Archivos Adjuntos */}
               <div className="flex flex-col gap-3 pt-2">
-                <div className="flex items-center gap-4 border-b border-outline-variant/25 text-xs">
-                  {[
-                    { id: 'notas', label: 'Notas Internas' },
-                    { id: 'info', label: 'Información adicional' },
-                    { id: 'lead', label: 'Archivos adjuntos (3)' },
-                  ].map((tb) => (
-                    <button
-                      key={tb.id}
-                      type="button"
-                      onClick={() =>
-                        setDetailTab(tb.id as 'notas' | 'info' | 'lead')
-                      }
-                      className={`pb-2 font-semibold transition-colors cursor-pointer ${
-                        detailTab === tb.id
-                          ? 'border-b-2 border-primary text-primary'
-                          : 'text-on-surface-variant hover:text-on-surface'
-                      }`}
-                    >
-                      {tb.label}
-                    </button>
-                  ))}
+                <div className="flex items-center justify-between border-b border-outline-variant/25 text-xs">
+                  <div className="flex items-center gap-4">
+                    {[
+                      { id: 'notas', label: 'Notas Internas' },
+                      { id: 'info', label: 'Información adicional' },
+                      { id: 'lead', label: 'Archivos adjuntos (3)' },
+                    ].map((tb) => (
+                      <button
+                        key={tb.id}
+                        type="button"
+                        onClick={() =>
+                          setDetailTab(tb.id as 'notas' | 'info' | 'lead')
+                        }
+                        className={`pb-2 font-semibold transition-colors cursor-pointer ${
+                          detailTab === tb.id
+                            ? 'border-b-2 border-primary text-primary'
+                            : 'text-on-surface-variant hover:text-on-surface'
+                        }`}
+                      >
+                        {tb.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {detailTab === 'notas' && (
-                  <div className="bg-surface-container-low p-4 rounded-xl border border-outline-variant/25 text-xs text-on-surface leading-relaxed">
-                    <p className="font-semibold mb-1">
-                      Alcance Técnico y Especificaciones:
-                    </p>
-                    <p>{selectedOpportunity.notes}</p>
+                  <div className="bg-surface-container-low p-4 rounded-xl border border-outline-variant/25 text-xs text-on-surface leading-relaxed flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold">
+                        Alcance Técnico y Especificaciones (Editable):
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (editDraftNotes.trim() !== selectedOpportunity.notes.trim()) {
+                            updateSelectedOpportunityField(
+                              { notes: editDraftNotes.trim() },
+                              'Notas Internas / Alcance Técnico',
+                              selectedOpportunity.notes,
+                              editDraftNotes.trim()
+                            );
+                          }
+                        }}
+                        className="text-[11px] font-semibold bg-primary-container text-on-primary px-2.5 py-1 rounded-md cursor-pointer"
+                      >
+                        Guardar nota técnica
+                      </button>
+                    </div>
+                    <textarea
+                      rows={3}
+                      value={editDraftNotes}
+                      onChange={(e) => setEditDraftNotes(e.target.value)}
+                      onBlur={() => {
+                        if (editDraftNotes.trim() !== selectedOpportunity.notes.trim()) {
+                          updateSelectedOpportunityField(
+                            { notes: editDraftNotes.trim() },
+                            'Notas Internas / Alcance Técnico',
+                            selectedOpportunity.notes,
+                            editDraftNotes.trim()
+                          );
+                        }
+                      }}
+                      className="w-full bg-surface-container-lowest border border-outline-variant/35 rounded-lg p-2.5 text-xs text-on-surface focus:outline-none focus:border-primary resize-y"
+                    />
                   </div>
                 )}
 
                 {detailTab === 'info' && (
-                  <div className="grid grid-cols-2 gap-3 text-xs bg-surface-container-low p-4 rounded-xl border border-outline-variant/25">
-                    <div>
-                      <span className="text-on-surface-variant block">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-surface-container-low p-4 rounded-xl border border-outline-variant/25">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-on-surface-variant font-semibold">
                         Equipo de Ventas:
                       </span>
-                      <span className="font-semibold text-on-surface">
-                        Ingeniería Fire &amp; Gas Golfo-Sur
-                      </span>
+                      <input
+                        type="text"
+                        value={detailTeamName}
+                        onChange={(e) => setDetailTeamName(e.target.value)}
+                        onBlur={() => {
+                          recordAuditMovement(selectedOpportunity.folio, {
+                            kind: 'modification',
+                            title: 'Modificación de Equipo de Ventas',
+                            fieldLabel: 'Equipo de Ventas',
+                            oldValue: 'Ingeniería Fire & Gas Golfo-Sur',
+                            newValue: detailTeamName,
+                            text: 'Actualizó la asignación del equipo técnico comercial.',
+                          });
+                        }}
+                        className="bg-surface-container-lowest border border-outline-variant/35 rounded-lg px-2.5 py-1.5 font-semibold text-on-surface focus:outline-none focus:border-primary"
+                      />
                     </div>
-                    <div>
-                      <span className="text-on-surface-variant block">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-on-surface-variant font-semibold">
                         Campaña / Origen:
                       </span>
-                      <span className="font-semibold text-on-surface">
-                        Licitación Industrial Pemex / CFE
-                      </span>
+                      <input
+                        type="text"
+                        value={detailCampaignName}
+                        onChange={(e) => setDetailCampaignName(e.target.value)}
+                        onBlur={() => {
+                          recordAuditMovement(selectedOpportunity.folio, {
+                            kind: 'modification',
+                            title: 'Modificación de Campaña / Origen',
+                            fieldLabel: 'Origen Comercial',
+                            oldValue: 'Licitación Industrial Pemex / CFE',
+                            newValue: detailCampaignName,
+                            text: 'Actualizó el origen comercial de la oportunidad.',
+                          });
+                        }}
+                        className="bg-surface-container-lowest border border-outline-variant/35 rounded-lg px-2.5 py-1.5 font-semibold text-on-surface focus:outline-none focus:border-primary"
+                      />
                     </div>
                   </div>
                 )}
@@ -3398,57 +3951,85 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
               </div>
             </div>
 
-            {/* Columna Derecha (5 cols ~ 40%): Chatter e Historial */}
+            {/* Columna Derecha (5 cols ~ 40%): Checador de Movimientos, Quién Movió/Modificó y Chatter */}
             <div className="lg:col-span-5 bg-surface-container-lowest rounded-xl border border-outline-variant/30 shadow-sm p-5 flex flex-col gap-4">
-              <div className="flex items-center justify-between border-b border-outline-variant/25 pb-3">
-                <div className="flex items-center gap-1.5">
+              {/* Cabecera del Checador de Movimientos */}
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/25 pb-3">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <button
                     type="button"
-                    onClick={() => setChatterTab('mensaje')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
-                      chatterTab === 'mensaje'
-                        ? 'bg-primary-container text-on-primary'
+                    onClick={() => {
+                      setChatterTab('movimientos');
+                      setChatterFilter('movimientos');
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer flex items-center gap-1 ${
+                      chatterTab === 'movimientos'
+                        ? 'bg-primary-container text-on-primary shadow-sm'
                         : 'bg-surface-container-low text-on-surface-variant'
                     }`}
                   >
-                    Enviar mensaje
+                    <span className="material-symbols-outlined text-[15px]">history</span>
+                    <span>Checador de Movimientos</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setChatterTab('nota')}
+                    onClick={() => {
+                      setChatterTab('nota');
+                      setChatterFilter('todos');
+                    }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
                       chatterTab === 'nota'
-                        ? 'bg-primary-container text-on-primary'
+                        ? 'bg-primary-container text-on-primary shadow-sm'
                         : 'bg-surface-container-low text-on-surface-variant'
                     }`}
                   >
-                    Registrar una nota
+                    Registrar nota
                   </button>
                   <button
                     type="button"
-                    onClick={() => setChatterTab('actividad')}
+                    onClick={() => {
+                      setChatterTab('mensaje');
+                      setChatterFilter('todos');
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
+                      chatterTab === 'mensaje'
+                        ? 'bg-primary-container text-on-primary shadow-sm'
+                        : 'bg-surface-container-low text-on-surface-variant'
+                    }`}
+                  >
+                    Mensaje
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChatterTab('actividad');
+                      setChatterFilter('todos');
+                    }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
                       chatterTab === 'actividad'
-                        ? 'bg-primary-container text-on-primary'
+                        ? 'bg-primary-container text-on-primary shadow-sm'
                         : 'bg-surface-container-low text-on-surface-variant'
                     }`}
                   >
                     Actividad
                   </button>
                 </div>
-                <span className="font-mono text-xs text-on-surface-variant">
-                  4 seguidores
+
+                <span className="font-mono text-[11px] bg-surface-container-low px-2 py-0.5 rounded text-on-surface-variant">
+                  {(chatterLogsByFolio[selectedOpportunity.folio] || []).length} registros
                 </span>
               </div>
 
-              {/* Caja de escritura */}
+              {/* Caja de escritura para agregar nota, mensaje o registro manual al checador */}
               <div className="flex flex-col gap-2 bg-surface-container-low p-3 rounded-xl border border-outline-variant/30">
                 <textarea
                   rows={2}
                   value={chatterInput}
                   onChange={(e) => setChatterInput(e.target.value)}
                   placeholder={
-                    chatterTab === 'mensaje'
+                    chatterTab === 'movimientos'
+                      ? 'Registrar observación de auditoría o justificación de movimiento...'
+                      : chatterTab === 'mensaje'
                       ? 'Escribe un mensaje para el cliente...'
                       : chatterTab === 'nota'
                       ? 'Registrar una nota interna técnica para el equipo SIFYGSA...'
@@ -3457,26 +4038,47 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                   className="w-full bg-transparent text-xs text-on-surface placeholder:text-outline focus:outline-none resize-none"
                 />
                 <div className="flex items-center justify-between pt-1 border-t border-outline-variant/20">
-                  <div className="flex items-center gap-1 text-on-surface-variant">
-                    <span className="material-symbols-outlined text-[16px]">
-                      attach_file
-                    </span>
-                    <span className="text-[11px]">Adjuntar DTI / PDF</span>
+                  <div className="flex items-center gap-1.5">
+                    {(['todos', 'movimientos', 'notas'] as const).map((flt) => (
+                      <button
+                        key={flt}
+                        type="button"
+                        onClick={() => setChatterFilter(flt)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase cursor-pointer ${
+                          chatterFilter === flt
+                            ? 'bg-primary-fixed text-on-primary-fixed'
+                            : 'text-on-surface-variant hover:text-on-surface'
+                        }`}
+                      >
+                        {flt === 'todos'
+                          ? 'Todo'
+                          : flt === 'movimientos'
+                          ? 'Solo Movimientos'
+                          : 'Notas'}
+                      </button>
+                    ))}
                   </div>
                   <button
                     type="button"
                     onClick={() => {
                       if (!chatterInput.trim()) return;
-                      setChatterLog((prev) => [
-                        {
-                          id: `log-${Date.now()}`,
-                          author: 'Ing. Carlos Rodríguez',
-                          initials: 'CR',
-                          time: 'Justo ahora',
-                          text: chatterInput.trim(),
-                        },
-                        ...prev,
-                      ]);
+                      recordAuditMovement(selectedOpportunity.folio, {
+                        kind:
+                          chatterTab === 'movimientos'
+                            ? 'movement'
+                            : chatterTab === 'mensaje'
+                            ? 'message'
+                            : chatterTab === 'actividad'
+                            ? 'activity'
+                            : 'note',
+                        title:
+                          chatterTab === 'movimientos'
+                            ? 'Bitácora de Movimiento Manual'
+                            : chatterTab === 'actividad'
+                            ? 'Actividad Programada'
+                            : 'Nota Técnica Registrada',
+                        text: chatterInput.trim(),
+                      });
                       setChatterInput('');
                     }}
                     className="bg-primary-container hover:bg-primary text-on-primary text-xs font-semibold px-3 py-1 rounded-lg cursor-pointer"
@@ -3486,50 +4088,134 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 </div>
               </div>
 
-              {/* Línea de tiempo del Chatter */}
-              <div className="flex items-center gap-2 my-1">
+              {/* Línea divisoria del Checador de Movimientos */}
+              <div className="flex items-center gap-2 my-0.5">
                 <div className="flex-1 h-[1px] bg-outline-variant/25" />
-                <span className="text-[10px] font-bold uppercase text-outline">
-                  Hoy
+                <span className="text-[10px] font-bold uppercase text-primary tracking-wider">
+                  Checador de Movimientos y Modificaciones • Hoy
                 </span>
                 <div className="flex-1 h-[1px] bg-outline-variant/25" />
               </div>
 
-              <div className="flex flex-col gap-3 overflow-y-auto">
-                {chatterLog.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-start gap-3 bg-surface-container-low/60 p-3 rounded-xl border border-outline-variant/20 text-xs"
-                  >
+              {/* Lista de Movimientos y Cambios (Quién la movió, qué campo cambió, valor anterior → nuevo) */}
+              <div className="flex flex-col gap-3 overflow-y-auto max-h-[540px] pr-1">
+                {(
+                  chatterLogsByFolio[selectedOpportunity.folio] || [
+                    {
+                      id: `default-${selectedOpportunity.folio}`,
+                      author: selectedOpportunity.ownerName,
+                      roleLabel: 'Responsable Comercial',
+                      initials: selectedOpportunity.ownerInitials,
+                      time: '09:10 a.m.',
+                      title: 'Alta Inicial en Pipeline CRM',
+                      text: `Oportunidad registrada para ${selectedOpportunity.client} en etapa ${selectedOpportunity.stage}.`,
+                      kind: 'movement' as const,
+                      fieldLabel: 'Etapa Inicial',
+                      oldValue: 'Nuevo Registro',
+                      newValue: `${selectedOpportunity.stage} (${selectedOpportunity.probability}%)`,
+                    },
+                  ]
+                )
+                  .filter((item) => {
+                    if (chatterFilter === 'movimientos') {
+                      return item.kind === 'movement' || item.kind === 'modification';
+                    }
+                    if (chatterFilter === 'notas') {
+                      return item.kind === 'note' || item.kind === 'message' || item.kind === 'activity';
+                    }
+                    return true;
+                  })
+                  .map((item) => (
                     <div
-                      className={`w-8 h-8 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0 ${
-                        item.isBot
-                          ? 'bg-secondary text-on-secondary'
-                          : 'bg-primary-container text-on-primary'
+                      key={item.id}
+                      className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs transition-all ${
+                        item.kind === 'movement'
+                          ? 'bg-primary-fixed/15 border-primary/30'
+                          : item.kind === 'modification'
+                          ? 'bg-amber-500/10 border-amber-500/30'
+                          : 'bg-surface-container-low/60 border-outline-variant/20'
                       }`}
                     >
-                      {item.initials}
-                    </div>
-                    <div className="flex-1 flex flex-col gap-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-on-surface">
-                          {item.author}
-                        </span>
-                        <span className="font-mono text-[10px] text-outline">
-                          {item.time}
-                        </span>
+                      <div
+                        className={`w-8 h-8 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0 ${
+                          item.isBot
+                            ? 'bg-secondary text-on-secondary'
+                            : item.kind === 'movement'
+                            ? 'bg-primary text-on-primary'
+                            : item.kind === 'modification'
+                            ? 'bg-amber-600 text-white'
+                            : 'bg-primary-container text-on-primary'
+                        }`}
+                      >
+                        {item.initials}
                       </div>
-                      {item.title && (
-                        <div className="font-semibold text-primary">
-                          {item.title}
+
+                      <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="font-bold text-on-surface truncate">
+                              {item.author}
+                            </span>
+                            {item.roleLabel && (
+                              <span className="text-[10px] text-on-surface-variant bg-surface-container-high px-1.5 py-0.2 rounded truncate">
+                                {item.roleLabel}
+                              </span>
+                            )}
+                          </div>
+                          <span className="font-mono text-[10px] text-outline shrink-0">
+                            {item.time}
+                          </span>
                         </div>
-                      )}
-                      <p className="text-on-surface-variant leading-relaxed">
-                        {item.text}
-                      </p>
+
+                        {item.title && (
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${
+                                item.kind === 'movement'
+                                  ? 'bg-primary text-on-primary'
+                                  : item.kind === 'modification'
+                                  ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300'
+                                  : 'bg-surface-container-high text-on-surface-variant'
+                              }`}
+                            >
+                              {item.kind === 'movement'
+                                ? 'MOVIMIENTO'
+                                : item.kind === 'modification'
+                                ? 'MODIFICACIÓN'
+                                : 'BITÁCORA'}
+                            </span>
+                            <span className="font-bold text-on-surface">
+                              {item.title}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Comparativa Antes → Después (Checador de cambios) */}
+                        {item.fieldLabel && item.oldValue && item.newValue && (
+                          <div className="bg-surface-container-lowest/90 border border-outline-variant/30 rounded-lg p-2 flex flex-col gap-1 font-mono text-[11px]">
+                            <span className="text-[10px] font-sans font-bold uppercase text-on-surface-variant">
+                              Campo: {item.fieldLabel}
+                            </span>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="px-2 py-0.5 rounded bg-error-container/60 text-on-error-container line-through">
+                                {item.oldValue}
+                              </span>
+                              <span className="material-symbols-outlined text-[14px] text-primary">
+                                arrow_forward
+                              </span>
+                              <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold">
+                                {item.newValue}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        <p className="text-on-surface-variant leading-relaxed">
+                          {item.text}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           </div>

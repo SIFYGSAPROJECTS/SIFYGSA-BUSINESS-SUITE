@@ -82,6 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
   const combosRef = useRef<HTMLDivElement>(null);
 
   const esPortalCrm = user?.portal !== 'rh' && user?.portal !== 'almacen';
+  const isInIconSelectionMenu = activeSubItemId === '__menu__';
 
   const getInitials = (name?: string) => {
     if (!name) return 'SF';
@@ -129,12 +130,16 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sifygsa-header">
-      {/* Left: Selected Menu Icon (animates to "<" on hover to return to launcher) + Brand Logo Identity */}
+      {/* Left: Selected Menu Icon (only enabled to return with "<" when inside a selected module, disabled on the icon selection menu itself) */}
       <div className="header-brand-group">
         <button
           type="button"
-          className={`header-selected-menu-btn tile-color-${selectedMenuMeta.colorClass}`}
+          disabled={isInIconSelectionMenu}
+          className={`header-selected-menu-btn tile-color-${selectedMenuMeta.colorClass} ${
+            isInIconSelectionMenu ? 'is-selection-menu-disabled' : ''
+          }`}
           onClick={() => {
+            if (isInIconSelectionMenu) return;
             if (onBackToMenu) {
               onBackToMenu();
             } else if (onSelectModule) {
@@ -148,8 +153,16 @@ export const Header: React.FC<HeaderProps> = ({
               onToggleSidebar();
             }
           }}
-          aria-label={`Menú actual: ${selectedMenuMeta.title}. Clic para regresar al selector de módulos`}
-          title={`${selectedMenuMeta.title} — Regresar al menú de módulos`}
+          aria-label={
+            isInIconSelectionMenu
+              ? selectedMenuMeta.title
+              : `Menú actual: ${selectedMenuMeta.title}. Clic para regresar al selector de módulos`
+          }
+          title={
+            isInIconSelectionMenu
+              ? selectedMenuMeta.title
+              : `${selectedMenuMeta.title} — Regresar al menú de módulos`
+          }
         >
           {/* Icono del menú seleccionado por defecto */}
           <span className="header-selected-icon-front" aria-hidden="true">
@@ -163,12 +176,14 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </span>
 
-          {/* Flecha "<" animada al pasar el cursor por encima */}
-          <span className="header-selected-icon-back" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8">
-              <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
+          {/* Flecha "<" animada al pasar el cursor por encima (solo habilitada dentro de un módulo seleccionado) */}
+          {!isInIconSelectionMenu && (
+            <span className="header-selected-icon-back" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8">
+                <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+          )}
         </button>
         <div className="brand-suite-identity" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <div className="flame-logo-wrapper" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -221,112 +236,149 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Dos Combo Box de Navegación CRM en el lado izquierdo del Header */}
-        {esPortalCrm && (
+        {/* Menús contextuales en el lado izquierdo del Header (Ocultos en el Menú Principal y en el módulo independiente de Calendario) */}
+        {esPortalCrm &&
+          activeSubItemId !== '__menu__' &&
+          activeSubItemId !== 'crm-calendar' && (
           <div className="header-crm-combos" ref={combosRef}>
             <span className="header-combos-divider" aria-hidden="true" />
 
-            {/* Combo Box 1: Ventas */}
-            <div className="header-combo-box">
-              <button
-                type="button"
-                className={`header-combo-trigger ${openCombo === 'ventas' ? 'is-open' : ''} ${selectedVentas ? 'has-value' : ''}`}
-                aria-haspopup="listbox"
-                aria-expanded={openCombo === 'ventas'}
-                aria-label="Ventas"
-                onClick={() => {
-                  setIsUserMenuOpen(false);
-                  setOpenCombo((prev) => (prev === 'ventas' ? null : 'ventas'));
-                }}
-              >
-                <span className="header-combo-text">
-                  {selectedVentas ? (
-                    <>
-                      <span className="header-combo-prefix">Ventas:</span>
-                      <span className="header-combo-value">{selectedVentas}</span>
-                    </>
-                  ) : (
-                    <span className="header-combo-value">Ventas</span>
-                  )}
+            {activeSubItemId === 'crm-clientes' ? (
+              <>
+                <span
+                  style={{
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    color: 'var(--text-primary)',
+                    marginRight: '0.35rem',
+                  }}
+                >
+                  Contactos
                 </span>
-                <IconChevronDown
-                  size={14}
-                  className={`header-combo-chevron ${openCombo === 'ventas' ? 'rotated' : ''}`}
-                />
-              </button>
+                <button
+                  type="button"
+                  className="header-combo-trigger has-value"
+                  onClick={() => onSelectModule?.('crm', 'crm-clientes')}
+                >
+                  <span className="header-combo-text">
+                    <span className="header-combo-value">Contactos</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="header-combo-trigger"
+                  onClick={() => onSelectModule?.('crm', 'crm-clientes')}
+                >
+                  <span className="header-combo-text">
+                    <span className="header-combo-value">Configuración</span>
+                  </span>
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Combo Box 1: Ventas */}
+                <div className="header-combo-box">
+                  <button
+                    type="button"
+                    className={`header-combo-trigger ${openCombo === 'ventas' ? 'is-open' : ''} ${selectedVentas ? 'has-value' : ''}`}
+                    aria-haspopup="listbox"
+                    aria-expanded={openCombo === 'ventas'}
+                    aria-label="Ventas"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      setOpenCombo((prev) => (prev === 'ventas' ? null : 'ventas'));
+                    }}
+                  >
+                    <span className="header-combo-text">
+                      {selectedVentas ? (
+                        <>
+                          <span className="header-combo-prefix">Ventas:</span>
+                          <span className="header-combo-value">{selectedVentas}</span>
+                        </>
+                      ) : (
+                        <span className="header-combo-value">Ventas</span>
+                      )}
+                    </span>
+                    <IconChevronDown
+                      size={14}
+                      className={`header-combo-chevron ${openCombo === 'ventas' ? 'rotated' : ''}`}
+                    />
+                  </button>
 
-              {openCombo === 'ventas' && (
-                <div className="header-combo-menu" role="listbox" aria-label="Opciones de Ventas">
-                  {VENTAS_COMBO_OPTIONS.map((option) => {
-                    const isSelected = selectedVentas === option.label;
-                    return (
-                      <button
-                        key={option.label}
-                        type="button"
-                        role="option"
-                        aria-selected={isSelected}
-                        className={`header-combo-option ${isSelected ? 'is-selected' : ''}`}
-                        onClick={() => handleSelectComboOption('ventas', option)}
-                      >
-                        <span>{option.label}</span>
-                        {isSelected && <IconCheck size={14} className="header-combo-check" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Combo Box 2: Reportes */}
-            <div className="header-combo-box">
-              <button
-                type="button"
-                className={`header-combo-trigger ${openCombo === 'reportes' ? 'is-open' : ''} ${selectedReportes ? 'has-value' : ''}`}
-                aria-haspopup="listbox"
-                aria-expanded={openCombo === 'reportes'}
-                aria-label="Reportes"
-                onClick={() => {
-                  setIsUserMenuOpen(false);
-                  setOpenCombo((prev) => (prev === 'reportes' ? null : 'reportes'));
-                }}
-              >
-                <span className="header-combo-text">
-                  {selectedReportes ? (
-                    <>
-                      <span className="header-combo-prefix">Reportes:</span>
-                      <span className="header-combo-value">{selectedReportes}</span>
-                    </>
-                  ) : (
-                    <span className="header-combo-value">Reportes</span>
+                  {openCombo === 'ventas' && (
+                    <div className="header-combo-menu" role="listbox" aria-label="Opciones de Ventas">
+                      {VENTAS_COMBO_OPTIONS.map((option) => {
+                        const isSelected = selectedVentas === option.label;
+                        return (
+                          <button
+                            key={option.label}
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            className={`header-combo-option ${isSelected ? 'is-selected' : ''}`}
+                            onClick={() => handleSelectComboOption('ventas', option)}
+                          >
+                            <span>{option.label}</span>
+                            {isSelected && <IconCheck size={14} className="header-combo-check" />}
+                          </button>
+                        );
+                      })}
+                    </div>
                   )}
-                </span>
-                <IconChevronDown
-                  size={14}
-                  className={`header-combo-chevron ${openCombo === 'reportes' ? 'rotated' : ''}`}
-                />
-              </button>
-
-              {openCombo === 'reportes' && (
-                <div className="header-combo-menu" role="listbox" aria-label="Opciones de Reportes">
-                  {REPORTES_COMBO_OPTIONS.map((option) => {
-                    const isSelected = selectedReportes === option.label;
-                    return (
-                      <button
-                        key={option.label}
-                        type="button"
-                        role="option"
-                        aria-selected={isSelected}
-                        className={`header-combo-option ${isSelected ? 'is-selected' : ''}`}
-                        onClick={() => handleSelectComboOption('reportes', option)}
-                      >
-                        <span>{option.label}</span>
-                        {isSelected && <IconCheck size={14} className="header-combo-check" />}
-                      </button>
-                    );
-                  })}
                 </div>
-              )}
-            </div>
+
+                {/* Combo Box 2: Reportes */}
+                <div className="header-combo-box">
+                  <button
+                    type="button"
+                    className={`header-combo-trigger ${openCombo === 'reportes' ? 'is-open' : ''} ${selectedReportes ? 'has-value' : ''}`}
+                    aria-haspopup="listbox"
+                    aria-expanded={openCombo === 'reportes'}
+                    aria-label="Reportes"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      setOpenCombo((prev) => (prev === 'reportes' ? null : 'reportes'));
+                    }}
+                  >
+                    <span className="header-combo-text">
+                      {selectedReportes ? (
+                        <>
+                          <span className="header-combo-prefix">Reportes:</span>
+                          <span className="header-combo-value">{selectedReportes}</span>
+                        </>
+                      ) : (
+                        <span className="header-combo-value">Reportes</span>
+                      )}
+                    </span>
+                    <IconChevronDown
+                      size={14}
+                      className={`header-combo-chevron ${openCombo === 'reportes' ? 'rotated' : ''}`}
+                    />
+                  </button>
+
+                  {openCombo === 'reportes' && (
+                    <div className="header-combo-menu" role="listbox" aria-label="Opciones de Reportes">
+                      {REPORTES_COMBO_OPTIONS.map((option) => {
+                        const isSelected = selectedReportes === option.label;
+                        return (
+                          <button
+                            key={option.label}
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            className={`header-combo-option ${isSelected ? 'is-selected' : ''}`}
+                            onClick={() => handleSelectComboOption('reportes', option)}
+                          >
+                            <span>{option.label}</span>
+                            {isSelected && <IconCheck size={14} className="header-combo-check" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

@@ -82,8 +82,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     pathname.startsWith('/almacen');
   const esPortalCompras =
     userProp?.portal === 'compras' ||
-    pathname.startsWith('/compras') ||
-    pathname.startsWith('/requisiciones');
+    pathname.startsWith('/compras');
 
   const portalDeterminado: 'crm' | 'rh' | 'almacen' | 'compras' =
     userProp?.portal ?? (esPortalRh ? 'rh' : esPortalAlmacen ? 'almacen' : esPortalCompras ? 'compras' : 'crm');
@@ -174,8 +173,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           router.push(wantsMenu ? '/crm?menu=1' : subItemId ? `/crm?sub=${subItemId}` : '/crm');
           break;
         case 'compras':
-          if (wantsMenu || !subItemId || subItemId === 'menu' || subItemId === 'compras-menu') {
-            router.push('/compras');
+          if (wantsMenu) {
+            router.push(esPortalCompras ? '/compras' : '/requisiciones?menu=1');
+          } else if (
+            subItemId === 'compras-nueva' ||
+            subItemId === 'compras-mis-requisiciones' ||
+            subItemId === 'compras-requisicion' ||
+            subItemId === 'compras-aprobaciones'
+          ) {
+            router.push(`/requisiciones?sub=${subItemId}`);
+          } else if (!subItemId || subItemId === 'menu' || subItemId === 'compras-menu') {
+            router.push(esPortalCompras ? '/compras' : '/requisiciones');
           } else if (subItemId === 'proveedores') {
             router.push('/compras/proveedores');
           } else if (subItemId === 'nuevo-proveedor') {
@@ -233,22 +241,16 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   };
 
   const handleBackToMenu = () => {
+    if (isModuleSelectorOpen) {
+      return;
+    }
     const targetMod =
       activeModuleId === 'compras' || activeModuleId === 'admin' ? activeModuleId : 'crm';
-    if (targetMod === 'compras') {
+    if (targetMod === 'compras' && esPortalCompras) {
       router.push('/compras');
       return;
     }
-    if (isModuleSelectorOpen) {
-      handleModuleSelection(
-        targetMod,
-        targetMod === 'crm'
-          ? 'crm-kanban'
-          : 'resumen'
-      );
-    } else {
-      handleModuleSelection(targetMod, '__menu__');
-    }
+    handleModuleSelection(targetMod, '__menu__');
   };
 
   return (

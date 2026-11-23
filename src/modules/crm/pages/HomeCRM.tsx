@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { RolUsuario, ZonaComercial } from '@/config/types';
 import { FlujoKanbanCrm } from '../components/FlujoKanbanCrm';
+import { CalendarioActividadesCrm } from '../components/CalendarioActividadesCrm';
 import { LeadsCrm } from '../components/leadsCrm';
-import { ComprasRequisicion } from '@/modules/compras/pages/ComprasRequisicion';
 import type { StitchOpportunity } from '../components/stitchCrmData';
 import type { OportunidadCrm } from '../types';
 import '../crm.css';
@@ -28,21 +28,29 @@ export const HomeCRM: React.FC<HomeCRMProps> = ({
   alAbrirDetalle,
 }) => {
   const router = useRouter();
-  const [activeModuleMode, setActiveModuleMode] = useState<'pipeline' | 'leads'>(
-    subItemId === 'crm-leads' || subItemId === 'crm-tableros' ? 'leads' : 'pipeline'
+  const [activeModuleMode, setActiveModuleMode] = useState<
+    'pipeline' | 'leads' | 'standalone-calendar'
+  >(
+    subItemId === 'crm-leads' || subItemId === 'crm-tableros'
+      ? 'leads'
+      : subItemId === 'crm-calendar'
+      ? 'standalone-calendar'
+      : 'pipeline'
   );
   const [convertedOpps, setConvertedOpps] = useState<StitchOpportunity[]>([]);
 
   useEffect(() => {
     setActiveModuleMode(
-      subItemId === 'crm-leads' || subItemId === 'crm-tableros' ? 'leads' : 'pipeline'
+      subItemId === 'crm-leads' || subItemId === 'crm-tableros'
+        ? 'leads'
+        : subItemId === 'crm-calendar'
+        ? 'standalone-calendar'
+        : 'pipeline'
     );
   }, [subItemId]);
 
   const currentView =
-    subItemId === 'crm-calendar'
-      ? 'calendar'
-      : subItemId === 'crm-clientes'
+    subItemId === 'crm-clientes'
       ? 'contacts'
       : subItemId === 'crm-opportunities'
       ? 'list'
@@ -57,14 +65,8 @@ export const HomeCRM: React.FC<HomeCRMProps> = ({
       className="sifygsa-crm-container"
       style={{ padding: 0, gap: 0, width: '100%', minHeight: '100vh' }}
     >
-      {subItemId === 'crm-nueva-requisicion' || subItemId === 'compras-nueva' ? (
-        <ComprasRequisicion
-          key="crm-nueva-requisicion"
-          subItemId="compras-nueva"
-          rolUsuario={rolUsuario}
-          moduloOrigen="crm"
-          alVolver={() => router.push('/crm?sub=crm-kanban')}
-        />
+      {activeModuleMode === 'standalone-calendar' ? (
+        <CalendarioActividadesCrm />
       ) : activeModuleMode === 'leads' ? (
         <LeadsCrm
           rolUsuario={rolUsuario}
