@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
+import { usePathname, useSearchParams } from 'next/navigation';
 import type { RolUsuario } from '@/config/types';
 import { obtenerSubItemsPermitidosModulo, type SubItemModulo } from '@/modules/registry';
 import { IconChevronRight, IconClose, IconShieldCheck } from '../ui/Icons';
@@ -64,6 +66,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   rolUsuario = 'administrador',
 }) => {
   const { language, t } = useLanguage();
+  const pathname = usePathname() || '';
+  const searchParams = useSearchParams();
+  const esNuevaRequisicionActiva =
+    (pathname === '/requisiciones' && searchParams?.get('sub') === 'compras-nueva') ||
+    (activeModuleId === 'requisiciones' && activeSubItemId === 'compras-nueva') ||
+    activeSubItemId === 'crm-nueva-requisicion';
 
   const subItemsCrm = obtenerSubItemsPermitidosModulo('crm', rolUsuario);
   const subItemsAdmin = obtenerSubItemsPermitidosModulo('admin', rolUsuario);
@@ -239,6 +247,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </button>
                 );
               })}
+
+              {/* Botón directo al submódulo Nueva Requisición */}
+              <Link
+                href="/requisiciones?sub=compras-nueva"
+                className={`collapsed-nav-btn ${esNuevaRequisicionActiva ? 'active-crm' : ''}`}
+                title={language === 'en' ? 'New Requisition' : 'Nueva Requisición'}
+                aria-label="Nueva Requisición"
+                onClick={() => onSelectModule('requisiciones', 'compras-nueva')}
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{
+                    fontSize: 18,
+                    color: esNuevaRequisicionActiva ? '#ffffff' : '#f59e0b',
+                  }}
+                >
+                  post_add
+                </span>
+              </Link>
             </div>
           </div>
         ) : (
@@ -328,6 +355,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                 );
               })}
+
+              {/* Acceso directo a Nueva Requisición en modo expandido */}
+              <div className="accordion-entry">
+                <Link
+                  href="/requisiciones?sub=compras-nueva"
+                  className={`accordion-head-btn sidebar-module-trigger ${esNuevaRequisicionActiva ? 'is-active-module' : ''}`}
+                  onClick={() => onSelectModule('requisiciones', 'compras-nueva')}
+                  style={{ textDecoration: 'none' }}
+                >
+                  <div className="head-left-content">
+                    <span
+                      className="material-symbols-outlined"
+                      style={{ fontSize: 16, color: '#f59e0b' }}
+                    >
+                      post_add
+                    </span>
+                    <div className="sidebar-module-label-group">
+                      <span className="group-title-label">
+                        {language === 'en' ? 'New Requisition' : 'Nueva Requisición'}
+                      </span>
+                      <span className="sidebar-active-sub-hint">
+                        {language === 'en' ? 'Direct request' : 'Solicitud directa'}
+                      </span>
+                    </div>
+                  </div>
+                  <IconChevronRight size={14} className="sidebar-module-chevron" />
+                </Link>
+              </div>
             </nav>
           </>
         )}

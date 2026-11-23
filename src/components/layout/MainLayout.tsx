@@ -171,7 +171,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           router.push('/ajustes');
           break;
         case 'crm':
-          router.push(wantsMenu ? '/crm?menu=1' : subItemId ? `/crm?sub=${subItemId}` : '/crm');
+          if (subItemId === 'crm-nueva-requisicion' || subItemId === 'compras-nueva') {
+            router.push('/requisiciones?sub=compras-nueva');
+          } else {
+            router.push(wantsMenu ? '/crm?menu=1' : subItemId ? `/crm?sub=${subItemId}` : '/crm');
+          }
           break;
         case 'compras':
           if (wantsMenu || !subItemId || subItemId === 'menu' || subItemId === 'compras-menu') {

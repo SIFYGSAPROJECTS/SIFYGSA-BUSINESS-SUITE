@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import Link from 'next/link';
 import {
   INITIAL_STITCH_OPPORTUNITIES,
   INITIAL_STITCH_STAGES,
@@ -724,6 +725,16 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                   <span className="material-symbols-outlined text-[16px]">expand_more</span>
                 </button>
               </div>
+
+              {/* Botón Acceso Rápido Nueva Requisición */}
+              <Link
+                href="/requisiciones?sub=compras-nueva"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 text-xs font-bold transition-all no-underline shadow-xs cursor-pointer"
+                title="Crear Nueva Requisición"
+              >
+                <span className="material-symbols-outlined text-[16px]">post_add</span>
+                <span className="hidden md:inline">Nueva Requisición</span>
+              </Link>
 
               <div className="h-5 w-[1px] bg-outline-variant/30 mx-1" />
 
