@@ -103,9 +103,11 @@ function mapearDepartamentoAArea(depto: string): AreaOperativa {
   return 'Operaciones & Logística';
 }
 
+const REQUISICIONES_DEFAULT: Requisicion[] = [];
+
 export const ComprasRequisicion: React.FC<ComprasRequisicionProps> = ({
   subItemId,
-  requisiciones = [],
+  requisiciones = REQUISICIONES_DEFAULT,
   rolUsuario = 'administrador',
   nombreUsuario = 'Pablo Vázquez Culebro',
   idUsuario,
@@ -139,8 +141,23 @@ export const ComprasRequisicion: React.FC<ComprasRequisicionProps> = ({
   );
 
   useEffect(() => {
-    setRequisicionesState(requisiciones);
+    if (requisiciones && requisiciones !== REQUISICIONES_DEFAULT && requisiciones.length > 0) {
+      setRequisicionesState(requisiciones);
+    }
   }, [requisiciones]);
+
+  useEffect(() => {
+    if (requisicionesState.length === 0) {
+      fetch('/api/requisiciones')
+        .then((res) => res.json())
+        .then((json: { exito: boolean; datos?: Requisicion[] }) => {
+          if (json.exito && json.datos && json.datos.length > 0) {
+            setRequisicionesState(json.datos);
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   useEffect(() => {
     if (subItemId === 'compras-aprobaciones' || subItemId === 'aprobaciones') {
