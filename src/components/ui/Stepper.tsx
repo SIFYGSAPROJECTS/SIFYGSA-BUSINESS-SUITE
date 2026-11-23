@@ -23,6 +23,7 @@ export interface StepperProps {
   successBannerText?: string;
   showHeader?: boolean;
   stepLabelPrefix?: string; // 'Etapa' | 'Paso'
+  isCurrentStepValid?: boolean; // Bloquea avance interactivo a pasos futuros si el actual es inválido
 }
 
 /**
@@ -57,6 +58,7 @@ export const Stepper: React.FC<StepperProps> = ({
   successBannerText,
   showHeader = false,
   stepLabelPrefix = 'Paso',
+  isCurrentStepValid = true,
 }) => {
   const totalSteps = steps.length;
   const currentStepConfig = steps[currentStep - 1] || steps[0];
@@ -172,14 +174,18 @@ export const Stepper: React.FC<StepperProps> = ({
             const isCurrent = !isCompletedAll && stepNum === currentStep;
             const isCompleted =
               isCompletedAll ||
-              (!isCurrent &&
-                (completedSteps.includes(stepNum) || stepNum < currentStep));
+              (!isCurrent && completedSteps.includes(stepNum));
             const hasError = !isCompletedAll && errorSteps.includes(stepNum);
             const isLast = stepNum === totalSteps;
             const isConcluidoNode = isCompletedAll && isLast;
 
-            // Navegación interactiva por clic
-            const canClick = !isReadOnly && !isCurrent && !!onStepClick;
+            // Navegación interactiva por clic:
+            // Regla: No permitir saltar a pasos posteriores si el actual es inválido. Sí permitir volver a pasos anteriores.
+            const canClick =
+              !isReadOnly &&
+              !isCurrent &&
+              !!onStepClick &&
+              (stepNum < currentStep || (isCurrentStepValid && (completedSteps.includes(stepNum) || stepNum === currentStep + 1)));
 
             // Determinación de etiqueta de estado
             let badgeText = 'Pendiente';

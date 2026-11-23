@@ -3,7 +3,7 @@
 // Arquitectura Next.js 15 App Router + React 18 + TypeScript
 // ============================================================================
 
-export type TipoPersona = 'moral' | 'fisica';
+export type TipoPersona = 'moral' | 'fisica' | 'extranjero';
 
 export type EstatusProveedor = 'activo' | 'inactivo' | 'revision';
 
@@ -205,7 +205,7 @@ export interface OrdenCompra {
   total: number;
   notas?: string;
   items: ItemOrdenCompra[];
-  
+
   // Trazabilidad de Facturación y Pagos
   tieneFactura?: boolean;
   facturaId?: string;
@@ -214,7 +214,7 @@ export interface OrdenCompra {
   facturasAdjuntas?: FacturaProveedor[]; // Soporta 1 o más facturas hasta cuadrar monto
   montoFacturadoTotal?: number;
   montoPendienteFacturar?: number;
-  
+
   // Comprobante de Pago (Tesorería / Administración)
   comprobantePagoUrl?: string;
   comprobantePagoNombre?: string;

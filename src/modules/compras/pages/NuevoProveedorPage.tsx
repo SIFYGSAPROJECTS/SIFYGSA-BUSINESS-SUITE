@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCompras } from '../context/ComprasContext';
 import type { Proveedor, TipoPersona, MonedaDivisa, CuentaBancariaProveedor } from '../types';
 import { Stepper } from '@/components/ui/Stepper';
+import { FormWizardFooter } from '../components/FormWizardFooter';
 import { ModuleMenu } from '@/components/ui/ModuleMenu';
 import '../compras.css';
 import '../nuevo-proveedor-wizard.css';
@@ -141,15 +142,23 @@ export const NuevoProveedorPage: React.FC = () => {
 
   // ── ETAPA 1: DATOS DE IDENTIFICACIÓN ──
   const [idProveedor] = useState(() => proveedorExistente?.id || `PRV-${Date.now().toString().slice(-4)}`);
-  const [tipoEntidad, setTipoEntidad] = useState<TipoPersona>(() => proveedorExistente?.tipoPersona || 'moral');
-  const [nombreComercial, setNombreComercial] = useState(() => proveedorExistente?.nombreComercial || 'Five Peaks México');
+  const [tipoEntidad, setTipoEntidad] = useState<TipoPersona | ''>(() => proveedorExistente?.tipoPersona || '');
+  const [nombreComercial, setNombreComercial] = useState(() => proveedorExistente?.nombreComercial || '');
   const [tratamiento, setTratamiento] = useState('Lic.');
-  const [nombreRepresentante, setNombreRepresentante] = useState(() => proveedorExistente?.contactoPrincipal || 'Pamela León Cadena');
-  const [denominacionPuesto, setDenominacionPuesto] = useState(() => proveedorExistente?.puestoContacto || 'Gerente Comercial Industrial');
-  const [categoriaOperativa, setCategoriaOperativa] = useState(() => proveedorExistente?.categoria || 'Servicios Especializados');
-  const [giroEmpresarial, setGiroEmpresarial] = useState(() => proveedorExistente?.giro || 'Suministro y Mantenimiento a Frentes Petroleros');
-  const [sitioWeb, setSitioWeb] = useState(() => proveedorExistente?.sitioWeb || 'https://www.fivepeaks.mx');
-  const [comentarios, setComentarios] = useState(() => proveedorExistente?.notas || 'Proveedor homologado para frentes petroleros e industriales.');
+  const [nombreRepresentante, setNombreRepresentante] = useState(() => proveedorExistente?.contactoPrincipal || '');
+  const [denominacionPuesto, setDenominacionPuesto] = useState(() => proveedorExistente?.puestoContacto || '');
+  const [categoriaOperativa, setCategoriaOperativa] = useState(() => proveedorExistente?.categoria || '');
+  const [giroEmpresarial, setGiroEmpresarial] = useState(() => proveedorExistente?.giro || '');
+  const [sitioWeb, setSitioWeb] = useState(() => proveedorExistente?.sitioWeb || '');
+  const [comentarios, setComentarios] = useState(() => proveedorExistente?.notas || '');
+
+  // Seguimiento de pasos completados y validación en tiempo real
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [camposTocados, setCamposTocados] = useState<Record<string, boolean>>({});
+
+  const marcarCampoTocado = (id: string) => {
+    setCamposTocados((prev) => ({ ...prev, [id]: true }));
+  };
 
   // ── ETAPA 2: CONTACTO Y DOMICILIO ──
   const [emailPrincipal, setEmailPrincipal] = useState(() => proveedorExistente?.email || 'contacto@fivepeaks.mx');
@@ -417,7 +426,7 @@ export const NuevoProveedorPage: React.FC = () => {
       rfc: rfc.trim().toUpperCase(),
       razonSocial: razonSocial.trim().toUpperCase(),
       nombreComercial: nombreComercial.trim(),
-      tipoPersona: tipoEntidad,
+      tipoPersona: (tipoEntidad as TipoPersona) || 'moral',
       giro: giroEmpresarial,
       contactoPrincipal: nombreRepresentante.trim(),
       puestoContacto: denominacionPuesto.trim(),
@@ -462,9 +471,165 @@ export const NuevoProveedorPage: React.FC = () => {
     }, 1200);
   };
 
+  // ── REGLAS DE VALIDACIÓN POR PASO (TIEMPO REAL) ──
+  const validarPasoActual = (paso: number) => {
+    const faltantes: string[] = [];
+    const idsFaltantes: string[] = [];
+
+    if (paso === 1) {
+      if (!tipoEntidad) {
+        faltantes.push('Tipo de Entidad Fiscal');
+        idsFaltantes.push('tipo-entidad-fiscal');
+      }
+      if (!nombreComercial.trim()) {
+        faltantes.push('Nombre Comercial / Marca');
+        idsFaltantes.push('nombre-comercial');
+      }
+      if (!categoriaOperativa.trim()) {
+        faltantes.push('Categoría Operativa');
+        idsFaltantes.push('categoria-operativa');
+      }
+      if (!nombreRepresentante.trim()) {
+        faltantes.push('Contacto Principal / Representante');
+        idsFaltantes.push('nombre-representante');
+      }
+      if (!giroEmpresarial.trim()) {
+        faltantes.push('Giro Empresarial');
+        idsFaltantes.push('giro-empresarial');
+      }
+    } else if (paso === 2) {
+      if (!emailPrincipal.trim() || !emailPrincipal.includes('@')) {
+        faltantes.push('Correo Electrónico Principal');
+        idsFaltantes.push('email-principal');
+      }
+      if (!telefonoMovil.trim()) {
+        faltantes.push('Teléfono Móvil / WhatsApp');
+        idsFaltantes.push('telefono-movil');
+      }
+      if (!calleNumero.trim()) {
+        faltantes.push('Calle y Número');
+        idsFaltantes.push('calle-numero');
+      }
+      if (!codigoPostal.trim()) {
+        faltantes.push('Código Postal');
+        idsFaltantes.push('codigo-postal');
+      }
+      if (!municipio.trim()) {
+        faltantes.push('Municipio / Alcaldía');
+        idsFaltantes.push('municipio');
+      }
+      if (!estado.trim()) {
+        faltantes.push('Estado');
+        idsFaltantes.push('estado');
+      }
+    } else if (paso === 3) {
+      if (!rfc.trim() || (tipoEntidad !== 'extranjero' && rfc.trim().length < 12)) {
+        faltantes.push(tipoEntidad === 'extranjero' ? 'Tax ID / Identificador Fiscal' : 'RFC Oficial (12 o 13 caracteres)');
+        idsFaltantes.push('rfc-fiscal');
+      }
+      if (!razonSocial.trim()) {
+        faltantes.push('Razón Social');
+        idsFaltantes.push('razon-social');
+      }
+      if (!regimenFiscal.trim()) {
+        faltantes.push('Régimen Fiscal');
+        idsFaltantes.push('regimen-fiscal');
+      }
+      if (!usoCfdi.trim()) {
+        faltantes.push('Uso de CFDI');
+        idsFaltantes.push('uso-cfdi');
+      }
+      if (!cpFiscal.trim()) {
+        faltantes.push('Código Postal Fiscal');
+        idsFaltantes.push('cp-fiscal');
+      }
+    } else if (paso === 4) {
+      if (!subsidiariaAsignada.trim()) {
+        faltantes.push('Subsidiaria Asignada');
+        idsFaltantes.push('subsidiaria-asignada');
+      }
+      if (!compradorResponsable.trim()) {
+        faltantes.push('Comprador Responsable');
+        idsFaltantes.push('comprador-responsable');
+      }
+      if (diasCredito === undefined || diasCredito === null || diasCredito < 0) {
+        faltantes.push('Días de Crédito');
+        idsFaltantes.push('dias-credito');
+      }
+      if (cuentasBancarias.length === 0) {
+        faltantes.push('Al menos una Cuenta Bancaria registrada');
+        idsFaltantes.push('agregar-cuenta-btn');
+      }
+    } else if (paso === 5) {
+      // Paso 5: Resumen y expediente digital (listo para confirmación)
+    }
+
+    return { valido: faltantes.length === 0, camposFaltantes: faltantes, idsFaltantes };
+  };
+
+  const estadoPasoActual = useMemo(() => {
+    return validarPasoActual(currentStep);
+  }, [
+    currentStep,
+    tipoEntidad,
+    nombreComercial,
+    categoriaOperativa,
+    nombreRepresentante,
+    giroEmpresarial,
+    emailPrincipal,
+    telefonoMovil,
+    calleNumero,
+    codigoPostal,
+    municipio,
+    estado,
+    rfc,
+    razonSocial,
+    regimenFiscal,
+    usoCfdi,
+    cpFiscal,
+    subsidiariaAsignada,
+    compradorResponsable,
+    diasCredito,
+    cuentasBancarias,
+  ]);
+
+  const campoTieneError = (id: string) => {
+    return Boolean(camposTocados[id] && estadoPasoActual.idsFaltantes.includes(id));
+  };
+
+  const handleIntentoAvanzarInvalido = () => {
+    setCamposTocados((prev) => {
+      const next = { ...prev };
+      estadoPasoActual.idsFaltantes.forEach((id) => {
+        next[id] = true;
+      });
+      return next;
+    });
+    mostrarToast(
+      `Faltan ${estadoPasoActual.camposFaltantes.length} campos obligatorios para continuar.`,
+      'error'
+    );
+    const primerId = estadoPasoActual.idsFaltantes[0];
+    if (primerId) {
+      const el = document.getElementById(primerId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus();
+      }
+    }
+  };
+
   const nextStep = () => {
+    if (!estadoPasoActual.valido) {
+      handleIntentoAvanzarInvalido();
+      return;
+    }
+    if (!completedSteps.includes(currentStep)) {
+      setCompletedSteps((prev) => [...prev, currentStep]);
+    }
     if (currentStep < totalSteps) {
       setCurrentStep((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       setModalNotificarAdminOpen(true);
     }
@@ -473,6 +638,7 @@ export const NuevoProveedorPage: React.FC = () => {
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep((prev) => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -524,8 +690,16 @@ export const NuevoProveedorPage: React.FC = () => {
         <Stepper
           steps={stepMeta}
           currentStep={currentStep}
-          completedSteps={Array.from({ length: currentStep - 1 }, (_, i) => i + 1)}
-          onStepClick={(step) => setCurrentStep(step)}
+          completedSteps={completedSteps}
+          onStepClick={(step) => {
+            if (step > currentStep && !estadoPasoActual.valido) {
+              handleIntentoAvanzarInvalido();
+              return;
+            }
+            setCurrentStep(step);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          isCurrentStepValid={estadoPasoActual.valido}
           stepLabelPrefix="Etapa"
           className="mb-6"
         />
@@ -564,115 +738,120 @@ export const NuevoProveedorPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Tipo de Entidad Fiscal */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                    Tipo de Entidad Fiscal <span className="text-red-500">*</span>
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <label
-                      className={`relative flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
-                        tipoEntidad === 'moral'
-                          ? 'border-[#1D4ED8] bg-blue-50/50 shadow-xs'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="tipo_entidad"
-                        value="moral"
-                        checked={tipoEntidad === 'moral'}
-                        onChange={() => setTipoEntidad('moral')}
-                        className="sr-only"
-                      />
-                      <span className={`material-symbols-outlined text-[24px] ${tipoEntidad === 'moral' ? 'text-[#1D4ED8]' : 'text-slate-400'}`}>
-                        domain
-                      </span>
-                      <div>
-                        <div className="text-xs font-bold text-slate-900">Persona Moral</div>
-                        <div className="text-[11px] text-slate-500">Sociedades mercantiles / S.A. de C.V.</div>
-                      </div>
-                    </label>
-
-                    <label
-                      className={`relative flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
-                        tipoEntidad === 'fisica'
-                          ? 'border-[#1D4ED8] bg-blue-50/50 shadow-xs'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="tipo_entidad"
-                        value="fisica"
-                        checked={tipoEntidad === 'fisica'}
-                        onChange={() => setTipoEntidad('fisica')}
-                        className="sr-only"
-                      />
-                      <span className={`material-symbols-outlined text-[24px] ${tipoEntidad === 'fisica' ? 'text-[#1D4ED8]' : 'text-slate-400'}`}>
-                        person
-                      </span>
-                      <div>
-                        <div className="text-xs font-bold text-slate-900">Persona Física</div>
-                        <div className="text-[11px] text-slate-500">Contratista independiente / Honorarios</div>
-                      </div>
-                    </label>
-
-                    <label
-                      className="relative flex items-center gap-3 p-3.5 rounded-xl border-2 border-slate-200 bg-white hover:bg-slate-50 cursor-pointer transition-all opacity-80"
-                      onClick={() => mostrarToast('Para entidades extranjeras se habilitará anexo fiscal W-8BEN en el paso 3.', 'info')}
-                    >
-                      <span className="material-symbols-outlined text-[24px] text-slate-400">public</span>
-                      <div>
-                        <div className="text-xs font-bold text-slate-900">Entidad Extranjera</div>
-                        <div className="text-[11px] text-slate-500">Sin residencia fiscal en México</div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Campos Principales */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Fila Principal de 3 Columnas: Tipo de Entidad Fiscal · Nombre Comercial / Marca · Categoría Operativa */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  {/* 1. Tipo de Entidad Fiscal */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    <label htmlFor="tipo-entidad-fiscal" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      Tipo de Entidad Fiscal <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="tipo-entidad-fiscal"
+                        value={tipoEntidad}
+                        onChange={(e) => {
+                          const val = e.target.value as TipoPersona | '';
+                          setTipoEntidad(val);
+                          marcarCampoTocado('tipo-entidad-fiscal');
+                          if (val === 'extranjero') {
+                            mostrarToast('Para entidades extranjeras se habilitará anexo fiscal W-8BEN en el paso 3.', 'info');
+                          }
+                        }}
+                        onBlur={() => marcarCampoTocado('tipo-entidad-fiscal')}
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-semibold transition-all appearance-none cursor-pointer bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${
+                          campoTieneError('tipo-entidad-fiscal')
+                            ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
+                            : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40'
+                        }`}
+                      >
+                        <option value="" disabled className="text-slate-400">
+                          Selecciona el tipo
+                        </option>
+                        <option value="moral">Persona Moral — Sociedades mercantiles / S.A. de C.V.</option>
+                        <option value="fisica">Persona Física — Contratista independiente / Honorarios</option>
+                        <option value="extranjero">Entidad Extranjera — Sin residencia fiscal en México</option>
+                      </select>
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">
+                        expand_more
+                      </span>
+                    </div>
+                    {campoTieneError('tipo-entidad-fiscal') && (
+                      <p className="mt-1 text-xs text-red-500 font-medium">Debe seleccionar el tipo de entidad fiscal.</p>
+                    )}
+                  </div>
+
+                  {/* 2. Nombre Comercial / Marca */}
+                  <div>
+                    <label htmlFor="nombre-comercial" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                       Nombre Comercial / Marca <span className="text-red-500">*</span>
                     </label>
                     <input
+                      id="nombre-comercial"
                       type="text"
                       value={nombreComercial}
-                      onChange={(e) => setNombreComercial(e.target.value)}
+                      onChange={(e) => {
+                        setNombreComercial(e.target.value);
+                        marcarCampoTocado('nombre-comercial');
+                      }}
+                      onBlur={() => marcarCampoTocado('nombre-comercial')}
                       placeholder="Ej. Five Peaks México / YAK Industrial"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-[#1D4ED8] focus:ring-2 focus:ring-blue-100 transition-all font-semibold"
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-semibold transition-all bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${
+                        campoTieneError('nombre-comercial')
+                          ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
+                          : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40'
+                      }`}
                     />
+                    {campoTieneError('nombre-comercial') && (
+                      <p className="mt-1 text-xs text-red-500 font-medium">El nombre comercial es obligatorio.</p>
+                    )}
                   </div>
 
+                  {/* 3. Categoría Operativa */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    <label htmlFor="categoria-operativa" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                       Categoría Operativa <span className="text-red-500">*</span>
                     </label>
-                    <select
-                      value={categoriaOperativa}
-                      onChange={(e) => setCategoriaOperativa(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-[#1D4ED8] focus:ring-2 focus:ring-blue-100 transition-all font-semibold bg-white"
-                    >
-                      <option value="Servicios Especializados">Servicios Especializados (Mantenimiento, Certificaciones)</option>
-                      <option value="Refacciones y Suministros Industriales">Refacciones y Suministros Industriales</option>
-                      <option value="Contratista de Obra y Mantenimiento">Contratista de Obra y Mantenimiento</option>
-                      <option value="Transporte y Logística">Transporte y Logística</option>
-                      <option value="Consultoría y Laboratorio">Consultoría y Laboratorio de Pruebas</option>
-                      <option value="Consumibles de Operación">Consumibles de Operación y Seguridad</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        id="categoria-operativa"
+                        value={categoriaOperativa}
+                        onChange={(e) => {
+                          setCategoriaOperativa(e.target.value);
+                          marcarCampoTocado('categoria-operativa');
+                        }}
+                        onBlur={() => marcarCampoTocado('categoria-operativa')}
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-semibold transition-all appearance-none cursor-pointer bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${
+                          campoTieneError('categoria-operativa')
+                            ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
+                            : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40'
+                        }`}
+                      >
+                        <option value="">Selecciona una categoría...</option>
+                        <option value="Servicios Especializados">Servicios Especializados (Mantenimiento, Certificaciones)</option>
+                        <option value="Refacciones y Suministros Industriales">Refacciones y Suministros Industriales</option>
+                        <option value="Contratista de Obra y Mantenimiento">Contratista de Obra y Mantenimiento</option>
+                        <option value="Transporte y Logística">Transporte y Logística</option>
+                        <option value="Consultoría y Laboratorio">Consultoría y Laboratorio de Pruebas</option>
+                        <option value="Consumibles de Operación">Consumibles de Operación y Seguridad</option>
+                      </select>
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">
+                        expand_more
+                      </span>
+                    </div>
+                    {campoTieneError('categoria-operativa') && (
+                      <p className="mt-1 text-xs text-red-500 font-medium">Debe seleccionar una categoría operativa.</p>
+                    )}
                   </div>
                 </div>
 
                 {/* Representante y Puesto */}
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
                   <div className="sm:col-span-3">
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Tratamiento</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Tratamiento</label>
                     <select
                       value={tratamiento}
                       onChange={(e) => setTratamiento(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-[#1D4ED8] bg-white font-semibold"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-sm focus:border-[#1D4ED8] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold"
                     >
                       <option value="Lic.">Lic.</option>
                       <option value="Ing.">Ing.</option>
@@ -683,24 +862,36 @@ export const NuevoProveedorPage: React.FC = () => {
                   </div>
 
                   <div className="sm:col-span-5">
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    <label htmlFor="nombre-representante" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                       Nombre del Representante Legal / Contacto <span className="text-red-500">*</span>
                     </label>
                     <input
+                      id="nombre-representante"
                       type="text"
                       value={nombreRepresentante}
-                      onChange={(e) => setNombreRepresentante(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-[#1D4ED8] font-semibold"
+                      onChange={(e) => {
+                        setNombreRepresentante(e.target.value);
+                        marcarCampoTocado('nombre-representante');
+                      }}
+                      onBlur={() => marcarCampoTocado('nombre-representante')}
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-semibold transition-all bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${
+                        campoTieneError('nombre-representante')
+                          ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
+                          : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8] focus:ring-2 focus:ring-blue-100'
+                      }`}
                     />
+                    {campoTieneError('nombre-representante') && (
+                      <p className="mt-1 text-xs text-red-500 font-medium">El representante legal es obligatorio.</p>
+                    )}
                   </div>
 
                   <div className="sm:col-span-4">
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Denominación del Puesto</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Denominación del Puesto</label>
                     <input
                       type="text"
                       value={denominacionPuesto}
                       onChange={(e) => setDenominacionPuesto(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-[#1D4ED8]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:border-[#1D4ED8]"
                     />
                   </div>
                 </div>
@@ -708,22 +899,36 @@ export const NuevoProveedorPage: React.FC = () => {
                 {/* Giro y Sitio Web */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Giro Empresarial</label>
+                    <label htmlFor="giro-empresarial" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      Giro Empresarial <span className="text-red-500">*</span>
+                    </label>
                     <input
+                      id="giro-empresarial"
                       type="text"
                       value={giroEmpresarial}
-                      onChange={(e) => setGiroEmpresarial(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-[#1D4ED8]"
+                      onChange={(e) => {
+                        setGiroEmpresarial(e.target.value);
+                        marcarCampoTocado('giro-empresarial');
+                      }}
+                      onBlur={() => marcarCampoTocado('giro-empresarial')}
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-sm transition-all bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${
+                        campoTieneError('giro-empresarial')
+                          ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
+                          : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8]'
+                      }`}
                     />
+                    {campoTieneError('giro-empresarial') && (
+                      <p className="mt-1 text-xs text-red-500 font-medium">El giro empresarial es obligatorio.</p>
+                    )}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Sitio Web Corporativo</label>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Sitio Web Corporativo</label>
                     <input
                       type="url"
                       value={sitioWeb}
                       onChange={(e) => setSitioWeb(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-[#1D4ED8]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:border-[#1D4ED8]"
                     />
                   </div>
                 </div>
@@ -1593,71 +1798,28 @@ export const NuevoProveedorPage: React.FC = () => {
       </main>
 
       {/* ====================================================================
-          BARRA DE ACCIONES FIJA INFERIOR (STICKY FOOTER - SEGÚN REQUERIMIENTO)
-          "noma que el boton de continuar sea fijo que no se mueva..."
+          BARRA DE ACCIONES FIJA INFERIOR REUTILIZABLE (STICKY FOOTER NORMATIVO)
           ==================================================================== */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 sm:px-8 py-3.5 z-40 shadow-[0_-4px_25px_rgba(0,0,0,0.15)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.5)] border-t border-slate-200 dark:border-slate-800 transition-colors">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-          {/* Lado Izquierdo: Guardar Borrador & Estado de Autoguardado */}
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
-            <button
-              type="button"
-              onClick={handleGuardarBorrador}
-              disabled={isSavingDraft}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer border border-slate-200 dark:border-slate-700 shadow-xs"
-              title="Guardar borrador de la sesión"
-            >
-              <span className="material-symbols-outlined text-[17px]">
-                {isSavingDraft ? 'sync' : 'save'}
-              </span>
-              <span>{isSavingDraft ? 'Guardando...' : 'Guardar Borrador'}</span>
-            </button>
-
-            <span className="text-xs text-slate-400 dark:text-slate-400 font-medium hidden md:inline">
-              {ultimoGuardado}
-            </span>
-          </div>
-
-          {/* Centro: Opción Cancelar */}
-          <div className="hidden sm:block">
-            <button
-              type="button"
-              onClick={() => setModalConfirmCancelOpen(true)}
-              className="px-3.5 py-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 text-xs font-bold transition-colors cursor-pointer"
-            >
-              Cancelar Operación
-            </button>
-          </div>
-
-          {/* Lado Derecho: Navegación de Etapas (Anterior / Continuar) */}
-          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-            <button
-              type="button"
-              disabled={currentStep === 1}
-              onClick={prevStep}
-              className={`inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-bold transition-colors border shadow-xs ${
-                currentStep === 1
-                  ? 'bg-slate-100 dark:bg-slate-800/60 text-slate-400 dark:text-slate-600 border-slate-200 dark:border-slate-800 cursor-not-allowed'
-                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[17px]">arrow_back</span>
-              <span>Anterior</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={nextStep}
-              className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-[#1D4ED8] hover:bg-blue-800 text-white text-xs font-black transition-all shadow-md active:scale-98 cursor-pointer"
-            >
-              <span>{stepMeta[currentStep - 1].nextText}</span>
-              <span className="material-symbols-outlined text-[17px]">
-                {currentStep === totalSteps ? 'check_circle' : 'arrow_forward'}
-              </span>
-            </button>
-          </div>
-        </div>
-      </footer>
+      <FormWizardFooter
+        currentStep={currentStep}
+        totalSteps={totalSteps}
+        isValid={estadoPasoActual.valido}
+        missingFields={estadoPasoActual.camposFaltantes}
+        onContinue={nextStep}
+        onPrevious={prevStep}
+        onSaveDraft={handleGuardarBorrador}
+        onCancel={() => setModalConfirmCancelOpen(true)}
+        continueText={stepMeta[currentStep - 1]?.nextText || 'Continuar'}
+        finalText="Finalizar y Enviar a Autorización"
+        continueIcon="arrow_forward"
+        finalIcon="check_circle"
+        isSavingDraft={isSavingDraft}
+        lastSavedText={ultimoGuardado}
+        onInvalidClick={handleIntentoAvanzarInvalido}
+        helperText="Completa los campos obligatorios (*) para continuar"
+        cancelText="Cancelar Operación"
+        showCancel={true}
+      />
 
       {/* ====================================================================
           MODAL: AGREGAR REGISTRO FISCAL ADICIONAL (STEP 3)

@@ -24,6 +24,7 @@ import {
 } from '../data/orden-compra-catalog';
 import type { OrdenCompra, MonedaDivisa } from '../types';
 import WizardStepper from '../components/WizardStepper';
+import { FormWizardFooter } from '../components/FormWizardFooter';
 import { ModuleMenu } from '@/components/ui/ModuleMenu';
 import '../orden-compra-wizard.css';
 
@@ -471,12 +472,30 @@ export const NuevaOrdenCompraPage: React.FC = () => {
     partidas,
   ]);
 
+  const estadoPasoActual = useMemo(() => {
+    return validarPaso(currentStep);
+  }, [
+    currentStep,
+    subsidiaria,
+    proveedorSeleccionado,
+    proveedorBusqueda,
+    moneda,
+    recibidoPor,
+    reqContrato,
+    ubicacion,
+    noOrdenCompra,
+    estadoAprobacion,
+    proximoAprobador,
+    partidas,
+  ]);
+
   // Manejo de avance de paso
   const handleContinuar = () => {
-    const res = validarPaso(currentStep);
+    const res = estadoPasoActual;
     if (!res.valido) {
       setErrorMessages(res.errores);
       setShowErrorBanner(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -683,14 +702,23 @@ export const NuevaOrdenCompraPage: React.FC = () => {
         errorSteps={errorSteps}
         isSaved={isSaved}
         isCompletedAll={isFacturaConcluida}
+        isCurrentStepValid={estadoPasoActual.valido}
         successBannerText={
           isFacturaConcluida
             ? `Factura ${facturaFolioParam || 'fiscal CFDI 4.0'} vinculada con éxito. Proceso de orden de compra concluido al 100%.`
             : undefined
         }
         onStepClick={(stepNum) => {
-          if (!isSaved && !isFacturaConcluida && (completedSteps.includes(stepNum) || stepNum === currentStep)) {
-            setCurrentStep(stepNum);
+          if (!isSaved && !isFacturaConcluida) {
+            if (stepNum > currentStep && !estadoPasoActual.valido) {
+              setErrorMessages(estadoPasoActual.errores);
+              setShowErrorBanner(true);
+              return;
+            }
+            if (completedSteps.includes(stepNum) || stepNum === currentStep || stepNum < currentStep) {
+              setCurrentStep(stepNum);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
           }
         }}
       />
@@ -2082,59 +2110,31 @@ export const NuevaOrdenCompraPage: React.FC = () => {
         </div>
       )}
 
-      {/* ── PIE FIJO DE NAVEGACIÓN ── */}
-      <footer className="oc-fixed-footer">
-        <div className="oc-fixed-footer-inner">
-          {/* Izquierda: Botón Atrás */}
-          <div>
-            {currentStep > 1 && currentStep <= 4 && !isSaved && (
-              <button
-                type="button"
-                className="cp-btn cp-btn-secondary"
-                onClick={handleAtras}
-              >
-                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
-                Atrás
-              </button>
-            )}
-          </div>
-
-          {/* Centro / Derecha: Cancelar y Continuar / Guardar */}
-          <div className="flex items-center gap-2.5">
-            {currentStep <= 4 && !isSaved && (
-              <button
-                type="button"
-                className="cp-btn cp-btn-secondary text-red-600 dark:text-red-400"
-                onClick={() => setIsDialogCancelarOpen(true)}
-              >
-                Cancelar
-              </button>
-            )}
-
-            {currentStep <= 3 && (
-              <button
-                type="button"
-                className="cp-btn cp-btn-primary"
-                onClick={handleContinuar}
-              >
-                Continuar
-                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-              </button>
-            )}
-
-            {currentStep === 4 && (
-              <button
-                type="button"
-                className="cp-btn cp-btn-primary"
-                onClick={handleGuardarOrden}
-              >
-                <span className="material-symbols-outlined text-[18px]">save</span>
-                Guardar orden de compra
-              </button>
-            )}
-          </div>
-        </div>
-      </footer>
+      {/* ── PIE FIJO DE NAVEGACIÓN REUTILIZABLE (NORMATIVO) ── */}
+      {!isSaved && (
+        <FormWizardFooter
+          currentStep={currentStep}
+          totalSteps={4}
+          isValid={estadoPasoActual.valido}
+          missingFields={estadoPasoActual.errores}
+          onContinue={currentStep === 4 ? handleGuardarOrden : handleContinuar}
+          onPrevious={handleAtras}
+          onCancel={() => setIsDialogCancelarOpen(true)}
+          continueText="Continuar"
+          finalText="Guardar orden de compra"
+          continueIcon="chevron_right"
+          finalIcon="save"
+          onInvalidClick={() => {
+            setErrorMessages(estadoPasoActual.errores);
+            setShowErrorBanner(true);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          helperText="Completa los campos obligatorios (*) para continuar"
+          cancelText="Cancelar"
+          showCancel={currentStep <= 4}
+          isLastStep={currentStep === 4}
+        />
+      )}
 
       {/* ── MODAL: VER LISTA COMPLETA DE PROVEEDORES (PASO 1) ── */}
       {isModalProveedoresOpen && (

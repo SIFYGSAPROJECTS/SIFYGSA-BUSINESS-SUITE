@@ -13,6 +13,7 @@ export interface WizardStepperProps {
   isCompletedAll?: boolean;
   onStepClick: (stepNumber: number) => void;
   successBannerText?: string;
+  isCurrentStepValid?: boolean;
 }
 
 /**
@@ -28,6 +29,7 @@ export const WizardStepper: React.FC<WizardStepperProps> = ({
   isCompletedAll = false,
   onStepClick,
   successBannerText,
+  isCurrentStepValid = true,
 }) => {
   const mappedSteps: StepItem[] = steps.map((s) => ({
     id: s.id,
@@ -48,6 +50,7 @@ export const WizardStepper: React.FC<WizardStepperProps> = ({
       isReadOnly={isSaved}
       stepLabelPrefix="Etapa"
       successBannerText={successBannerText}
+      isCurrentStepValid={isCurrentStepValid}
       className="mb-6"
     />
   );

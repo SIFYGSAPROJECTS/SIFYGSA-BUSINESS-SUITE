@@ -4,6 +4,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Stepper, type StepItem } from '@/components/ui/Stepper';
+import { FormWizardFooter } from '../components/FormWizardFooter';
 import { useCompras } from '../context/ComprasContext';
 import {
   obtenerOrdenesCompra,
@@ -289,49 +290,40 @@ export const RegistroFacturaProveedorPage: React.FC = () => {
   }, [ordenes, busquedaOrden]);
 
   // ── MANEJADORES DE NAVEGACIÓN Y VALIDACIÓN DEL STEPPER ──
-  const validarPasoActual = (paso: number): boolean => {
-    setErrorValidacion(null);
+  const obtenerEstadoValidacionPaso = (paso: number): { valido: boolean; camposFaltantes: string[] } => {
+    const faltantes: string[] = [];
     if (paso === 1) {
       if (!ordenSeleccionada) {
-        setErrorValidacion('Debe seleccionar una orden de compra para continuar.');
-        return false;
+        faltantes.push('Orden de Compra vinculada');
       }
-      return true;
-    }
-
-    if (paso === 2) {
+    } else if (paso === 2) {
       if (!referenciaNo.trim()) {
-        setErrorValidacion('El campo "Referencia No." es obligatorio.');
-        return false;
+        faltantes.push('Referencia No. de Factura');
       }
       if (!fechaVencimiento.trim()) {
-        setErrorValidacion('La "Fecha de vencimiento" es obligatoria.');
-        return false;
+        faltantes.push('Fecha de Vencimiento');
       }
       if (!cuentaContable.trim()) {
-        setErrorValidacion('Debe seleccionar una "Cuenta" contable obligatoria.');
-        return false;
+        faltantes.push('Cuenta Contable');
       }
-      return true;
-    }
-
-    if (paso === 3) {
+    } else if (paso === 3) {
       if (!carpetaSeleccionada.trim()) {
-        setErrorValidacion('Debe seleccionar una "Carpeta" para el archivo.');
-        return false;
+        faltantes.push('Carpeta de destino');
       }
       if (archivosLista.length === 0) {
-        setErrorValidacion('Debe agregar al menos un archivo adjunto (PDF, XML, JPG o PNG).');
-        return false;
+        faltantes.push('Al menos un archivo comprobante (PDF/XML)');
       }
-      return true;
     }
-
-    return true;
+    return { valido: faltantes.length === 0, camposFaltantes: faltantes };
   };
 
+  const estadoPasoActual = useMemo(() => {
+    return obtenerEstadoValidacionPaso(currentStep);
+  }, [currentStep, ordenSeleccionada, referenciaNo, fechaVencimiento, cuentaContable, carpetaSeleccionada, archivosLista]);
+
   const handleContinuar = () => {
-    if (!validarPasoActual(currentStep)) {
+    if (!estadoPasoActual.valido) {
+      setErrorValidacion(`Faltan ${estadoPasoActual.camposFaltantes.length} campos obligatorios para continuar: ${estadoPasoActual.camposFaltantes.join(', ')}`);
       if (!errorSteps.includes(currentStep)) {
         setErrorSteps((prev) => [...prev, currentStep]);
       }
@@ -340,6 +332,7 @@ export const RegistroFacturaProveedorPage: React.FC = () => {
 
     // Quitar de error si estaba
     setErrorSteps((prev) => prev.filter((s) => s !== currentStep));
+    setErrorValidacion(null);
 
     // Agregar a completados
     if (!completedSteps.includes(currentStep)) {
@@ -623,7 +616,14 @@ export const RegistroFacturaProveedorPage: React.FC = () => {
             completedSteps={completedSteps}
             errorSteps={errorSteps}
             isCompletedAll={isCompletedAll}
-            onStepClick={handleStepClick}
+            isCurrentStepValid={estadoPasoActual.valido}
+            onStepClick={(step) => {
+              if (step > currentStep && !estadoPasoActual.valido) {
+                setErrorValidacion(`Faltan ${estadoPasoActual.camposFaltantes.length} campos obligatorios para continuar: ${estadoPasoActual.camposFaltantes.join(', ')}`);
+                return;
+              }
+              handleStepClick(step);
+            }}
             isReadOnly={facturaGuardadaExito}
             successBannerText={
               facturaGuardadaExito
@@ -1553,66 +1553,29 @@ export const RegistroFacturaProveedorPage: React.FC = () => {
             </div>
           )}
 
-          {/* ── BARRA INFERIOR FIJA DE NAVEGACIÓN POR PASOS ── */}
+          {/* ── BARRA INFERIOR FIJA REUTILIZABLE DE NAVEGACIÓN (NORMATIVO) ── */}
           {!facturaGuardadaExito && (
-            <footer className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 py-3 px-4 sm:px-8 shadow-lg">
-              <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-4">
-                {/* Izquierda: Botón Atrás */}
-                <div>
-                  {currentStep > 1 && (
-                    <button
-                      type="button"
-                      onClick={handleAtras}
-                      className="cp-btn cp-btn-secondary text-xs"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">chevron_left</span>
-                      Atrás
-                    </button>
-                  )}
-                </div>
-
-                {/* Derecha: Cancelar + Continuar / Guardar */}
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsDialogCancelarOpen(true)}
-                    className="cp-btn cp-btn-secondary text-xs text-red-600 dark:text-red-400 hover:bg-red-50"
-                  >
-                    Cancelar
-                  </button>
-
-                  {currentStep < 4 ? (
-                    <button
-                      type="button"
-                      onClick={handleContinuar}
-                      className="cp-btn cp-btn-primary text-xs"
-                    >
-                      <span>Continuar</span>
-                      <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleGuardarFactura}
-                      disabled={isSaving}
-                      className="cp-btn cp-btn-primary text-xs"
-                    >
-                      {isSaving ? (
-                        <>
-                          <span className="material-symbols-outlined animate-spin text-[18px]">sync</span>
-                          <span>Asentando contablemente...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                          <span>Guardar factura</span>
-                        </>
-                      )}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </footer>
+            <FormWizardFooter
+              currentStep={currentStep}
+              totalSteps={4}
+              isValid={estadoPasoActual.valido}
+              missingFields={estadoPasoActual.camposFaltantes}
+              onContinue={currentStep < 4 ? handleContinuar : handleGuardarFactura}
+              onPrevious={handleAtras}
+              onCancel={() => setIsDialogCancelarOpen(true)}
+              continueText="Continuar"
+              finalText={isSaving ? 'Asentando contablemente...' : 'Guardar factura'}
+              continueIcon="chevron_right"
+              finalIcon="check_circle"
+              onInvalidClick={() => {
+                setErrorValidacion(`Faltan ${estadoPasoActual.camposFaltantes.length} campos obligatorios para continuar: ${estadoPasoActual.camposFaltantes.join(', ')}`);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              helperText="Completa los campos obligatorios (*) para continuar"
+              cancelText="Cancelar"
+              showCancel={true}
+              isLastStep={currentStep === 4}
+            />
           )}
         </div>
       )}
