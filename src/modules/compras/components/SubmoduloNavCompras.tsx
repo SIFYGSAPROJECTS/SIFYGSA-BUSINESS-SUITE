@@ -124,6 +124,18 @@ const TODOS_LAUNCHER_ITEMS: ComprasLauncherItem[] = [
       </span>
     ),
   },
+  {
+    id: 'requisiciones',
+    href: '/requisiciones',
+    title: 'Requisiciones',
+    description: 'Gestión, solicitudes y seguimiento de requisiciones',
+    colorClass: 'amber',
+    icon: (
+      <span className="material-symbols-outlined" style={{ fontSize: '28px', color: '#ffffff' }}>
+        assignment
+      </span>
+    ),
+  },
 ];
 
 export const SubmoduloNavCompras: React.FC<SubmoduloNavComprasProps> = ({
@@ -145,6 +157,8 @@ export const SubmoduloNavCompras: React.FC<SubmoduloNavComprasProps> = ({
       ? 'nuevo-proveedor'
       : pathname.startsWith('/compras/proveedores')
       ? 'proveedores'
+      : pathname.startsWith('/requisiciones')
+      ? 'requisiciones'
       : pathname.startsWith('/compras/ordenes') && vistaParam === 'autorizar'
       ? 'autorizar-ordenes'
       : pathname.startsWith('/compras/ordenes') && filtroParam === 'por-actualizar'
@@ -162,7 +176,8 @@ export const SubmoduloNavCompras: React.FC<SubmoduloNavComprasProps> = ({
         item.id === 'ordenes' ||
         item.id === 'ordenes-por-actualizar' ||
         item.id === 'ordenes-pendientes' ||
-        item.id === 'autorizar-ordenes'
+        item.id === 'autorizar-ordenes' ||
+        item.id === 'requisiciones'
       );
     }
     if (modo === 'proveedores-puro') {

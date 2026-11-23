@@ -31,6 +31,15 @@ const SUBMODULOS_SERVICIOS: SubmoduloCardItem[] = [
     colorClass: 'amber',
     tag: 'Asignación de Servicio a Obra',
   },
+  {
+    id: 'requisiciones',
+    href: '/requisiciones',
+    title: 'Requisiciones',
+    description: 'Requisición de servicios técnicos y calibración.',
+    icon: 'assignment',
+    colorClass: 'emerald',
+    tag: 'Solicitud de Servicios',
+  },
 ];
 
 export const HubModulosServiciosPage: React.FC = () => {
@@ -38,7 +47,7 @@ export const HubModulosServiciosPage: React.FC = () => {
     <HubSubmodulosAlmacen
       titulo="Servicios"
       subtitulo="Gestión de catálogo, entradas y salidas de servicios."
-      badgeTexto="3 Submódulos"
+      badgeTexto="4 Submódulos"
       headerIcon="extension"
       headerColorClass="emerald"
       breadcrumbModulo="Módulos de Servicios"

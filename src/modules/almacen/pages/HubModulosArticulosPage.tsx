@@ -31,6 +31,15 @@ const SUBMODULOS_ARTICULOS: SubmoduloCardItem[] = [
     colorClass: 'amber',
     tag: 'Vales de Salida y Préstamos',
   },
+  {
+    id: 'requisiciones',
+    href: '/requisiciones',
+    title: 'Requisiciones',
+    description: 'Solicitud y pedido de materiales a compras.',
+    icon: 'assignment',
+    colorClass: 'brand',
+    tag: 'Solicitudes y Pedidos',
+  },
 ];
 
 export const HubModulosArticulosPage: React.FC = () => {
@@ -38,7 +47,7 @@ export const HubModulosArticulosPage: React.FC = () => {
     <HubSubmodulosAlmacen
       titulo="Artículos"
       subtitulo="Gestión de catálogo, entradas y salidas de inventario de artículos."
-      badgeTexto="3 Submódulos"
+      badgeTexto="4 Submódulos"
       headerIcon="inventory_2"
       headerColorClass="brand"
       breadcrumbModulo="Módulos de Artículos"

@@ -67,6 +67,15 @@ const SUBMODULOS_COMPRAS: SubmoduloCardItem[] = [
     colorClass: 'amber',
     tag: 'Mesa de Validación',
   },
+  {
+    id: 'requisiciones',
+    href: '/requisiciones',
+    title: 'Requisiciones',
+    description: 'Solicitudes de compra, materiales y autorizaciones internas.',
+    icon: 'assignment',
+    colorClass: 'brand',
+    tag: 'Solicitudes y Aprobación',
+  },
 ];
 
 export const HubModulosComprasPage: React.FC = () => {
@@ -101,6 +110,15 @@ export const HubModulosComprasPage: React.FC = () => {
             <span className="material-symbols-outlined text-[17px] text-emerald-600">groups</span>
             <span>Proveedores</span>
           </Link>
+
+          <Link
+            href="/requisiciones"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all shadow-xs"
+            title="Ir al submódulo de Requisiciones"
+          >
+            <span className="material-symbols-outlined text-[17px] text-amber-600">assignment</span>
+            <span>Requisiciones</span>
+          </Link>
         </div>
       </div>
 
@@ -119,7 +137,7 @@ export const HubModulosComprasPage: React.FC = () => {
                   </h1>
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-900">
                     <span className="material-symbols-outlined text-[14px]">verified</span>
-                    5 Submódulos
+                    6 Submódulos
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
@@ -133,7 +151,7 @@ export const HubModulosComprasPage: React.FC = () => {
 
       {/* ── CUADRÍCULA DE SUBMÓDULOS DE COMPRAS (CARPETAS GRANDES CON EFECTO HOVER) ── */}
       <section aria-label="Submódulos de Compras" className="cp-ventas-launcher-bar p-6 rounded-2xl mb-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5">
           {SUBMODULOS_COMPRAS.map((item) => (
             <Link
               key={item.id}

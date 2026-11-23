@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import type { RolUsuario } from '@/config/types';
 import {
@@ -215,6 +216,18 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
                   extension
                 </span>
               </button>
+
+              {/* Grupo 4: Requisiciones */}
+              <Link
+                href="/requisiciones"
+                className={`collapsed-nav-btn almacen-ops-btn ${pathname.startsWith('/requisiciones') ? 'active-ops' : ''}`}
+                title="Requisiciones"
+                aria-label="Requisiciones"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                  assignment
+                </span>
+              </Link>
             </div>
           </div>
         ) : (
@@ -342,6 +355,14 @@ export const SidebarAlmacen: React.FC<SidebarAlmacenProps> = ({
                       <span className={`bullet-indicator ${esSubItemActivo('asignaciones') ? 'orange' : 'gray'}`} />
                       <span>Asignaciones a Proyectos</span>
                     </button>
+
+                    <Link
+                      href="/requisiciones"
+                      className={`sub-nav-link ${pathname.startsWith('/requisiciones') ? 'active-pill' : ''}`}
+                    >
+                      <span className={`bullet-indicator ${pathname.startsWith('/requisiciones') ? 'orange' : 'gray'}`} />
+                      <span>Requisiciones</span>
+                    </Link>
                   </div>
                 )}
               </div>

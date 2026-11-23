@@ -149,6 +149,21 @@ export const MenuPrincipalAlmacenPage: React.FC = () => {
                       <span className="text-[10px] text-slate-400">Vale de salida a proyecto (SA)</span>
                     </div>
                   </Link>
+
+                  {/* Opción 4: Requisición de artículos */}
+                  <Link
+                    href="/requisiciones"
+                    onClick={() => setMenuAbierto(null)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-slate-700 dark:text-slate-200 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors group no-underline"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <span className="material-symbols-outlined text-[18px]">assignment</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold">Requisición de artículos</span>
+                      <span className="text-[10px] text-slate-400">Solicitud de material para obra o reposición</span>
+                    </div>
+                  </Link>
                 </div>
               </div>
             )}
@@ -241,10 +256,37 @@ export const MenuPrincipalAlmacenPage: React.FC = () => {
                       <span className="text-[10px] text-slate-400">Asignación de servicio a proyecto</span>
                     </div>
                   </Link>
+
+                  {/* Opción 4: Requisición de servicios */}
+                  <Link
+                    href="/requisiciones"
+                    onClick={() => setMenuAbierto(null)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-slate-700 dark:text-slate-200 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors group no-underline"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <span className="material-symbols-outlined text-[18px]">assignment</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold">Requisición de servicios</span>
+                      <span className="text-[10px] text-slate-400">Solicitud de pruebas o calibración técnica</span>
+                    </div>
+                  </Link>
                 </div>
               </div>
             )}
           </div>
+
+          {/* SELECTOR 3: REQUISICIONES (Enlace directo a requisiciones) */}
+          <Link
+            href="/requisiciones"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs transition-colors no-underline cursor-pointer"
+            title="Ir al submódulo de Requisiciones"
+          >
+            <span className="material-symbols-outlined text-[18px] text-amber-600 dark:text-amber-400">
+              assignment
+            </span>
+            <span>Requisiciones</span>
+          </Link>
         </div>
       </div>
 

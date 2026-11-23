@@ -25,12 +25,17 @@ export const ModuleMenu: React.FC<ModuleMenuProps> = ({ className = '', onNaviga
     pathname === '/compras/proveedores/modulos' ||
     pathname.startsWith('/compras/proveedores');
 
+  const esRequisicionesHub =
+    pathname === '/requisiciones' ||
+    pathname.startsWith('/requisiciones') ||
+    pathname.startsWith('/compras/requisiciones');
+
   const esComprasHub =
     pathname === '/compras/modulos' ||
     (!esProveedoresHub &&
+      !esRequisicionesHub &&
       (pathname.startsWith('/compras/ordenes') ||
         pathname.startsWith('/compras/facturas') ||
-        pathname.startsWith('/compras/requisiciones') ||
         pathname === '/compras'));
 
   return (
@@ -87,6 +92,37 @@ export const ModuleMenu: React.FC<ModuleMenuProps> = ({ className = '', onNaviga
           shopping_cart
         </span>
         <span>Compras</span>
+      </Link>
+
+      {/* ── BOTÓN 3: REQUISICIONES (Secundario, con borde, ícono assignment) ── */}
+      <Link
+        href="/requisiciones"
+        id="btn-nav-requisiciones"
+        onClick={onNavigate}
+        className={`cp-btn cp-btn-secondary inline-flex items-center gap-2 cursor-pointer transition-all select-none no-underline ${
+          esRequisicionesHub
+            ? 'border-amber-500 bg-amber-50/60 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 font-bold shadow-xs'
+            : ''
+        }`}
+        style={{
+          textDecoration: 'none',
+          ...(esRequisicionesHub
+            ? {
+                borderColor: '#d97706',
+                color: '#d97706',
+                fontWeight: 700,
+              }
+            : {}),
+        }}
+        title="Ir al submódulo de Requisiciones"
+      >
+        <span
+          className="material-symbols-outlined"
+          style={{ fontSize: 18, color: esRequisicionesHub ? '#d97706' : 'inherit' }}
+        >
+          assignment
+        </span>
+        <span className="hidden sm:inline">Requisiciones</span>
       </Link>
     </div>
   );

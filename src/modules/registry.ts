@@ -148,6 +148,7 @@ export const REGISTRO_MODULOS: readonly DefinicionModulo[] = [
       { id: 'almacen-salida', nombre: 'Salidas de Almacén (SA)', nombreEn: 'Outbound SA', vista: 'salida', accionRequerida: 'crear' },
       { id: 'almacen-alta-servicio', nombre: 'Alta de Servicios', nombreEn: 'New Service', vista: 'alta-servicio', accionRequerida: 'crear' },
       { id: 'almacen-asignaciones', nombre: 'Asignaciones a Proyectos', nombreEn: 'Project Assignments', vista: 'asignaciones', accionRequerida: 'ver' },
+      { id: 'almacen-requisiciones', nombre: 'Requisiciones', nombreEn: 'Requisitions', vista: 'requisiciones', accionRequerida: 'ver' },
     ],
   },
   {
@@ -165,6 +166,7 @@ export const REGISTRO_MODULOS: readonly DefinicionModulo[] = [
       { id: 'compras-proveedores', nombre: 'Gestión de Proveedores', nombreEn: 'Suppliers Management', vista: 'proveedores', accionRequerida: 'ver' },
       { id: 'compras-nuevo-proveedor', nombre: 'Alta de Proveedor', nombreEn: 'New Supplier', vista: 'proveedores/nuevo', accionRequerida: 'crear' },
       { id: 'compras-facturas', nombre: 'Recepción de Facturas', nombreEn: 'Invoices CFDI 4.0', vista: 'facturas', accionRequerida: 'ver' },
+      { id: 'compras-requisiciones', nombre: 'Requisiciones', nombreEn: 'Requisitions', vista: 'requisiciones', accionRequerida: 'ver' },
     ],
   },
 ] as const;

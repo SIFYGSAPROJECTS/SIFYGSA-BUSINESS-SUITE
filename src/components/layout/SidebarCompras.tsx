@@ -87,6 +87,7 @@ export const SidebarCompras: React.FC<SidebarComprasProps> = ({
   const esNuevoProveedorActivo = pathname === '/compras/proveedores/nuevo';
   const esProveedoresListaActivo =
     pathname === '/compras/proveedores' || (esProveedoresActivo && !esNuevoProveedorActivo);
+  const esRequisicionesActivo = pathname.startsWith('/requisiciones');
 
   return (
     <aside
@@ -290,6 +291,18 @@ export const SidebarCompras: React.FC<SidebarComprasProps> = ({
               >
                 <span className="material-symbols-outlined" style={{ fontSize: 18, color: esAutorizarActivo ? '#ffffff' : '#d97706' }}>
                   verified_user
+                </span>
+              </Link>
+
+              {/* 5.1 Requisiciones */}
+              <Link
+                href="/requisiciones"
+                className={`collapsed-nav-btn ${esRequisicionesActivo ? 'active-crm' : ''}`}
+                title="Requisiciones"
+                aria-label="Requisiciones"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 18, color: esRequisicionesActivo ? '#ffffff' : '#d97706' }}>
+                  assignment
                 </span>
               </Link>
 
@@ -771,6 +784,47 @@ export const SidebarCompras: React.FC<SidebarComprasProps> = ({
                           </span>
                         </div>
                         <span style={{ lineHeight: 1.2 }}>Autorización de Órdenes</span>
+                      </Link>
+
+                      {/* 1.5.1 Requisiciones */}
+                      <Link
+                        href="/requisiciones"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.65rem',
+                          padding: '0.45rem 0.65rem',
+                          borderRadius: 'var(--radius-control)',
+                          textDecoration: 'none',
+                          backgroundColor: esRequisicionesActivo
+                            ? 'rgba(217, 119, 6, 0.12)'
+                            : 'transparent',
+                          color: esRequisicionesActivo
+                            ? '#d97706'
+                            : 'var(--text-secondary)',
+                          fontWeight: esRequisicionesActivo ? 700 : 500,
+                          fontSize: '0.82rem',
+                          transition: 'background-color 0.15s ease',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 26,
+                            height: 26,
+                            borderRadius: '8px',
+                            backgroundColor: '#d97706',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#ffffff',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                            assignment
+                          </span>
+                        </div>
+                        <span style={{ lineHeight: 1.2 }}>Requisiciones</span>
                       </Link>
 
                       {/* 1.6 Módulos Compras (Hub) */}
