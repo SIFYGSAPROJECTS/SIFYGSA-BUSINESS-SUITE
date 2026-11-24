@@ -2008,21 +2008,36 @@ export const computeInitials = (fullName: string): string => {
   return `${src[0][0] || ''}${src[1][0] || ''}`.toUpperCase();
 };
 
+export type EmployeeEditTabKey = 'general' | 'contacto' | 'laboral' | 'nomina' | 'documentos';
+
+export interface EmployeeMissingFieldItem {
+  key: string;
+  label: string;
+  tab: EmployeeEditTabKey;
+}
+
 export interface EmployeeCompletenessInfo {
   percent: number;
+  completedCount: number;
+  totalCount: number;
   isComplete: boolean;
   hasPhoto: boolean;
   missingFields: string[];
+  missingItems: EmployeeMissingFieldItem[];
 }
 
 export const getEmployeeProfileCompleteness = (emp: Employee): EmployeeCompletenessInfo => {
-  const missingFields: string[] = [];
+  const missingItems: EmployeeMissingFieldItem[] = [];
+  const addMissing = (key: string, label: string, tab: EmployeeEditTabKey) => {
+    missingItems.push({ key, label, tab });
+  };
 
+  // 1-5: Identidad laboral y fotografía (General & Foto)
   const hasName = Boolean(emp.name && emp.name.trim().length >= 3);
-  if (!hasName) missingFields.push('Nombre');
+  if (!hasName) addMissing('name', 'Nombre', 'general');
 
   const hasPosition = Boolean(emp.position && emp.position.trim() && emp.position !== 'Por definir');
-  if (!hasPosition) missingFields.push('Puesto');
+  if (!hasPosition) addMissing('position', 'Puesto', 'general');
 
   const hasDepartment = Boolean(
     emp.department &&
@@ -2030,34 +2045,99 @@ export const getEmployeeProfileCompleteness = (emp: Employee): EmployeeCompleten
     emp.department !== 'Por asignar' &&
     emp.department !== 'Sin asignar'
   );
-  if (!hasDepartment) missingFields.push('Departamento');
-
-  const hasEmail = isValidEmail(emp.email || '');
-  if (!hasEmail) missingFields.push('Correo');
-
-  const hasPhone = Boolean(toRawDigits(emp.phoneCell || emp.phonePrimary || '').length >= 10);
-  if (!hasPhone) missingFields.push('Teléfono');
+  if (!hasDepartment) addMissing('department', 'Departamento', 'general');
 
   const hasLocation = Boolean(emp.location && emp.location.trim() && emp.location !== 'Por definir');
-  if (!hasLocation) missingFields.push('Sede');
-
-  const hasRfc = Boolean((emp.rfc || '').trim().length >= 12);
-  if (!hasRfc) missingFields.push('RFC');
-
-  const hasCurp = Boolean((emp.curp || '').trim().length === 18);
-  if (!hasCurp) missingFields.push('CURP');
-
-  const hasNss = Boolean(toRawDigits(emp.nss || '').length === 11);
-  if (!hasNss) missingFields.push('NSS');
+  if (!hasLocation) addMissing('location', 'Sede', 'general');
 
   const hasPhoto = Boolean(emp.photoUrl);
-  if (!hasPhoto) missingFields.push('Fotografía');
+  if (!hasPhoto) addMissing('photo', 'Fotografía', 'general');
 
-  const completedCount = 10 - missingFields.length;
-  const percent = Math.round((completedCount / 10) * 100);
-  const isComplete = missingFields.length === 0;
+  // 6-9: Contacto, domicilio y emergencia (Contacto & Emergencia)
+  const hasEmail = isValidEmail(emp.email || '') || isValidEmail(emp.emailPersonal || '');
+  if (!hasEmail) addMissing('email', 'Correo', 'contacto');
 
-  return { percent, isComplete, hasPhoto, missingFields };
+  const hasPhone = Boolean(toRawDigits(emp.phoneCell || emp.phonePrimary || '').length >= 10);
+  if (!hasPhone) addMissing('phone', 'Teléfono', 'contacto');
+
+  const hasStructuredAddress = Boolean(
+    (emp.addressStreet || '').trim().length >= 2 &&
+    Boolean(
+      (emp.addressColony || '').trim() ||
+      (emp.addressCity || '').trim() ||
+      (emp.addressZip || '').trim().length === 5
+    )
+  );
+  const cleanedAddress = (emp.address || '').replace(/[#,\s]|Col\.|C\.P\./gi, '').trim();
+  const hasAddress = hasStructuredAddress || cleanedAddress.length >= 10;
+  if (!hasAddress) addMissing('address', 'Domicilio', 'contacto');
+
+  const hasEmergencyContact = Boolean(
+    (emp.emergencyContact || '').trim().length >= 3 &&
+    toRawDigits(emp.emergencyPhone || '').length >= 10
+  );
+  if (!hasEmergencyContact) addMissing('emergency', 'Emergencia', 'contacto');
+
+  // 10-12: Identificadores fiscales y seguro social (Laboral & Fiscal)
+  const hasRfc = Boolean((emp.rfc || '').trim().length >= 12);
+  if (!hasRfc) addMissing('rfc', 'RFC', 'laboral');
+
+  const hasCurp = Boolean((emp.curp || '').trim().length === 18);
+  if (!hasCurp) addMissing('curp', 'CURP', 'laboral');
+
+  const hasNss = Boolean(toRawDigits(emp.nss || '').length === 11);
+  if (!hasNss) addMissing('nss', 'NSS', 'laboral');
+
+  // 13-14: Salud básica y cuenta de nómina (Salud, Uniformes & Bancos)
+  const hasBloodType = Boolean((emp.bloodType || '').trim());
+  if (!hasBloodType) addMissing('bloodType', 'Tipo de sangre', 'nomina');
+
+  const hasDirectPayroll = Boolean(
+    (emp.bank || '').trim().length >= 2 &&
+    toRawDigits(emp.clabe || '').length === 18
+  );
+  const hasAccountPayroll =
+    Array.isArray(emp.bankAccounts) &&
+    emp.bankAccounts.some(
+      (acc) => (acc.bank || '').trim().length >= 2 && toRawDigits(acc.clabe || '').length === 18
+    );
+  if (!hasDirectPayroll && !hasAccountPayroll) {
+    addMissing('payroll', 'Nómina (Banco y CLABE)', 'nomina');
+  }
+
+  // 15: Constancia de Situación Fiscal SAT (Constancia & Cursos)
+  const hasCsfDoc =
+    Array.isArray(emp.documents) &&
+    emp.documents.some(
+      (d) =>
+        d.category.toLowerCase().includes('constancia') &&
+        d.category.toLowerCase().includes('fiscal') &&
+        Boolean(d.fileDataUrl || d.fileName || d.externalUrl)
+    );
+  const hasCsf = Boolean(
+    emp.taxCertificateFileUrl ||
+    emp.taxCertificateStatus === 'Vigente' ||
+    hasCsfDoc
+  );
+  if (!hasCsf) addMissing('csf', 'Constancia Fiscal (CSF)', 'documentos');
+
+  // Campos opcionales (NO afectan el 100%): Cursos/DC-3, Uniformes EPP,
+  // Discapacidad/Padecimientos/Alergias, Tarjeta 16 dígitos, Jefe, Cuadrilla.
+  const totalCount = 15;
+  const completedCount = totalCount - missingItems.length;
+  const percent = Math.round((completedCount / totalCount) * 100);
+  const isComplete = missingItems.length === 0;
+  const missingFields = missingItems.map((item) => item.label);
+
+  return {
+    percent,
+    completedCount,
+    totalCount,
+    isComplete,
+    hasPhoto,
+    missingFields,
+    missingItems
+  };
 };
 
 export const readCsvFileWithEncoding = async (file: File): Promise<string> => {

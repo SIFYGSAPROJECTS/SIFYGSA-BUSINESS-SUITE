@@ -1311,7 +1311,7 @@ export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees })
                       Formato de Solicitud de Vacaciones (SGI-FR-RH-06 Rev. 02)
                     </h3>
                     <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                      Elaborar mínimo con 15 días de anticipación de acuerdo con el Art. 76 de la Ley Federal del Trabajo.
+                      Solicitar con 15 días de anticipación (Art. 76 LFT).
                     </p>
                   </div>
 
@@ -1641,7 +1641,7 @@ export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees })
                     Requisición y Solicitud de Personal (SGI-FR-RH-01 Rev. 02)
                   </h3>
                   <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                    Solicitud formal de vacante para contratación técnica, operativa o administrativa
+                    Solicitud de nueva vacante.
                   </p>
                 </div>
                 <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)' }}>
@@ -1766,7 +1766,7 @@ export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees })
                     Solicitud de Capacitación & Acreditación STPS DC-3 (SGI-FR-RH-02 Rev. 02)
                   </h3>
                   <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                    Detección de necesidades de adiestramiento normativo para personal de campo y planta
+                    Programación de cursos y capacitación.
                   </p>
                 </div>
                 <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)' }}>
@@ -1856,7 +1856,7 @@ export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees })
                     Vale de No Adeudo de Salida (SGI-FR-RH-15 Rev. 02)
                   </h3>
                   <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                    Liberación institucional de 9 departamentos para liquidación o finiquito laboral
+                    Liberación de adeudos por baja.
                   </p>
                 </div>
                 <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)' }}>
@@ -1989,7 +1989,7 @@ export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees })
                     Importar Matriz de Vacaciones / Planilla
                   </h3>
                   <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                    Cargue un archivo CSV / Excel o descargue la plantilla oficial SGI
+                    Sube un CSV/Excel o descarga la plantilla.
                   </p>
                 </div>
               </div>

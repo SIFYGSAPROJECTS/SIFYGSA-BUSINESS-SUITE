@@ -1137,7 +1137,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       fullLabel: '1. Datos Laborales',
       isDone: isSection1Done,
       icon: Briefcase,
-      description: 'Empresa, departamento, base y sueldo.'
+      description: 'Área, sede y sueldo.'
     },
     {
       id: 'section2',
@@ -1146,7 +1146,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       fullLabel: '2. Datos Personales',
       isDone: isSection2Done,
       icon: User,
-      description: 'Nombre, RFC, CURP, NSS y fotografía.'
+      description: 'Identidad, RFC, CURP y NSS.'
     },
     {
       id: 'section3',
@@ -1155,7 +1155,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       fullLabel: '3. Contacto & Domicilio',
       isDone: isSection3Done,
       icon: MapPin,
-      description: 'Teléfonos, correo, emergencia y dirección.'
+      description: 'Contacto y domicilio.'
     },
     {
       id: 'section4',
@@ -1164,7 +1164,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       fullLabel: '4. Salud & Uniformes',
       isDone: isSection4Done,
       icon: HeartPulse,
-      description: 'Tallas de EPP, tipo de sangre y alergias.'
+      description: 'EPP y datos médicos.'
     },
     {
       id: 'section5',
@@ -1173,7 +1173,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       fullLabel: '5. Nómina & Banco',
       isDone: isSection5Done,
       icon: CreditCard,
-      description: 'Cuenta bancaria y CLABE de 18 dígitos.'
+      description: 'Banco y CLABE.'
     },
     {
       id: 'section6',
@@ -1182,7 +1182,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       fullLabel: '6. Expediente & Resumen',
       isDone: isSection6Done,
       icon: Award,
-      description: 'Constancia fiscal SAT, cursos y credencial.'
+      description: 'Documentos y anexos.'
     }
   ];
 
@@ -2130,25 +2130,8 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
 
           <h1 className="rrhh-wizard-title">Registro del Personal</h1>
           <p className="rrhh-wizard-subtitle">
-            Captura estructurada del expediente laboral, fiscal, médico y bancario del colaborador.
+            Alta de nuevo colaborador.
           </p>
-        </div>
-
-        {/* Badge Folio Sugerido + Estatus Vivo */}
-        <div className="rrhh-folio-badge">
-          <div className="rrhh-folio-info">
-            <span className="rrhh-folio-label">Folio Sugerido</span>
-            <span className="rrhh-folio-value">{empId}</span>
-          </div>
-          <div className="rrhh-folio-divider" />
-          <span className={`rrhh-status-pill ${isReadyToSave ? 'is-ready' : ''}`}>
-            <span className="rrhh-pulse-dot" />
-            {isReadyToSave
-              ? 'Listo para Guardar'
-              : draftSavedAt
-              ? `Borrador ${draftSavedAt}`
-              : 'Nuevo Ingreso'}
-          </span>
         </div>
       </div>
 
@@ -2316,7 +2299,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
               <span className="rrhh-step-num-badge">1</span>
               <div>
                 <h3 className="rrhh-step-card-title">Asignación Laboral &amp; Puesto</h3>
-                <p className="rrhh-step-card-sub">Empresa, departamento, base operativa, contrato y sueldo mensual.</p>
+                <p className="rrhh-step-card-sub">Área, sede, contrato y sueldo.</p>
               </div>
             </div>
             <span className={`rrhh-step-tag ${isSection1Done ? 'done' : 'primary'}`}>
@@ -2563,7 +2546,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
               <span className="rrhh-step-num-badge">2</span>
               <div>
                 <h3 className="rrhh-step-card-title">Identificación &amp; Expediente Personal</h3>
-                <p className="rrhh-step-card-sub">Matrícula SFG, puesto, nombre completo, RFC, CURP, NSS y fotografía.</p>
+                <p className="rrhh-step-card-sub">Identidad, RFC, CURP, NSS y foto.</p>
               </div>
             </div>
             <span className={`rrhh-step-tag ${isSection2Done ? 'done' : 'primary'}`}>
@@ -2580,7 +2563,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                   <div className="rrhh-field">
                     <div className="rrhh-field-label-row">
                       <label className="rrhh-field-label">
-                        <span>Folio</span>
+                        <span>Código de Empleado</span>
                         <span style={{ color: 'var(--danger)' }}>*</span>
                       </label>
                       <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer', color: 'var(--primary)', userSelect: 'none' }}>
@@ -2964,7 +2947,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
               <span className="rrhh-step-num-badge">3</span>
               <div>
                 <h3 className="rrhh-step-card-title">Contacto &amp; Domicilio Particular</h3>
-                <p className="rrhh-step-card-sub">Teléfonos, correos, contacto de emergencia y domicilio con API SEPOMEX.</p>
+                <p className="rrhh-step-card-sub">Contacto, emergencia y domicilio.</p>
               </div>
             </div>
             <span className={`rrhh-step-tag ${isSection3Done ? 'done' : 'primary'}`}>
@@ -3410,7 +3393,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
               <span className="rrhh-step-num-badge">4</span>
               <div>
                 <h3 className="rrhh-step-card-title">Salud &amp; Uniformes (EPP)</h3>
-                <p className="rrhh-step-card-sub">Tallas de calzado y overol, tipo sanguíneo, alergias y datos médicos.</p>
+                <p className="rrhh-step-card-sub">Tallas EPP y datos médicos.</p>
               </div>
             </div>
             <span className={`rrhh-step-tag ${isSection4Done ? 'done' : 'primary'}`}>
@@ -3718,7 +3701,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
               <span className="rrhh-step-num-badge">5</span>
               <div>
                 <h3 className="rrhh-step-card-title">Nómina &amp; Banco</h3>
-                <p className="rrhh-step-card-sub">Institución bancaria, CLABE interbancaria de 18 dígitos y tarjeta opcional.</p>
+                <p className="rrhh-step-card-sub">Banco y CLABE de nómina.</p>
               </div>
             </div>
             <span className={`rrhh-step-tag ${isSection5Done ? 'done' : 'primary'}`}>
@@ -3923,7 +3906,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
               <span className="rrhh-step-num-badge">6</span>
               <div>
                 <h3 className="rrhh-step-card-title">Expediente Digital &amp; Certificaciones</h3>
-                <p className="rrhh-step-card-sub">Organización por subcarpetas (Documentos, Certificaciones y anexos).</p>
+                <p className="rrhh-step-card-sub">Documentos y carpetas digitales.</p>
               </div>
             </div>
             <span className={`rrhh-step-tag ${isSection6Done ? 'done' : 'primary'}`}>
@@ -5028,7 +5011,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
             </p>
 
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 1.5rem 0' }}>
-              Incorporado al Directorio de Personal en <strong>{savedEmployeeModal.department}</strong> ({savedEmployeeModal.location}) bajo el puesto de <strong>{savedEmployeeModal.position}</strong>.
+              Registrado en <strong>{savedEmployeeModal.department}</strong> ({savedEmployeeModal.location}) · <strong>{savedEmployeeModal.position}</strong>.
             </p>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>

@@ -672,7 +672,7 @@ export const EmployeesCatalogView: React.FC<EmployeesCatalogViewProps> = ({
                 Directorio de Personal
               </h1>
               <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                Consulta de colaboradores, áreas asignadas y expedientes digitales
+                Plantilla activa y expedientes.
               </div>
             </div>
           </div>
@@ -1560,7 +1560,7 @@ export const EmployeesCatalogView: React.FC<EmployeesCatalogViewProps> = ({
               No se encontraron colaboradores con esos filtros
             </h3>
             <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginTop: '4px' }}>
-              Ajusta tu búsqueda o limpia los filtros activos para ver todo el directorio.
+              Ajusta la búsqueda o limpia los filtros.
             </p>
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '4px' }}>
@@ -1665,9 +1665,12 @@ export const EmployeesCatalogView: React.FC<EmployeesCatalogViewProps> = ({
                   const deptStyle = getDepartmentBadgeStyle(emp.department);
                   const comp = completenessMap.get(emp.id) || {
                     percent: 0,
+                    completedCount: 0,
+                    totalCount: 15,
                     isComplete: false,
                     hasPhoto: false,
-                    missingFields: []
+                    missingFields: [],
+                    missingItems: []
                   };
                   const isInactive = emp.employmentStatus === 'Inactivo';
                   const hasEmail = Boolean(emp.email && emp.email.trim());
@@ -1994,9 +1997,12 @@ export const EmployeesCatalogView: React.FC<EmployeesCatalogViewProps> = ({
             const deptStyle = getDepartmentBadgeStyle(emp.department);
             const comp = completenessMap.get(emp.id) || {
               percent: 0,
+              completedCount: 0,
+              totalCount: 15,
               isComplete: false,
               hasPhoto: false,
-              missingFields: []
+              missingFields: [],
+              missingItems: []
             };
             const isInactive = emp.employmentStatus === 'Inactivo';
             const phoneDisplay = emp.phoneCell || emp.phonePrimary;

@@ -46,7 +46,8 @@ import {
   SHOE_SIZE_OPTIONS,
   analyzeTaxCertificateFile,
   PRIMARY_BANK_ALIAS,
-  syncBankAccountsConsistency
+  syncBankAccountsConsistency,
+  getEmployeeProfileCompleteness
 } from '../../utils/formShield';
 
 interface EmployeeEditModalProps {
@@ -156,6 +157,21 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
   }, [employee]);
 
   if (!employee) return null;
+
+  const liveCompleteness = getEmployeeProfileCompleteness({
+    ...formData,
+    bankAccounts
+  });
+  const missingByTab: Record<TabType, number> = {
+    general: 0,
+    contacto: 0,
+    laboral: 0,
+    nomina: 0,
+    documentos: 0
+  };
+  liveCompleteness.missingItems.forEach((item) => {
+    missingByTab[item.tab] = (missingByTab[item.tab] || 0) + 1;
+  });
 
   const readFileAsDataUrl = (
     file: File,
@@ -561,7 +577,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
               </span>
             </div>
             <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
-              Actualización de ficha técnica, contacto/emergencia, salud y uniformes EPP, cuentas bancarias y constancia fiscal / cursos
+              Edición de expediente y datos laborales.
             </p>
           </div>
 
@@ -575,6 +591,112 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
           </button>
         </div>
 
+        {/* Barra de Completitud en Vivo (15 requisitos obligatorios · opcionales no penalizan) */}
+        <div
+          style={{
+            marginBottom: '12px',
+            padding: '10px 12px',
+            borderRadius: '10px',
+            border: liveCompleteness.isComplete
+              ? '1px solid var(--success-border)'
+              : '1px solid var(--border)',
+            backgroundColor: liveCompleteness.isComplete
+              ? 'var(--success-bg)'
+              : 'var(--surface-alt)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  color: liveCompleteness.isComplete ? 'var(--success-text)' : 'var(--text-primary)'
+                }}
+              >
+                {liveCompleteness.isComplete
+                  ? '✓ Expediente base completo (100%)'
+                  : `Expediente al ${liveCompleteness.percent}%`}
+              </span>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: liveCompleteness.isComplete ? 'var(--success-text)' : 'var(--text-muted)',
+                  fontFamily: 'var(--font-mono)'
+                }}
+              >
+                {liveCompleteness.completedCount}/{liveCompleteness.totalCount} obligatorios
+              </span>
+            </div>
+            <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>
+              Campos marcados con <strong style={{ color: 'var(--danger)' }}>*</strong> suman al 100% · Opcionales no penalizan
+            </span>
+          </div>
+
+          <div
+            style={{
+              width: '100%',
+              height: '6px',
+              borderRadius: '999px',
+              backgroundColor: 'var(--divider)',
+              overflow: 'hidden'
+            }}
+          >
+            <div
+              style={{
+                width: `${liveCompleteness.percent}%`,
+                height: '100%',
+                borderRadius: '999px',
+                backgroundColor: liveCompleteness.isComplete
+                  ? 'var(--success)'
+                  : liveCompleteness.percent >= 70
+                    ? 'var(--primary)'
+                    : 'var(--warning)',
+                transition: 'width 0.25s ease, background-color 0.25s ease'
+              }}
+            />
+          </div>
+
+          {liveCompleteness.missingItems.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--text-secondary)', marginRight: '2px' }}>
+                Faltan ({liveCompleteness.missingItems.length}):
+              </span>
+              {liveCompleteness.missingItems.map((item) => {
+                const isOnThisTab = activeTab === item.tab;
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setActiveTab(item.tab)}
+                    title={`Ir a la pestaña de ${item.label}`}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '2px 8px',
+                      borderRadius: '999px',
+                      fontSize: '10.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: isOnThisTab ? '1px solid var(--primary)' : '1px solid var(--warning-border, #F59E0B)',
+                      backgroundColor: isOnThisTab ? 'var(--brand-50)' : 'var(--warning-bg)',
+                      color: isOnThisTab ? 'var(--primary)' : 'var(--warning-text)',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         {/* Pestañas de Navegación del Modal */}
         <div
           style={{
@@ -584,7 +706,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
             padding: '4px',
             borderRadius: '10px',
             border: '1px solid var(--border)',
-            marginBottom: '18px',
+            marginBottom: '16px',
             overflowX: 'auto'
           }}
         >
@@ -597,6 +719,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
           ].map((tab) => {
             const isActive = activeTab === tab.id;
             const IconComponent = tab.icon;
+            const pendingCount = missingByTab[tab.id] || 0;
             return (
               <button
                 key={tab.id}
@@ -622,6 +745,27 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
               >
                 <IconComponent className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
+                {pendingCount > 0 ? (
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 800,
+                      minWidth: '16px',
+                      height: '16px',
+                      padding: '0 4px',
+                      borderRadius: '999px',
+                      backgroundColor: 'var(--warning-bg)',
+                      color: 'var(--warning-text)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {pendingCount}
+                  </span>
+                ) : (
+                  <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--success)', flexShrink: 0 }} />
+                )}
               </button>
             );
           })}
@@ -687,10 +831,10 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
 
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '12.5px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    Fotografía de Credencial / Perfil
+                    Fotografía de Credencial / Perfil <span style={{ color: 'var(--danger)' }}>*</span>
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    Sube una foto clara de frente en formato JPG, PNG o WEBP para su credencialización.
+                    Foto de frente en JPG, PNG o WEBP.
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
@@ -797,7 +941,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
 
                 <div>
                   <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    DEPARTAMENTO ASIGNADO
+                    DEPARTAMENTO ASIGNADO <span style={{ color: 'var(--danger)' }}>*</span>
                   </label>
                   <select
                     value={formData.department}
@@ -837,7 +981,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
 
                 <div>
                   <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    BASE DE TRABAJO
+                    BASE DE TRABAJO <span style={{ color: 'var(--danger)' }}>*</span>
                   </label>
                   <select
                     value={formData.location}
@@ -873,7 +1017,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
                 <div>
                   <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    CUADRILLA ASIGNADA
+                    CUADRILLA ASIGNADA <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>(Opcional)</span>
                   </label>
                   <input
                     type="text"
@@ -944,7 +1088,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
                 }}
               >
                 <div style={{ fontSize: '11.5px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  Domicilio Particular
+                  Domicilio Particular <span style={{ color: 'var(--danger)' }}>*</span>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 0.75fr 0.75fr', gap: '12px' }}>
@@ -1150,7 +1294,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
                 <div>
                   <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    TELÉFONO MÓVIL / CELULAR
+                    TELÉFONO MÓVIL / CELULAR <span style={{ color: 'var(--danger)' }}>*</span>
                   </label>
                   <input
                     type="tel"
@@ -1193,7 +1337,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
                 <div>
                   <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    CORREO CORPORATIVO
+                    CORREO CORPORATIVO <span style={{ color: 'var(--danger)' }}>*</span>
                   </label>
                   <input
                     type="email"
@@ -1235,7 +1379,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <PhoneCall className="w-3.5 h-3.5" style={{ color: 'var(--danger)' }} />
                   <span style={{ fontSize: '11.5px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                    Contacto en Caso de Emergencia
+                    Contacto en Caso de Emergencia <span style={{ color: 'var(--danger)' }}>*</span>
                   </span>
                 </div>
 
@@ -1356,7 +1500,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
                 <div>
                   <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    R.F.C. {!isLegalUnlocked && '🔒'}
+                    R.F.C. <span style={{ color: 'var(--danger)' }}>*</span> {!isLegalUnlocked && '🔒'}
                   </label>
                   <input
                     type="text"
@@ -1381,7 +1525,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
 
                 <div>
                   <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    C.U.R.P. {!isLegalUnlocked && '🔒'}
+                    C.U.R.P. <span style={{ color: 'var(--danger)' }}>*</span> {!isLegalUnlocked && '🔒'}
                   </label>
                   <input
                     type="text"
@@ -1406,7 +1550,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
 
                 <div>
                   <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '5px', color: 'var(--text-secondary)' }}>
-                    N.S.S. (IMSS) {!isLegalUnlocked && '🔒'}
+                    N.S.S. (IMSS) <span style={{ color: 'var(--danger)' }}>*</span> {!isLegalUnlocked && '🔒'}
                   </label>
                   <input
                     type="text"
@@ -1575,7 +1719,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
                 <div>
                   <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--text-secondary)' }}>
-                    TIPO DE SANGRE
+                    TIPO DE SANGRE <span style={{ color: 'var(--danger)' }}>*</span>
                   </label>
                   <select
                     value={formData.bloodType || ''}
@@ -1599,7 +1743,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
 
                 <div>
                   <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--text-secondary)' }}>
-                    DISCAPACIDAD O AJUSTE RAZONABLE
+                    DISCAPACIDAD O AJUSTE <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>(Opcional)</span>
                   </label>
                   <input
                     type="text"
@@ -1613,7 +1757,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
 
                 <div>
                   <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--text-secondary)' }}>
-                    PADECIMIENTOS CRÓNICOS
+                    PADECIMIENTOS CRÓNICOS <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>(Opcional)</span>
                   </label>
                   <input
                     type="text"
@@ -1628,7 +1772,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
 
               <div>
                 <label style={{ fontSize: '11px', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--text-secondary)' }}>
-                  ALERGIAS (MEDICAMENTOS, ALIMENTOS O AMBIENTALES)
+                  ALERGIAS <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>(Opcional)</span>
                 </label>
                 <textarea
                   rows={2}
@@ -1657,7 +1801,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                        Nómina
+                        Nómina <span style={{ color: 'var(--danger)' }}>*</span>
                       </span>
                     </div>
 
@@ -1733,7 +1877,7 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
 
                       <div>
                         <label style={{ fontSize: '10.5px', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--text-secondary)' }}>
-                          Tarjeta (16 dígitos)
+                          Tarjeta (16 dígitos) <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>(Opcional)</span>
                         </label>
                         <input
                           type="text"
@@ -1815,11 +1959,11 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <FileText className="w-4 h-4" style={{ color: 'var(--primary)' }} />
                       <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                        Constancia de Situación Fiscal (CSF - SAT)
+                        Constancia de Situación Fiscal (CSF - SAT) <span style={{ color: 'var(--danger)' }}>*</span>
                       </span>
                     </div>
                     <p style={{ fontSize: '10.5px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                      Sube tu archivo PDF o foto. El sistema verifica que sea la constancia del SAT (opcional).
+                      PDF o foto de constancia SAT (requerida para 100%).
                     </p>
                   </div>
 
@@ -2050,7 +2194,8 @@ export const EmployeeEditModal: React.FC<EmployeeEditModalProps> = ({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Award className="w-4 h-4" style={{ color: 'var(--primary)' }} />
                     <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                      Cursos, Certificaciones DC-3 y Cartas de Recomendación ({(formData.documents || []).length})
+                      Cursos, Certificaciones DC-3 y Cartas ({(formData.documents || []).length}){' '}
+                      <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>(Opcional)</span>
                     </span>
                   </div>
                   <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--primary)', backgroundColor: 'var(--brand-50)', padding: '2px 8px', borderRadius: '999px', border: '1px solid var(--brand-200)', whiteSpace: 'nowrap' }}>

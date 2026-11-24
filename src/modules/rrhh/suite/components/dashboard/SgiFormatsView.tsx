@@ -948,7 +948,7 @@ export const SgiFormatsView: React.FC<SgiFormatsViewProps> = ({
                 </span>
               </div>
               <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '3px 0 0 0' }}>
-                Flujo digital ordenado del personal: 1. Apertura de Vacante → 2. Verificación de Expediente → 3. Capacitación → 4. Liberación de No Adeudo
+                Vacantes, expedientes, capacitación y no adeudo.
               </p>
             </div>
           </div>
@@ -1129,7 +1129,7 @@ export const SgiFormatsView: React.FC<SgiFormatsViewProps> = ({
                   1. Solicitud de Personal y Apertura de Vacantes (SGI-FR-RH-01)
                 </h2>
                 <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                  Requisición de nueva plaza o reemplazo con validación de perfil del puesto, requerimientos de Infraestructura/HSE y autorización de Dirección General.
+                  Requisición de plaza y autorización.
                 </p>
               </div>
               <button
@@ -1911,7 +1911,7 @@ export const SgiFormatsView: React.FC<SgiFormatsViewProps> = ({
                   3. Solicitud y Acreditación de Capacitación (SGI-FR-RH-02)
                 </h2>
                 <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                  Programación de cursos internos o externos, asignación de participantes del catálogo y acreditación directa de constancias DC-3 al expediente de cada participante.
+                  Cursos, participantes y constancias DC-3.
                 </p>
               </div>
               <button
@@ -2326,7 +2326,7 @@ export const SgiFormatsView: React.FC<SgiFormatsViewProps> = ({
                 4. Vale de No Adeudo y Liberación por las 9 Áreas (SGI-FR-RH-15)
               </h2>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                Verificación patrimonial en Almacén, Compras, Servicios, Ingeniería, HSE, Infraestructura, Calidad, RRHH y Administración con cálculo automático de adeudos.
+                Validación de no adeudo por área.
               </p>
             </div>
 

@@ -243,7 +243,9 @@ ON rrhh.empleados
 FOR EACH ROW
 EXECUTE FUNCTION rrhh.tgfn_auditar_movimiento_laboral();
 
--- ── 7. Cálculo de porcentaje de completitud de expediente (0–100%) ───────────
+-- ── 7. Cálculo de porcentaje de completitud de expediente (0–100%, 15 requisitos) ─
+-- Evalúa únicamente el Expediente Base obligatorio (13 campos) + Fotografía + CSF SAT.
+-- Campos opcionales (cursos/DC-3, uniformes EPP, alergias, tarjeta 16d, jefe) no penalizan.
 CREATE OR REPLACE FUNCTION rrhh.fn_porcentaje_expediente(p_id_empleado core.id_uuid)
 RETURNS SMALLINT
 LANGUAGE plpgsql
@@ -252,21 +254,68 @@ AS $$
 DECLARE
   v_emp    rrhh.empleados%ROWTYPE;
   v_puntos SMALLINT := 0;
-  v_total  CONSTANT SMALLINT := 10;
+  v_total  CONSTANT SMALLINT := 15;
+  v_has_nomina BOOLEAN := FALSE;
+  v_has_csf    BOOLEAN := FALSE;
 BEGIN
   SELECT * INTO v_emp FROM rrhh.empleados WHERE id_empleado = p_id_empleado;
   IF NOT FOUND THEN RETURN 0; END IF;
 
+  -- Identidad laboral y fotografía (5)
   IF LENGTH(TRIM(COALESCE(v_emp.nombre_pila, ''))) >= 2 THEN v_puntos := v_puntos + 1; END IF;
   IF v_emp.puesto_texto IS NOT NULL AND v_emp.puesto_texto <> 'Por definir' THEN v_puntos := v_puntos + 1; END IF;
   IF v_emp.id_departamento IS NOT NULL THEN v_puntos := v_puntos + 1; END IF;
+  IF v_emp.id_sede IS NOT NULL OR LENGTH(TRIM(COALESCE(v_emp.ubicacion_texto, ''))) > 0 THEN v_puntos := v_puntos + 1; END IF;
+  IF LENGTH(TRIM(COALESCE(v_emp.foto_url, ''))) > 0 THEN v_puntos := v_puntos + 1; END IF;
+
+  -- Contacto, domicilio y emergencia (4)
+  IF COALESCE(v_emp.correo_corporativo, v_emp.correo_personal) IS NOT NULL THEN v_puntos := v_puntos + 1; END IF;
+  IF COALESCE(v_emp.telefono_celular, v_emp.telefono_fijo) IS NOT NULL THEN v_puntos := v_puntos + 1; END IF;
+  IF LENGTH(TRIM(COALESCE(v_emp.calle, ''))) >= 2
+     AND (
+       LENGTH(TRIM(COALESCE(v_emp.colonia, ''))) > 0
+       OR LENGTH(TRIM(COALESCE(v_emp.municipio, ''))) > 0
+       OR v_emp.codigo_postal IS NOT NULL
+     ) THEN
+    v_puntos := v_puntos + 1;
+  END IF;
+  IF LENGTH(TRIM(COALESCE(v_emp.emergencia_nombre, ''))) >= 3
+     AND v_emp.emergencia_telefono IS NOT NULL THEN
+    v_puntos := v_puntos + 1;
+  END IF;
+
+  -- Fiscales y seguro social (3)
   IF v_emp.rfc IS NOT NULL THEN v_puntos := v_puntos + 1; END IF;
   IF v_emp.curp IS NOT NULL THEN v_puntos := v_puntos + 1; END IF;
   IF v_emp.nss IS NOT NULL THEN v_puntos := v_puntos + 1; END IF;
-  IF COALESCE(v_emp.correo_corporativo, v_emp.correo_personal) IS NOT NULL THEN v_puntos := v_puntos + 1; END IF;
-  IF COALESCE(v_emp.telefono_celular, v_emp.telefono_fijo) IS NOT NULL THEN v_puntos := v_puntos + 1; END IF;
+
+  -- Salud básica (1)
   IF v_emp.tipo_sangre IS NOT NULL THEN v_puntos := v_puntos + 1; END IF;
-  IF v_emp.foto_url IS NOT NULL THEN v_puntos := v_puntos + 1; END IF;
+
+  -- Nómina: Banco + CLABE de 18 dígitos (1)
+  SELECT EXISTS (
+    SELECT 1
+    FROM rrhh.cuentas_bancarias cb
+    WHERE cb.id_empleado = p_id_empleado
+      AND cb.activa = TRUE
+      AND LENGTH(TRIM(COALESCE(cb.banco_nombre, ''))) >= 2
+      AND cb.clabe IS NOT NULL
+  ) INTO v_has_nomina;
+  IF v_has_nomina THEN v_puntos := v_puntos + 1; END IF;
+
+  -- Constancia de Situación Fiscal SAT (1)
+  IF v_emp.estatus_csf = 'VIGENTE' THEN
+    v_has_csf := TRUE;
+  ELSE
+    SELECT EXISTS (
+      SELECT 1
+      FROM rrhh.documentos_expediente d
+      WHERE d.id_empleado = p_id_empleado
+        AND LOWER(d.categoria) LIKE '%constancia%'
+        AND LOWER(d.categoria) LIKE '%fiscal%'
+    ) INTO v_has_csf;
+  END IF;
+  IF v_has_csf THEN v_puntos := v_puntos + 1; END IF;
 
   RETURN ROUND((v_puntos::NUMERIC / v_total::NUMERIC) * 100)::SMALLINT;
 END;

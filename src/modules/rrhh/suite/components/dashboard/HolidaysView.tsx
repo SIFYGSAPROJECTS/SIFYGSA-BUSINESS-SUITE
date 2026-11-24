@@ -1234,7 +1234,7 @@ export const HolidaysView: React.FC = () => {
                 </span>
               </div>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                Gestión de asuetos oficiales y comunicados institucionales.
+                Asuetos oficiales y comunicados.
               </p>
             </div>
           </div>
@@ -1693,7 +1693,7 @@ export const HolidaysView: React.FC = () => {
                 Programación de Publicaciones en Telegram
               </h3>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                Activa, pausa o ajusta la fecha y hora exacta en que se enviará cada comunicado al canal <strong>{tgConfig.chatId}</strong>.
+                Programación de avisos en <strong>{tgConfig.chatId}</strong>.
               </p>
             </div>
           </div>
@@ -1946,7 +1946,7 @@ export const HolidaysView: React.FC = () => {
                 Subcarpeta de Fechas Concluidas y Archivadas (Retención 30 días)
               </h3>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                Las festividades que ya pasaron (como Día de Muertos o Revolución Mexicana) se archivan automáticamente aquí y se depuran tras {tgConfig.autoArchiveDays} días. Si necesitas corregir un aviso o reutilizarlo, haz clic en <strong>Restaurar y Editar</strong>.
+                Archivo automático por {tgConfig.autoArchiveDays} días. Usa <strong>Restaurar y Editar</strong> para reutilizar.
               </p>
             </div>
           </div>
@@ -2211,7 +2211,7 @@ export const HolidaysView: React.FC = () => {
                   {isCreatingNew ? 'Nuevo Comunicado de Día Festivo' : `Editar Festividad: ${editingHoliday.title}`}
                 </h3>
                 <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                  Configura la fecha, aplica una plantilla rápida y revisa la vista previa limpia a la derecha.
+                  Configura fecha, plantilla y vista previa.
                 </p>
               </div>
               <button

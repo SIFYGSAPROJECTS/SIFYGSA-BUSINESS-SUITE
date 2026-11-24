@@ -361,7 +361,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
                 </span>
               </div>
               <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
-                Monitoreo de guardias 24h, cursos normativos SIL-3 y citas de reclutamiento.
+                Guardias, cursos y citas.
               </p>
             </div>
           </div>

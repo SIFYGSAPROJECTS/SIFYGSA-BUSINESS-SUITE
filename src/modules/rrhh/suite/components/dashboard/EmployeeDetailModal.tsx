@@ -1505,7 +1505,7 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
                 />
               </div>
               <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                {completeness.percent}% completo
+                {completeness.percent}% ({completeness.completedCount}/{completeness.totalCount})
               </span>
               {completeness.missingFields.length > 0 && (
                 <span

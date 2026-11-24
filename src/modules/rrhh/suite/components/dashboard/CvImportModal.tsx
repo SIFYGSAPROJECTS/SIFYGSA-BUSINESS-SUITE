@@ -316,7 +316,7 @@ export const CvImportModal: React.FC<CvImportModalProps> = ({
                 Importar CV de Colaborador
               </h2>
               <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                Extrae datos del currículum y prellena el Registro del Personal
+                Extrae datos del CV al registro.
               </div>
             </div>
           </div>

@@ -298,7 +298,7 @@ export const ExtensionsCatalogView: React.FC<ExtensionsCatalogViewProps> = ({
                 Directorio de Extensiones Telefónicas
               </h1>
               <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                Catálogo vinculado al Alta de Empleado para autorrellenar la extensión según el departamento seleccionado.
+                Extensiones internas por área y sede.
               </div>
             </div>
           </div>
@@ -614,7 +614,7 @@ export const ExtensionsCatalogView: React.FC<ExtensionsCatalogViewProps> = ({
                   {editingItem ? `Editar Extensión ${editingItem.extension}` : 'Nueva Extensión Telefónica'}
                 </h3>
                 <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                  Configura la extensión y el departamento al que pertenece.
+                  Asigna extensión y departamento.
                 </p>
               </div>
               <button type="button" className="btn-icon" onClick={() => setIsModalOpen(false)}>

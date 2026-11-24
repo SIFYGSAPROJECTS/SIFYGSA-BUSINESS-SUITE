@@ -1289,7 +1289,7 @@ export const BirthdaysView: React.FC = () => {
                 </span>
               </div>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                Felicitaciones institucionales conectadas al expediente del colaborador.
+                Cumpleaños y felicitaciones del personal.
               </p>
             </div>
           </div>
@@ -1766,7 +1766,7 @@ export const BirthdaysView: React.FC = () => {
               Programación Automática de Felicitaciones en Telegram
             </h3>
             <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-              Configura qué colaboradores recibirán felicitación automática en el canal <strong>{tgConfig.chatId}</strong> el día de su cumpleaños.
+              Envíos automáticos al canal <strong>{tgConfig.chatId}</strong>.
             </p>
           </div>
 
@@ -1902,7 +1902,7 @@ export const BirthdaysView: React.FC = () => {
               Calendario Anual de Cumpleaños por Mes
             </h3>
             <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-              Haz clic sobre cualquier colaborador para editar su tarjeta, foto o preparar su felicitación.
+              Selecciona un colaborador para editar su tarjeta.
             </p>
           </div>
 
@@ -1990,7 +1990,7 @@ export const BirthdaysView: React.FC = () => {
               Subcarpeta de Cumpleaños Recientes / Concluidos (Retención 30 días)
             </h3>
             <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-              Los colaboradores cuyo cumpleaños acaba de pasar se guardan aquí durante 30 días antes de pasar automáticamente al ciclo del próximo año. Si necesitas corregir o reenviar una felicitación, haz clic en <strong>Restaurar / Corregir</strong>.
+              Archivo de últimos 30 días. Usa <strong>Restaurar / Corregir</strong> si requieres reenviar.
             </p>
           </div>
 
@@ -2252,7 +2252,7 @@ export const BirthdaysView: React.FC = () => {
                   {isCreatingNew ? 'Registrar Cumpleaños de Colaborador' : `Editar Felicitación: ${editingBirthday.name}`}
                 </h3>
                 <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-                  Vincula al colaborador desde el padrón de empleados para cargar su foto y datos registrados.
+                  Selecciona un colaborador del directorio.
                 </p>
               </div>
               <button

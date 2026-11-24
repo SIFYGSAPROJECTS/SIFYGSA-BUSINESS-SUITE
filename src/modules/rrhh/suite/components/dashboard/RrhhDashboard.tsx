@@ -353,7 +353,7 @@ export const RrhhDashboard: React.FC<RrhhDashboardProps> = ({
             Recursos Humanos
           </h1>
           <p className="page-subtitle">
-            Control de plantilla, programación semanal y directorio operativo.
+            Plantilla, agenda y directorio.
           </p>
         </div>
 
@@ -634,7 +634,7 @@ export const RrhhDashboard: React.FC<RrhhDashboardProps> = ({
               </span>
             </div>
             <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-              Actividades, inducciones SIL-3, juntas y guardias programadas de la semana
+              Actividades y guardias de la semana.
             </p>
           </div>
 
@@ -995,7 +995,7 @@ export const RrhhDashboard: React.FC<RrhhDashboardProps> = ({
               )}
             </div>
             <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-              Consulta rápida de expedientes, puestos y estado de acreditaciones técnicas
+              Consulta rápida de colaboradores.
             </p>
           </div>
 

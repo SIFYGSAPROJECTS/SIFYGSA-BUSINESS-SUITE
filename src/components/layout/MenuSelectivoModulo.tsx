@@ -804,57 +804,57 @@ export const MenuSelectivoModulo: React.FC<MenuSelectivoModuloProps> = ({
   const permittedRh = obtenerSubItemsPermitidosModulo('rrhh', rolUsuario);
   const rhMeta: Record<string, Omit<LauncherTile, 'id' | 'targetModule' | 'targetSubItem' | 'title' | 'titleEn'>> = {
     'rrhh-panel': {
-      description: 'Resumen de plantilla, indicadores KPI, directorio rápido y agenda semanal',
-      descriptionEn: 'Workforce overview, KPI summary, quick directory and weekly agenda',
+      description: 'Plantilla, KPIs y agenda semanal',
+      descriptionEn: 'Workforce KPIs and weekly agenda',
       colorClass: 'brand',
       badge: 'Principal',
       icon: getSelectedMenuIconMeta('rh', 'rrhh-panel').icon,
     },
     'rrhh-alta': {
-      description: 'Registro paso a paso de nuevos colaboradores con expediente digital en 6 etapas',
-      descriptionEn: '6-step onboarding wizard with digital employee dossier',
+      description: 'Alta y expediente en 6 etapas',
+      descriptionEn: '6-step onboarding and dossier',
       colorClass: 'blue',
       icon: getSelectedMenuIconMeta('rh', 'rrhh-alta').icon,
     },
     'rrhh-catalogos': {
-      description: 'Directorio completo, Organigrama corporativo en árbol e importador Excel / CV',
-      descriptionEn: 'Full staff directory, interactive org chart and Excel / CV importer',
+      description: 'Plantilla, organigrama e importador',
+      descriptionEn: 'Directory, org chart and importer',
       colorClass: 'indigo',
       icon: getSelectedMenuIconMeta('rh', 'rrhh-catalogos').icon,
     },
     'rrhh-vacaciones': {
-      description: 'Control de saldos LFT, solicitudes SGI-FR-RH-06 y calendario de ausencias',
-      descriptionEn: 'Vacation balances, SGI-FR-RH-06 requests and leave tracking',
+      description: 'Saldos LFT y solicitudes',
+      descriptionEn: 'Vacation balances and requests',
       colorClass: 'emerald',
       icon: getSelectedMenuIconMeta('rh', 'rrhh-vacaciones').icon,
     },
     'rrhh-formatos': {
-      description: 'Ciclo digital SGI: Requisición RH-01, Expediente RH-13/08, Capacitación RH-02 y No Adeudo RH-15',
-      descriptionEn: 'Digital SGI workflows: RH-01, RH-13/08, RH-02 Training and RH-15 Clearance',
+      description: 'Trámites RH-01, RH-02, RH-13 y RH-15',
+      descriptionEn: 'SGI workflows RH-01 to RH-15',
       colorClass: 'amber',
       icon: getSelectedMenuIconMeta('rh', 'rrhh-formatos').icon,
     },
     'rrhh-departamentos': {
-      description: 'Catálogo de las 14 áreas oficiales SIFYGSA (DIR..GSAPE), responsables y ramas',
-      descriptionEn: 'Official SIFYGSA departments (DIR..GSAPE), managers and branches',
+      description: 'Áreas oficiales, titulares y plantilla',
+      descriptionEn: 'Official areas, managers and headcount',
       colorClass: 'cyan',
       icon: getSelectedMenuIconMeta('rh', 'rrhh-departamentos').icon,
     },
     'rrhh-extensiones': {
-      description: 'Directorio corporativo de extensiones telefónicas internas por sede y área',
-      descriptionEn: 'Corporate directory of internal phone extensions by site and area',
+      description: 'Extensiones internas por sede y área',
+      descriptionEn: 'Internal extensions by site and area',
       colorClass: 'indigo',
       icon: getSelectedMenuIconMeta('rh', 'rrhh-extensiones').icon,
     },
     'rrhh-cumpleanos': {
-      description: 'Calendario de cumpleaños del personal, felicitaciones y avisos automatizados',
-      descriptionEn: 'Staff birthday calendar, greeting cards and automated reminders',
+      description: 'Cumpleaños y felicitaciones',
+      descriptionEn: 'Birthdays and greeting cards',
       colorClass: 'amber',
       icon: getSelectedMenuIconMeta('rh', 'rrhh-cumpleanos').icon,
     },
     'rrhh-festivos': {
-      description: 'Calendario de días festivos oficiales LFT, puentes y avisos institucionales',
-      descriptionEn: 'Official LFT holiday calendar and institutional notices',
+      description: 'Asuetos LFT y comunicados',
+      descriptionEn: 'Official holidays and notices',
       colorClass: 'slate',
       icon: getSelectedMenuIconMeta('rh', 'rrhh-festivos').icon,
     },
@@ -907,8 +907,8 @@ export const MenuSelectivoModulo: React.FC<MenuSelectivoModuloProps> = ({
       ? {
           title: isEn ? 'Human Resources · RH Suite' : 'Recursos Humanos · RH Suite',
           subtitle: isEn
-            ? 'Select a Human Resources submodule to manage staff, org chart, vacations and SGI workflows'
-            : 'Selecciona un submódulo de Recursos Humanos para gestionar personal, organigrama, vacaciones y formatos SGI',
+            ? 'Select a Human Resources submodule'
+            : 'Selecciona un submódulo de Recursos Humanos',
           badge: 'RH SUITE',
           tiles: rhTiles,
         }

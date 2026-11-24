@@ -846,8 +846,8 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
               </h1>
               <p className="rrhh-wizard-subtitle">
                 {activeCatalogTab === 'extensiones'
-                  ? 'Directorio corporativo de extensiones internas por área y sede.'
-                  : 'Estructura organizacional, códigos oficiales, titulares y plantilla real por área.'}
+                  ? 'Extensiones internas por área.'
+                  : 'Áreas oficiales, titulares y plantilla.'}
               </p>
             </div>
           </div>
@@ -2057,7 +2057,7 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
                           )}
                         </div>
                         <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.45, minHeight: '2.15rem' }}>
-                          {dept.description || 'Área operativa adscrita a la estructura organizacional SIFYGSA.'}
+                          {dept.description || 'Área operativa SIFYGSA.'}
                         </p>
                       </div>
 

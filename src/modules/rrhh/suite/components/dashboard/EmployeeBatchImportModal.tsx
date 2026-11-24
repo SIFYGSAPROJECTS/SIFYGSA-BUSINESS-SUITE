@@ -430,7 +430,7 @@ export const EmployeeBatchImportModal: React.FC<EmployeeBatchImportModalProps> =
               Agregar Personal desde Excel, CSV o Lista Rápida
             </h3>
             <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '3px 0 0 0' }}>
-              Sube cualquier listado con los datos que tengas disponibles. Después podrás completar su foto, RFC o datos restantes desde <strong>Editar</strong>.
+              Importa Excel/CSV y completa datos faltantes en <strong>Editar</strong>.
             </p>
           </div>
           <button type="button" className="btn-icon" onClick={onClose} title="Cerrar">
