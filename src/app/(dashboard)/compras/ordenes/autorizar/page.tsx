@@ -1,17 +1,16 @@
-import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { obtenerSesionActual } from '@/lib/auth';
-import { AutorizacionOrdenesPage } from '@/modules/compras/pages/AutorizacionOrdenesPage';
+import { tienePermiso } from '@/lib/permissions';
 
-export default async function PaginaAutorizacionOrdenes() {
+export default async function PaginaAutorizarOrdenesRedirect() {
   const sesion = await obtenerSesionActual();
   if (!sesion) {
     redirect('/login');
   }
 
-  return (
-    <Suspense fallback={<div style={{ padding: '1.5rem' }}>Cargando Autorización de Órdenes...</div>}>
-      <AutorizacionOrdenesPage />
-    </Suspense>
-  );
+  if (!tienePermiso(sesion.rol, 'autorizacion-ordenes', 'aprobar', sesion.modulosPermitidos)) {
+    redirect('/sin-acceso?modulo=Autorizaci%C3%B3n+de+%C3%93rdenes+de+Compra');
+  }
+
+  redirect('/autorizacion-ordenes');
 }

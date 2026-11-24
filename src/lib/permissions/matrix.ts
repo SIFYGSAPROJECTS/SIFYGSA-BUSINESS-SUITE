@@ -18,6 +18,7 @@ export const MATRIZ_PERMISOS_POR_DEFECTO: MatrizPermisos = {
     rrhh: ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
     almacen: ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
     compras: ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
+    'autorizacion-ordenes': ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
   },
   gerente: {
     admin: [],
@@ -26,6 +27,7 @@ export const MATRIZ_PERMISOS_POR_DEFECTO: MatrizPermisos = {
     rrhh: ['ver'],
     almacen: ['ver', 'ver_propias', 'crear', 'editar', 'aprobar', 'exportar'],
     compras: ['ver', 'ver_propias', 'crear', 'editar', 'aprobar', 'exportar'],
+    'autorizacion-ordenes': ['ver', 'ver_propias', 'aprobar', 'exportar'],
   },
   vendedor: {
     admin: [],
@@ -34,6 +36,7 @@ export const MATRIZ_PERMISOS_POR_DEFECTO: MatrizPermisos = {
     rrhh: [],
     almacen: ['ver'],
     compras: ['ver'],
+    'autorizacion-ordenes': [],
   },
   rrhh: {
     admin: [],
@@ -42,6 +45,7 @@ export const MATRIZ_PERMISOS_POR_DEFECTO: MatrizPermisos = {
     rrhh: ['ver', 'ver_propias', 'crear', 'editar', 'eliminar', 'aprobar', 'exportar'],
     almacen: [],
     compras: [],
+    'autorizacion-ordenes': [],
   },
   requisiciones: {
     admin: [],
@@ -50,6 +54,7 @@ export const MATRIZ_PERMISOS_POR_DEFECTO: MatrizPermisos = {
     rrhh: [],
     almacen: ['ver', 'ver_propias', 'crear', 'editar', 'aprobar', 'exportar'],
     compras: ['ver', 'ver_propias', 'crear', 'editar', 'aprobar', 'exportar'],
+    'autorizacion-ordenes': [],
   },
 };
 
@@ -71,6 +76,15 @@ export function tienePermiso(
       permisosRequisiciones.includes(accion) ||
       permisosRequisiciones.includes('ver')
     );
+  }
+
+  // Autorización de Órdenes de Compra está restringida estrictamente a perfiles gerenciales / administrador
+  if (modulo === 'autorizacion-ordenes') {
+    const permisosAutorizacion = matriz[rol]?.['autorizacion-ordenes'] ?? [];
+    if (accion === 'ver_propias' && permisosAutorizacion.includes('ver')) {
+      return true;
+    }
+    return permisosAutorizacion.includes(accion);
   }
 
   if (modulosPermitidosUsuario && !modulosPermitidosUsuario.includes(modulo)) {

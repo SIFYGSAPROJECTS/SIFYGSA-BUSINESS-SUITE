@@ -9,6 +9,7 @@ import { Sidebar } from './sidebar';
 import { SidebarRH } from './SidebarRH';
 import { SidebarAlmacen } from './SidebarAlmacen';
 import { SidebarCompras } from './SidebarCompras';
+import { SidebarAutorizacion } from './SidebarAutorizacion';
 import { MenuSelectivoModulo } from './MenuSelectivoModulo';
 import { CentroConversaciones } from './CentroConversaciones';
 import { Footer } from './Footer';
@@ -80,6 +81,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     userProp?.portal === 'almacen' ||
     usuario?.departamento === 'Almacén & SGA' ||
     pathname.startsWith('/almacen');
+  const esPortalAutorizacion = pathname.startsWith('/autorizacion-ordenes');
   const esPortalCompras =
     userProp?.portal === 'compras' ||
     pathname.startsWith('/compras');
@@ -102,6 +104,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     activeModuleProp ??
     (pathname.startsWith('/ajustes')
       ? 'settings'
+      : esPortalAutorizacion
+      ? 'autorizacion-ordenes'
       : pathname.startsWith('/crm')
       ? 'crm'
       : pathname.startsWith('/compras')
@@ -190,8 +194,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             router.push('/compras/proveedores/nuevo');
           } else if (subItemId === 'ordenes') {
             router.push('/compras/ordenes');
+          } else if (subItemId === 'editar-facturas') {
+            router.push('/compras/ordenes/editar-facturas');
           } else if (subItemId === 'autorizar-ordenes') {
-            router.push('/compras/ordenes?vista=autorizar');
+            router.push('/autorizacion-ordenes');
           } else if (subItemId === 'nueva-orden') {
             router.push('/compras/ordenes/nueva');
           } else if (subItemId === 'requisiciones') {
@@ -205,6 +211,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           } else {
             router.push('/compras/ordenes');
           }
+          break;
+        case 'autorizacion-ordenes':
+          router.push('/autorizacion-ordenes');
           break;
         case 'requisiciones':
           router.push(
@@ -315,6 +324,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               void handleLogout();
             }}
             rolUsuario={usuario?.rol ?? 'requisiciones'}
+          />
+        ) : esPortalAutorizacion ? (
+          <SidebarAutorizacion
+            isCollapsed={isCollapsed}
+            isMobileOpen={isMobileOpen}
+            onCloseMobile={() => setIsMobileOpen(false)}
+            onSelectModule={handleModuleSelection}
           />
         ) : esPortalCompras ? (
           <SidebarCompras

@@ -22,5 +22,5 @@ export default async function PaginaHomeDashboard() {
     redirect('/almacen');
   }
 
-  return <GeneralDashboard />;
+  return <GeneralDashboard rolUsuario={sesion.rol} />;
 }

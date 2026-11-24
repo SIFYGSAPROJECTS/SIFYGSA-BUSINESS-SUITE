@@ -7,6 +7,7 @@ export const ETIQUETAS_MODULOS: Record<IdModulo, string> = {
   rrhh: 'Recursos Humanos',
   almacen: 'Almacén & SGA',
   compras: 'Compras & Procura',
+  'autorizacion-ordenes': 'Autorización de Órdenes de Compra',
 };
 
 export const ETIQUETAS_ACCIONES: Record<AccionPermiso, string> = {

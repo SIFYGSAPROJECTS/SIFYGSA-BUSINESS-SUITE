@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useCompras } from '../context/ComprasContext';
 import { obtenerOrdenesCompra, guardarNuevaOrdenCompra } from '../data/mock-data';
 import type { OrdenCompra } from '../types';
-import { ModuleMenu } from '@/components/ui/ModuleMenu';
 import '../compras.css';
 
 type SortField = 'folio' | 'proveedorNombre' | 'fechaEmision' | 'fechaEntrega' | 'total' | 'estatus';
@@ -57,15 +56,30 @@ export const AutorizacionOrdenesPage: React.FC = () => {
   // Tooltip explicativo
   const [showTooltipInfo, setShowTooltipInfo] = useState(false);
 
-  // Contadores para chips de estatus
+  // Modal de rechazo con motivo obligatorio
+  const [ordenARechazar, setOrdenARechazar] = useState<OrdenCompra | null>(null);
+  const [motivoRechazoInput, setMotivoRechazoInput] = useState('');
+
+  // Contadores para chips de estatus y KPIs
   const contadores = useMemo(() => {
+    const hoyIso = new Date().toISOString().split('T')[0];
     const pendientes = ordenes.filter((o) => o.estatus === 'pendiente').length;
-    const autorizadas = ordenes.filter((o) => o.estatus === 'autorizada' || o.estatus === 'aprobada_supervisor').length;
-    const rechazadas = ordenes.filter((o) => o.estatus === 'cancelada').length;
+    const autorizadas = ordenes.filter(
+      (o) => o.estatus === 'autorizada' || o.estatus === 'aprobada_supervisor'
+    ).length;
+    const autorizadasHoy = ordenes.filter(
+      (o) =>
+        (o.estatus === 'autorizada' || o.estatus === 'aprobada_supervisor') &&
+        o.fechaAutorizacion === hoyIso
+    ).length;
+    const rechazadas = ordenes.filter(
+      (o) => o.estatus === 'cancelada' || Boolean(o.motivoRechazo)
+    ).length;
     return {
       todas: ordenes.length,
       pendientes,
       autorizadas,
+      autorizadasHoy,
       rechazadas,
     };
   }, [ordenes]);
@@ -81,7 +95,8 @@ export const AutorizacionOrdenesPage: React.FC = () => {
         o.estatus !== 'aprobada_supervisor'
       )
         return false;
-      if (filtroEstatus === 'rechazadas' && o.estatus !== 'cancelada') return false;
+      if (filtroEstatus === 'rechazadas' && o.estatus !== 'cancelada' && !o.motivoRechazo)
+        return false;
 
       // Filtro por búsqueda de texto
       if (!busqueda.trim()) return true;
@@ -147,15 +162,59 @@ export const AutorizacionOrdenesPage: React.FC = () => {
 
   // ── AUTORIZAR INDIVIDUAL ──
   const handleAutorizarIndividual = (oc: OrdenCompra) => {
+    const hoyIso = new Date().toISOString().split('T')[0];
     const actualizada: OrdenCompra = {
       ...oc,
       estatus: 'autorizada',
+      motivoRechazo: undefined,
+      fechaAutorizacion: hoyIso,
+      autorizadoPor: 'Validación Gerencial',
       notas: `${oc.notas || ''} | [AUTORIZADA: ${new Date().toLocaleDateString('es-MX')} - ${dictamenNota}]`.trim(),
     };
     actualizarOrden(actualizada);
     guardarNuevaOrdenCompra(actualizada);
     setOrdenes((prev) => prev.map((o) => (o.id === oc.id ? actualizada : o)));
-    mostrarToast(`Orden ${oc.folio} autorizada con firma digital exitosa.`, 'success');
+    mostrarToast(`Orden ${oc.folio} autorizada con firma digital. Salió de Pendientes.`, 'success');
+  };
+
+  // ── RECHAZAR CON MOTIVO OBLIGATORIO (REGRESA A "POR ACTUALIZAR") ──
+  const handleConfirmarRechazo = () => {
+    if (!ordenARechazar) return;
+    const motivo = motivoRechazoInput.trim();
+    if (!motivo) {
+      mostrarToast('El motivo de rechazo es obligatorio.', 'error');
+      return;
+    }
+    const devuelta: OrdenCompra = {
+      ...ordenARechazar,
+      estatus: 'abierta',
+      motivoRechazo: motivo,
+      notas: `${ordenARechazar.notas || ''} | [RECHAZADA ${new Date().toLocaleDateString('es-MX')}: ${motivo}]`.trim(),
+    };
+    actualizarOrden(devuelta);
+    guardarNuevaOrdenCompra(devuelta);
+    setOrdenes((prev) => prev.map((o) => (o.id === ordenARechazar.id ? devuelta : o)));
+    setOrdenARechazar(null);
+    setMotivoRechazoInput('');
+    mostrarToast(
+      `Orden ${devuelta.folio} rechazada y devuelta a "Por actualizar" con el motivo registrado.`,
+      'info'
+    );
+  };
+
+  // ── LIBERAR ORDEN AUTORIZADA ──
+  const handleLiberarOrden = (oc: OrdenCompra) => {
+    const hoyIso = new Date().toISOString().split('T')[0];
+    const liberada: OrdenCompra = {
+      ...oc,
+      estatus: 'en_transito',
+      liberada: true,
+      fechaLiberacion: hoyIso,
+    };
+    actualizarOrden(liberada);
+    guardarNuevaOrdenCompra(liberada);
+    setOrdenes((prev) => prev.map((o) => (o.id === oc.id ? liberada : o)));
+    mostrarToast(`Orden ${oc.folio} liberada exitosamente para envío al proveedor.`, 'success');
   };
 
   // ── ACCIONES MASIVAS ──
@@ -233,23 +292,26 @@ export const AutorizacionOrdenesPage: React.FC = () => {
 
   return (
     <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-6 py-5 text-slate-900 dark:text-slate-100 transition-colors">
-      {/* ── 1. ENCABEZADO COMPACTO ── */}
+      {/* ── 1. ENCABEZADO MÓDULO INDEPENDIENTE: AUTORIZACIÓN DE ÓRDENES DE COMPRA ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
         <div>
           <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
-            <Link href="/compras/modulos" className="hover:text-primary transition-colors flex items-center gap-1 font-semibold">
+            <Link href="/" className="hover:text-primary transition-colors flex items-center gap-1 font-semibold">
               <span className="material-symbols-outlined text-[15px]">arrow_back</span>
-              Módulos de Compras
+              Menú Principal SIFYGSA
             </Link>
             <span>/</span>
-            <span className="text-slate-400">Autorización</span>
+            <span className="text-slate-400">Autorización de Órdenes de Compra</span>
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/30">
+              <span className="material-symbols-outlined text-[22px]">verified_user</span>
+            </div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
               Autorización de Órdenes de Compra
             </h1>
 
-            {/* Ícono de información con Tooltip compacto que reemplaza el bloque azul */}
+            {/* Ícono de información con Tooltip compacto */}
             <div className="relative inline-block">
               <button
                 type="button"
@@ -264,22 +326,21 @@ export const AutorizacionOrdenesPage: React.FC = () => {
 
               {showTooltipInfo && (
                 <div className="absolute left-0 top-full mt-1 z-50 w-80 p-3 rounded-xl bg-slate-900 text-white text-[11px] shadow-xl border border-slate-700 animate-fadeIn leading-relaxed">
-                  <div className="font-bold flex items-center gap-1.5 text-blue-300 mb-1">
+                  <div className="font-bold flex items-center gap-1.5 text-amber-300 mb-1">
                     <span className="material-symbols-outlined text-[16px]">verified_user</span>
-                    Centro de Autorización Gerencial
+                    Mesa de Validación Gerencial
                   </div>
-                  Selecciona una o varias órdenes pendientes para liberar la compra con firma digital, o envía cualquier orden activa a revisión presupuestal y técnica.
+                  Autoriza con firma digital, rechaza con motivo obligatorio (devuelve a Por actualizar) o libera órdenes autorizadas para envío al proveedor.
                 </div>
               )}
             </div>
           </div>
 
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Validación gerencial y firma digital
+            Mesa de Validación · Firma digital, rechazo con motivo y liberación de órdenes
           </p>
         </div>
 
-        {/* Lado Derecho: ModuleMenu ("Proveedores" y "Compras") + Botón "Exportar CSV" */}
         <div className="flex items-center gap-2.5 self-start sm:self-auto">
           <button
             type="button"
@@ -290,8 +351,38 @@ export const AutorizacionOrdenesPage: React.FC = () => {
             <span className="material-symbols-outlined text-[16px]">download</span>
             <span className="hidden md:inline">Exportar CSV</span>
           </button>
+        </div>
+      </div>
 
-          <ModuleMenu />
+      {/* ── 2. KPIS DE MESA DE VALIDACIÓN ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+        <div className="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/60 rounded-2xl p-4 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Por firmar</span>
+            <p className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-0.5">{contadores.pendientes}</p>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 flex items-center justify-center">
+            <span className="material-symbols-outlined text-[22px]">pending_actions</span>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-900/60 rounded-2xl p-4 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Autorizadas hoy</span>
+            <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{contadores.autorizadasHoy}</p>
+            <span className="text-[10px] text-slate-400">{contadores.autorizadas} acumuladas</span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center">
+            <span className="material-symbols-outlined text-[22px]">verified</span>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 rounded-2xl p-4 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Rechazadas</span>
+            <p className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-0.5">{contadores.rechazadas}</p>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-rose-500/15 text-rose-600 flex items-center justify-center">
+            <span className="material-symbols-outlined text-[22px]">cancel</span>
+          </div>
         </div>
       </div>
 
@@ -778,13 +869,37 @@ export const AutorizacionOrdenesPage: React.FC = () => {
                         <td className="px-3.5 py-2.5 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1.5">
                             {oc.estatus === 'pendiente' && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleAutorizarIndividual(oc)}
+                                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-primary text-white hover:bg-blue-700 transition-colors shadow-sm cursor-pointer"
+                                  title="Autorizar orden de compra con firma digital"
+                                >
+                                  Autorizar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOrdenARechazar(oc);
+                                    setMotivoRechazoInput('');
+                                  }}
+                                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-rose-600 text-white hover:bg-rose-700 transition-colors shadow-sm cursor-pointer"
+                                  title="Rechazar con motivo obligatorio y devolver a Por actualizar"
+                                >
+                                  Rechazar
+                                </button>
+                              </>
+                            )}
+
+                            {(oc.estatus === 'autorizada' || oc.estatus === 'aprobada_supervisor') && !oc.liberada && (
                               <button
                                 type="button"
-                                onClick={() => handleAutorizarIndividual(oc)}
-                                className="px-2 py-1 rounded-lg text-[10px] font-bold bg-primary text-white hover:bg-blue-700 transition-colors shadow-sm"
-                                title="Autorizar orden de compra con firma digital"
+                                onClick={() => handleLiberarOrden(oc)}
+                                className="px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
+                                title="Liberar orden autorizada"
                               >
-                                Autorizar
+                                Liberar
                               </button>
                             )}
 
@@ -849,6 +964,60 @@ export const AutorizacionOrdenesPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de Rechazo con Motivo Obligatorio */}
+      {ordenARechazar && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          onClick={() => setOrdenARechazar(null)}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2.5 text-rose-600 dark:text-rose-400">
+              <span className="material-symbols-outlined text-[24px]">cancel</span>
+              <h3 className="text-base font-bold">
+                Rechazar Orden {ordenARechazar.folio}
+              </h3>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              La orden regresará a la pestaña <strong>Por actualizar</strong> del submódulo de edición con este motivo visible para seguimiento.
+            </p>
+            <div>
+              <label className="block text-xs font-bold uppercase text-slate-500 mb-1">
+                Motivo del rechazo <span className="text-rose-500">*</span>
+              </label>
+              <textarea
+                rows={3}
+                value={motivoRechazoInput}
+                onChange={(e) => setMotivoRechazoInput(e.target.value)}
+                placeholder="Especifica el motivo del rechazo o corrección requerida..."
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs focus:outline-none focus:border-rose-500"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setOrdenARechazar(null)}
+                className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmarRechazo}
+                disabled={!motivoRechazoInput.trim()}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50 cursor-pointer"
+              >
+                Confirmar rechazo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

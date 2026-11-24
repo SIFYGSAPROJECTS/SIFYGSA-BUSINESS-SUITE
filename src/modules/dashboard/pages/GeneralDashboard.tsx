@@ -2,15 +2,22 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import type { RolUsuario } from '@/config/types';
+import { tienePermiso } from '@/lib/permissions';
 import '../dashboard.css';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useTheme } from '../../../context/ThemeContext';
 
 interface GeneralDashboardProps {
   onNavigateModule?: (moduleId: string, subItemId?: string) => void;
+  rolUsuario?: RolUsuario;
 }
 
-export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateModule: onNavigateProp }) => {
+export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
+  onNavigateModule: onNavigateProp,
+  rolUsuario = 'administrador',
+}) => {
+  const puedeAutorizarOrdenes = tienePermiso(rolUsuario, 'autorizacion-ordenes', 'aprobar');
   const router = useRouter();
   const onNavigateModule = (moduleId: string, subItemId?: string) => {
     if (onNavigateProp) {
@@ -472,6 +479,41 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({ onNavigateMo
           </div>
         </div>
       </section>
+
+      {puedeAutorizarOrdenes && (
+        <section className="mt-4">
+          <div
+            onClick={() => router.push('/autorizacion-ordenes')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') router.push('/autorizacion-ordenes');
+            }}
+            className="dashboard-portlet-card cursor-pointer flex items-center justify-between p-4 hover:shadow-md transition-all"
+            style={{ borderLeft: '4px solid #d97706' }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: 'rgba(217, 119, 6, 0.15)', color: '#d97706' }}
+              >
+                <span className="material-symbols-outlined text-[22px]">verified_user</span>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                  Autorización de Órdenes de Compra
+                </h3>
+                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  Mesa de Validación Gerencial · Firma digital, rechazo con motivo y liberación de ODC
+                </p>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-[20px]" style={{ color: '#d97706' }}>
+              arrow_forward
+            </span>
+          </div>
+        </section>
+      )}
     </div>
   );
 };
