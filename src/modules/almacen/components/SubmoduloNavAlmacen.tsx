@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export type SubmoduloAlmacenId = 'articulos' | 'servicios' | 'inventarios' | 'mantenimiento' | 'requisiciones';
+export type SubmoduloAlmacenId = 'articulos' | 'servicios' | 'inventarios' | 'mantenimiento';
 
 interface SubmoduloNavAlmacenProps {
   activeTab?: SubmoduloAlmacenId;
@@ -68,18 +68,6 @@ const ALMACEN_LAUNCHER_ITEMS: AlmacenLauncherItem[] = [
       </span>
     ),
   },
-  {
-    id: 'requisiciones',
-    href: '/requisiciones',
-    title: 'Requisiciones',
-    description: 'Solicitudes y pedidos de materiales y suministros',
-    colorClass: 'amber',
-    icon: (
-      <span className="material-symbols-outlined" style={{ fontSize: '28px', color: '#ffffff' }}>
-        assignment
-      </span>
-    ),
-  },
 ];
 
 export const SubmoduloNavAlmacen: React.FC<SubmoduloNavAlmacenProps> = ({ activeTab }) => {
@@ -95,8 +83,6 @@ export const SubmoduloNavAlmacen: React.FC<SubmoduloNavAlmacenProps> = ({ active
       ? 'inventarios'
       : pathname.startsWith('/almacen/mantenimiento')
       ? 'mantenimiento'
-      : pathname.startsWith('/requisiciones')
-      ? 'requisiciones'
       : null);
 
   return (

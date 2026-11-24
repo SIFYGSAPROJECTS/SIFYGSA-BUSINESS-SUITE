@@ -222,12 +222,9 @@ export default function AltaServicioNoInventariablePage() {
             <h1 className="text-2xl lg:text-[28px] font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
               Alta de Servicio / Artículo no Inventariable
             </h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-              Registro de servicios, fletes, calibraciones y gastos directos vinculados a frentes de obra y proyectos.
-            </p>
           </div>
 
-          {/* Acciones y Badge a la derecha: Volver, Folio Sugerido y Estado Borrador */}
+          {/* Acciones a la derecha: Volver */}
           <div className="flex items-center gap-3 self-start md:self-auto flex-wrap">
             <button
               type="button"
@@ -239,22 +236,6 @@ export default function AltaServicioNoInventariablePage() {
               <span className="material-symbols-outlined text-[16px]">arrow_back</span>
               <span>Volver a Servicios</span>
             </button>
-
-            <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl shadow-xs" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
-              <div className="flex flex-col items-start md:items-end">
-                <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-secondary)' }}>
-                  Folio Sugerido
-                </span>
-                <span className="text-lg font-bold text-emerald-500 font-mono">
-                  SRV #{codigo || 'SRV-001'}
-                </span>
-              </div>
-              <div className="h-8 w-px" style={{ background: 'var(--divider)' }} />
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold" style={{ background: 'var(--success-bg)', color: 'var(--success-text)', border: '1px solid var(--success-border, var(--border))' }}>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Borrador Activo
-              </span>
-            </div>
           </div>
         </div>
 

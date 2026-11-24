@@ -706,21 +706,6 @@ export default function AltaArticuloCatalogoPage() {
             <span className="material-symbols-outlined text-[17px]">arrow_back</span>
             <span>Volver a Artículos</span>
           </button>
-
-          {/* Badge Folio Sugerido y Estado Borrador */}
-          <div className="alta-articulo-folio-badge">
-            <div className="alta-articulo-folio-info">
-              <span className="alta-articulo-folio-label">Folio Sugerido</span>
-              <span className="alta-articulo-folio-value">
-                SKU #{codigoArticulo || '9367'}
-              </span>
-            </div>
-            <div className="alta-articulo-divider-v" />
-            <span className="alta-articulo-status-pill">
-              <span className="alta-articulo-pulse-blue" />
-              Borrador
-            </span>
-          </div>
         </div>
       </div>
 

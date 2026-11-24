@@ -19,6 +19,7 @@ interface ItemRecepcionStitch {
   precioUnitario: number;
   recibir: boolean;
   numerosSerie?: string[];
+  esEditableInline?: boolean;
 }
 
 const PARTIDAS_INICIALES_STITCH: ItemRecepcionStitch[] = [
@@ -99,7 +100,7 @@ export default function RecepcionMercanciaIR03Page() {
   const esOrigenServicios = searchParams?.get('origen') === 'servicios';
   const rutaPadre = esOrigenServicios ? '/almacen/servicios' : '/almacen/articulos';
   const etiquetaPadre = esOrigenServicios ? 'Servicios' : 'Artículos';
-  const { recepciones, articulos, crearRecepcionIR03, eliminarRecepcionIR03, mostrarToast } = useAlmacen();
+  const { recepciones, articulos, crearRecepcionIR03, mostrarToast } = useAlmacen();
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Estados de Pasos (Stepper SIFYGSA)
@@ -131,15 +132,7 @@ export default function RecepcionMercanciaIR03Page() {
   const [modalExitoOpen, setModalExitoOpen] = useState(false);
   const [recepcionCreada, setRecepcionCreada] = useState<RecepcionIR03Documento | null>(null);
 
-  // Modal para agregar artículo
-  const [modalAgregarArticuloOpen, setModalAgregarArticuloOpen] = useState(false);
-  const [skuSeleccionadoParaAgregar, setSkuSeleccionadoParaAgregar] = useState('');
   const [filtroMarca, setFiltroMarca] = useState('');
-
-  // Modal para eliminar recepción con motivo de auditoría
-  const [modalEliminarOpen, setModalEliminarOpen] = useState(false);
-  const [recepcionAEliminar, setRecepcionAEliminar] = useState<string | null>(null);
-  const [motivoEliminacion, setMotivoEliminacion] = useState('');
 
   const validarPaso1 = (): boolean => {
     if (!noOrdenCompra.trim()) {
@@ -283,29 +276,64 @@ export default function RecepcionMercanciaIR03Page() {
     setTimeout(() => setBorradorGuardado(false), 2500);
   };
 
-  // Agregar artículo desde el catálogo
+  // Agregar artículo directamente en la misma tabla (sin ventana emergente)
   const handleAgregarArticulo = () => {
-    if (!skuSeleccionadoParaAgregar) return;
-    const art = articulos.find((a) => a.sku === skuSeleccionadoParaAgregar);
-    if (!art) return;
+    const codigosEnTabla = new Set(partidas.map((p) => p.codigo.toLowerCase()));
+    const artSugerido =
+      articulos.find((a) => !codigosEnTabla.has(a.sku.toLowerCase())) ?? articulos[0];
 
     const nuevaFila: ItemRecepcionStitch = {
       id: `row-${Date.now()}`,
-      codigo: art.sku,
-      descripcion: art.descripcionCorta || art.nombre,
-      marca: art.marca || 'Genérico',
-      modelo: art.modelo || 'STD-2026',
-      cantidadOrdenada: 5,
-      cantidadRecibida: 5,
-      unidad: art.unidadMedida || 'PZA',
-      precioUnitario: art.precioUnitario || 1500,
+      codigo: artSugerido?.sku || `ART-NEW-${partidas.length + 1}`,
+      descripcion:
+        artSugerido?.descripcionCorta || artSugerido?.nombre || 'Nuevo artículo en recepción',
+      marca: artSugerido?.marca || 'Genérico',
+      modelo: artSugerido?.modelo || 'STD-2026',
+      cantidadOrdenada: 1,
+      cantidadRecibida: 1,
+      unidad: artSugerido?.unidadMedida || 'PZA',
+      precioUnitario: artSugerido?.precioUnitario || 1500,
       recibir: true,
+      esEditableInline: true,
     };
 
+    setFiltroMarca('');
     setPartidas((prev) => [...prev, nuevaFila]);
-    setModalAgregarArticuloOpen(false);
-    setSkuSeleccionadoParaAgregar('');
-    mostrarToast(`Artículo ${art.sku} agregado a la tabla de recepción.`, 'success');
+    mostrarToast(`Partida ${nuevaFila.codigo} agregada directamente en la tabla.`, 'success');
+  };
+
+  const handleCambiarArticuloFila = (id: string, sku: string) => {
+    const art = articulos.find((a) => a.sku === sku);
+    if (!art) return;
+    setPartidas((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              codigo: art.sku,
+              descripcion: art.descripcionCorta || art.nombre,
+              marca: art.marca || 'Genérico',
+              modelo: art.modelo || 'STD-2026',
+              unidad: art.unidadMedida || 'PZA',
+              precioUnitario: art.precioUnitario || 1500,
+            }
+          : item
+      )
+    );
+  };
+
+  const handleCantidadOrdenadaChange = (id: string, valor: number) => {
+    setPartidas((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, cantidadOrdenada: Math.max(1, valor) }
+          : item
+      )
+    );
+  };
+
+  const handleEliminarFilaPartida = (id: string) => {
+    setPartidas((prev) => prev.filter((item) => item.id !== id));
   };
 
   // Filtrar artículos por marca
@@ -380,19 +408,6 @@ export default function RecepcionMercanciaIR03Page() {
       `¡Recepción ${folioProvisional} confirmada con éxito! Existencias afectadas en Kárdex.`,
       'success'
     );
-  };
-
-  // Eliminar recepción con motivo de auditoría
-  const handleConfirmarEliminacion = () => {
-    if (!recepcionAEliminar) return;
-    if (!motivoEliminacion.trim()) {
-      mostrarToast('El motivo de eliminación es estrictamente obligatorio para la auditoría.', 'error');
-      return;
-    }
-    eliminarRecepcionIR03(recepcionAEliminar, motivoEliminacion.trim(), 'Roberto Velázquez');
-    setModalEliminarOpen(false);
-    setRecepcionAEliminar(null);
-    setMotivoEliminacion('');
   };
 
   return (
@@ -714,7 +729,7 @@ export default function RecepcionMercanciaIR03Page() {
               <div className="flex flex-wrap items-center gap-2.5 mb-4">
                 <button
                   type="button"
-                  onClick={() => setModalAgregarArticuloOpen(true)}
+                  onClick={handleAgregarArticulo}
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs"
                   style={{ background: 'var(--surface-alt)', border: '1px solid var(--border)', color: 'var(--link)' }}
                 >
@@ -805,7 +820,35 @@ export default function RecepcionMercanciaIR03Page() {
 
                           {/* Código Artículo */}
                           <td className="py-3 px-3 font-mono text-xs font-bold" style={{ borderRight: '1px solid var(--border)', color: 'var(--link)' }}>
-                            {item.codigo}
+                            {item.esEditableInline ? (
+                              <div className="flex items-center gap-1.5">
+                                <select
+                                  value={item.codigo}
+                                  onChange={(e) => handleCambiarArticuloFila(item.id, e.target.value)}
+                                  className="max-w-[140px] px-2 py-1 rounded text-xs font-mono font-bold outline-none focus:ring-1 focus:ring-[#1D4ED8]"
+                                  style={{ background: 'var(--surface)', color: 'var(--link)', border: '1px solid var(--border)' }}
+                                >
+                                  {!articulos.some((a) => a.sku === item.codigo) && (
+                                    <option value={item.codigo}>{item.codigo}</option>
+                                  )}
+                                  {articulos.map((art) => (
+                                    <option key={art.sku} value={art.sku}>
+                                      {art.sku} — {art.descripcionCorta || art.nombre}
+                                    </option>
+                                  ))}
+                                </select>
+                                <button
+                                  type="button"
+                                  onClick={() => handleEliminarFilaPartida(item.id)}
+                                  title="Quitar partida"
+                                  className="p-1 rounded hover:bg-rose-500/10 text-rose-500 cursor-pointer"
+                                >
+                                  <span className="material-symbols-outlined text-[15px]">close</span>
+                                </button>
+                              </div>
+                            ) : (
+                              item.codigo
+                            )}
                           </td>
 
                           {/* Descripción Corta */}
@@ -827,9 +870,22 @@ export default function RecepcionMercanciaIR03Page() {
 
                           {/* Cant. Ordenada */}
                           <td className="py-3 px-3 text-center" style={{ borderRight: '1px solid var(--border)' }}>
-                            <span className="font-mono font-bold text-xs px-2.5 py-1 rounded" style={{ background: 'var(--surface-alt)', color: 'var(--text-primary)' }}>
-                              {item.cantidadOrdenada}
-                            </span>
+                            {item.esEditableInline ? (
+                              <input
+                                type="number"
+                                min={1}
+                                value={item.cantidadOrdenada}
+                                onChange={(e) =>
+                                  handleCantidadOrdenadaChange(item.id, Number(e.target.value))
+                                }
+                                className="w-16 text-center font-bold py-1 px-1 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] font-mono shadow-xs"
+                                style={{ background: 'var(--surface)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+                              />
+                            ) : (
+                              <span className="font-mono font-bold text-xs px-2.5 py-1 rounded" style={{ background: 'var(--surface-alt)', color: 'var(--text-primary)' }}>
+                                {item.cantidadOrdenada}
+                              </span>
+                            )}
                           </td>
 
                           {/* Cant. Recibida (Editable) */}
@@ -1016,74 +1072,6 @@ export default function RecepcionMercanciaIR03Page() {
             </div>
           )}
 
-          {/* ====================================================================
-              TARJETA 3: HISTORIAL DE RECEPCIONES IR03 CONFIRMADAS
-             ==================================================================== */}
-          <div className="rounded-xl shadow-xs p-6" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
-            <div className="flex items-center justify-between mb-4 pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
-              <div className="flex items-center gap-2.5">
-                <span className="material-symbols-outlined text-[#1D4ED8] text-[22px]">history</span>
-                <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
-                  Historial de Recepciones IR03 en Sistema
-                </h3>
-              </div>
-              <span className="text-xs font-mono px-2.5 py-0.5 rounded-full" style={{ background: 'var(--surface-alt)', color: 'var(--text-secondary)' }}>
-                {recepciones.length} Documentos
-              </span>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="font-mono uppercase text-[11px]" style={{ background: 'var(--surface-alt)', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)' }}>
-                    <th className="py-2 px-3">Folio IR03</th>
-                    <th className="py-2 px-3">Orden Compra</th>
-                    <th className="py-2 px-3">Proveedor</th>
-                    <th className="py-2 px-3">Fecha</th>
-                    <th className="py-2 px-3 text-center">Partidas</th>
-                    <th className="py-2 px-3 text-center">Estado</th>
-                    <th className="py-2 px-3 text-right">Acción</th>
-                  </tr>
-                </thead>
-                <tbody className="font-medium" style={{ background: 'var(--card)', color: 'var(--text-primary)' }}>
-                  {recepciones.map((r) => (
-                    <tr key={r.id} style={{ borderBottom: '1px solid var(--divider)' }}>
-                      <td className="py-2.5 px-3 font-mono font-bold text-[#1D4ED8]">{r.folio}</td>
-                      <td className="py-2.5 px-3 font-mono">{r.ordenCompraFolio}</td>
-                      <td className="py-2.5 px-3">{r.proveedor}</td>
-                      <td className="py-2.5 px-3 font-mono" style={{ color: 'var(--text-secondary)' }}>{r.fecha}</td>
-                      <td className="py-2.5 px-3 text-center font-mono">{r.partidas.length}</td>
-                      <td className="py-2.5 px-3 text-center">
-                        <span
-                          className="inline-flex items-center px-2 py-0.5 rounded-full font-mono text-[10px] font-bold"
-                          style={{
-                            background: r.estatus === 'Completa' ? 'var(--success-bg)' : 'var(--warning-bg)',
-                            color: r.estatus === 'Completa' ? 'var(--success-text)' : 'var(--warning-text)',
-                          }}
-                        >
-                          {r.estatus}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setRecepcionAEliminar(r.id);
-                            setModalEliminarOpen(true);
-                          }}
-                          className="px-2 py-1 rounded font-mono text-xs cursor-pointer"
-                          style={{ background: 'var(--danger-bg)', color: 'var(--danger-text)', border: '1px solid var(--border)' }}
-                        >
-                          Anular
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
         </div>
       </main>
 
@@ -1109,75 +1097,6 @@ export default function RecepcionMercanciaIR03Page() {
         showCancel={true}
         isLastStep={currentStep === 3}
       />
-
-      {/* Modal para Agregar Artículo */}
-      {modalAgregarArticuloOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-          onClick={() => setModalAgregarArticuloOpen(false)}
-        >
-          <div
-            className="rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4"
-            style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
-              <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                <span className="material-symbols-outlined text-[#1D4ED8]">add_box</span>
-                Agregar Artículo de Catálogo
-              </h3>
-              <button
-                type="button"
-                onClick={() => setModalAgregarArticuloOpen(false)}
-                className="p-1"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>
-                Seleccionar SKU del Catálogo Maestro
-              </label>
-              <select
-                value={skuSeleccionadoParaAgregar}
-                onChange={(e) => setSkuSeleccionadoParaAgregar(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg text-sm font-medium outline-none focus:ring-1 focus:ring-[#1D4ED8]"
-                style={{ background: 'var(--surface)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
-              >
-                <option value="">-- Elige un artículo --</option>
-                {articulos.map((art) => (
-                  <option key={art.sku} value={art.sku}>
-                    {art.sku} — {art.descripcionCorta || art.nombre} ({art.marca})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="pt-2 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setModalAgregarArticuloOpen(false)}
-                className="px-4 py-2 rounded-lg text-xs font-semibold"
-                style={{ background: 'var(--surface-alt)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleAgregarArticulo}
-                disabled={!skuSeleccionadoParaAgregar}
-                className="px-5 py-2 rounded-lg bg-[#1D4ED8] hover:bg-blue-700 text-white text-xs font-bold shadow-sm disabled:opacity-50"
-              >
-                Agregar a Partidas
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal de Confirmación Exitosa */}
       {modalExitoOpen && recepcionCreada && (
@@ -1215,65 +1134,6 @@ export default function RecepcionMercanciaIR03Page() {
                 className="px-5 py-2 rounded-lg bg-[#1D4ED8] hover:bg-blue-700 text-white text-xs font-bold shadow-sm cursor-pointer"
               >
                 Volver a {etiquetaPadre}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal para Eliminar Recepción con Motivo de Auditoría */}
-      {modalEliminarOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-          onClick={() => setModalEliminarOpen(false)}
-        >
-          <div
-            className="rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4"
-            style={{ background: 'var(--card)', border: '1px solid var(--danger-border, #f43f5e)' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-rose-500 flex-shrink-0" style={{ background: 'var(--danger-bg)' }}>
-                <span className="material-symbols-outlined text-[24px]">warning</span>
-              </div>
-              <div>
-                <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>Auditoría: Anular Recepción IR03</h3>
-                <span className="text-xs font-mono text-rose-500">Esta acción revertirá las existencias en Kárdex</span>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase" style={{ color: 'var(--text-secondary)' }}>
-                Motivo de Auditoría / Justificación <span className="text-rose-500">*</span>
-              </label>
-              <textarea
-                rows={3}
-                required
-                value={motivoEliminacion}
-                onChange={(e) => setMotivoEliminacion(e.target.value)}
-                placeholder="Especifica el motivo de la anulación..."
-                className="w-full px-3.5 py-2 rounded-lg text-xs outline-none"
-                style={{ background: 'var(--surface)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
-              />
-            </div>
-
-            <div className="pt-2 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setModalEliminarOpen(false)}
-                className="px-4 py-2 rounded-lg text-xs font-semibold"
-                style={{ background: 'var(--surface-alt)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmarEliminacion}
-                className="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm"
-              >
-                Confirmar Anulación
               </button>
             </div>
           </div>
