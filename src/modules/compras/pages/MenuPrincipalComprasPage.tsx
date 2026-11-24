@@ -430,9 +430,9 @@ export const MenuPrincipalComprasPage: React.FC = () => {
             </div>
           </Link>
 
-          {/* KPI 2: Órdenes por autorizar (Clicable -> /compras/ordenes/autorizar) */}
+          {/* KPI 2: Órdenes por autorizar (Clicable -> Editar Orden / Facturas en pestaña Pendientes) */}
           <Link
-            href="/compras/ordenes/autorizar"
+            href="/compras/ordenes/editar-facturas?tab=pendientes"
             className="cp-stat-card"
             style={{
               textDecoration: 'none',

@@ -382,56 +382,6 @@ export const DashboardOrdenesCompraPage: React.FC = () => {
     }, 350);
   };
 
-  const handleExportCSV = () => {
-    const headers = [
-      'Folio OC',
-      'Proveedor',
-      'RFC',
-      'Fecha Emision',
-      'Fecha Entrega',
-      'Almacen Destino',
-      'Proyecto',
-      'Moneda',
-      'Subtotal',
-      'IVA',
-      'Total',
-      'Estatus',
-      'CFDI Vinculado',
-    ];
-    const rows = ordenesFiltradasYOrdenadas.map((o) => [
-      o.folio,
-      `"${o.proveedorNombre.replace(/"/g, '""')}"`,
-      o.proveedorRfc,
-      o.fechaEmision,
-      o.fechaEntrega,
-      `"${o.almacenDestino.replace(/"/g, '""')}"`,
-      o.proyectoId || 'N/A',
-      o.moneda,
-      o.subtotal.toFixed(2),
-      o.iva.toFixed(2),
-      o.total.toFixed(2),
-      o.estatus.toUpperCase(),
-      ocTieneFactura(o.folio) || o.tieneFactura ? 'SI' : 'NO',
-    ]);
-    const csvContent =
-      'data:text/csv;charset=utf-8,\uFEFF' +
-      [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute(
-      'download',
-      `ordenes_compra_sifygsa_${new Date().toISOString().slice(0, 10)}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    mostrarToast(
-      `Se exportaron ${ordenesFiltradasYOrdenadas.length} órdenes de compra a CSV`,
-      'success'
-    );
-  };
-
   const handleGuardarEdicionRapida = (e: React.FormEvent) => {
     e.preventDefault();
     if (!ordenSeleccionada) return;
@@ -682,45 +632,13 @@ export const DashboardOrdenesCompraPage: React.FC = () => {
         </div>
       )}
 
-      {/* ── ENCABEZADO EJECUTIVO DEL MÓDULO ── */}
+      {/* ── ENCABEZADO DEL MÓDULO ── */}
       <div className="compras-header-banner">
         <div className="compras-header-left">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
-            <Link href="/compras/modulos" className="hover:text-primary transition-colors flex items-center gap-1 font-semibold">
-              <span className="material-symbols-outlined text-[15px]">arrow_back</span>
-              Módulos de Compras
-            </Link>
-            <span>/</span>
-            <span className="text-slate-400">Órdenes de Compra</span>
-          </nav>
-          <div className="compras-header-title-row">
-            <h1 className="compras-page-title">
-              Órdenes de Compra
-            </h1>
-            <span className="compras-context-badge">
-              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
-                description
-              </span>
-              Gestión y Control de ODC
-            </span>
-          </div>
-          <p className="compras-page-subtitle">
-            Gestión, seguimiento y control de órdenes de compra
-          </p>
+          <h1 className="compras-page-title">Órdenes de Compra</h1>
         </div>
 
         <div className="compras-header-actions">
-          <button
-            type="button"
-            className="cp-btn cp-btn-secondary"
-            onClick={handleExportCSV}
-            title="Descargar reporte en formato CSV"
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
-              download
-            </span>
-            Exportar CSV
-          </button>
           <Link href="/compras/ordenes/nueva" className="cp-btn cp-btn-primary">
             <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
               add_shopping_cart

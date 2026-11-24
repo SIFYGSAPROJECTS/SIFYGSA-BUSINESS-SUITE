@@ -227,6 +227,13 @@ export interface OrdenCompra {
 
   // Sticky Notes / Mensajería interna
   notasSticky?: StickyNote[];
+
+  // Trazabilidad de Autorización Gerencial
+  motivoRechazo?: string;
+  fechaAutorizacion?: string;
+  autorizadoPor?: string;
+  liberada?: boolean;
+  fechaLiberacion?: string;
 }
 
 export interface DocumentoAdjunto {

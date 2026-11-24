@@ -89,7 +89,14 @@ const TODAS_LAS_COLUMNAS: ColumnaConfig[] = [
   { key: 'acciones', label: 'Acciones' },
 ];
 
-export const NuevaOrdenCompraPage: React.FC = () => {
+export interface NuevaOrdenCompraPageProps {
+  ordenExistente?: OrdenCompra | null;
+}
+
+export const NuevaOrdenCompraPage: React.FC<NuevaOrdenCompraPageProps> = ({
+  ordenExistente = null,
+}) => {
+  const esEdicion = Boolean(ordenExistente);
   const router = useRouter();
   const searchParams = useSearchParams();
   const facturaRegistradaParam = searchParams?.get('facturaRegistrada') === 'true';
@@ -101,9 +108,9 @@ export const NuevaOrdenCompraPage: React.FC = () => {
   // ── ESTADO DEL WIZARD (5 PASOS DINÁMICOS) ──
   const [currentStep, setCurrentStep] = useState<number>(() => (facturaRegistradaParam ? 5 : 1));
   const [completedSteps, setCompletedSteps] = useState<number[]>(() =>
-    facturaRegistradaParam ? [1, 2, 3, 4, 5] : []
+    facturaRegistradaParam ? [1, 2, 3, 4, 5] : ordenExistente ? [1, 2, 3, 4] : []
   );
-  const [isSaved, setIsSaved] = useState<boolean>(() => facturaRegistradaParam);
+  const [isSaved, setIsSaved] = useState<boolean>(() => facturaRegistradaParam || Boolean(ordenExistente));
   const [isFacturaConcluida] = useState<boolean>(() => facturaRegistradaParam);
   const [showErrorBanner, setShowErrorBanner] = useState<boolean>(false);
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
@@ -127,10 +134,28 @@ export const NuevaOrdenCompraPage: React.FC = () => {
     });
   }, []);
 
-  const [folioOrden] = useState('PO-2026-0174');
-  const [subsidiaria, setSubsidiaria] = useState('SIFYGSA Fire & Gas S.A. de C.V.');
-  const [proveedorBusqueda, setProveedorBusqueda] = useState('FIVE PEAKS MÉXICO SA DE CV');
+  const [folioOrden] = useState(() => ordenExistente?.folio || 'PO-2026-0174');
+  const [subsidiaria, setSubsidiaria] = useState(
+    () => ordenExistente?.subsidiaria || 'SIFYGSA Fire & Gas S.A. de C.V.'
+  );
+  const [proveedorBusqueda, setProveedorBusqueda] = useState(
+    () => ordenExistente?.proveedorNombre || 'FIVE PEAKS MÉXICO SA DE CV'
+  );
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState(() => {
+    if (ordenExistente) {
+      const encontrado = PROVEEDORES_OC_CATALOG.find(
+        (p) =>
+          p.rfc.toLowerCase() === (ordenExistente.proveedorRfc || '').toLowerCase() ||
+          p.v.toLowerCase().includes((ordenExistente.proveedorNombre || '').toLowerCase())
+      );
+      if (encontrado) return encontrado;
+      return {
+        v: ordenExistente.proveedorNombre || 'Proveedor',
+        rfc: ordenExistente.proveedorRfc || 'XAXX010101000',
+        pay: ordenExistente.condicionPago || 'Contado',
+        ct: ordenExistente.solicitante || 'Contacto asignado',
+      };
+    }
     return (
       PROVEEDORES_OC_CATALOG.find((p) => p.v.includes('FIVE PEAKS')) ||
       PROVEEDORES_OC_CATALOG[0]
@@ -138,25 +163,43 @@ export const NuevaOrdenCompraPage: React.FC = () => {
   });
   const [isProveedorDropdownOpen, setIsProveedorDropdownOpen] = useState(false);
 
-  const [moneda, setMoneda] = useState<string>('MXN');
-  const [tipoCambio, setTipoCambio] = useState<string>('1.00');
+  const [moneda, setMoneda] = useState<string>(() => ordenExistente?.moneda || 'MXN');
+  const [tipoCambio, setTipoCambio] = useState<string>(() =>
+    ordenExistente?.tipoCambio ? ordenExistente.tipoCambio.toFixed(2) : '1.00'
+  );
   const [filtroModalProveedor, setFiltroModalProveedor] = useState('');
 
   // ── PASO 2: CONDICIONES Y CLASIFICACIÓN ──
-  const [tipoCondicion, setTipoCondicion] = useState<'Contado' | 'Crédito'>('Contado');
-  const [diasCredito, setDiasCredito] = useState<number>(15);
+  const [tipoCondicion, setTipoCondicion] = useState<'Contado' | 'Crédito'>(() =>
+    ordenExistente?.condicionPago?.toLowerCase().includes('crédito') ? 'Crédito' : 'Contado'
+  );
+  const [diasCredito, setDiasCredito] = useState<number>(() => {
+    const match = ordenExistente?.condicionPago?.match(/(\d+)/);
+    return match ? Number(match[1]) : 15;
+  });
   const [notaOrden, setNotaOrden] = useState(
-    'PO-2026-0174 - Condiciones de pago: Contado comercial - Suministro para obra Tenaris Tamsa.'
+    () =>
+      ordenExistente?.notas ||
+      'PO-2026-0174 - Condiciones de pago: Contado comercial - Suministro para obra Tenaris Tamsa.'
   );
   const [recibidoPor, setRecibidoPor] = useState(() => {
+    if (ordenExistente?.fechaEntrega) return ordenExistente.fechaEntrega;
     const d = new Date();
     d.setDate(d.getDate() + 15);
     return d.toISOString().split('T')[0];
   });
-  const [reqContrato, setReqContrato] = useState(REQUISICION_MAESTRA_INFO.codigo);
-  const [ubicacion, setUbicacion] = useState('SFG-C259-TAM (Tenaris Tamsa - Veracruz)');
-  const [noOrdenCompra, setNoOrdenCompra] = useState('OC-SFG-C259-127');
-  const [estadoAprobacion, setEstadoAprobacion] = useState('Aprobado');
+  const [reqContrato, setReqContrato] = useState(
+    () => ordenExistente?.contratoProyecto || REQUISICION_MAESTRA_INFO.codigo
+  );
+  const [ubicacion, setUbicacion] = useState(
+    () => ordenExistente?.almacenDestino || 'SFG-C259-TAM (Tenaris Tamsa - Veracruz)'
+  );
+  const [noOrdenCompra, setNoOrdenCompra] = useState(
+    () => ordenExistente?.folio || 'OC-SFG-C259-127'
+  );
+  const [estadoAprobacion, setEstadoAprobacion] = useState(() =>
+    ordenExistente ? ordenExistente.estatus : 'Aprobado'
+  );
   const [proximoAprobador, setProximoAprobador] = useState(APROBADORES_CATALOG[0]);
 
   // Sección colapsable "Más campos"
@@ -166,14 +209,44 @@ export const NuevaOrdenCompraPage: React.FC = () => {
   const [contratoCompra, setContratoCompra] = useState('CC-TT-VER-024');
   const [adRequisicionContrato, setAdRequisicionContrato] = useState('AD-RQ-127-REV02');
   const [fechaRevision, setFechaRevision] = useState('2026-11-10');
-  const [comprador, setComprador] = useState(COMPRADORES_CATALOG[0]);
+  const [comprador, setComprador] = useState(
+    () => ordenExistente?.solicitante || COMPRADORES_CATALOG[0]
+  );
   const [fechaAprobacionDG, setFechaAprobacionDG] = useState(
     REQUISICION_MAESTRA_INFO.fechaAprobacionDG
   );
 
   // ── PASO 3: PARTIDAS (TABLA EDITABLE ESTILO NETSUITE) ──
-  // Partidas iniciales cargadas de la requisición
+  // Partidas iniciales cargadas de la orden existente o de la requisición
   const [partidas, setPartidas] = useState<PartidaOrdenForm[]>(() => {
+    if (ordenExistente?.items && ordenExistente.items.length > 0) {
+      return ordenExistente.items.map((it, idx) => ({
+        id: it.id || `item-${idx + 1}`,
+        numArticulo: it.partida || idx + 1,
+        c: it.codigo,
+        articuloNombre: it.codigo,
+        d: it.descripcion,
+        q: it.cantidad,
+        p: it.precioUnitario,
+        n: ordenExistente.notas || '',
+        on: false,
+        unidad: it.unidad || 'Pza',
+        proveedorNombre: ordenExistente.proveedorNombre || 'FIVE PEAKS MÉXICO SA DE CV',
+        departamento: ordenExistente.departamento || 'Dirección : Compras',
+        disponible: 10,
+        recibido: 0,
+        facturado: 0,
+        opciones: 'Normal',
+        cerrado: false,
+        fechaReciboPrevista: ordenExistente.fechaEntrega || '2026-11-25',
+        clienteTrabajo: ordenExistente.contratoProyecto || 'SFG-C259-TAM Tenaris Tamsa : Obra Principal',
+        activityCode: 'Paquetería',
+        refDetallesImpuestos: `1194487_${idx + 1}`,
+        importe: it.subtotal ?? it.cantidad * it.precioUnitario,
+        importeBruto: it.totalPartida ?? it.cantidad * it.precioUnitario * 1.16,
+        importeImpuestos: it.ivaMonto ?? it.cantidad * it.precioUnitario * 0.16,
+      }));
+    }
     return REQUISICION_MAESTRA_ITEMS.map((it, idx) => ({
       ...it,
       numArticulo: idx + 1,
@@ -525,31 +598,31 @@ export const NuevaOrdenCompraPage: React.FC = () => {
     const fechaActual = new Date().toISOString().split('T')[0];
 
     const nuevaOC: OrdenCompra = {
-      id: `oc-${Date.now()}`,
+      id: ordenExistente?.id || `oc-${Date.now()}`,
       folio: folioOrden,
-      proveedorId: proveedorSeleccionado?.rfc || 'PROV-001',
+      proveedorId: proveedorSeleccionado?.rfc || ordenExistente?.proveedorId || 'PROV-001',
       proveedorNombre: proveedorSeleccionado?.v || proveedorBusqueda,
-      proveedorRfc: proveedorSeleccionado?.rfc || 'FPM130918MPA',
-      fechaEmision: fechaActual,
+      proveedorRfc: proveedorSeleccionado?.rfc || ordenExistente?.proveedorRfc || 'FPM130918MPA',
+      fechaEmision: ordenExistente?.fechaEmision || fechaActual,
       fechaEntrega: recibidoPor,
       moneda: (moneda.split(' ')[0] as MonedaDivisa) || 'MXN',
       tipoCambio: Number(tipoCambio) || 1.0,
       subtotal: subtotalGeneral,
-      descuento: 0,
+      descuento: ordenExistente?.descuento ?? 0,
       iva: impuestosGenerales,
       total: totalGeneral,
-      estatus: 'abierta',
+      estatus: ordenExistente?.estatus || 'abierta',
       condicionPago:
         tipoCondicion === 'Crédito' ? `Crédito ${diasCredito} días` : 'Contado comercial',
       subsidiaria: subsidiaria,
       solicitante: comprador,
-      departamento: 'Dirección : Compras',
+      departamento: ordenExistente?.departamento || 'Dirección : Compras',
       almacenDestino: ubicacion,
-      proyectoId: 'SFG-C259',
+      proyectoId: ordenExistente?.proyectoId || 'SFG-C259',
       contratoProyecto: reqContrato,
       notas: notaOrden,
       items: partidas.map((it, idx) => ({
-        id: `item-${idx + 1}`,
+        id: it.id || `item-${idx + 1}`,
         partida: idx + 1,
         codigo: it.c,
         descripcion: it.d,
@@ -569,7 +642,9 @@ export const NuevaOrdenCompraPage: React.FC = () => {
     setCurrentStep(5);
 
     mostrarToast(
-      `Orden de compra ${folioOrden} generada exitosamente. Continúa al registro fiscal de factura.`,
+      esEdicion
+        ? `Orden de compra ${folioOrden} actualizada exitosamente.`
+        : `Orden de compra ${folioOrden} generada exitosamente. Continúa al registro fiscal de factura.`,
       'success'
     );
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -656,7 +731,7 @@ export const NuevaOrdenCompraPage: React.FC = () => {
             <span className="material-symbols-outlined text-primary text-[28px]">
               shopping_cart_checkout
             </span>
-            Nueva Orden de Compra
+            {esEdicion ? `Orden de Compra ${folioOrden}` : 'Nueva Orden de Compra'}
           </h1>
         </div>
 
@@ -762,7 +837,7 @@ export const NuevaOrdenCompraPage: React.FC = () => {
             </div>
             <div>
               <span>N.º de pedido: </span>
-              <strong>Se generará al guardar ({folioOrden})</strong>
+              <strong>{esEdicion ? folioOrden : `Se generará al guardar (${folioOrden})`}</strong>
             </div>
             <div>
               <span>Requisición de origen: </span>
@@ -2111,7 +2186,7 @@ export const NuevaOrdenCompraPage: React.FC = () => {
       )}
 
       {/* ── PIE FIJO DE NAVEGACIÓN REUTILIZABLE (NORMATIVO) ── */}
-      {!isSaved && (
+      {(!isSaved || (esEdicion && currentStep <= 4)) && (
         <FormWizardFooter
           currentStep={currentStep}
           totalSteps={4}
@@ -2121,7 +2196,7 @@ export const NuevaOrdenCompraPage: React.FC = () => {
           onPrevious={handleAtras}
           onCancel={() => setIsDialogCancelarOpen(true)}
           continueText="Continuar"
-          finalText="Guardar orden de compra"
+          finalText={esEdicion ? 'Guardar cambios' : 'Guardar orden de compra'}
           continueIcon="chevron_right"
           finalIcon="save"
           onInvalidClick={() => {

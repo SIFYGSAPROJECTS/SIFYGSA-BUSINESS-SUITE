@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import type { RolUsuario } from '@/config/types';
+import { obtenerOrdenesCompra } from '@/modules/compras/data/mock-data';
 import { IconClose } from '../ui/Icons';
 import { SubsidebarFavoritos } from './subsidebarFavoritos';
 
@@ -30,7 +31,6 @@ export const SidebarCompras: React.FC<SidebarComprasProps> = ({
 }) => {
   const pathname = usePathname() || '';
   const searchParams = useSearchParams();
-  const vistaParam = searchParams?.get('vista');
 
   // Estados de colapso de acordeón
   const [openCompras, setOpenCompras] = useState(true);
@@ -68,21 +68,27 @@ export const SidebarCompras: React.FC<SidebarComprasProps> = ({
   // Detección precisa de submódulos activos
   const filtroParam = searchParams?.get('filtro');
   const esNuevaOrdenActivo = pathname === '/compras/ordenes/nueva';
-  const esAutorizarActivo =
-    (pathname.startsWith('/compras/ordenes') && vistaParam === 'autorizar') ||
-    pathname === '/compras/ordenes/autorizar';
-  const esPorActualizarActivo =
-    (pathname.startsWith('/compras/ordenes') && filtroParam === 'por-actualizar') ||
-    pathname === '/compras/ordenes/por-actualizar';
-  const esPendientesActivo =
-    (pathname.startsWith('/compras/ordenes') && filtroParam === 'pendientes') ||
-    pathname === '/compras/ordenes/pendientes';
+  const esEditarFacturasActivo =
+    pathname === '/compras/ordenes/editar-facturas' ||
+    pathname === '/compras/ordenes/por-actualizar' ||
+    pathname === '/compras/ordenes/pendientes' ||
+    (pathname.startsWith('/compras/ordenes') &&
+      (filtroParam === 'por-actualizar' || filtroParam === 'pendientes'));
   const esOrdenesActivo =
     pathname.startsWith('/compras/ordenes') &&
     !esNuevaOrdenActivo &&
-    !esAutorizarActivo &&
-    !esPorActualizarActivo &&
-    !esPendientesActivo;
+    !esEditarFacturasActivo;
+
+  const totalEditarFacturas = useMemo(() => {
+    const lista = obtenerOrdenesCompra();
+    return lista.filter(
+      (o) =>
+        o.estatus === 'abierta' ||
+        o.estatus === 'en_transito' ||
+        o.estatus === 'orden_completa_factura_abierta' ||
+        o.estatus === 'pendiente'
+    ).length;
+  }, []);
 
   const esNuevoProveedorActivo = pathname === '/compras/proveedores/nuevo';
   const esProveedoresListaActivo =
@@ -91,9 +97,8 @@ export const SidebarCompras: React.FC<SidebarComprasProps> = ({
 
   return (
     <aside
-      className={`gemini-sidebar sidebar-compras ${isCollapsed ? 'collapsed' : ''} ${
-        isMobileOpen ? 'mobile-visible' : ''
-      }`}
+      className={`gemini-sidebar sidebar-compras ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-visible' : ''
+        }`}
       aria-label="Navegación Compras y Procura SIFYGSA"
     >
       {/* Cabecera Móvil */}
@@ -224,16 +229,16 @@ export const SidebarCompras: React.FC<SidebarComprasProps> = ({
                 </span>
               </Link>
 
-              {/* 3. Por Actualizar */}
+              {/* 3. Editar Orden de Compra / Facturas */}
               <Link
-                href="/compras/ordenes/por-actualizar"
-                className={`collapsed-nav-btn ${esPorActualizarActivo ? 'active-crm' : ''}`}
-                title="Órdenes por Actualizar (8)"
-                aria-label="Órdenes por Actualizar"
+                href="/compras/ordenes/editar-facturas"
+                className={`collapsed-nav-btn ${esEditarFacturasActivo ? 'active-crm' : ''}`}
+                title={`Editar Orden de Compra / Facturas (${totalEditarFacturas})`}
+                aria-label="Editar Orden de Compra / Facturas"
                 style={{ position: 'relative' }}
               >
-                <span className="material-symbols-outlined" style={{ fontSize: 18, color: esPorActualizarActivo ? '#ffffff' : '#d97706' }}>
-                  update
+                <span className="material-symbols-outlined" style={{ fontSize: 18, color: esEditarFacturasActivo ? '#ffffff' : '#d97706' }}>
+                  edit_document
                 </span>
                 <span
                   style={{
@@ -249,48 +254,7 @@ export const SidebarCompras: React.FC<SidebarComprasProps> = ({
                     lineHeight: 1,
                   }}
                 >
-                  8
-                </span>
-              </Link>
-
-              {/* 4. Órdenes Pendientes */}
-              <Link
-                href="/compras/ordenes/pendientes"
-                className={`collapsed-nav-btn ${esPendientesActivo ? 'active-crm' : ''}`}
-                title="Órdenes Pendientes (14)"
-                aria-label="Órdenes Pendientes"
-                style={{ position: 'relative' }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: 18, color: esPendientesActivo ? '#ffffff' : '#1d4ed8' }}>
-                  pending_actions
-                </span>
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: 2,
-                    right: 2,
-                    backgroundColor: '#1d4ed8',
-                    color: '#ffffff',
-                    fontSize: '9px',
-                    fontWeight: 800,
-                    borderRadius: '9999px',
-                    padding: '1px 4px',
-                    lineHeight: 1,
-                  }}
-                >
-                  14
-                </span>
-              </Link>
-
-              {/* 5. Autorización de Órdenes */}
-              <Link
-                href="/compras/ordenes/autorizar"
-                className={`collapsed-nav-btn ${esAutorizarActivo ? 'active-crm' : ''}`}
-                title="Autorización de Órdenes"
-                aria-label="Autorización de Órdenes"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: 18, color: esAutorizarActivo ? '#ffffff' : '#d97706' }}>
-                  verified_user
+                  {totalEditarFacturas}
                 </span>
               </Link>
 
@@ -637,7 +601,7 @@ export const SidebarCompras: React.FC<SidebarComprasProps> = ({
 
                       {/* 1.3 Por Actualizar */}
                       <Link
-                        href="/compras/ordenes/por-actualizar"
+                        href="/compras/ordenes/editar-facturas"
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -645,13 +609,13 @@ export const SidebarCompras: React.FC<SidebarComprasProps> = ({
                           padding: '0.45rem 0.65rem',
                           borderRadius: 'var(--radius-control)',
                           textDecoration: 'none',
-                          backgroundColor: esPorActualizarActivo
+                          backgroundColor: esEditarFacturasActivo
                             ? 'rgba(217, 119, 6, 0.12)'
                             : 'transparent',
-                          color: esPorActualizarActivo
+                          color: esEditarFacturasActivo
                             ? '#d97706'
                             : 'var(--text-secondary)',
-                          fontWeight: esPorActualizarActivo ? 700 : 500,
+                          fontWeight: esEditarFacturasActivo ? 700 : 500,
                           fontSize: '0.82rem',
                           transition: 'background-color 0.15s ease',
                         }}
@@ -671,10 +635,10 @@ export const SidebarCompras: React.FC<SidebarComprasProps> = ({
                             }}
                           >
                             <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
-                              update
+                              edit_document
                             </span>
                           </div>
-                          <span style={{ lineHeight: 1.2 }}>Por Actualizar</span>
+                          <span style={{ lineHeight: 1.2 }}>Editar Orden / Facturas</span>
                         </div>
                         <span
                           style={{
@@ -686,104 +650,8 @@ export const SidebarCompras: React.FC<SidebarComprasProps> = ({
                             color: '#ffffff',
                           }}
                         >
-                          8
+                          {totalEditarFacturas}
                         </span>
-                      </Link>
-
-                      {/* 1.4 Órdenes Pendientes */}
-                      <Link
-                        href="/compras/ordenes/pendientes"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '0.45rem 0.65rem',
-                          borderRadius: 'var(--radius-control)',
-                          textDecoration: 'none',
-                          backgroundColor: esPendientesActivo
-                            ? 'var(--nav-active-bg, rgba(37, 99, 235, 0.12))'
-                            : 'transparent',
-                          color: esPendientesActivo
-                            ? 'var(--primary, #1d4ed8)'
-                            : 'var(--text-secondary)',
-                          fontWeight: esPendientesActivo ? 700 : 500,
-                          fontSize: '0.82rem',
-                          transition: 'background-color 0.15s ease',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                          <div
-                            style={{
-                              width: 26,
-                              height: 26,
-                              borderRadius: '8px',
-                              backgroundColor: '#1d4ed8',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: '#ffffff',
-                              flexShrink: 0,
-                            }}
-                          >
-                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
-                              pending_actions
-                            </span>
-                          </div>
-                          <span style={{ lineHeight: 1.2 }}>Órdenes Pendientes</span>
-                        </div>
-                        <span
-                          style={{
-                            padding: '1px 6px',
-                            fontSize: '0.68rem',
-                            fontWeight: 800,
-                            borderRadius: '9999px',
-                            backgroundColor: '#1d4ed8',
-                            color: '#ffffff',
-                          }}
-                        >
-                          14
-                        </span>
-                      </Link>
-
-                      {/* 1.5 Autorización de Órdenes */}
-                      <Link
-                        href="/compras/ordenes/autorizar"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.65rem',
-                          padding: '0.45rem 0.65rem',
-                          borderRadius: 'var(--radius-control)',
-                          textDecoration: 'none',
-                          backgroundColor: esAutorizarActivo
-                            ? 'rgba(217, 119, 6, 0.12)'
-                            : 'transparent',
-                          color: esAutorizarActivo
-                            ? '#d97706'
-                            : 'var(--text-secondary)',
-                          fontWeight: esAutorizarActivo ? 700 : 500,
-                          fontSize: '0.82rem',
-                          transition: 'background-color 0.15s ease',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: 26,
-                            height: 26,
-                            borderRadius: '8px',
-                            backgroundColor: '#d97706',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#ffffff',
-                            flexShrink: 0,
-                          }}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
-                            verified_user
-                          </span>
-                        </div>
-                        <span style={{ lineHeight: 1.2 }}>Autorización de Órdenes</span>
                       </Link>
 
                       {/* 1.5.1 Requisiciones */}

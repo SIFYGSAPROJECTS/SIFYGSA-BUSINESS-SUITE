@@ -62,19 +62,38 @@ export interface FacturaProgramadaItem {
   estado: 'Por vencer' | 'Vencida' | 'Programada para pago' | 'Anulada';
 }
 
-export const RegistroFacturaProveedorPage: React.FC = () => {
+export interface RegistroFacturaProveedorPageProps {
+  facturaIdProp?: string;
+}
+
+export const RegistroFacturaProveedorPage: React.FC<RegistroFacturaProveedorPageProps> = ({
+  facturaIdProp,
+}) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const ocParam = searchParams.get('oc');
+  const facturaIdParam = facturaIdProp || searchParams.get('facturaId') || searchParams.get('folio');
   const archivosParam = searchParams.get('archivos'); // Archivos marcados como 'Factura' desde ODC
   const vistaQuery = searchParams.get('vista');
 
   const {
     ordenes: ordenesContext,
+    facturas: facturasContext,
     guardarFactura: guardarFacturaContext,
     anularFactura: anularFacturaContext,
     mostrarToast,
   } = useCompras();
+
+  const facturaExistente = useMemo(() => {
+    if (!facturaIdParam) return null;
+    const q = facturaIdParam.trim().toLowerCase();
+    return (
+      facturasContext.find(
+        (f) => f.id.toLowerCase() === q || f.folio.toLowerCase() === q
+      ) || null
+    );
+  }, [facturasContext, facturaIdParam]);
+  const esEdicionFactura = Boolean(facturaExistente);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -97,8 +116,9 @@ export const RegistroFacturaProveedorPage: React.FC = () => {
 
   // ── PASO 1: ORDEN DE COMPRA ──
   const [ordenSeleccionada, setOrdenSeleccionada] = useState<OrdenCompra | null>(() => {
-    if (!ocParam) return ordenes[0] || null;
-    const buscado = ocParam.trim().toLowerCase();
+    const targetOc = facturaExistente?.ocId || ocParam;
+    if (!targetOc) return ordenes[0] || null;
+    const buscado = targetOc.trim().toLowerCase();
     return ordenes.find(
       (o) => o.folio.toLowerCase() === buscado || o.id.toLowerCase() === buscado
     ) || ordenes[0] || null;
@@ -109,14 +129,15 @@ export const RegistroFacturaProveedorPage: React.FC = () => {
 
   // ── PASO 2: INFORMACIÓN DE LA FACTURA ──
   const [referenciaNo, setReferenciaNo] = useState(
-    () => `FAC-2026-${Math.floor(1000 + Math.random() * 8999)}`
+    () => facturaExistente?.folio || `FAC-2026-${Math.floor(1000 + Math.random() * 8999)}`
   );
 
   const [fechaEmision, setFechaEmision] = useState(() => {
-    return new Date().toISOString().split('T')[0];
+    return facturaExistente?.fechaEmision || new Date().toISOString().split('T')[0];
   });
 
   const [fechaVencimiento, setFechaVencimiento] = useState(() => {
+    if (facturaExistente?.fechaVencimiento) return facturaExistente.fechaVencimiento;
     const d = new Date();
     d.setDate(d.getDate() + 30);
     return d.toISOString().split('T')[0];
@@ -124,6 +145,7 @@ export const RegistroFacturaProveedorPage: React.FC = () => {
 
   // Cuenta contable preasignada según divisa de la orden
   const [cuentaContable, setCuentaContable] = useState(() => {
+    if (facturaExistente?.cuentaContable) return facturaExistente.cuentaContable;
     const isUsd = (ordenSeleccionada?.moneda || '').toUpperCase() === 'USD';
     return isUsd
       ? '2110-0020-0000-0000 PROVEEDORES EXTRANJEROS (USD)'
@@ -151,18 +173,30 @@ export const RegistroFacturaProveedorPage: React.FC = () => {
 
   // Sección colapsable "Datos fiscales (CFDI 4.0)" (cerrada por defecto)
   const [isDatosFiscalesOpen, setIsDatosFiscalesOpen] = useState(false);
-  const [uuidFiscal, setUuidFiscal] = useState('4A2B89D1-7C34-49E1-88F2-51E9C8921BA0');
-  const [rfcEmisor, setRfcEmisor] = useState(() => ordenSeleccionada?.proveedorRfc || 'FPM130918MPA');
-  const [rfcReceptor, setRfcReceptor] = useState('SFG120301ABC');
-  const [razonSocialEmisor, setRazonSocialEmisor] = useState(
-    () => ordenSeleccionada?.proveedorNombre || 'FIVE PEAKS MÉXICO SA DE CV'
+  const [uuidFiscal, setUuidFiscal] = useState(
+    () => facturaExistente?.uuid || '4A2B89D1-7C34-49E1-88F2-51E9C8921BA0'
   );
-  const [regimenFiscal, setRegimenFiscal] = useState('601 - General de Ley Personas Morales');
+  const [rfcEmisor, setRfcEmisor] = useState(
+    () => facturaExistente?.rfcEmisor || ordenSeleccionada?.proveedorRfc || 'FPM130918MPA'
+  );
+  const [rfcReceptor, setRfcReceptor] = useState(
+    () => facturaExistente?.rfcReceptor || 'SFG120301ABC'
+  );
+  const [razonSocialEmisor, setRazonSocialEmisor] = useState(
+    () => facturaExistente?.proveedor || ordenSeleccionada?.proveedorNombre || 'FIVE PEAKS MÉXICO SA DE CV'
+  );
+  const [regimenFiscal, setRegimenFiscal] = useState(
+    () => facturaExistente?.regimenEmisor || '601 - General de Ley Personas Morales'
+  );
   const [metodoPago, setMetodoPago] = useState('PPD - Pago en parcialidades o diferido');
   const [formaPago, setFormaPago] = useState('03 - Transferencia electrónica de fondos');
-  const [usoCfdi, setUsoCfdi] = useState('G03 - Gastos en general');
+  const [usoCfdi, setUsoCfdi] = useState(
+    () => facturaExistente?.usoCfdi || 'G03 - Gastos en general'
+  );
   const [observaciones, setObservaciones] = useState(
-    'Recepción y vinculación de factura fiscal CFDI 4.0 a orden de compra autorizada.'
+    () =>
+      facturaExistente?.notaCondiciones ||
+      'Recepción y vinculación de factura fiscal CFDI 4.0 a orden de compra autorizada.'
   );
 
   // Actualizar datos del proveedor si cambia la orden
@@ -465,7 +499,7 @@ export const RegistroFacturaProveedorPage: React.FC = () => {
 
     // Guardar en contexto
     guardarFacturaContext({
-      id: referenciaNo,
+      id: facturaExistente?.id || referenciaNo,
       ocId: ordenSeleccionada.folio,
       uuid: uuidFiscal,
       folio: referenciaNo,
@@ -479,11 +513,14 @@ export const RegistroFacturaProveedorPage: React.FC = () => {
       subtotal: ordenSeleccionada.subtotal,
       iva: ordenSeleccionada.iva,
       total: ordenSeleccionada.total,
-      conceptos: [],
-      estado: 'abierta',
+      conceptos: facturaExistente?.conceptos || [],
+      estado: facturaExistente?.estado || 'abierta',
+      xmlNombre: archivosLista.find((a) => a.nombre.endsWith('.xml'))?.nombre || facturaExistente?.xmlNombre,
+      pdfNombre: archivosLista.find((a) => a.nombre.endsWith('.pdf'))?.nombre || facturaExistente?.pdfNombre,
       cuentaContable: cuentaContable,
       usoCfdi: usoCfdi,
       regimenEmisor: regimenFiscal,
+      notaCondiciones: observaciones,
     });
 
     // Agregar también a facturas programadas
@@ -557,7 +594,11 @@ export const RegistroFacturaProveedorPage: React.FC = () => {
             </Link>
             <span>/</span>
             <span className="font-semibold text-slate-700 dark:text-slate-300">
-              {tabPrincipal === 'registro' ? 'Registro de Factura de Proveedor' : 'Facturas Programadas'}
+              {tabPrincipal === 'registro'
+                ? esEdicionFactura
+                  ? `Editar Factura ${referenciaNo}`
+                  : 'Registro de Factura de Proveedor'
+                : 'Facturas Programadas'}
             </span>
           </div>
 

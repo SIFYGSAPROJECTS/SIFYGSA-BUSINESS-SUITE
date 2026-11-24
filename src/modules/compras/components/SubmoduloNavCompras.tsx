@@ -1,16 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { MOCK_COMPRAS_FILTROS } from '../data/mock-data';
+import { useCompras } from '../context/ComprasContext';
 
 export type SubmoduloComprasId =
   | 'nueva-orden'
   | 'ordenes'
-  | 'ordenes-por-actualizar'
-  | 'ordenes-pendientes'
-  | 'autorizar-ordenes'
+  | 'editar-facturas'
   | 'proveedores'
   | 'nuevo-proveedor'
   | 'requisiciones'
@@ -61,42 +59,15 @@ const TODOS_LAUNCHER_ITEMS: ComprasLauncherItem[] = [
     ),
   },
   {
-    id: 'ordenes-por-actualizar',
-    href: '/compras/ordenes?filtro=por-actualizar',
-    title: 'Por Actualizar',
-    description: 'Órdenes abiertas que requieren seguimiento o factura',
+    id: 'editar-facturas',
+    href: '/compras/ordenes/editar-facturas',
+    title: 'Editar Orden de Compra / Facturas',
+    description: 'Actualiza órdenes abiertas, da seguimiento y gestiona sus facturas',
     colorClass: 'amber',
-    badge: MOCK_COMPRAS_FILTROS.ordenesPorActualizarCount,
     badgeType: 'warning',
     icon: (
       <span className="material-symbols-outlined" style={{ fontSize: '28px', color: '#ffffff' }}>
-        update
-      </span>
-    ),
-  },
-  {
-    id: 'ordenes-pendientes',
-    href: '/compras/ordenes?filtro=pendientes',
-    title: 'Órdenes Pendientes',
-    description: 'En espera de validación gerencial y liberación',
-    colorClass: 'brand',
-    badge: MOCK_COMPRAS_FILTROS.ordenesPendientesCount,
-    badgeType: 'primary',
-    icon: (
-      <span className="material-symbols-outlined" style={{ fontSize: '28px', color: '#ffffff' }}>
-        pending_actions
-      </span>
-    ),
-  },
-  {
-    id: 'autorizar-ordenes',
-    href: '/compras/ordenes?vista=autorizar',
-    title: 'Autorización de Órdenes',
-    description: 'Validación gerencial, firma digital y liberación de ODC',
-    colorClass: 'amber',
-    icon: (
-      <span className="material-symbols-outlined" style={{ fontSize: '28px', color: '#ffffff' }}>
-        verified_user
+        edit_document
       </span>
     ),
   },
@@ -146,8 +117,20 @@ export const SubmoduloNavCompras: React.FC<SubmoduloNavComprasProps> = ({
 }) => {
   const pathname = usePathname() || '';
   const searchParams = useSearchParams();
-  const vistaParam = searchParams?.get('vista');
   const filtroParam = searchParams?.get('filtro');
+  const { ordenes } = useCompras();
+
+  const totalEditarFacturas = useMemo(
+    () =>
+      ordenes.filter(
+        (o) =>
+          o.estatus === 'abierta' ||
+          o.estatus === 'en_transito' ||
+          o.estatus === 'orden_completa_factura_abierta' ||
+          o.estatus === 'pendiente'
+      ).length,
+    [ordenes]
+  );
 
   const tabActiva: SubmoduloComprasId =
     activeTab ||
@@ -159,24 +142,22 @@ export const SubmoduloNavCompras: React.FC<SubmoduloNavComprasProps> = ({
       ? 'proveedores'
       : pathname.startsWith('/requisiciones')
       ? 'requisiciones'
-      : pathname.startsWith('/compras/ordenes') && vistaParam === 'autorizar'
-      ? 'autorizar-ordenes'
-      : pathname.startsWith('/compras/ordenes') && filtroParam === 'por-actualizar'
-      ? 'ordenes-por-actualizar'
-      : pathname.startsWith('/compras/ordenes') && filtroParam === 'pendientes'
-      ? 'ordenes-pendientes'
+      : pathname === '/compras/ordenes/editar-facturas' ||
+        (pathname.startsWith('/compras/ordenes') &&
+          (filtroParam === 'por-actualizar' || filtroParam === 'pendientes'))
+      ? 'editar-facturas'
       : pathname.startsWith('/compras/ordenes')
       ? 'ordenes'
       : ('' as SubmoduloComprasId));
 
-  const itemsVisibles = TODOS_LAUNCHER_ITEMS.filter((item) => {
+  const itemsVisibles = TODOS_LAUNCHER_ITEMS.map((item) =>
+    item.id === 'editar-facturas' ? { ...item, badge: totalEditarFacturas } : item
+  ).filter((item) => {
     if (modo === 'compras-puro') {
       return (
         item.id === 'nueva-orden' ||
         item.id === 'ordenes' ||
-        item.id === 'ordenes-por-actualizar' ||
-        item.id === 'ordenes-pendientes' ||
-        item.id === 'autorizar-ordenes' ||
+        item.id === 'editar-facturas' ||
         item.id === 'requisiciones'
       );
     }
