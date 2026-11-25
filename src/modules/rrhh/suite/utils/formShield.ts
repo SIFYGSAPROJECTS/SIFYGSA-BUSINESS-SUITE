@@ -365,6 +365,90 @@ const isCorruptedBinaryEmployeeName = (name?: string): boolean => {
   return false;
 };
 
+/**
+ * Normaliza texto para búsquedas insensibles a mayúsculas, minúsculas y acentos.
+ */
+export const normalizeSearchText = (value?: string | null): string =>
+  (value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/**
+ * Evalúa coincidencias de búsqueda sin importar mayúsculas, acentos ni orden de palabras.
+ */
+export const matchesNormalizedSearch = (
+  rawQuery: string,
+  ...fields: Array<string | null | undefined>
+): boolean => {
+  const normQuery = normalizeSearchText(rawQuery);
+  if (!normQuery) return true;
+  const haystack = normalizeSearchText(fields.filter(Boolean).join(' '));
+  if (haystack.includes(normQuery)) return true;
+  const tokens = normQuery.split(' ').filter(Boolean);
+  return tokens.length > 1 && tokens.every((tk) => haystack.includes(tk));
+};
+
+const CANONICAL_LOCATIONS_BY_KEY: Record<string, string> = {
+  'minatitlan, ver.': 'Minatitlán, Ver.',
+  'minatitlan, ver': 'Minatitlán, Ver.',
+  'minatitlan': 'Minatitlán, Ver.',
+  'comalcalco, tab.': 'Comalcalco, Tab.',
+  'comalcalco, tab': 'Comalcalco, Tab.',
+  'comalcalco, ver.': 'Comalcalco, Tab.',
+  'comalcalco, ver': 'Comalcalco, Tab.',
+  'comalcalco': 'Comalcalco, Tab.',
+  'mapachapa, ver.': 'Mapachapa, Ver.',
+  'mapachapa, ver': 'Mapachapa, Ver.',
+  'mapachapa': 'Mapachapa, Ver.',
+  'cosoleacaque, ver.': 'Cosoleacaque, Ver.',
+  'cosoleacaque, ver': 'Cosoleacaque, Ver.',
+  'cosoleacaque': 'Cosoleacaque, Ver.',
+  'coatzacoalcos, ver.': 'Coatzacoalcos, Ver.',
+  'coatzacoalcos, ver': 'Coatzacoalcos, Ver.',
+  'coatzacoalcos': 'Coatzacoalcos, Ver.',
+  'cordoba, ver.': 'Córdoba, Ver.',
+  'cordoba, ver': 'Córdoba, Ver.',
+  'jaltipan, ver.': 'Jáltipan, Ver.',
+  'jaltipan, ver': 'Jáltipan, Ver.',
+  'jalpa de mendez, tab.': 'Jalpa de Méndez, Tab.',
+  'jalpa de mendez, tab': 'Jalpa de Méndez, Tab.',
+  'ixhuatlan del sureste, ver.': 'Ixhuatlán del Sureste, Ver.',
+  'paraiso, tab.': 'Paraíso, Tab.',
+  'paraiso, tab': 'Paraíso, Tab.',
+  'san pedro martir, ver.': 'San Pedro Mártir, Ver.',
+  'villahermosa, tab.': 'Villahermosa, Tab.',
+  'huimanguillo, tab.': 'Huimanguillo, Tab.',
+  'nacajuca, tab.': 'Nacajuca, Tab.',
+  'centla, tab.': 'Centla, Tab.',
+  'acayucan, ver.': 'Acayucan, Ver.',
+  'oteapan, ver.': 'Oteapan, Ver.',
+  'texistepec, ver.': 'Texistepec, Ver.',
+  'canticas, ver.': 'Canticas, Ver.',
+  'carrizal, ver.': 'Carrizal, Ver.',
+  'orizaba, ver.': 'Orizaba, Ver.',
+  'soconusco, ver.': 'Soconusco, Ver.',
+  'tierra blanca, ver.': 'Tierra Blanca, Ver.',
+  'xalapa, ver.': 'Xalapa, Ver.',
+  'corregidora, queretaro': 'Corregidora, Querétaro',
+  'tabasco, tab.': 'Comalcalco, Tab.',
+  'sfg-adm-infra': 'Minatitlán, Ver.',
+  'sfg-c245-msa': 'Comalcalco, Tab.',
+  'sfg-c284-ct1': 'Minatitlán, Ver.'
+};
+
+/**
+ * Unifica nombres de sedes/localidades sin duplicados por mayúsculas, acentos o códigos mal capturados.
+ */
+export const normalizeLocationLabel = (value?: string | null): string => {
+  const raw = (value || '').replace(/\s+/g, ' ').trim();
+  if (!raw) return '';
+  const key = normalizeSearchText(raw);
+  return CANONICAL_LOCATIONS_BY_KEY[key] || raw;
+};
+
 const sanitizeLoadedEmployees = (list: Employee[]): { cleaned: Employee[]; changed: boolean } => {
   let changed = false;
   const deduped = deduplicateById(list);
@@ -380,7 +464,8 @@ const sanitizeLoadedEmployees = (list: Employee[]): { cleaned: Employee[]; chang
       ? 'Por asignar'
       : normalizeOfficialDepartmentName(rawDept);
     const safePosition = isCorruptedBinaryText(emp.position) ? 'Por asignar' : emp.position;
-    const safeLocation = isCorruptedBinaryText(emp.location) ? 'Minatitlán, Ver.' : emp.location;
+    const rawLocation = isCorruptedBinaryText(emp.location) ? 'Minatitlán, Ver.' : emp.location;
+    const safeLocation = rawLocation ? normalizeLocationLabel(rawLocation) : rawLocation;
 
     if (
       safeDept !== emp.department ||
@@ -2571,7 +2656,7 @@ export const buildQuickEmployeeRecord = (
     position: partial.position?.trim() || 'Por definir',
     department: partial.department?.trim() || 'Por asignar',
     subsidiary: partial.subsidiary?.trim() || 'SIFYGSA',
-    location: partial.location?.trim() || 'Minatitlán, Ver.',
+    location: normalizeLocationLabel(partial.location) || 'Minatitlán, Ver.',
     squad: partial.squad?.trim() || '',
     silStatus: partial.silStatus?.trim() || 'En Trámite',
     silStatusType: partial.silStatusType || 'info',

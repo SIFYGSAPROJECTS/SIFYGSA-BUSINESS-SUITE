@@ -318,20 +318,20 @@ button {
 
 @keyframes stageSlideNext {
   0% { opacity: 0; transform: translateX(18px) translateY(4px); }
-  100% { opacity: 1; transform: translateX(0) translateY(0); }
+  100% { opacity: 1; transform: none; }
 }
 
 @keyframes stageSlidePrev {
   0% { opacity: 0; transform: translateX(-18px) translateY(4px); }
-  100% { opacity: 1; transform: translateX(0) translateY(0); }
+  100% { opacity: 1; transform: none; }
 }
 
 .step-stage-enter-next {
-  animation: stageSlideNext 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: stageSlideNext 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .step-stage-enter-prev {
-  animation: stageSlidePrev 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: stageSlidePrev 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes activeStepHaloPulse {
@@ -521,17 +521,16 @@ button {
   50% { opacity: 0.35; transform: scale(0.8); }
 }
 
-/* Stepper Corporativo SIFYGSA (Claro/Oscuro + Zoom-Proof) */
+/* Stepper Corporativo Estándar SIFYGSA (Claro/Oscuro + Zoom-Proof, sin barra inferior) */
 .rrhh-stepper-card {
   width: 100%;
   background-color: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 0.85rem 1.25rem 0.8rem 1.25rem;
+  padding: 1rem 1.25rem 0.95rem 1.25rem;
   box-shadow: var(--shadow-xs);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
 }
 
 .rrhh-stepper-desktop {
@@ -539,33 +538,37 @@ button {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding-top: 0.35rem;
+  width: 100%;
 }
 
-.rrhh-stepper-track-bg {
+.rrhh-stepper-item {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rrhh-stepper-segment {
   position: absolute;
-  top: 1.6rem;
-  left: 8%;
-  right: 8%;
-  height: 4px;
+  top: 19px;
+  left: calc(50% + 22px);
+  right: calc(-50% + 22px);
+  height: 2px;
   border-radius: 999px;
   background-color: var(--border);
   z-index: 0;
+  transition: background 0.3s ease, background-color 0.3s ease;
+  pointer-events: none;
 }
 
-.rrhh-stepper-track-fill {
-  position: absolute;
-  top: 1.6rem;
-  left: 8%;
-  height: 4px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #059669 0%, #1D4ED8 100%);
-  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-  z-index: 0;
-}
-
-.rrhh-stepper-track-fill.all-done {
+.rrhh-stepper-segment.is-done {
   background: #059669;
+}
+
+.rrhh-stepper-segment.is-done-to-current {
+  background: linear-gradient(90deg, #059669 0%, #1D4ED8 100%);
 }
 
 .rrhh-stepper-node {
@@ -574,69 +577,66 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1 1 0;
-  min-width: 0;
+  width: 100%;
   padding: 0 0.25rem;
   background: none;
   border: none;
   cursor: pointer;
-  transition: transform 0.18s ease;
+  transition: transform 0.16s ease;
 }
 
 .rrhh-stepper-node:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .rrhh-stepper-circle {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   font-weight: 800;
-  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1);
   background-color: var(--surface);
   color: var(--text-muted);
-  border: 2px solid var(--border);
+  border: 1.5px solid var(--border);
 }
 
 .rrhh-stepper-circle.is-current {
   background-color: #1D4ED8;
   color: #ffffff;
   border-color: #1D4ED8;
-  transform: scale(1.08);
-  box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px rgba(29, 78, 216, 0.25);
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px rgba(29, 78, 216, 0.22);
 }
 
 .rrhh-stepper-circle.is-done {
   background-color: #059669;
   color: #ffffff;
   border-color: #059669;
-  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.22);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.22);
 }
 
 .rrhh-stepper-circle.is-done.is-current {
-  transform: scale(1.08);
-  box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px rgba(5, 150, 105, 0.28);
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px rgba(5, 150, 105, 0.28);
 }
 
 .rrhh-stepper-circle.is-error {
   background-color: var(--surface);
   color: var(--danger);
   border-color: var(--danger);
-  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.16);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
 }
 
 .rrhh-stepper-title {
-  margin-top: 0.55rem;
-  font-size: 0.74rem;
+  margin-top: 0.5rem;
+  font-size: 0.76rem;
   font-weight: 700;
   line-height: 1.25;
   text-align: center;
   color: var(--text-secondary);
-  max-width: 122px;
+  max-width: 138px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -644,11 +644,15 @@ button {
 }
 
 .rrhh-stepper-title.is-current {
-  color: var(--primary);
+  color: #1D4ED8;
+}
+
+[data-theme="dark"] .rrhh-stepper-title.is-current {
+  color: var(--brand-300);
 }
 
 .rrhh-stepper-title.is-done {
-  color: #059669;
+  color: #047857;
 }
 
 [data-theme="dark"] .rrhh-stepper-title.is-done {
@@ -661,9 +665,9 @@ button {
 
 .rrhh-stepper-badge {
   margin-top: 0.25rem;
-  font-size: 0.625rem;
+  font-size: 0.64rem;
   font-weight: 700;
-  padding: 0.1rem 0.5rem;
+  padding: 0.12rem 0.55rem;
   border-radius: 9999px;
   background-color: var(--surface-alt);
   color: var(--text-muted);
@@ -693,26 +697,6 @@ button {
   display: none;
   flex-direction: column;
   gap: 0.75rem;
-}
-
-.rrhh-stepper-progress-rail {
-  width: 100%;
-  height: 6px;
-  border-radius: 999px;
-  background-color: var(--surface-alt);
-  border: 1px solid var(--border);
-  overflow: hidden;
-}
-
-.rrhh-stepper-progress-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #059669 0%, #1D4ED8 100%);
-  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.rrhh-stepper-progress-fill.all-done {
-  background: #059669;
 }
 
 /* Tarjeta de Etapa (Estándar Catálogo Maestro) */

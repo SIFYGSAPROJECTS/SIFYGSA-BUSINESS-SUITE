@@ -23,7 +23,8 @@ import {
   downloadCsvFile,
   loadPersistedEmployees,
   savePersistedEmployees,
-  logHrAuditAction
+  logHrAuditAction,
+  matchesNormalizedSearch
 } from '../../utils/formShield';
 
 interface QuickEntryRow {
@@ -102,17 +103,16 @@ export const EmployeeBatchImportModal: React.FC<EmployeeBatchImportModalProps> =
   }, [rawCsvText, existingEmployees, availableDepartments]);
 
   const filteredPreviewRows = useMemo(() => {
-    const q = previewSearch.trim().toLowerCase();
     return parsedCsv.rows.filter((item) => {
       if (previewFilter === 'new' && item.isDuplicate) return false;
       if (previewFilter === 'dup' && !item.isDuplicate) return false;
-      if (!q) return true;
-      return (
-        item.employee.name.toLowerCase().includes(q) ||
-        (item.employee.department || '').toLowerCase().includes(q) ||
-        (item.employee.position || '').toLowerCase().includes(q) ||
-        (item.employee.nss || '').toLowerCase().includes(q) ||
-        (item.employee.curp || '').toLowerCase().includes(q)
+      return matchesNormalizedSearch(
+        previewSearch,
+        item.employee.name,
+        item.employee.department,
+        item.employee.position,
+        item.employee.nss,
+        item.employee.curp
       );
     });
   }, [parsedCsv.rows, previewFilter, previewSearch]);

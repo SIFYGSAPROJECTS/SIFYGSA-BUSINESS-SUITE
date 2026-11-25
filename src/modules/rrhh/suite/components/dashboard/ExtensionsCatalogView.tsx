@@ -25,7 +25,8 @@ import {
   sanitizeCleanText,
   sanitizePersonName,
   downloadCsvFile,
-  logHrAuditAction
+  logHrAuditAction,
+  matchesNormalizedSearch
 } from '../../utils/formShield';
 
 interface ExtensionsCatalogViewProps {
@@ -77,14 +78,14 @@ export const ExtensionsCatalogView: React.FC<ExtensionsCatalogViewProps> = ({
         const matchesDept =
           selectedDeptFilter === 'Todos' ||
           item.department.toLowerCase() === selectedDeptFilter.toLowerCase();
-        const q = searchQuery.trim().toLowerCase();
-        const matchesSearch =
-          !q ||
-          item.extension.toLowerCase().includes(q) ||
-          item.areaLabel.toLowerCase().includes(q) ||
-          item.department.toLowerCase().includes(q) ||
-          item.assignedTo.toLowerCase().includes(q) ||
-          item.location.toLowerCase().includes(q);
+        const matchesSearch = matchesNormalizedSearch(
+          searchQuery,
+          item.extension,
+          item.areaLabel,
+          item.department,
+          item.assignedTo,
+          item.location
+        );
         return matchesDept && matchesSearch;
       })
       .sort((a, b) => Number(a.extension) - Number(b.extension));

@@ -79,8 +79,8 @@ const EXTRA_EMPLOYEE_FIELDS: ExtraFieldDefinition[] = [
   { key: 'assignedProject', label: 'Proyecto Asignado', group: 'Datos Laborales', placeholder: 'Ej. Mantenimiento Preventivo' },
   {
     key: 'laborCategory',
-    label: 'Categoría Laboral',
-    group: 'Datos Personales',
+    label: 'Categoría de Puesto',
+    group: 'Datos Laborales',
     options: ['Confianza', 'Sindicalizado', 'Eventual', 'Becario']
   },
   { key: 'institutionalEmail', label: 'Correo Institucional', group: 'Contacto y Domicilio', placeholder: 'nombre@sifygsa.com.mx' },
@@ -880,7 +880,7 @@ export const CvImportModal: React.FC<CvImportModalProps> = ({
                     }}
                   >
                     <option value="">Elegir campo del empleado...</option>
-                    {['Datos Laborales', 'Datos Personales', 'Contacto y Domicilio', 'Salud y Uniformes', 'Nómina y Banco'].map(
+                    {['Datos Personales', 'Datos Laborales', 'Contacto y Domicilio', 'Salud y Uniformes', 'Nómina y Banco'].map(
                       (groupName) => {
                         const groupItems = EXTRA_EMPLOYEE_FIELDS.filter(
                           (f) => f.group === groupName && !activeExtraFields.includes(f.key)

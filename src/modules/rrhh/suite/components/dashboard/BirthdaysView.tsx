@@ -32,7 +32,7 @@ import {
 const sifygsaLogo = '/assets/logos/Logo_S.png';
 import { EMPLOYEES } from '../../data/mockData';
 import { Employee } from '../../types';
-import { useSyncedEmployees, savePersistedEmployees } from '../../utils/formShield';
+import { useSyncedEmployees, savePersistedEmployees, matchesNormalizedSearch } from '../../utils/formShield';
 
 export interface BirthdayItem {
   id: string;
@@ -624,13 +624,13 @@ export const BirthdaysView: React.FC = () => {
     return enrichedBirthdays
       .filter((b) => !b.effectiveArchived)
       .filter((b) => {
-        const q = searchQuery.trim().toLowerCase();
-        const matchesQuery =
-          !q ||
-          b.name.toLowerCase().includes(q) ||
-          b.department.toLowerCase().includes(q) ||
-          b.location.toLowerCase().includes(q) ||
-          b.position.toLowerCase().includes(q);
+        const matchesQuery = matchesNormalizedSearch(
+          searchQuery,
+          b.name,
+          b.department,
+          b.location,
+          b.position
+        );
         if (!matchesQuery) return false;
         if (filterScope === 'mes_actual') return b.birthMonth === todayDate.getMonth() + 1;
         if (filterScope === 'quincena') return b.daysRemaining <= 15;

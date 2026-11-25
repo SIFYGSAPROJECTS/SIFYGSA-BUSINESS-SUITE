@@ -1,16 +1,17 @@
 -- ============================================================================
 -- database/postgres/02_rrhh/06_procedures.sql
--- Procedimientos Almacenados transaccionales del módulo Recursos Humanos
+-- Procedimientos Almacenados transaccionales del módulo Recursos Humanos (3FN)
 -- ============================================================================
 
--- ── 1. Alta Integral de Colaborador (Empleado + Cuenta de Nómina) ────────────
+-- ── 1. Alta Integral de Colaborador (Empleado + Puesto + Cuenta de Nómina) ───
 CREATE OR REPLACE PROCEDURE rrhh.sp_registrar_colaborador(
   IN  p_codigo_empresa    VARCHAR,
   IN  p_codigo_depto      VARCHAR,
   IN  p_nombre_pila       VARCHAR,
   IN  p_apellido_paterno  VARCHAR,
   IN  p_apellido_materno  VARCHAR,
-  IN  p_puesto_texto      VARCHAR,
+  IN  p_puesto_nombre     VARCHAR,
+  IN  p_codigo_sede       VARCHAR DEFAULT NULL,
   IN  p_rfc               VARCHAR DEFAULT NULL,
   IN  p_curp              VARCHAR DEFAULT NULL,
   IN  p_nss               VARCHAR DEFAULT NULL,
@@ -29,8 +30,12 @@ AS $$
 DECLARE
   v_id_empresa    core.id_uuid;
   v_id_depto      core.id_uuid;
+  v_id_sede       core.id_uuid;
+  v_id_puesto     core.id_uuid;
   v_id_supervisor core.id_uuid;
   v_id_banco      core.id_uuid;
+  v_puesto_limpio core.nombre_entidad;
+  v_banco_limpio  core.nombre_corto;
 BEGIN
   -- Lock transaccional para garantizar integridad en altas simultáneas
   PERFORM pg_advisory_xact_lock(hashtext('rrhh_alta_colaborador'));
@@ -53,6 +58,27 @@ BEGIN
     RAISE EXCEPTION 'Departamento "%" no encontrado en rrhh.departamentos', p_codigo_depto;
   END IF;
 
+  IF p_codigo_sede IS NOT NULL AND TRIM(p_codigo_sede) <> '' THEN
+    SELECT id_sede INTO v_id_sede
+      FROM core.sedes
+     WHERE codigo = UPPER(TRIM(p_codigo_sede))
+        OR rrhh.fn_normalizar_busqueda(nombre) = rrhh.fn_normalizar_busqueda(p_codigo_sede)
+     LIMIT 1;
+  END IF;
+
+  -- Resolver o registrar puesto en catálogo normalizado rrhh.cat_puestos
+  v_puesto_limpio := COALESCE(NULLIF(TRIM(p_puesto_nombre), ''), 'Por definir')::core.nombre_entidad;
+  SELECT id_puesto INTO v_id_puesto
+    FROM rrhh.cat_puestos
+   WHERE rrhh.fn_normalizar_busqueda(nombre) = rrhh.fn_normalizar_busqueda(v_puesto_limpio)
+   LIMIT 1;
+
+  IF v_id_puesto IS NULL THEN
+    INSERT INTO rrhh.cat_puestos (id_departamento, nombre)
+    VALUES (v_id_depto, v_puesto_limpio)
+    RETURNING id_puesto INTO v_id_puesto;
+  END IF;
+
   IF p_folio_supervisor IS NOT NULL AND TRIM(p_folio_supervisor) <> '' THEN
     SELECT id_empleado INTO v_id_supervisor
       FROM rrhh.empleados
@@ -62,14 +88,13 @@ BEGIN
   END IF;
 
   INSERT INTO rrhh.empleados (
-    id_empresa, id_departamento, id_supervisor,
+    id_empresa, id_departamento, id_sede, id_puesto, id_supervisor,
     nombre_pila, apellido_paterno, apellido_materno,
-    puesto_texto, rfc, curp, nss,
+    rfc, curp, nss,
     correo_personal, telefono_celular, sueldo_mensual_bruto
   ) VALUES (
-    v_id_empresa, v_id_depto, v_id_supervisor,
+    v_id_empresa, v_id_depto, v_id_sede, v_id_puesto, v_id_supervisor,
     p_nombre_pila, COALESCE(p_apellido_paterno, ''), COALESCE(p_apellido_materno, ''),
-    p_puesto_texto,
     NULLIF(UPPER(TRIM(COALESCE(p_rfc, ''))), '')::core.rfc_mx,
     NULLIF(UPPER(TRIM(COALESCE(p_curp, ''))), '')::core.curp_mx,
     NULLIF(TRIM(COALESCE(p_nss, '')), '')::rrhh.nss_mx,
@@ -79,19 +104,25 @@ BEGIN
   )
   RETURNING id_empleado, folio INTO p_id_empleado_out, p_folio_generado;
 
-  -- Crear cuenta de Nómina si se proporcionó banco o CLABE
-  IF COALESCE(TRIM(p_banco_nombre), '') <> '' OR COALESCE(TRIM(p_clabe), '') <> '' THEN
+  -- Crear cuenta de Nómina normalizada vía FK id_banco si se proporcionó CLABE
+  IF COALESCE(TRIM(p_clabe), '') <> '' THEN
+    v_banco_limpio := COALESCE(NULLIF(TRIM(p_banco_nombre), ''), 'BBVA México')::core.nombre_corto;
     SELECT id_banco INTO v_id_banco
       FROM rrhh.cat_bancos
-     WHERE LOWER(nombre) = LOWER(TRIM(COALESCE(p_banco_nombre, '')))
+     WHERE rrhh.fn_normalizar_busqueda(nombre) = rrhh.fn_normalizar_busqueda(v_banco_limpio)
      LIMIT 1;
 
+    IF v_id_banco IS NULL THEN
+      INSERT INTO rrhh.cat_bancos (nombre)
+      VALUES (v_banco_limpio)
+      RETURNING id_banco INTO v_id_banco;
+    END IF;
+
     INSERT INTO rrhh.cuentas_bancarias (
-      id_empleado, id_banco, banco_nombre, alias, clabe, es_principal
+      id_empleado, id_banco, alias, clabe, es_principal
     ) VALUES (
       p_id_empleado_out,
       v_id_banco,
-      COALESCE(NULLIF(TRIM(p_banco_nombre), ''), 'Pendiente'),
       'Nómina',
       NULLIF(regexp_replace(COALESCE(p_clabe, ''), '\D', '', 'g'), '')::core.clabe_mx,
       TRUE

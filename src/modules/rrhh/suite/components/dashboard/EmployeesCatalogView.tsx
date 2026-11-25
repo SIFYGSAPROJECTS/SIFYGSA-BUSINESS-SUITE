@@ -42,6 +42,8 @@ import {
   getEmployeeProfileCompleteness,
   getDepartmentCode,
   getDepartmentTheme,
+  normalizeLocationLabel,
+  matchesNormalizedSearch,
   EmployeeCompletenessInfo
 } from '../../utils/formShield';
 import { HrAuditLogModal } from './HrAuditLogModal';
@@ -285,14 +287,17 @@ export const EmployeesCatalogView: React.FC<EmployeesCatalogViewProps> = ({
     [activeDepartments]
   );
 
-  // Sedes únicas reales
+  // Sedes únicas normalizadas (sin duplicados por mayúsculas o acentos)
   const locationOptions = useMemo(() => {
-    const set = new Set<string>();
+    const map = new Map<string, string>();
     employees.forEach((e) => {
-      const loc = (e.location || e.codeLocation || '').trim();
-      if (loc) set.add(loc);
+      const canonical = normalizeLocationLabel(e.location || e.codeLocation);
+      if (canonical) {
+        const key = canonical.toLowerCase();
+        if (!map.has(key)) map.set(key, canonical);
+      }
     });
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
+    return Array.from(map.values()).sort((a, b) => a.localeCompare(b, 'es'));
   }, [employees]);
 
   // Cálculo de completitud por colaborador
@@ -318,7 +323,9 @@ export const EmployeesCatalogView: React.FC<EmployeesCatalogViewProps> = ({
     const coveredOfficialDepts = Array.from(coveredDeptSet).filter((d) => activeDeptNames.has(d)).length;
 
     const activeLocationsSet = new Set(
-      activeEmployees.map((e) => (e.location || e.codeLocation || '').trim()).filter(Boolean)
+      activeEmployees
+        .map((e) => normalizeLocationLabel(e.location || e.codeLocation))
+        .filter(Boolean)
     );
 
     let completeCount = 0;
@@ -340,10 +347,8 @@ export const EmployeesCatalogView: React.FC<EmployeesCatalogViewProps> = ({
     };
   }, [employees, activeDepartments, completenessMap]);
 
-  // Filtrado y ordenación real
+  // Filtrado y ordenación real (insensible a mayúsculas, acentos y orden de palabras)
   const filteredEmployees = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-
     return employees
       .filter((emp) => {
         const status = emp.employmentStatus || 'Activo';
@@ -352,7 +357,7 @@ export const EmployeesCatalogView: React.FC<EmployeesCatalogViewProps> = ({
         const deptName = emp.department?.trim() || 'Por asignar';
         if (selectedDeptoFilter !== 'todos' && deptName !== selectedDeptoFilter) return false;
 
-        const locName = (emp.location || emp.codeLocation || '').trim();
+        const locName = normalizeLocationLabel(emp.location || emp.codeLocation);
         if (selectedLocationFilter !== 'todas' && locName !== selectedLocationFilter) return false;
 
         const info = completenessMap.get(emp.id);
@@ -360,20 +365,22 @@ export const EmployeesCatalogView: React.FC<EmployeesCatalogViewProps> = ({
         if (completenessFilter === 'incomplete' && info?.isComplete) return false;
         if (completenessFilter === 'missingPhoto' && info?.hasPhoto) return false;
 
-        if (!q) return true;
-        return (
-          emp.name.toLowerCase().includes(q) ||
-          emp.id.toLowerCase().includes(q) ||
-          (emp.position && emp.position.toLowerCase().includes(q)) ||
-          (emp.department && emp.department.toLowerCase().includes(q)) ||
-          (emp.email && emp.email.toLowerCase().includes(q)) ||
-          (emp.supervisor && emp.supervisor.toLowerCase().includes(q)) ||
-          (emp.phoneCell && emp.phoneCell.toLowerCase().includes(q)) ||
-          (emp.phonePrimary && emp.phonePrimary.toLowerCase().includes(q)) ||
-          (emp.location && emp.location.toLowerCase().includes(q)) ||
-          (emp.codeLocation && emp.codeLocation.toLowerCase().includes(q)) ||
-          (emp.rfc && emp.rfc.toLowerCase().includes(q)) ||
-          (emp.curp && emp.curp.toLowerCase().includes(q))
+        return matchesNormalizedSearch(
+          searchQuery,
+          emp.name,
+          emp.id,
+          emp.position,
+          emp.department,
+          emp.email,
+          emp.emailPersonal,
+          emp.supervisor,
+          emp.phoneCell,
+          emp.phonePrimary,
+          locName,
+          emp.location,
+          emp.codeLocation,
+          emp.rfc,
+          emp.curp
         );
       })
       .sort((a, b) => {
@@ -568,7 +575,7 @@ export const EmployeesCatalogView: React.FC<EmployeesCatalogViewProps> = ({
           emp.department,
           emp.supervisor || '',
           emp.subsidiary || 'SIFYGSA',
-          emp.location || emp.codeLocation || '',
+          normalizeLocationLabel(emp.location || emp.codeLocation),
           emp.email || '',
           emp.phoneCell || emp.phonePrimary || '',
           emp.hireDate || '',
@@ -1879,7 +1886,7 @@ export const EmployeesCatalogView: React.FC<EmployeesCatalogViewProps> = ({
                       {/* Sede */}
                       {cols.showLocation && (
                         <td style={{ padding: cellPad, fontSize: '11.5px', color: 'var(--text-secondary)' }}>
-                          {emp.location || emp.codeLocation || 'Por definir'}
+                          {normalizeLocationLabel(emp.location || emp.codeLocation) || 'Por definir'}
                         </td>
                       )}
 
@@ -2222,7 +2229,7 @@ export const EmployeesCatalogView: React.FC<EmployeesCatalogViewProps> = ({
                       {cols.showLocation && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
                           <MapPin className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                          <span>{emp.location || emp.codeLocation || 'Por definir'}</span>
+                          <span>{normalizeLocationLabel(emp.location || emp.codeLocation) || 'Por definir'}</span>
                         </div>
                       )}
 

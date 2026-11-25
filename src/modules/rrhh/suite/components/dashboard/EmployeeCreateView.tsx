@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
   UserPlus,
-  Save,
   CheckCircle2,
   AlertTriangle,
   ChevronDown,
@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { Employee, EmployeeBankAccount, EmployeeDocumentItem } from '../../types';
 import { CvImportDraft } from '../../utils/cvParser';
+import { ProcessStepper } from './ProcessStepper';
 import { DEPARTMENTS, INITIAL_DEPARTMENTS, EMPLOYEES } from '../../data/mockData';
 import {
   sanitizePersonName,
@@ -173,9 +174,41 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(0);
+  const [menuStyle, setMenuStyle] = useState<{
+    left: number;
+    width: number;
+    top?: number;
+    bottom?: number;
+    maxHeight: number;
+  } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const computeMenuPosition = useCallback(() => {
+    const btn = buttonRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const margin = 14;
+    const gap = 6;
+    const idealMaxHeight = Math.min(265, Math.max(110, options.length * 36 + 14));
+    const spaceBelow = window.innerHeight - rect.bottom - margin;
+    const spaceAbove = rect.top - margin;
+
+    const openUpward = spaceBelow < Math.min(idealMaxHeight, 185) && spaceAbove > spaceBelow;
+    const availableSpace = openUpward ? spaceAbove : spaceBelow;
+    const maxHeight = Math.min(265, Math.max(120, availableSpace - gap));
+
+    setMenuStyle({
+      left: Math.max(8, Math.min(rect.left, window.innerWidth - rect.width - 8)),
+      width: rect.width,
+      ...(openUpward
+        ? { bottom: window.innerHeight - rect.top + gap }
+        : { top: rect.bottom + gap }),
+      maxHeight
+    });
+  }, [options.length]);
 
   const findNextEnabledIndex = (start: number, step: 1 | -1): number => {
     if (options.length === 0) return 0;
@@ -188,7 +221,10 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const inTrigger = containerRef.current?.contains(target);
+      const inMenu = menuRef.current?.contains(target);
+      if (!inTrigger && !inMenu) {
         setIsOpen(false);
       }
     };
@@ -197,12 +233,24 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   }, []);
 
   useEffect(() => {
+    if (!isOpen) return;
+    const handleReposition = () => computeMenuPosition();
+    window.addEventListener('resize', handleReposition);
+    window.addEventListener('scroll', handleReposition, true);
+    return () => {
+      window.removeEventListener('resize', handleReposition);
+      window.removeEventListener('scroll', handleReposition, true);
+    };
+  }, [isOpen, computeMenuPosition]);
+
+  useEffect(() => {
     const btn = buttonRef.current;
     if (!btn) return;
     const handleAutoOpen = () => {
       if (disabled) return;
       const idx = options.findIndex((opt) => opt.value === value && !opt.disabled);
       setHighlightedIndex(idx >= 0 ? idx : findNextEnabledIndex(0, 1));
+      computeMenuPosition();
       setIsOpen(true);
       window.requestAnimationFrame(() => {
         containerRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -210,7 +258,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
     };
     btn.addEventListener('sifygsa-auto-open', handleAutoOpen);
     return () => btn.removeEventListener('sifygsa-auto-open', handleAutoOpen);
-  }, [options, value, disabled]);
+  }, [options, value, disabled, computeMenuPosition]);
 
   useEffect(() => {
     if (isOpen && optionRefs.current[highlightedIndex]) {
@@ -230,6 +278,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
         ? currentIdx
         : findNextEnabledIndex(0, 1);
     setHighlightedIndex(options[baseIdx]?.disabled ? findNextEnabledIndex(baseIdx, 1) : baseIdx);
+    computeMenuPosition();
     setIsOpen(true);
   };
 
@@ -396,89 +445,93 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
         )}
       </button>
 
-      {isOpen && !disabled && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 6px)',
-            left: 0,
-            right: 0,
-            zIndex: 999,
-            maxHeight: '265px',
-            overflowY: 'auto',
-            backgroundColor: 'var(--surface)',
-            border: '1.5px solid var(--brand-200)',
-            borderRadius: '12px',
-            boxShadow: '0 14px 34px -6px rgba(15, 23, 42, 0.18), 0 4px 12px -2px rgba(15, 23, 42, 0.08)',
-            padding: '5px'
-          }}
-        >
-          {options.map((opt, idx) => {
-            const isSelected = opt.value === value;
-            const isHighlighted = !opt.disabled && idx === highlightedIndex;
-            return (
-              <div
-                key={opt.value}
-                ref={(el) => {
-                  optionRefs.current[idx] = el;
-                }}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  if (!opt.disabled) selectAndAdvance(opt.value);
-                }}
-                onMouseEnter={() => {
-                  if (!opt.disabled) setHighlightedIndex(idx);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '8px',
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  fontWeight: isSelected || isHighlighted ? 700 : 500,
-                  color: opt.disabled
-                    ? 'var(--text-muted)'
-                    : isSelected || isHighlighted
-                    ? 'var(--primary)'
-                    : 'var(--text-primary)',
-                  backgroundColor: isHighlighted
-                    ? 'var(--brand-100)'
-                    : isSelected
-                    ? 'var(--brand-50)'
-                    : 'transparent',
-                  opacity: opt.disabled ? 0.55 : 1,
-                  cursor: opt.disabled ? 'not-allowed' : 'pointer',
-                  transition: 'background-color var(--transition-fast)'
-                }}
-              >
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {opt.label}
-                </span>
-                {opt.disabled ? (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '3px',
-                      fontSize: '10px',
-                      color: 'var(--text-muted)',
-                      fontWeight: 600,
-                      flexShrink: 0
-                    }}
-                  >
-                    <Lock className="w-3 h-3" />
-                    <span>{opt.disabledReason || 'En uso'}</span>
+      {isOpen && !disabled && menuStyle && typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{
+              position: 'fixed',
+              top: menuStyle.top,
+              bottom: menuStyle.bottom,
+              left: menuStyle.left,
+              width: menuStyle.width,
+              zIndex: 9999,
+              maxHeight: `${menuStyle.maxHeight}px`,
+              overflowY: 'auto',
+              backgroundColor: 'var(--surface)',
+              border: '1.5px solid var(--brand-200)',
+              borderRadius: '12px',
+              boxShadow: '0 16px 38px -6px rgba(15, 23, 42, 0.22), 0 4px 14px -2px rgba(15, 23, 42, 0.1)',
+              padding: '5px'
+            }}
+          >
+            {options.map((opt, idx) => {
+              const isSelected = opt.value === value;
+              const isHighlighted = !opt.disabled && idx === highlightedIndex;
+              return (
+                <div
+                  key={opt.value}
+                  ref={(el) => {
+                    optionRefs.current[idx] = el;
+                  }}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    if (!opt.disabled) selectAndAdvance(opt.value);
+                  }}
+                  onMouseEnter={() => {
+                    if (!opt.disabled) setHighlightedIndex(idx);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: isSelected || isHighlighted ? 700 : 500,
+                    color: opt.disabled
+                      ? 'var(--text-muted)'
+                      : isSelected || isHighlighted
+                      ? 'var(--primary)'
+                      : 'var(--text-primary)',
+                    backgroundColor: isHighlighted
+                      ? 'var(--brand-100)'
+                      : isSelected
+                      ? 'var(--brand-50)'
+                      : 'transparent',
+                    opacity: opt.disabled ? 0.55 : 1,
+                    cursor: opt.disabled ? 'not-allowed' : 'pointer',
+                    transition: 'background-color var(--transition-fast)'
+                  }}
+                >
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {opt.label}
                   </span>
-                ) : (
-                  isSelected && <Check className="w-3.5 h-3.5 text-primary" style={{ flexShrink: 0 }} />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                  {opt.disabled ? (
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        fontSize: '10px',
+                        color: 'var(--text-muted)',
+                        fontWeight: 600,
+                        flexShrink: 0
+                      }}
+                    >
+                      <Lock className="w-3 h-3" />
+                      <span>{opt.disabledReason || 'En uso'}</span>
+                    </span>
+                  ) : (
+                    isSelected && <Check className="w-3.5 h-3.5 text-primary" style={{ flexShrink: 0 }} />
+                  )}
+                </div>
+              );
+            })}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
@@ -738,8 +791,6 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' } | null>(null);
   const [errorField, setErrorField] = useState<string | null>(null);
   const [errorStepIndex, setErrorStepIndex] = useState<number | null>(null);
-  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
-  const [draftFeedback, setDraftFeedback] = useState(false);
   const [savedEmployeeModal, setSavedEmployeeModal] = useState<Employee | null>(null);
   const toastTimerRef = useRef<number | null>(null);
 
@@ -809,7 +860,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
     return merged;
   }, [savedJobPositions, employeesCatalog]);
 
-  // Sección 1: Datos Laborales
+  // Sección 2: Datos Laborales
   // Empresa fija y bloqueada en SIFYGSA S.A de C.V
   const subsidiary = 'SIFYGSA S.A de C.V';
   const [deptTecnico, setDeptTecnico] = useState('');
@@ -818,7 +869,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
   const [salarioBruto, setSalarioBruto] = useState('');
   const [proyectoAsignado, setProyectoAsignado] = useState('');
 
-  // Sección 2: Datos Personales
+  // Sección 1: Datos Personales
   const [categoriaLaboral, setCategoriaLaboral] = useState('');
   const [puestoOficial, setPuestoOficial] = useState('');
   const [nombrePila, setNombrePila] = useState('');
@@ -1084,27 +1135,29 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
   // VALIDACIÓN DINÁMICA DE COMPLETITUD POR SECCIÓN
   // =========================================================================
   const isSection1Done = Boolean(
-    subsidiary &&
-    tipoContrato.trim().length >= 3 &&
-    deptTecnico &&
-    !deptTecnico.toLowerCase().includes('seleccionar') &&
-    salarioBruto.trim() &&
-    salarioBruto !== '0' &&
-    salarioBruto !== '0.00'
-  );
-
-  const isSection2Done = Boolean(
-    categoriaLaboral.trim().length >= 2 &&
+    empId.trim().length >= 3 &&
     nombrePila.trim().length >= 2 &&
     apellidoPaterno.trim().length >= 2 &&
-    puestoOficial.trim().length >= 2 &&
     rfc.trim().length >= 12 &&
     curp.trim().length === 18 &&
     toRawDigits(nss).length === 11
   );
 
+  const isSection2Done = Boolean(
+    subsidiary &&
+    deptTecnico &&
+    !deptTecnico.toLowerCase().includes('seleccionar') &&
+    puestoOficial.trim().length >= 2 &&
+    categoriaLaboral.trim().length >= 2 &&
+    tipoContrato.trim().length >= 3 &&
+    salarioBruto.trim() &&
+    salarioBruto !== '0' &&
+    salarioBruto !== '0.00'
+  );
+
   const isSection3Done = Boolean(
     toRawDigits(telMovil).length === 10 &&
+    (!telFijo.trim() || toRawDigits(telFijo).length === 10) &&
     isValidEmail(emailPersonal) &&
     (!emailInstitucional.trim() || isValidEmail(emailInstitucional)) &&
     calle.trim().length >= 2 &&
@@ -1133,20 +1186,20 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
     {
       id: 'section1',
       stepNumber: 1,
-      label: 'Datos Laborales',
-      fullLabel: '1. Datos Laborales',
+      label: 'Datos Personales',
+      fullLabel: '1. Datos Personales',
       isDone: isSection1Done,
-      icon: Briefcase,
-      description: 'Área, sede y sueldo.'
+      icon: User,
+      description: 'Identidad, RFC, CURP y NSS.'
     },
     {
       id: 'section2',
       stepNumber: 2,
-      label: 'Datos Personales',
-      fullLabel: '2. Datos Personales',
+      label: 'Datos Laborales',
+      fullLabel: '2. Datos Laborales',
       isDone: isSection2Done,
-      icon: User,
-      description: 'Identidad, RFC, CURP y NSS.'
+      icon: Briefcase,
+      description: 'Área, sede y sueldo.'
     },
     {
       id: 'section3',
@@ -1260,61 +1313,6 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
           handleNextStep();
         }
       }
-    }
-  };
-
-  const DRAFT_STORAGE_KEY = 'sifygsa_rrhh_employee_draft_v2';
-
-  const handleSaveDraft = () => {
-    try {
-      const payload = {
-        savedAt: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
-        deptTecnico,
-        baseDespliegue,
-        tipoContrato,
-        salarioBruto,
-        proyectoAsignado,
-        categoriaLaboral,
-        puestoOficial,
-        nombrePila,
-        apellidoPaterno,
-        apellidoMaterno,
-        rfc,
-        curp,
-        nss,
-        supervisor,
-        notasContratacion,
-        telMovil,
-        telFijo,
-        emailPersonal,
-        emailInstitucional,
-        extOficina,
-        calle,
-        numeroDomicilio,
-        numeroInterior,
-        colonia,
-        codigoPostal,
-        municipio,
-        estadoDomicilio,
-        contactoEmergenciaNombre,
-        contactoEmergenciaParentesco,
-        contactoEmergenciaTel,
-        calzado,
-        overol,
-        tipoSangre,
-        discapacidad,
-        discapacidadDetalle,
-        padecimientos,
-        alergias,
-        bankAccounts
-      };
-      window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
-      setDraftSavedAt(payload.savedAt);
-      setDraftFeedback(true);
-      triggerToast('Borrador guardado localmente.', 'success', 2000);
-      window.setTimeout(() => setDraftFeedback(false), 2200);
-    } catch {
-      triggerToast('No se pudo guardar el borrador local.', 'warning', 2200);
     }
   };
 
@@ -1732,14 +1730,8 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
     setNotasContratacion('');
     setErrorField(null);
     setErrorStepIndex(null);
-    setDraftSavedAt(null);
     setCurrentStepIndex(0);
     setStepDirection('next');
-    try {
-      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
-    } catch {
-      // ignore
-    }
     if (nextFolio && isAutoFolio) {
       setEmpId(nextFolio);
     }
@@ -1767,16 +1759,32 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
+    if (empId.trim().length < 3) {
+      focusErrorField('section1', 'empId', '¡Falta código de empleado!');
+      return;
+    }
+    if (nombrePila.trim().length < 2) {
+      focusErrorField('section1', 'nombrePila', '¡Falta nombre!');
+      return;
+    }
+    if (apellidoPaterno.trim().length < 2) {
+      focusErrorField('section1', 'apellidoPaterno', '¡Falta apellido!');
+      return;
+    }
+    if (rfc.trim().length < 12) {
+      focusErrorField('section1', 'rfc', '¡RFC incompleto!');
+      return;
+    }
+    if (curp.trim().length !== 18) {
+      focusErrorField('section1', 'curp', '¡CURP incompleta!');
+      return;
+    }
+    if (toRawDigits(nss).length !== 11) {
+      focusErrorField('section1', 'nss', '¡NSS a 11 dígitos!');
+      return;
+    }
     if (!deptTecnico || deptTecnico.toLowerCase().includes('seleccionar')) {
-      focusErrorField('section1', 'deptTecnico', '¡Selecciona departamento!');
-      return;
-    }
-    if (tipoContrato.trim().length < 3) {
-      focusErrorField('section1', 'tipoContrato', '¡Indica tipo de contrato!');
-      return;
-    }
-    if (!salarioBruto.trim() || salarioBruto === '0' || salarioBruto === '0.00') {
-      focusErrorField('section1', 'salarioBruto', '¡Ingresa sueldo!');
+      focusErrorField('section2', 'deptTecnico', '¡Selecciona departamento!');
       return;
     }
     if (puestoOficial.trim().length < 2) {
@@ -1787,24 +1795,12 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       focusErrorField('section2', 'categoriaLaboral', '¡Elige categoría!');
       return;
     }
-    if (nombrePila.trim().length < 2) {
-      focusErrorField('section2', 'nombrePila', '¡Falta nombre!');
+    if (tipoContrato.trim().length < 3) {
+      focusErrorField('section2', 'tipoContrato', '¡Indica tipo de contrato!');
       return;
     }
-    if (apellidoPaterno.trim().length < 2) {
-      focusErrorField('section2', 'apellidoPaterno', '¡Falta apellido!');
-      return;
-    }
-    if (rfc.trim().length < 12) {
-      focusErrorField('section2', 'rfc', '¡RFC incompleto!');
-      return;
-    }
-    if (curp.trim().length !== 18) {
-      focusErrorField('section2', 'curp', '¡CURP incompleta!');
-      return;
-    }
-    if (toRawDigits(nss).length !== 11) {
-      focusErrorField('section2', 'nss', '¡NSS a 11 dígitos!');
+    if (!salarioBruto.trim() || salarioBruto === '0' || salarioBruto === '0.00') {
+      focusErrorField('section2', 'salarioBruto', '¡Ingresa sueldo!');
       return;
     }
     if (toRawDigits(telMovil).length !== 10) {
@@ -1930,7 +1926,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
 
     if (dupCheck.hasConflict) {
       focusErrorField(
-        'section2',
+        'section1',
         dupCheck.conflictField || 'rfc',
         dupCheck.toastMessage || '¡Dato duplicado!'
       );
@@ -2054,12 +2050,6 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
     triggerToast(`Colaborador ${nuevoColaborador.id} registrado exitosamente.`, 'success', 3200);
   };
 
-  const handleLimpiar = () => {
-    resetAllFields();
-    triggerToast('¡Campos limpios!', 'warning', 2000);
-  };
-
-  const progressPercent = Math.round((completedCount / steps.length) * 100);
   const currentStepObj = steps[currentStepIndex] || steps[0];
   const nextStepObj = currentStepIndex < steps.length - 1 ? steps[currentStepIndex + 1] : null;
   const isReadyToSave =
@@ -2136,152 +2126,15 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       </div>
 
       {/* ========================================================= */}
-      {/* 2. STEPPER CORPORATIVO SIFYGSA (ZOOM-PROOF + DARK MODE)   */}
+      {/* 2. STEPPER CORPORATIVO ESTÁNDAR SIFYGSA                   */}
       {/* ========================================================= */}
-      <div className="rrhh-stepper-card" aria-label="Progreso de registro en 6 etapas">
-        {/* Vista Desktop / Tablet amplia */}
-        <div className="rrhh-stepper-desktop">
-          <div className="rrhh-stepper-track-bg" />
-          <div
-            className={`rrhh-stepper-track-fill ${completedCount === steps.length ? 'all-done' : ''}`}
-            style={{
-              width:
-                completedCount === steps.length
-                  ? '84%'
-                  : `${Math.max(0, (currentStepIndex / (steps.length - 1)) * 84)}%`
-            }}
-          />
-
-          {steps.map((step, idx) => {
-            const isDone = step.isDone;
-            const isCurrent = currentStepIndex === idx;
-            const hasErr = errorStepIndex === idx && !isDone;
-            const statusText = hasErr
-              ? 'Revisar'
-              : isDone
-              ? 'Listo'
-              : isCurrent
-              ? 'En curso'
-              : 'Pendiente';
-
-            const stateClass = hasErr
-              ? 'is-error'
-              : isDone && isCurrent
-              ? 'is-done is-current'
-              : isDone
-              ? 'is-done'
-              : isCurrent
-              ? 'is-current'
-              : '';
-
-            return (
-              <button
-                key={step.id}
-                type="button"
-                onClick={() => handleSelectStep(idx)}
-                className="rrhh-stepper-node"
-                aria-current={isCurrent ? 'step' : undefined}
-                title={`Ir a Etapa ${step.stepNumber}: ${step.label}`}
-              >
-                <div className={`rrhh-stepper-circle ${stateClass}`}>
-                  {isDone ? <Check className="w-5 h-5" strokeWidth={3} /> : step.stepNumber}
-                </div>
-                <span className={`rrhh-stepper-title ${stateClass}`}>
-                  {step.label}
-                </span>
-                <span className={`rrhh-stepper-badge ${stateClass}`}>
-                  {statusText}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Vista Compacta Automática (Móvil o Zoom 150%-200%) */}
-        <div className="rrhh-stepper-compact">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-              <div
-                className={`rrhh-stepper-circle ${
-                  currentStepObj.isDone ? 'is-done' : 'is-current'
-                }`}
-                style={{ width: '38px', height: '38px', flexShrink: 0, transform: 'none' }}
-              >
-                {currentStepObj.isDone ? <Check className="w-4 h-4" strokeWidth={3} /> : currentStepObj.stepNumber}
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
-                  Etapa {currentStepIndex + 1} de {steps.length}
-                </div>
-                <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {currentStepObj.label}
-                </div>
-              </div>
-            </div>
-
-            <span
-              className={`rrhh-stepper-badge ${completedCount === steps.length ? 'is-done' : 'is-current'}`}
-              style={{ fontSize: '0.7rem', padding: '0.2rem 0.65rem', marginTop: 0, flexShrink: 0 }}
-            >
-              {progressPercent}% Completado
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-            {steps.map((step, idx) => {
-              const isCurrent = currentStepIndex === idx;
-              const isDone = step.isDone;
-              return (
-                <button
-                  key={step.id}
-                  type="button"
-                  onClick={() => handleSelectStep(idx)}
-                  style={{
-                    flex: '1 1 36px',
-                    height: '28px',
-                    borderRadius: '8px',
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    border: isCurrent
-                      ? '1.5px solid var(--primary)'
-                      : isDone
-                      ? '1px solid var(--success-border)'
-                      : '1px solid var(--border)',
-                    backgroundColor: isCurrent
-                      ? 'var(--primary)'
-                      : isDone
-                      ? 'var(--success-bg)'
-                      : 'var(--surface-alt)',
-                    color: isCurrent
-                      ? '#ffffff'
-                      : isDone
-                      ? 'var(--success-text)'
-                      : 'var(--text-secondary)',
-                    cursor: 'pointer'
-                  }}
-                  title={step.label}
-                >
-                  {isDone ? '✓' : step.stepNumber}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Barra de progreso fina inferior */}
-        <div
-          className="rrhh-stepper-progress-rail"
-          role="progressbar"
-          aria-valuenow={progressPercent}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        >
-          <div
-            className={`rrhh-stepper-progress-fill ${completedCount === steps.length ? 'all-done' : ''}`}
-            style={{ width: `${Math.max(progressPercent, currentStepIndex > 0 ? 14 : 6)}%` }}
-          />
-        </div>
-      </div>
+      <ProcessStepper
+        steps={steps}
+        currentStepIndex={currentStepIndex}
+        errorStepIndex={errorStepIndex}
+        onSelectStep={handleSelectStep}
+        ariaLabel="Progreso de registro en 6 etapas"
+      />
 
       {/* CONTENEDOR ANIMADO POR ETAPA */}
       <div
@@ -2290,7 +2143,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
         style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
       >
       {/* ========================================================= */}
-      {/* PROCESO 1: DATOS LABORALES                                */}
+      {/* PROCESO 1: DATOS PERSONALES                               */}
       {/* ========================================================= */}
       {currentStepIndex === 0 && (
         <div id="section1" className="rrhh-step-card">
@@ -2298,12 +2151,395 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
             <div className="rrhh-step-card-header-left">
               <span className="rrhh-step-num-badge">1</span>
               <div>
-                <h3 className="rrhh-step-card-title">Asignación Laboral &amp; Puesto</h3>
-                <p className="rrhh-step-card-sub">Área, sede, contrato y sueldo.</p>
+                <h3 className="rrhh-step-card-title">Identificación &amp; Expediente Personal</h3>
+                <p className="rrhh-step-card-sub">Identidad, RFC, CURP, NSS y foto.</p>
               </div>
             </div>
             <span className={`rrhh-step-tag ${isSection1Done ? 'done' : 'primary'}`}>
               {isSection1Done ? '✓ Completado' : 'Datos Principales'}
+            </span>
+          </div>
+
+          <div className="rrhh-step-card-body">
+            <div className="rrhh-grid-split-photo" style={{ alignItems: 'stretch' }}>
+              {/* Formulario Izquierdo (4 filas simétricas, sin espacios vacíos) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: 0 }}>
+                {/* Fila 1: Código de Empleado (barra compacta superior; foco inicial en Nombre(s)) */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '10px 14px',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    backgroundColor: 'var(--surface-alt)',
+                    border: '1px solid var(--border-subtle)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <label className="rrhh-field-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>
+                      <span>Código de Empleado</span>
+                      <span style={{ color: 'var(--danger)' }}>*</span>
+                    </label>
+                    <input
+                      data-field="empId"
+                      type="text"
+                      value={empId}
+                      onChange={(e) => {
+                        setErrorField((prev) => (prev === 'empId' ? null : prev));
+                        setEmpId(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 16));
+                      }}
+                      onKeyDown={handleInputKeyDown}
+                      disabled={isAutoFolio}
+                      className="input-text"
+                      style={getFieldStyle('empId', {
+                        width: '158px',
+                        height: '34px',
+                        padding: '0 10px',
+                        fontFamily: 'var(--font-mono)',
+                        fontWeight: 700,
+                        color: 'var(--primary)',
+                        backgroundColor: 'var(--surface)'
+                      })}
+                    />
+                    <label
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        color: 'var(--primary)',
+                        userSelect: 'none',
+                        padding: '4px 9px',
+                        borderRadius: '999px',
+                        backgroundColor: 'var(--brand-50)',
+                        border: '1px solid var(--brand-200)'
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isAutoFolio}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setIsAutoFolio(checked);
+                          if (checked) {
+                            setEmpId(getNextEmployeeFolio());
+                          } else {
+                            window.setTimeout(() => {
+                              document.querySelector<HTMLInputElement>('[data-field="empId"]')?.focus();
+                            }, 20);
+                          }
+                        }}
+                      />
+                      <span>AUTO</span>
+                    </label>
+                  </div>
+
+                  <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                    {isAutoFolio ? 'Folio consecutivo automático' : 'Captura manual activa'}
+                  </span>
+                </div>
+
+                {/* Fila 2: Nombre(s) y Apellidos (foco inicial en Nombre(s)) */}
+                <div className="rrhh-field">
+                  <div className="rrhh-field-label-row">
+                    <label className="rrhh-field-label">
+                      <span>Nombre(s) y Apellidos</span>
+                      <span style={{ color: 'var(--danger)' }}>*</span>
+                    </label>
+                    <span className="rrhh-field-hint">Según acta o INE oficial</span>
+                  </div>
+                  <div className="rrhh-grid-3">
+                    <input
+                      ref={firstInputRef}
+                      data-field="nombrePila"
+                      type="text"
+                      placeholder="Nombre(s)"
+                      value={nombrePila}
+                      onChange={handlePersonNameChange(setNombrePila, 'nombrePila')}
+                      onKeyDown={handleInputKeyDown}
+                      className="input-text"
+                      style={getFieldStyle('nombrePila')}
+                      required
+                    />
+                    <input
+                      data-field="apellidoPaterno"
+                      type="text"
+                      placeholder="Apellido paterno"
+                      value={apellidoPaterno}
+                      onChange={handlePersonNameChange(setApellidoPaterno, 'apellidoPaterno')}
+                      onKeyDown={handleInputKeyDown}
+                      className="input-text"
+                      style={getFieldStyle('apellidoPaterno')}
+                      required
+                    />
+                    <input
+                      data-field="apellidoMaterno"
+                      type="text"
+                      placeholder="Apellido materno"
+                      value={apellidoMaterno}
+                      onChange={handlePersonNameChange(setApellidoMaterno, 'apellidoMaterno')}
+                      onKeyDown={handleInputKeyDown}
+                      className="input-text"
+                      style={getFieldStyle('apellidoMaterno')}
+                    />
+                  </div>
+                </div>
+
+                {/* Fila 3: RFC, CURP y NSS alineados en una sola fila equilibrada */}
+                <div className="rrhh-grid-folio-row">
+                  <div className="rrhh-field">
+                    <div className="rrhh-field-label-row">
+                      <label className="rrhh-field-label">
+                        <span>RFC</span>
+                        <span style={{ color: 'var(--danger)' }}>*</span>
+                      </label>
+                      <span className="rrhh-field-hint">12-13 SAT</span>
+                    </div>
+                    <div className="rrhh-input-with-check">
+                      <input
+                        data-field="rfc"
+                        type="text"
+                        placeholder="GAVM950412H8A"
+                        value={rfc}
+                        onChange={handleRfcChange}
+                        onKeyDown={handleInputKeyDown}
+                        maxLength={13}
+                        className="input-text"
+                        style={getFieldStyle('rfc', { paddingRight: '34px', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', fontWeight: 600 })}
+                        required
+                      />
+                      {rfc.trim().length >= 12 && (
+                        <span className="rrhh-input-valid-icon" title="RFC completo">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rrhh-field">
+                    <div className="rrhh-field-label-row">
+                      <label className="rrhh-field-label">
+                        <span>CURP</span>
+                        <span style={{ color: 'var(--danger)' }}>*</span>
+                      </label>
+                      <span className="rrhh-field-hint">18 RENAPO</span>
+                    </div>
+                    <div className="rrhh-input-with-check">
+                      <input
+                        data-field="curp"
+                        type="text"
+                        placeholder="GAVM950412HVERRN01"
+                        value={curp}
+                        onChange={handleCurpChange}
+                        onKeyDown={handleInputKeyDown}
+                        maxLength={18}
+                        className="input-text"
+                        style={getFieldStyle('curp', { paddingRight: '34px', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', fontWeight: 600 })}
+                        required
+                      />
+                      {curp.trim().length === 18 && (
+                        <span className="rrhh-input-valid-icon" title="CURP completa">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rrhh-field">
+                    <div className="rrhh-field-label-row">
+                      <label className="rrhh-field-label">
+                        <span>NSS (IMSS)</span>
+                        <span style={{ color: 'var(--danger)' }}>*</span>
+                      </label>
+                      <span className="rrhh-field-hint">11 dígitos</span>
+                    </div>
+                    <div className="rrhh-input-with-check">
+                      <input
+                        data-field="nss"
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="34-12-88-9412-1"
+                        value={nss}
+                        onChange={handleNssChange}
+                        onKeyDown={handleInputKeyDown}
+                        maxLength={15}
+                        className="input-text"
+                        style={getFieldStyle('nss', { paddingRight: '34px', fontFamily: 'var(--font-mono)', fontWeight: 600 })}
+                        required
+                      />
+                      {toRawDigits(nss).length === 11 && (
+                        <span className="rrhh-input-valid-icon" title="NSS completo">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fila 4: Observaciones de Contratación (ancho completo, alinea con tarjeta de foto) */}
+                <div className="rrhh-field">
+                  <div className="rrhh-field-label-row">
+                    <label className="rrhh-field-label">Observaciones de Contratación</label>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                      {notasContratacion && (
+                        <button
+                          type="button"
+                          onClick={() => setNotasContratacion('')}
+                          style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}
+                        >
+                          Limpiar
+                        </button>
+                      )}
+                      <span className="rrhh-field-hint">Opcional</span>
+                    </div>
+                  </div>
+                  <textarea
+                    value={notasContratacion}
+                    onChange={(e) => setNotasContratacion(e.target.value)}
+                    onKeyDown={handleInputKeyDown}
+                    placeholder="Comentarios adicionales del expediente..."
+                    rows={2}
+                    className="input-text"
+                    style={{ fontSize: '0.82rem', resize: 'vertical' }}
+                  />
+                </div>
+              </div>
+
+              {/* Zona Derecha: Fotografía dedicada y centrada al mismo alto */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  backgroundColor: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  height: '100%'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h4 style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                    Fotografía del Colaborador
+                  </h4>
+                  <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)' }}>
+                    Opcional
+                  </span>
+                </div>
+
+                <div
+                  tabIndex={0}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    handleFotoPasteOrDrop(e.dataTransfer.files);
+                  }}
+                  onPaste={(e) => {
+                    handleFotoPasteOrDrop(e.clipboardData.files);
+                  }}
+                  style={{
+                    flex: 1,
+                    border: '2px dashed var(--brand-300)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.03)',
+                    borderRadius: '12px',
+                    padding: '20px 14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    gap: '7px',
+                    minHeight: '210px',
+                    outline: 'none'
+                  }}
+                >
+                  {fotoPreview ? (
+                    <div style={{ position: 'relative' }}>
+                      <img
+                        src={fotoPreview}
+                        alt="Fotografía"
+                        style={{ width: '120px', height: '120px', objectFit: 'cover', borderRadius: '12px', border: '2px solid var(--primary)' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFotoPreview(null)}
+                        style={{
+                          position: 'absolute',
+                          top: '-8px',
+                          right: '-8px',
+                          backgroundColor: 'var(--danger)',
+                          color: '#fff',
+                          borderRadius: '50%',
+                          width: '22px',
+                          height: '22px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '11px',
+                          fontWeight: 800
+                        }}
+                        title="Eliminar foto"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div
+                        style={{
+                          width: '46px',
+                          height: '46px',
+                          borderRadius: '12px',
+                          backgroundColor: 'var(--brand-50)',
+                          color: 'var(--primary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <ImageIcon className="w-5 h-5" />
+                      </div>
+                      <div style={{ fontSize: '12.5px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        Fotografía para credencial
+                      </div>
+                      <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>
+                        JPG, PNG o arrastra aquí
+                      </span>
+                      <label
+                        className="btn btn-secondary"
+                        style={{ fontSize: '11.5px', marginTop: '4px', cursor: 'pointer', padding: '6px 14px' }}
+                      >
+                        Seleccionar archivo
+                        <input type="file" accept="image/*" onChange={handleFotoUpload} style={{ display: 'none' }} />
+                      </label>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* PROCESO 2: DATOS LABORALES                                */}
+      {/* ========================================================= */}
+      {currentStepIndex === 1 && (
+        <div id="section2" className="rrhh-step-card">
+          <div className="rrhh-step-card-header">
+            <div className="rrhh-step-card-header-left">
+              <span className="rrhh-step-num-badge">2</span>
+              <div>
+                <h3 className="rrhh-step-card-title">Asignación Laboral &amp; Puesto</h3>
+                <p className="rrhh-step-card-sub">Área, sede, contrato y sueldo.</p>
+              </div>
+            </div>
+            <span className={`rrhh-step-tag ${isSection2Done ? 'done' : 'primary'}`}>
+              {isSection2Done ? '✓ Completado' : 'Asignación Laboral'}
             </span>
           </div>
 
@@ -2454,7 +2690,79 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
             </div>
 
             <div className="rrhh-grid-3">
-              {/* 4. Tipo de Contrato (Campo de texto con autocompletado estilo placeholder y Tab) */}
+              {/* 4. Puesto de Trabajo */}
+              <div className="rrhh-field">
+                <div className="rrhh-field-label-row">
+                  <label className="rrhh-field-label">
+                    <span>Puesto de Trabajo</span>
+                    <span style={{ color: 'var(--danger)' }}>*</span>
+                  </label>
+                  <span className="rrhh-field-hint">Tab completa</span>
+                </div>
+                <AutocompleteTextInput
+                  dataField="puestoOficial"
+                  value={puestoOficial}
+                  onChangeValue={(raw) => {
+                    setErrorField((prev) => (prev === 'puestoOficial' ? null : prev));
+                    const { value, hadInvalid } = sanitizeCleanText(raw, 70);
+                    if (hadInvalid) triggerToast('¡Carácter inválido!', 'warning', 2200);
+                    setPuestoOficial(value);
+                  }}
+                  suggestions={jobPositionSuggestions}
+                  placeholder="Ej. Analista de Operaciones"
+                  hasError={errorField === 'puestoOficial'}
+                  required
+                  onAdvanceNext={moveFocusNext}
+                  onAutoCompleted={() => triggerToast('Autocompletado', 'success', 1200)}
+                />
+              </div>
+
+              {/* 5. Categoría de Puesto */}
+              <CustomSelect
+                label="Categoría de Puesto"
+                dataField="categoriaLaboral"
+                required
+                placeholder="Seleccionar categoría..."
+                value={categoriaLaboral}
+                onChange={(val) => {
+                  setErrorField((prev) => (prev === 'categoriaLaboral' ? null : prev));
+                  setCategoriaLaboral(val);
+                }}
+                options={[
+                  { value: 'Técnico Especialista', label: 'Técnico Especialista' },
+                  { value: 'Operativo de Campo', label: 'Operativo de Campo' },
+                  { value: 'Administrativo', label: 'Administrativo' },
+                  { value: 'Ingeniería', label: 'Ingeniería' },
+                  { value: 'Supervisión', label: 'Supervisión' },
+                  { value: 'Coordinación', label: 'Coordinación' },
+                  { value: 'Gerencia', label: 'Gerencia' },
+                  { value: 'Dirección', label: 'Dirección' }
+                ]}
+                hasError={errorField === 'categoriaLaboral'}
+                onKeyDown={handleInputKeyDown}
+              />
+
+              {/* 6. Jefe Asignado (se autocompleta al elegir Departamento) */}
+              <div className="rrhh-field">
+                <div className="rrhh-field-label-row">
+                  <label className="rrhh-field-label">Jefe Asignado</label>
+                  <span className="rrhh-field-hint">Auto por depto.</span>
+                </div>
+                <input
+                  data-field="supervisor"
+                  type="text"
+                  placeholder="Nombre del jefe directo"
+                  value={supervisor}
+                  onChange={handlePersonNameChange(setSupervisor, 'supervisor')}
+                  onKeyDown={handleInputKeyDown}
+                  className="input-text"
+                  style={{ fontWeight: supervisor ? 600 : 400 }}
+                />
+              </div>
+            </div>
+
+            <div className="rrhh-grid-3">
+              {/* 7. Tipo de Contrato (Campo de texto con autocompletado estilo placeholder y Tab) */}
               <div className="rrhh-field">
                 <div className="rrhh-field-label-row">
                   <label className="rrhh-field-label">
@@ -2465,7 +2773,6 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                 </div>
 
                 <AutocompleteTextInput
-                  inputRef={firstInputRef}
                   dataField="tipoContrato"
                   value={tipoContrato}
                   onChangeValue={(raw) => {
@@ -2531,407 +2838,6 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
                   className="input-text"
                 />
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================= */}
-      {/* PROCESO 2: DATOS PERSONALES                               */}
-      {/* ========================================================= */}
-      {currentStepIndex === 1 && (
-        <div id="section2" className="rrhh-step-card">
-          <div className="rrhh-step-card-header">
-            <div className="rrhh-step-card-header-left">
-              <span className="rrhh-step-num-badge">2</span>
-              <div>
-                <h3 className="rrhh-step-card-title">Identificación &amp; Expediente Personal</h3>
-                <p className="rrhh-step-card-sub">Identidad, RFC, CURP, NSS y foto.</p>
-              </div>
-            </div>
-            <span className={`rrhh-step-tag ${isSection2Done ? 'done' : 'primary'}`}>
-              {isSection2Done ? '✓ Completado' : 'Identidad y SAT'}
-            </span>
-          </div>
-
-          <div className="rrhh-step-card-body">
-            <div className="rrhh-grid-split-photo">
-              {/* Formulario Izquierdo */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: 0 }}>
-                {/* Fila 1: Folio, Puesto de Trabajo y Categoría de Puesto */}
-                <div className="rrhh-grid-folio-row">
-                  <div className="rrhh-field">
-                    <div className="rrhh-field-label-row">
-                      <label className="rrhh-field-label">
-                        <span>Código de Empleado</span>
-                        <span style={{ color: 'var(--danger)' }}>*</span>
-                      </label>
-                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer', color: 'var(--primary)', userSelect: 'none' }}>
-                        <input
-                          type="checkbox"
-                          checked={isAutoFolio}
-                          onChange={(e) => {
-                            setIsAutoFolio(e.target.checked);
-                            if (e.target.checked) setEmpId(getNextEmployeeFolio());
-                          }}
-                        />
-                        <span>AUTO</span>
-                      </label>
-                    </div>
-                    <input
-                      type="text"
-                      value={empId}
-                      onChange={(e) => setEmpId(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 16))}
-                      onKeyDown={handleInputKeyDown}
-                      disabled={isAutoFolio}
-                      className="input-text"
-                      style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontWeight: 700,
-                        color: 'var(--primary)'
-                      }}
-                    />
-                  </div>
-
-                  <div className="rrhh-field">
-                    <div className="rrhh-field-label-row">
-                      <label className="rrhh-field-label">
-                        <span>Puesto de Trabajo</span>
-                        <span style={{ color: 'var(--danger)' }}>*</span>
-                      </label>
-                      <span className="rrhh-field-hint">Tab completa</span>
-                    </div>
-                    <AutocompleteTextInput
-                      dataField="puestoOficial"
-                      value={puestoOficial}
-                      onChangeValue={(raw) => {
-                        setErrorField((prev) => (prev === 'puestoOficial' ? null : prev));
-                        const { value, hadInvalid } = sanitizeCleanText(raw, 70);
-                        if (hadInvalid) triggerToast('¡Carácter inválido!', 'warning', 2200);
-                        setPuestoOficial(value);
-                      }}
-                      suggestions={jobPositionSuggestions}
-                      placeholder="Ej. Analista de Operaciones"
-                      hasError={errorField === 'puestoOficial'}
-                      required
-                      onAdvanceNext={moveFocusNext}
-                      onAutoCompleted={() => triggerToast('Autocompletado', 'success', 1200)}
-                    />
-                  </div>
-
-                  <CustomSelect
-                    label="Categoría de Puesto"
-                    dataField="categoriaLaboral"
-                    required
-                    placeholder="Seleccionar categoría..."
-                    value={categoriaLaboral}
-                    onChange={(val) => {
-                      setErrorField((prev) => (prev === 'categoriaLaboral' ? null : prev));
-                      setCategoriaLaboral(val);
-                    }}
-                    options={[
-                      { value: 'Técnico Especialista', label: 'Técnico Especialista' },
-                      { value: 'Operativo de Campo', label: 'Operativo de Campo' },
-                      { value: 'Administrativo', label: 'Administrativo' },
-                      { value: 'Ingeniería', label: 'Ingeniería' },
-                      { value: 'Supervisión', label: 'Supervisión' },
-                      { value: 'Coordinación', label: 'Coordinación' },
-                      { value: 'Gerencia', label: 'Gerencia' },
-                      { value: 'Dirección', label: 'Dirección' }
-                    ]}
-                    hasError={errorField === 'categoriaLaboral'}
-                    onKeyDown={handleInputKeyDown}
-                  />
-                </div>
-
-                {/* Fila 2: Nombre(s) y Apellidos */}
-                <div className="rrhh-field">
-                  <div className="rrhh-field-label-row">
-                    <label className="rrhh-field-label">
-                      <span>Nombre(s) y Apellidos</span>
-                      <span style={{ color: 'var(--danger)' }}>*</span>
-                    </label>
-                    <span className="rrhh-field-hint">Según acta o INE oficial</span>
-                  </div>
-                  <div className="rrhh-grid-3">
-                    <input
-                      data-field="nombrePila"
-                      type="text"
-                      placeholder="Nombre(s)"
-                      value={nombrePila}
-                      onChange={handlePersonNameChange(setNombrePila, 'nombrePila')}
-                      onKeyDown={handleInputKeyDown}
-                      className="input-text"
-                      style={getFieldStyle('nombrePila')}
-                      required
-                    />
-                    <input
-                      data-field="apellidoPaterno"
-                      type="text"
-                      placeholder="Apellido paterno"
-                      value={apellidoPaterno}
-                      onChange={handlePersonNameChange(setApellidoPaterno, 'apellidoPaterno')}
-                      onKeyDown={handleInputKeyDown}
-                      className="input-text"
-                      style={getFieldStyle('apellidoPaterno')}
-                      required
-                    />
-                    <input
-                      data-field="apellidoMaterno"
-                      type="text"
-                      placeholder="Apellido materno"
-                      value={apellidoMaterno}
-                      onChange={handlePersonNameChange(setApellidoMaterno, 'apellidoMaterno')}
-                      onKeyDown={handleInputKeyDown}
-                      className="input-text"
-                      style={getFieldStyle('apellidoMaterno')}
-                    />
-                  </div>
-                </div>
-
-                {/* Fila 3: RFC y CURP */}
-                <div className="rrhh-grid-2">
-                  <div className="rrhh-field">
-                    <div className="rrhh-field-label-row">
-                      <label className="rrhh-field-label">
-                        <span>RFC</span>
-                        <span style={{ color: 'var(--danger)' }}>*</span>
-                      </label>
-                      <span className="rrhh-field-hint">12-13 caracteres SAT</span>
-                    </div>
-                    <div className="rrhh-input-with-check">
-                      <input
-                        data-field="rfc"
-                        type="text"
-                        placeholder="Ej. GAVM950412H8A"
-                        value={rfc}
-                        onChange={handleRfcChange}
-                        onKeyDown={handleInputKeyDown}
-                        maxLength={13}
-                        className="input-text"
-                        style={getFieldStyle('rfc', { paddingRight: '34px', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', fontWeight: 600 })}
-                        required
-                      />
-                      {rfc.trim().length >= 12 && (
-                        <span className="rrhh-input-valid-icon" title="RFC completo">
-                          <CheckCircle2 className="w-4 h-4" />
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="rrhh-field">
-                    <div className="rrhh-field-label-row">
-                      <label className="rrhh-field-label">
-                        <span>CURP</span>
-                        <span style={{ color: 'var(--danger)' }}>*</span>
-                      </label>
-                      <span className="rrhh-field-hint">18 caracteres RENAPO</span>
-                    </div>
-                    <div className="rrhh-input-with-check">
-                      <input
-                        data-field="curp"
-                        type="text"
-                        placeholder="Ej. GAVM950412HVERRN01"
-                        value={curp}
-                        onChange={handleCurpChange}
-                        onKeyDown={handleInputKeyDown}
-                        maxLength={18}
-                        className="input-text"
-                        style={getFieldStyle('curp', { paddingRight: '34px', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', fontWeight: 600 })}
-                        required
-                      />
-                      {curp.trim().length === 18 && (
-                        <span className="rrhh-input-valid-icon" title="CURP completa">
-                          <CheckCircle2 className="w-4 h-4" />
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Fila 4: NSS y Jefe Asignado */}
-                <div className="rrhh-grid-2">
-                  <div className="rrhh-field">
-                    <div className="rrhh-field-label-row">
-                      <label className="rrhh-field-label">
-                        <span>NSS (IMSS)</span>
-                        <span style={{ color: 'var(--danger)' }}>*</span>
-                      </label>
-                      <span className="rrhh-field-hint">11 dígitos</span>
-                    </div>
-                    <div className="rrhh-input-with-check">
-                      <input
-                        data-field="nss"
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="Ej. 34-12-88-9412-1"
-                        value={nss}
-                        onChange={handleNssChange}
-                        onKeyDown={handleInputKeyDown}
-                        maxLength={15}
-                        className="input-text"
-                        style={getFieldStyle('nss', { paddingRight: '34px', fontFamily: 'var(--font-mono)', fontWeight: 600 })}
-                        required
-                      />
-                      {toRawDigits(nss).length === 11 && (
-                        <span className="rrhh-input-valid-icon" title="NSS completo">
-                          <CheckCircle2 className="w-4 h-4" />
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="rrhh-field">
-                    <div className="rrhh-field-label-row">
-                      <label className="rrhh-field-label">Jefe Asignado</label>
-                      <span className="rrhh-field-hint">Auto por depto.</span>
-                    </div>
-                    <input
-                      data-field="supervisor"
-                      type="text"
-                      placeholder="Nombre del jefe directo"
-                      value={supervisor}
-                      onChange={handlePersonNameChange(setSupervisor, 'supervisor')}
-                      onKeyDown={handleInputKeyDown}
-                      className="input-text"
-                      style={{ fontWeight: supervisor ? 600 : 400 }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Zona Derecha: Fotografía */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-                backgroundColor: 'var(--surface)',
-                border: '1px solid var(--border)',
-                borderRadius: '12px',
-                padding: '16px'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h4 style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                  Fotografía del Colaborador
-                </h4>
-                <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)' }}>
-                  Opcional
-                </span>
-              </div>
-
-              <div
-                tabIndex={0}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  handleFotoPasteOrDrop(e.dataTransfer.files);
-                }}
-                onPaste={(e) => {
-                  handleFotoPasteOrDrop(e.clipboardData.files);
-                }}
-                style={{
-                  border: '2px dashed var(--brand-300)',
-                  backgroundColor: 'rgba(59, 130, 246, 0.03)',
-                  borderRadius: '12px',
-                  padding: '18px 14px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  gap: '6px',
-                  minHeight: '175px',
-                  outline: 'none'
-                }}
-              >
-                {fotoPreview ? (
-                  <div style={{ position: 'relative' }}>
-                    <img
-                      src={fotoPreview}
-                      alt="Fotografía"
-                      style={{ width: '105px', height: '105px', objectFit: 'cover', borderRadius: '12px', border: '2px solid var(--primary)' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setFotoPreview(null)}
-                      style={{
-                        position: 'absolute',
-                        top: '-8px',
-                        right: '-8px',
-                        backgroundColor: 'var(--danger)',
-                        color: '#fff',
-                        borderRadius: '50%',
-                        width: '22px',
-                        height: '22px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '11px',
-                        fontWeight: 800
-                      }}
-                      title="Eliminar foto"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div
-                      style={{
-                        width: '44px',
-                        height: '44px',
-                        borderRadius: '12px',
-                        backgroundColor: 'var(--brand-50)',
-                        color: 'var(--primary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <ImageIcon className="w-5 h-5" />
-                    </div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      Fotografía para credencial
-                    </div>
-                    <label
-                      className="btn btn-secondary"
-                      style={{ fontSize: '11.5px', marginTop: '4px', cursor: 'pointer', padding: '6px 14px' }}
-                    >
-                      Seleccionar archivo
-                      <input type="file" accept="image/*" onChange={handleFotoUpload} style={{ display: 'none' }} />
-                    </label>
-                  </>
-                )}
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                    Observaciones de Contratación
-                  </label>
-                  {notasContratacion && (
-                    <button
-                      type="button"
-                      onClick={() => setNotasContratacion('')}
-                      style={{ fontSize: '10px', color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}
-                    >
-                      Limpiar
-                    </button>
-                  )}
-                </div>
-                <textarea
-                  value={notasContratacion}
-                  onChange={(e) => setNotasContratacion(e.target.value)}
-                  onKeyDown={handleInputKeyDown}
-                  placeholder="Comentarios adicionales del expediente..."
-                  rows={2}
-                  className="input-text"
-                  style={{ fontSize: '0.8rem', resize: 'vertical' }}
-                />
-              </div>
-            </div>
             </div>
           </div>
         </div>
@@ -4870,27 +4776,10 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
       </div>
 
       {/* ========================================================= */}
-      {/* BARRA INFERIOR STICKY DE ACCIONES (ZOOM-PROOF)            */}
+      {/* BARRA INFERIOR STICKY DE ACCIONES (LIMPIA Y CONCRETA)     */}
       {/* ========================================================= */}
       <div className="rrhh-sticky-bar" role="region" aria-label="Acciones de navegación y guardado">
-        <div className="rrhh-sticky-status">
-          <span
-            className="rrhh-pulse-dot"
-            style={{
-              backgroundColor: isReadyToSave ? '#059669' : '#1D4ED8',
-              flexShrink: 0
-            }}
-          />
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {draftFeedback
-              ? 'Borrador guardado localmente de forma segura'
-              : draftSavedAt
-              ? `Borrador guardado (${draftSavedAt}) · Etapa ${currentStepIndex + 1} de ${steps.length}`
-              : `Etapa ${currentStepIndex + 1} de ${steps.length}: ${currentStepObj.label} · ${progressPercent}% completado`}
-          </span>
-        </div>
-
-        <div className="rrhh-sticky-actions">
+        <div>
           {onCancel && (
             <button
               type="button"
@@ -4901,36 +4790,9 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
               Cancelar
             </button>
           )}
+        </div>
 
-          <button
-            type="button"
-            onClick={handleLimpiar}
-            className="rrhh-btn-outline"
-            title="Vaciar todos los campos del formulario"
-          >
-            Limpiar
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            className="rrhh-btn-outline"
-            style={{ color: draftFeedback ? '#059669' : 'var(--text-primary)' }}
-            title="Guardar borrador local en este navegador"
-          >
-            {draftFeedback ? (
-              <>
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Guardado</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
-                <span>Guardar Borrador</span>
-              </>
-            )}
-          </button>
-
+        <div className="rrhh-sticky-actions">
           {currentStepIndex > 0 && (
             <button
               type="button"

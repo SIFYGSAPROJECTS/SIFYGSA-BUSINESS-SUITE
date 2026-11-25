@@ -53,7 +53,8 @@ import {
   suggestDepartmentCode,
   DEPARTMENT_COLOR_SWATCHES,
   downloadCsvFile,
-  logHrAuditAction
+  logHrAuditAction,
+  matchesNormalizedSearch
 } from '../../utils/formShield';
 
 interface DepartmentsViewProps {
@@ -462,7 +463,6 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
 
   // Filtrado y ordenación multi-campo
   const filteredDepartments = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
     return enrichedDepartments
       .filter((dept) => {
         const matchesStatus =
@@ -489,14 +489,15 @@ export const DepartmentsView: React.FC<DepartmentsViewProps> = ({
             : extensionFilter === 'con_ext'
               ? dept.extensions.length > 0
               : dept.extensions.length === 0;
-        const matchesSearch =
-          !q ||
-          dept.name.toLowerCase().includes(q) ||
-          dept.code.toLowerCase().includes(q) ||
-          dept.lead.toLowerCase().includes(q) ||
-          dept.location.toLowerCase().includes(q) ||
-          (dept.description || '').toLowerCase().includes(q) ||
-          dept.extensions.some((ext) => ext.extension.includes(q));
+        const matchesSearch = matchesNormalizedSearch(
+          searchQuery,
+          dept.name,
+          dept.code,
+          dept.lead,
+          dept.location,
+          dept.description,
+          ...dept.extensions.map((ext) => ext.extension)
+        );
         return matchesStatus && matchesSite && matchesLead && matchesHeadcount && matchesExt && matchesSearch;
       })
       .sort((a, b) => {

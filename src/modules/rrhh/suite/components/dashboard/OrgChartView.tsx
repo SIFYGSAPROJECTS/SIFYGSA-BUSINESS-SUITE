@@ -26,7 +26,12 @@ import {
   UserCheck
 } from 'lucide-react';
 import { Employee } from '../../types';
-import { getDepartmentCode, getDepartmentTheme } from '../../utils/formShield';
+import {
+  getDepartmentCode,
+  getDepartmentTheme,
+  matchesNormalizedSearch,
+  normalizeLocationLabel
+} from '../../utils/formShield';
 import { TeamsOrgPanel } from './TeamsOrgPanel';
 
 interface OrgChartViewProps {
@@ -475,13 +480,17 @@ export const OrgChartView: React.FC<OrgChartViewProps> = ({
     }
 
     activeEmployees.forEach((emp) => {
-      const textMatch =
-        normalizeKey(emp.name).includes(q) ||
-        normalizeKey(emp.position).includes(q) ||
-        normalizeKey(emp.department).includes(q) ||
-        normalizeKey(emp.id).includes(q) ||
-        normalizeKey(emp.location).includes(q) ||
-        normalizeKey(getDepartmentCode(emp.department, emp.location)).includes(q);
+      const normalizedLoc = normalizeLocationLabel(emp.location || emp.codeLocation);
+      const textMatch = matchesNormalizedSearch(
+        searchQuery,
+        emp.name,
+        emp.position,
+        emp.department,
+        emp.id,
+        normalizedLoc,
+        emp.location,
+        getDepartmentCode(emp.department, emp.location)
+      );
 
       if (textMatch) {
         matches.add(emp.id);
@@ -861,14 +870,17 @@ export const OrgChartView: React.FC<OrgChartViewProps> = ({
   }
 
   const shouldShowBranch = (node: OrgNode): boolean => {
-    const q = normalizeKey(searchQuery);
-    if (!q) return true;
-    const selfTextOk =
-      normalizeKey(node.employee.name).includes(q) ||
-      normalizeKey(node.employee.position).includes(q) ||
-      normalizeKey(node.employee.department).includes(q) ||
-      normalizeKey(node.employee.id).includes(q) ||
-      normalizeKey(node.employee.location).includes(q);
+    if (!searchQuery.trim()) return true;
+    const selfTextOk = matchesNormalizedSearch(
+      searchQuery,
+      node.employee.name,
+      node.employee.position,
+      node.employee.department,
+      node.employee.id,
+      normalizeLocationLabel(node.employee.location || node.employee.codeLocation),
+      node.employee.location,
+      getDepartmentCode(node.employee.department, node.employee.location)
+    );
     if (selfTextOk) return true;
     return node.children.some((child) => shouldShowBranch(child));
   };

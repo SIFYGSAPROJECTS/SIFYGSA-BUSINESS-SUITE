@@ -19,7 +19,12 @@ import {
   PhoneCall
 } from 'lucide-react';
 import { Employee } from '../../types';
-import { getDepartmentCode, getDepartmentTheme } from '../../utils/formShield';
+import {
+  getDepartmentCode,
+  getDepartmentTheme,
+  matchesNormalizedSearch,
+  normalizeLocationLabel
+} from '../../utils/formShield';
 
 export interface TeamsOrgNode {
   employee: Employee;
@@ -52,14 +57,6 @@ interface TeamsOrgPanelProps {
   onViewEmployee: (employee: Employee) => void;
   onOpenInTree: (employeeId: string) => void;
 }
-
-const normalizeStr = (value?: string): string =>
-  (value || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
 
 export const TeamsOrgPanel: React.FC<TeamsOrgPanelProps> = ({
   rootNode,
@@ -152,17 +149,19 @@ export const TeamsOrgPanel: React.FC<TeamsOrgPanelProps> = ({
     };
     walk(scopeRoot);
 
-    const combinedQuery = normalizeStr(sidebarQuery || globalSearchQuery);
+    const combinedQuery = (sidebarQuery || globalSearchQuery).trim();
     const filtered = !combinedQuery
       ? collected
       : collected.filter((n) => {
           const emp = n.employee;
-          return (
-            normalizeStr(emp.name).includes(combinedQuery) ||
-            normalizeStr(emp.position).includes(combinedQuery) ||
-            normalizeStr(emp.department).includes(combinedQuery) ||
-            normalizeStr(emp.id).includes(combinedQuery) ||
-            normalizeStr(emp.location).includes(combinedQuery)
+          return matchesNormalizedSearch(
+            combinedQuery,
+            emp.name,
+            emp.position,
+            emp.department,
+            emp.id,
+            normalizeLocationLabel(emp.location || emp.codeLocation),
+            emp.location
           );
         });
 

@@ -26,7 +26,8 @@ import {
   savePersistedEmployees,
   formatCurrencyMask,
   logHrAuditAction,
-  downloadCsvFile
+  downloadCsvFile,
+  matchesNormalizedSearch
 } from '../../utils/formShield';
 
 export interface SgiFormatsViewProps {
@@ -1591,11 +1592,8 @@ export const SgiFormatsView: React.FC<SgiFormatsViewProps> = ({
 
             <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
               {employees
-                .filter(
-                  (e) =>
-                    e.name.toLowerCase().includes(dossierSearch.toLowerCase()) ||
-                    e.id.toLowerCase().includes(dossierSearch.toLowerCase()) ||
-                    e.department.toLowerCase().includes(dossierSearch.toLowerCase())
+                .filter((e) =>
+                  matchesNormalizedSearch(dossierSearch, e.name, e.id, e.department, e.position)
                 )
                 .map((emp) => {
                   const isSel = emp.id === selectedDossierEmployee.id;

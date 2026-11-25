@@ -1,6 +1,7 @@
 -- ============================================================================
 -- database/postgres/02_rrhh/01_domains.sql
 -- Dominios especializados del módulo Recursos Humanos (SIFYGSA)
+-- Solo dominios de atributos base almacenados (sin dominios de datos derivados)
 -- ============================================================================
 
 -- Folio corporativo inmutable: SFG-0001 .. SFG-999999 (soporta 10,000+ a 999,999 históricos)
@@ -24,24 +25,13 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
--- Identidad del colaborador
+-- Apellidos separados del colaborador (nombre_completo e iniciales se derivan en vistas)
 DO $$ BEGIN
   CREATE DOMAIN rrhh.apellido_dom AS VARCHAR(60);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
-DO $$ BEGIN
-  CREATE DOMAIN rrhh.nombre_completo_dom AS VARCHAR(210);
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-
-DO $$ BEGIN
-  CREATE DOMAIN rrhh.iniciales_dom AS VARCHAR(4)
-    CONSTRAINT ck_rrhh_iniciales CHECK (VALUE ~ '^[A-ZÁÉÍÓÚÜÑ]{1,4}$');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-
--- NSS (IMSS): exactamente 11 dígitos numéricos
+-- NSS (IMSS): exactamente 11 dígitos numéricos (admite entrada con o sin guiones)
 DO $$ BEGIN
   CREATE DOMAIN rrhh.nss_mx AS VARCHAR(15)
     CONSTRAINT ck_rrhh_nss_mx CHECK (
@@ -59,7 +49,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
--- Código SPEI bancario (3 a 10 caracteres)
+-- Código SPEI bancario (3 a 10 dígitos)
 DO $$ BEGIN
   CREATE DOMAIN rrhh.codigo_spei AS VARCHAR(10)
     CONSTRAINT ck_rrhh_codigo_spei CHECK (VALUE ~ '^[0-9]{3,10}$');
@@ -75,17 +65,21 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
--- Talla de calzado MEX y overol EPP
+-- Talla de calzado MEX (ej. '27', '27.5') o 'No aplica'
 DO $$ BEGIN
-  CREATE DOMAIN rrhh.talla_calzado AS VARCHAR(10)
-    CONSTRAINT ck_rrhh_talla_calzado CHECK (VALUE ~ '^[0-9]{2}(\.[05])?$');
+  CREATE DOMAIN rrhh.talla_calzado AS VARCHAR(15)
+    CONSTRAINT ck_rrhh_talla_calzado CHECK (
+      VALUE ~ '^[0-9]{2}(\.[05])?$' OR VALUE = 'No aplica'
+    );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+-- Talla de overol EPP (catálogo estándar 'Talla 36 (CH)'..'Talla 48 (4XG)', 'XCH'..'4XG', 'No aplica' o medida libre limpia)
 DO $$ BEGIN
-  CREATE DOMAIN rrhh.talla_overol AS VARCHAR(6)
+  CREATE DOMAIN rrhh.talla_overol AS VARCHAR(35)
     CONSTRAINT ck_rrhh_talla_overol CHECK (
-      VALUE IN ('XCH', 'CH', 'M', 'G', 'XG', '2XG', '3XG', '4XG')
+      LENGTH(TRIM(VALUE)) > 0
+      AND VALUE ~ '^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ()\s./-]{1,35}$'
     );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
@@ -95,14 +89,6 @@ DO $$ BEGIN
   CREATE DOMAIN rrhh.estatus_empleado AS VARCHAR(20)
     CONSTRAINT ck_rrhh_estatus_emp CHECK (
       VALUE IN ('ACTIVO', 'INACTIVO', 'SUSPENDIDO', 'BAJA')
-    );
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-
-DO $$ BEGIN
-  CREATE DOMAIN rrhh.acreditacion_tipo AS VARCHAR(15)
-    CONSTRAINT ck_rrhh_acreditacion_tipo CHECK (
-      VALUE IN ('success', 'warning', 'info')
     );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
@@ -149,7 +135,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
--- Días de vacaciones y año de periodo
+-- Días hábiles de vacaciones solicitados y año de periodo
 DO $$ BEGIN
   CREATE DOMAIN rrhh.dias_vacaciones AS SMALLINT
     CONSTRAINT ck_rrhh_dias_vacaciones CHECK (VALUE BETWEEN 1 AND 60);
@@ -162,7 +148,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
--- Metadatos de archivos digitales
+-- Metadatos de archivos digitales y agenda
 DO $$ BEGIN
   CREATE DOMAIN rrhh.mime_type_dom AS VARCHAR(100);
 EXCEPTION WHEN duplicate_object THEN NULL;

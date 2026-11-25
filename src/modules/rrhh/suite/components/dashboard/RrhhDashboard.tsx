@@ -31,7 +31,10 @@ import { HrAuditLogModal } from './HrAuditLogModal';
 import {
   useSyncedEmployees,
   useSyncedDepartments,
-  savePersistedEmployees
+  savePersistedEmployees,
+  matchesNormalizedSearch,
+  normalizeSearchText,
+  normalizeLocationLabel
 } from '../../utils/formShield';
 
 interface RrhhDashboardProps {
@@ -279,22 +282,25 @@ export const RrhhDashboard: React.FC<RrhhDashboardProps> = ({
     }
   }, [selectedLocation]);
 
-  // Filtrado de colaboradores
+  // Filtrado de colaboradores (insensible a mayúsculas, acentos y variantes de sede)
   const filteredEmployees = useMemo(() => {
-    const q = searchEmployeeQuery.trim().toLowerCase();
+    const locFilterKey = normalizeSearchText(activeLocationFilter.split(',')[0]);
     return employeeList.filter((emp) => {
       const matchesDepto =
-        selectedDepto === 'todos' || emp.department.toLowerCase() === selectedDepto.toLowerCase();
+        selectedDepto === 'todos' ||
+        normalizeSearchText(emp.department) === normalizeSearchText(selectedDepto);
       const matchesLoc =
         activeLocationFilter === 'Todas' ||
-        emp.location.toLowerCase().includes(activeLocationFilter.split(',')[0].toLowerCase());
-      const matchesQuery =
-        !q ||
-        emp.name.toLowerCase().includes(q) ||
-        emp.position.toLowerCase().includes(q) ||
-        emp.department.toLowerCase().includes(q) ||
-        emp.id.toLowerCase().includes(q) ||
-        emp.email.toLowerCase().includes(q);
+        normalizeSearchText(normalizeLocationLabel(emp.location)).includes(locFilterKey);
+      const matchesQuery = matchesNormalizedSearch(
+        searchEmployeeQuery,
+        emp.name,
+        emp.position,
+        emp.department,
+        emp.id,
+        emp.email,
+        emp.location
+      );
       return matchesDepto && matchesLoc && matchesQuery;
     });
   }, [employeeList, selectedDepto, activeLocationFilter, searchEmployeeQuery]);
@@ -1075,7 +1081,7 @@ export const RrhhDashboard: React.FC<RrhhDashboardProps> = ({
                     position: 'absolute',
                     top: 'calc(100% + 4px)',
                     left: '50px',
-                    zIndex: 50,
+                    zIndex: 90,
                     minWidth: '220px',
                     maxWidth: '260px',
                     maxHeight: '230px',
@@ -1227,7 +1233,7 @@ export const RrhhDashboard: React.FC<RrhhDashboardProps> = ({
 
                     <td>
                       <div style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
-                        {emp.location}
+                        {normalizeLocationLabel(emp.location) || 'Por definir'}
                       </div>
                       <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                         {emp.squad}

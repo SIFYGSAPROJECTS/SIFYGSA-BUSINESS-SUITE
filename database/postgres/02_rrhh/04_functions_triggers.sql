@@ -1,6 +1,6 @@
 -- ============================================================================
 -- database/postgres/02_rrhh/04_functions_triggers.sql
--- Funciones y Triggers empresariales del módulo Recursos Humanos
+-- Funciones de negocio y Triggers del módulo Recursos Humanos (3FN)
 -- ============================================================================
 
 -- ── 1. Función genérica de timestamp updated_at ──────────────────────────────
@@ -105,36 +105,51 @@ BEGIN
 END;
 $$;
 
--- ── 5. Trigger de normalización previa en rrhh.empleados ─────────────────────
+-- ── 5. Helper: extraer fecha de nacimiento desde CURP válida (regla RENAPO) ──
+CREATE OR REPLACE FUNCTION rrhh.fn_fecha_nacimiento_desde_curp(p_curp TEXT)
+RETURNS DATE
+LANGUAGE plpgsql
+IMMUTABLE
+AS $$
+DECLARE
+  v_clean TEXT := UPPER(TRIM(COALESCE(p_curp, '')));
+  v_yy    INTEGER;
+  v_mm    INTEGER;
+  v_dd    INTEGER;
+  v_siglo CHAR(1);
+  v_anio  INTEGER;
+BEGIN
+  IF v_clean !~ '^[A-Z][AEIOUX][A-Z]{2}[0-9]{6}[HM][A-Z]{2}[B-DF-HJ-NP-TV-Z]{3}[A-Z0-9][0-9]$' THEN
+    RETURN NULL;
+  END IF;
+
+  v_yy    := SUBSTRING(v_clean FROM 5 FOR 2)::INTEGER;
+  v_mm    := SUBSTRING(v_clean FROM 7 FOR 2)::INTEGER;
+  v_dd    := SUBSTRING(v_clean FROM 9 FOR 2)::INTEGER;
+  v_siglo := SUBSTRING(v_clean FROM 17 FOR 1);
+  v_anio  := CASE WHEN v_siglo ~ '^[0-9]$' THEN 1900 + v_yy ELSE 2000 + v_yy END;
+
+  RETURN make_date(v_anio, v_mm, v_dd);
+EXCEPTION WHEN others THEN
+  RETURN NULL;
+END;
+$$;
+
+-- ── 6. Trigger de normalización previa en rrhh.empleados ─────────────────────
 CREATE OR REPLACE FUNCTION rrhh.tgfn_normalizar_empleado()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
-DECLARE
-  v_p1 TEXT;
-  v_p2 TEXT;
 BEGIN
   -- Asignar folio corporativo SFG-XXXX automáticamente si viene nulo
   IF NEW.folio IS NULL OR TRIM(NEW.folio) = '' THEN
     NEW.folio := rrhh.fn_siguiente_folio('EMPLEADO')::rrhh.folio_empleado;
   END IF;
 
-  -- Limpiar y componer nombre completo + iniciales
+  -- Limpiar espacios redundantes en nombres separados
   NEW.nombre_pila      := TRIM(regexp_replace(COALESCE(NEW.nombre_pila, ''), '\s+', ' ', 'g'));
   NEW.apellido_paterno := TRIM(regexp_replace(COALESCE(NEW.apellido_paterno, ''), '\s+', ' ', 'g'));
   NEW.apellido_materno := TRIM(regexp_replace(COALESCE(NEW.apellido_materno, ''), '\s+', ' ', 'g'));
-
-  NEW.nombre_completo := TRIM(
-    CONCAT_WS(' ',
-      NULLIF(NEW.nombre_pila, ''),
-      NULLIF(NEW.apellido_paterno, ''),
-      NULLIF(NEW.apellido_materno, '')
-    )
-  );
-
-  v_p1 := COALESCE(NULLIF(LEFT(NEW.nombre_pila, 1), ''), 'S');
-  v_p2 := COALESCE(NULLIF(LEFT(NEW.apellido_paterno, 1), ''), NULLIF(SUBSTRING(NEW.nombre_pila FROM 2 FOR 1), ''), 'F');
-  NEW.iniciales := UPPER(v_p1 || v_p2);
 
   -- Estandarizar fiscales y correos
   IF NEW.rfc IS NOT NULL THEN
@@ -143,6 +158,13 @@ BEGIN
 
   IF NEW.curp IS NOT NULL THEN
     NEW.curp := UPPER(TRIM(NEW.curp))::core.curp_mx;
+    IF NEW.fecha_nacimiento IS NULL THEN
+      NEW.fecha_nacimiento := rrhh.fn_fecha_nacimiento_desde_curp(NEW.curp);
+    END IF;
+  END IF;
+
+  IF NEW.nss IS NOT NULL THEN
+    NEW.nss := regexp_replace(NEW.nss, '\D', '', 'g')::rrhh.nss_mx;
   END IF;
 
   IF NEW.correo_corporativo IS NOT NULL THEN
@@ -168,7 +190,7 @@ BEFORE INSERT OR UPDATE ON rrhh.empleados
 FOR EACH ROW
 EXECUTE FUNCTION rrhh.tgfn_normalizar_empleado();
 
--- ── 6. Trigger automático de trazabilidad laboral (append-only, lee contexto de sesión)
+-- ── 7. Trigger automático de trazabilidad laboral (append-only) ──────────────
 CREATE OR REPLACE FUNCTION rrhh.tgfn_auditar_movimiento_laboral()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -186,10 +208,10 @@ BEGIN
 
   IF TG_OP = 'INSERT' THEN
     INSERT INTO rrhh.historial_movimientos (
-      id_empleado, tipo_movimiento, id_depto_nuevo, puesto_nuevo, sueldo_nuevo,
+      id_empleado, tipo_movimiento, id_depto_nuevo, id_puesto_nuevo, sueldo_nuevo,
       motivo, realizado_por, fecha_efecto
     ) VALUES (
-      NEW.id_empleado, 'ALTA', NEW.id_departamento, NEW.puesto_texto, NEW.sueldo_mensual_bruto,
+      NEW.id_empleado, 'ALTA', NEW.id_departamento, NEW.id_puesto, NEW.sueldo_mensual_bruto,
       COALESCE(v_motivo, 'Alta inicial en Directorio de Personal'), v_usuario, NEW.fecha_ingreso
     );
     RETURN NEW;
@@ -204,11 +226,11 @@ BEGIN
     );
   END IF;
 
-  IF NEW.puesto_texto IS DISTINCT FROM OLD.puesto_texto THEN
+  IF NEW.id_puesto IS DISTINCT FROM OLD.id_puesto THEN
     INSERT INTO rrhh.historial_movimientos (
-      id_empleado, tipo_movimiento, puesto_anterior, puesto_nuevo, motivo, realizado_por
+      id_empleado, tipo_movimiento, id_puesto_anterior, id_puesto_nuevo, motivo, realizado_por
     ) VALUES (
-      NEW.id_empleado, 'CAMBIO_PUESTO', OLD.puesto_texto, NEW.puesto_texto,
+      NEW.id_empleado, 'CAMBIO_PUESTO', OLD.id_puesto, NEW.id_puesto,
       COALESCE(v_motivo, 'Actualización de puesto'), v_usuario
     );
   END IF;
@@ -224,10 +246,10 @@ BEGIN
 
   IF NEW.estatus IS DISTINCT FROM OLD.estatus AND NEW.estatus IN ('BAJA', 'INACTIVO') THEN
     INSERT INTO rrhh.historial_movimientos (
-      id_empleado, tipo_movimiento, id_depto_anterior, puesto_anterior,
+      id_empleado, tipo_movimiento, id_depto_anterior, id_puesto_anterior,
       motivo, realizado_por, fecha_efecto
     ) VALUES (
-      NEW.id_empleado, 'BAJA', OLD.id_departamento, OLD.puesto_texto,
+      NEW.id_empleado, 'BAJA', OLD.id_departamento, OLD.id_puesto,
       COALESCE(v_motivo, 'Cambio de estatus a ' || NEW.estatus), v_usuario, COALESCE(NEW.fecha_baja, CURRENT_DATE)
     );
   END IF;
@@ -238,12 +260,12 @@ $$;
 
 DROP TRIGGER IF EXISTS tr_rrhh_empleados_movimientos ON rrhh.empleados;
 CREATE TRIGGER tr_rrhh_empleados_movimientos
-AFTER INSERT OR UPDATE OF id_departamento, puesto_texto, sueldo_mensual_bruto, estatus
+AFTER INSERT OR UPDATE OF id_departamento, id_puesto, sueldo_mensual_bruto, estatus
 ON rrhh.empleados
 FOR EACH ROW
 EXECUTE FUNCTION rrhh.tgfn_auditar_movimiento_laboral();
 
--- ── 7. Cálculo de porcentaje de completitud de expediente (0–100%, 15 requisitos) ─
+-- ── 8. Cálculo de porcentaje de completitud de expediente (0–100%, 15 requisitos)
 -- Evalúa únicamente el Expediente Base obligatorio (13 campos) + Fotografía + CSF SAT.
 -- Campos opcionales (cursos/DC-3, uniformes EPP, alergias, tarjeta 16d, jefe) no penalizan.
 CREATE OR REPLACE FUNCTION rrhh.fn_porcentaje_expediente(p_id_empleado core.id_uuid)
@@ -252,20 +274,25 @@ LANGUAGE plpgsql
 STABLE
 AS $$
 DECLARE
-  v_emp    rrhh.empleados%ROWTYPE;
-  v_puntos SMALLINT := 0;
-  v_total  CONSTANT SMALLINT := 15;
-  v_has_nomina BOOLEAN := FALSE;
-  v_has_csf    BOOLEAN := FALSE;
+  v_emp         rrhh.empleados%ROWTYPE;
+  v_puesto_nom  TEXT;
+  v_puntos      SMALLINT := 0;
+  v_total       CONSTANT SMALLINT := 15;
+  v_has_nomina  BOOLEAN := FALSE;
+  v_has_csf     BOOLEAN := FALSE;
 BEGIN
   SELECT * INTO v_emp FROM rrhh.empleados WHERE id_empleado = p_id_empleado;
   IF NOT FOUND THEN RETURN 0; END IF;
 
+  SELECT p.nombre INTO v_puesto_nom
+    FROM rrhh.cat_puestos p
+   WHERE p.id_puesto = v_emp.id_puesto;
+
   -- Identidad laboral y fotografía (5)
   IF LENGTH(TRIM(COALESCE(v_emp.nombre_pila, ''))) >= 2 THEN v_puntos := v_puntos + 1; END IF;
-  IF v_emp.puesto_texto IS NOT NULL AND v_emp.puesto_texto <> 'Por definir' THEN v_puntos := v_puntos + 1; END IF;
+  IF v_puesto_nom IS NOT NULL AND v_puesto_nom NOT IN ('Por definir', 'Por asignar') THEN v_puntos := v_puntos + 1; END IF;
   IF v_emp.id_departamento IS NOT NULL THEN v_puntos := v_puntos + 1; END IF;
-  IF v_emp.id_sede IS NOT NULL OR LENGTH(TRIM(COALESCE(v_emp.ubicacion_texto, ''))) > 0 THEN v_puntos := v_puntos + 1; END IF;
+  IF v_emp.id_sede IS NOT NULL THEN v_puntos := v_puntos + 1; END IF;
   IF LENGTH(TRIM(COALESCE(v_emp.foto_url, ''))) > 0 THEN v_puntos := v_puntos + 1; END IF;
 
   -- Contacto, domicilio y emergencia (4)
@@ -292,13 +319,13 @@ BEGIN
   -- Salud básica (1)
   IF v_emp.tipo_sangre IS NOT NULL THEN v_puntos := v_puntos + 1; END IF;
 
-  -- Nómina: Banco + CLABE de 18 dígitos (1)
+  -- Nómina: Banco (FK) + CLABE de 18 dígitos (1)
   SELECT EXISTS (
     SELECT 1
     FROM rrhh.cuentas_bancarias cb
     WHERE cb.id_empleado = p_id_empleado
       AND cb.activa = TRUE
-      AND LENGTH(TRIM(COALESCE(cb.banco_nombre, ''))) >= 2
+      AND cb.id_banco IS NOT NULL
       AND cb.clabe IS NOT NULL
   ) INTO v_has_nomina;
   IF v_has_nomina THEN v_puntos := v_puntos + 1; END IF;
@@ -321,7 +348,7 @@ BEGIN
 END;
 $$;
 
--- ── 8. Triggers updated_at en tablas principales ─────────────────────────────
+-- ── 9. Triggers updated_at en tablas principales ─────────────────────────────
 DROP TRIGGER IF EXISTS tr_rrhh_deptos_updated ON rrhh.departamentos;
 CREATE TRIGGER tr_rrhh_deptos_updated
 BEFORE UPDATE ON rrhh.departamentos
@@ -345,4 +372,19 @@ FOR EACH ROW EXECUTE FUNCTION rrhh.tgfn_set_updated_at();
 DROP TRIGGER IF EXISTS tr_rrhh_vac_updated ON rrhh.vacaciones_solicitudes;
 CREATE TRIGGER tr_rrhh_vac_updated
 BEFORE UPDATE ON rrhh.vacaciones_solicitudes
+FOR EACH ROW EXECUTE FUNCTION rrhh.tgfn_set_updated_at();
+
+DROP TRIGGER IF EXISTS tr_rrhh_ext_updated ON rrhh.extensiones_telefonicas;
+CREATE TRIGGER tr_rrhh_ext_updated
+BEFORE UPDATE ON rrhh.extensiones_telefonicas
+FOR EACH ROW EXECUTE FUNCTION rrhh.tgfn_set_updated_at();
+
+DROP TRIGGER IF EXISTS tr_rrhh_sgi_updated ON rrhh.formatos_sgi;
+CREATE TRIGGER tr_rrhh_sgi_updated
+BEFORE UPDATE ON rrhh.formatos_sgi
+FOR EACH ROW EXECUTE FUNCTION rrhh.tgfn_set_updated_at();
+
+DROP TRIGGER IF EXISTS tr_rrhh_agenda_updated ON rrhh.agenda_actividades;
+CREATE TRIGGER tr_rrhh_agenda_updated
+BEFORE UPDATE ON rrhh.agenda_actividades
 FOR EACH ROW EXECUTE FUNCTION rrhh.tgfn_set_updated_at();

@@ -27,7 +27,8 @@ import {
   sanitizePersonName,
   sanitizeCleanText,
   formatCurrencyMask,
-  logHrAuditAction
+  logHrAuditAction,
+  matchesNormalizedSearch
 } from '../../utils/formShield';
 
 export interface VacationRecord {
@@ -445,10 +446,12 @@ export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees })
   const filteredRecords = useMemo(() => {
     return vacationRecords.filter((rec) => {
       const matchesDept = selectedDeptFilter === 'todos' || rec.department === selectedDeptFilter;
-      const matchesSearch =
-        rec.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        rec.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        rec.position.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = matchesNormalizedSearch(
+        searchQuery,
+        rec.employeeName,
+        rec.department,
+        rec.position
+      );
       return matchesDept && matchesSearch;
     });
   }, [vacationRecords, searchQuery, selectedDeptFilter]);
