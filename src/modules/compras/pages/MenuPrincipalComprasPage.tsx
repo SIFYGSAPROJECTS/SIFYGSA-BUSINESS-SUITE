@@ -310,12 +310,6 @@ export const MenuPrincipalComprasPage: React.FC = () => {
             <h1 className="compras-page-title" style={{ fontSize: '1.5rem', fontWeight: 800 }}>
               Compras
             </h1>
-            <span className="compras-context-badge">
-              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
-
-              </span>
-              S
-            </span>
           </div>
         </div>
 
