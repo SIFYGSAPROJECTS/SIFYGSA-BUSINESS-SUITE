@@ -1366,32 +1366,87 @@
   }
 }
 
+.header-mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background-color: var(--surface-alt);
+  color: var(--text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.header-mobile-menu-btn:hover {
+  background-color: var(--card-hover, var(--surface));
+  border-color: var(--primary);
+}
+
 @media (max-width: 860px) {
   .header-search-container {
     display: none;
+  }
+
+  /* Mantener visible el rail lateral compacto en pantallas divididas y tablets (521px - 860px) */
+  .gemini-sidebar,
+  .gemini-sidebar.collapsed {
+    width: 56px !important;
+    min-width: 56px !important;
+    position: sticky;
+    top: var(--header-height);
+    height: calc(100vh - var(--header-height));
+    transform: none;
+    z-index: 40;
+  }
+
+  .layout-content-area {
+    padding: var(--space-3);
+    min-width: 0;
+  }
+
+  .sifygsa-header {
+    padding: 0 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .footer-columns-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .footer-bottom-bar {
+    flex-direction: column;
+    gap: var(--space-3);
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .header-mobile-menu-btn {
+    display: inline-flex;
   }
 
   .sidebar-mobile-header {
     display: flex;
   }
 
-  .gemini-sidebar {
+  .gemini-sidebar,
+  .gemini-sidebar.collapsed {
     position: fixed;
     top: 0;
     bottom: 0;
     left: 0;
-    width: 270px !important;
-    min-width: 270px !important;
+    height: 100vh;
+    width: 240px !important;
+    min-width: 240px !important;
     transform: translateX(-100%);
     transition: transform var(--transition-normal);
     z-index: 1000;
     box-shadow: var(--shadow-xl);
-  }
-
-  .gemini-sidebar.collapsed {
-    width: 270px !important;
-    min-width: 270px !important;
-    transform: translateX(-100%);
   }
 
   .app-layout.mobile-open .gemini-sidebar,
@@ -1408,23 +1463,6 @@
     z-index: 999;
   }
 
-  .layout-content-area {
-    padding: var(--space-3);
-  }
-
-  .footer-columns-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-4);
-  }
-
-  .footer-bottom-bar {
-    flex-direction: column;
-    gap: var(--space-3);
-    align-items: flex-start;
-  }
-}
-
-@media (max-width: 480px) {
   .brand-title-text {
     font-size: 0.95rem;
   }

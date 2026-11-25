@@ -66,7 +66,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   // Detección de dispositivo móvil montado de manera segura para SSR/Hydration
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 860);
+      setIsMobile(window.innerWidth <= 520);
     };
     handleResize();
     window.addEventListener('resize', handleResize);
