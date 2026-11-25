@@ -1,3 +1,4 @@
+import type { Filter } from 'mongodb';
 import {
   TIPOS_EVENTO_AUDITORIA,
   esquemaEventoAuditoria,
@@ -6,6 +7,12 @@ import {
   type RolUsuario,
   type TipoEventoAuditoria,
 } from '@/config/types';
+import {
+  COLECCION_BITACORA_GENERAL,
+  asegurarColeccionesEnCaliente,
+} from '@/lib/mongodb/bitacoras.schema';
+import { estaMongoConfigurado, obtenerBdBitacoras } from '@/lib/mongodb/client';
+import { formatearFechaLegibleMx, formatearIsoMexico } from '@/lib/mongodb/fecha-mx';
 import { actualizarJsonSeguro, leerJsonSeguro } from '@/lib/storage/json-storage';
 
 export { TIPOS_EVENTO_AUDITORIA, esquemaEventoAuditoria, type EventoAuditoria, type TipoEventoAuditoria };
@@ -78,14 +85,44 @@ const AUDITORIA_INICIAL: EventoAuditoria[] = [
   },
 ];
 
+function limpiarCamposUndefined<T extends Record<string, unknown>>(obj: T): T {
+  const resultado: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) {
+      resultado[k] = v;
+    }
+  }
+  return resultado as T;
+}
+
+function escaparRegex(texto: string): string {
+  return texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export async function registrarEventoAuditoria(
   entrada: Omit<EventoAuditoria, 'id' | 'fecha'>
 ): Promise<EventoAuditoria> {
-  const nuevoEvento: EventoAuditoria = {
+  const ahora = new Date();
+  const fechaMx = formatearIsoMexico(ahora);
+  const fechaLegible = formatearFechaLegibleMx(ahora);
+
+  const nuevoEvento = limpiarCamposUndefined<EventoAuditoria & { fechaLegible?: string }>({
     ...entrada,
     id: `aud_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    fecha: new Date().toISOString(),
-  };
+    fecha: fechaMx,
+    fechaLegible,
+  });
+
+  if (estaMongoConfigurado()) {
+    try {
+      const db = await obtenerBdBitacoras();
+      await asegurarColeccionesEnCaliente(db);
+      await db.collection(COLECCION_BITACORA_GENERAL).insertOne({ ...nuevoEvento });
+      return nuevoEvento;
+    } catch (err) {
+      console.warn('[registrarEventoAuditoria] Error guardando en MongoDB Atlas, usando respaldo local:', err);
+    }
+  }
 
   try {
     await actualizarJsonSeguro<EventoAuditoria[]>(
@@ -106,7 +143,60 @@ export async function consultarAuditoria(filtros: FiltrosAuditoria = {}): Promis
   pagina: number;
   limite: number;
   totalPaginas: number;
+  origen: 'mongodb' | 'json';
 }> {
+  const pagina = Math.max(1, filtros.pagina ?? 1);
+  const limite = Math.max(1, Math.min(100, filtros.limite ?? 12));
+
+  if (estaMongoConfigurado()) {
+    try {
+      const db = await obtenerBdBitacoras();
+      await asegurarColeccionesEnCaliente(db);
+      const col = db.collection<EventoAuditoria>(COLECCION_BITACORA_GENERAL);
+
+      const query: Filter<EventoAuditoria> = {};
+      if (filtros.modulo && filtros.modulo !== 'todos') {
+        query.modulo = filtros.modulo;
+      }
+      if (filtros.tipoEvento && filtros.tipoEvento !== 'todos') {
+        query.tipoEvento = filtros.tipoEvento;
+      }
+      if (filtros.usuario) {
+        query.usuarioNombre = { $regex: escaparRegex(filtros.usuario), $options: 'i' };
+      }
+      if (filtros.fechaDesde || filtros.fechaHasta) {
+        const rangoFecha: Record<string, string> = {};
+        if (filtros.fechaDesde) rangoFecha.$gte = filtros.fechaDesde;
+        if (filtros.fechaHasta) rangoFecha.$lte = `${filtros.fechaHasta}T23:59:59.999Z`;
+        query.fecha = rangoFecha as unknown as string;
+      }
+      if (filtros.busqueda) {
+        const rx = { $regex: escaparRegex(filtros.busqueda), $options: 'i' };
+        query.$or = [
+          { detalle: rx },
+          { entidad: rx },
+          { usuarioNombre: rx },
+          { entidadId: rx },
+        ];
+      }
+
+      const [total, eventos] = await Promise.all([
+        col.countDocuments(query),
+        col
+          .find(query, { projection: { _id: 0 } })
+          .sort({ fecha: -1 })
+          .skip((pagina - 1) * limite)
+          .limit(limite)
+          .toArray(),
+      ]);
+
+      const totalPaginas = Math.max(1, Math.ceil(total / limite));
+      return { eventos, total, pagina, limite, totalPaginas, origen: 'mongodb' };
+    } catch (err) {
+      console.warn('[consultarAuditoria] Error consultando MongoDB Atlas, usando respaldo local:', err);
+    }
+  }
+
   const todos = await leerJsonSeguro<EventoAuditoria[]>(ARCHIVO_AUDITORIA, AUDITORIA_INICIAL);
 
   const filtrados = todos.filter((ev) => {
@@ -137,14 +227,12 @@ export async function consultarAuditoria(filtros: FiltrosAuditoria = {}): Promis
     return true;
   });
 
-  const pagina = Math.max(1, filtros.pagina ?? 1);
-  const limite = Math.max(1, Math.min(100, filtros.limite ?? 12));
   const total = filtrados.length;
   const totalPaginas = Math.max(1, Math.ceil(total / limite));
   const inicio = (pagina - 1) * limite;
   const eventos = filtrados.slice(inicio, inicio + limite);
 
-  return { eventos, total, pagina, limite, totalPaginas };
+  return { eventos, total, pagina, limite, totalPaginas, origen: 'json' };
 }
 
 export async function registrarAccionUsuario(params: {

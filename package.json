@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "crear-usuario": "tsx scripts/crear-usuario.ts"
+    "crear-usuario": "tsx scripts/crear-usuario.ts",
+    "init:mongo-bitacoras": "tsx scripts/inicializar-mongo-bitacoras.ts",
+    "seed:mongo-bitacoras": "tsx scripts/poblar-mongo-bitacoras.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -21,6 +23,7 @@
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^1.67.0",
+    "mongodb": "^7.9.1",
     "next": "16.3.8",
     "react": "19.2.8",
     "react-dom": "^19.2.8",

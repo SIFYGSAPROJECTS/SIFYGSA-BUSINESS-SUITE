@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { registrarEventoAuditoria } from '@/lib/audit';
 import { exigirPermiso, manejarErrorApi } from '@/lib/auth';
 import {
   listarArticulosAlmacen,
@@ -18,12 +19,23 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    await exigirPermiso('almacen', 'crear');
+    const sesion = await exigirPermiso('almacen', 'crear');
     const cuerpo = (await request.json()) as Omit<Articulo, 'id' | 'fechaRegistro'>;
     const creado = await registrarArticuloAlmacen(cuerpo);
+
+    await registrarEventoAuditoria({
+      usuarioId: sesion.sub,
+      usuarioNombre: sesion.nombre,
+      rol: sesion.rol,
+      modulo: 'almacen',
+      tipoEvento: 'creacion',
+      entidad: 'Producto / Artículo de Almacén',
+      entidadId: creado.sku,
+      detalle: `Alta de nuevo producto en catálogo maestro: ${creado.sku} - ${creado.nombre || creado.descripcionCorta || ''}`,
+    });
+
     return NextResponse.json({ exito: true, datos: creado }, { status: 201 });
   } catch (error) {
     return manejarErrorApi(error);
   }
 }
-

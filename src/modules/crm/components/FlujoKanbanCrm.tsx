@@ -317,6 +317,69 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
     ],
   });
 
+  // Cargar desde MongoDB (bitacora_crm_promesas) el historial real de movimientos del folio seleccionado
+  useEffect(() => {
+    if (!selectedFolio) return;
+    let cancelado = false;
+
+    fetch(`/api/crm/bitacora-promesas?folio=${encodeURIComponent(selectedFolio)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then(
+        (
+          json: {
+            exito?: boolean;
+            datos?: Array<{
+              id: string;
+              autor: string;
+              rolEtiqueta?: string;
+              iniciales: string;
+              horaEtiqueta: string;
+              titulo?: string;
+              texto: string;
+              esBot?: boolean;
+              tipo: AuditLogEntry['kind'];
+              campoEtiqueta?: string;
+              valorAnterior?: string;
+              valorNuevo?: string;
+            }>;
+          } | null
+        ) => {
+          if (cancelado || !json?.exito || !Array.isArray(json.datos) || json.datos.length === 0) {
+            return;
+          }
+          const remotos: AuditLogEntry[] = json.datos.map((d) => ({
+            id: d.id,
+            author: d.autor,
+            roleLabel: d.rolEtiqueta,
+            initials: d.iniciales,
+            time: d.horaEtiqueta,
+            title: d.titulo,
+            text: d.texto,
+            isBot: d.esBot,
+            kind: d.tipo,
+            fieldLabel: d.campoEtiqueta,
+            oldValue: d.valorAnterior,
+            newValue: d.valorNuevo,
+          }));
+
+          setChatterLogsByFolio((prev) => {
+            const actuales = prev[selectedFolio] || [];
+            const idsRemotos = new Set(remotos.map((r) => r.id));
+            const localesSinDuplicar = actuales.filter((a) => !idsRemotos.has(a.id));
+            return {
+              ...prev,
+              [selectedFolio]: [...remotos, ...localesSinDuplicar],
+            };
+          });
+        }
+      )
+      .catch(() => {});
+
+    return () => {
+      cancelado = true;
+    };
+  }, [selectedFolio]);
+
   const recordAuditMovement = (
     folio: string,
     entry: Omit<AuditLogEntry, 'id' | 'time' | 'author' | 'initials' | 'roleLabel'> & {
@@ -329,8 +392,9 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
       hour: '2-digit',
       minute: '2-digit',
     });
+    const generatedId = `audit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const newEntry: AuditLogEntry = {
-      id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      id: generatedId,
       author: entry.author || 'Ing. Carlos Rodríguez',
       roleLabel: entry.roleLabel || 'Director Comercial & CRM',
       initials: entry.initials || 'CR',
@@ -361,6 +425,39 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
         [folio]: [newEntry, ...existing],
       };
     });
+
+    // Obtener nombre y cliente de la promesa/oportunidad para guardarlos siempre en MongoDB
+    const oppMeta = opportunities.find((o) => o.folio === folio);
+    const nombrePromesa = oppMeta?.title;
+    const clientePromesa = oppMeta?.client;
+
+    // Persistir movimiento en MongoDB Atlas -> BitacoraSifigsa.bitacora_crm_promesas
+    void fetch('/api/crm/bitacora-promesas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: generatedId,
+        folio,
+        nombrePromesa,
+        clientePromesa,
+        tipo: entry.kind,
+        titulo: entry.title,
+        campoEtiqueta: entry.fieldLabel,
+        valorAnterior: entry.oldValue,
+        valorNuevo: entry.newValue,
+        texto: entry.text,
+        esBot: entry.isBot,
+      }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const detail = await res.text().catch(() => '');
+          console.warn('[CRM Bitácora MongoDB] Error al guardar movimiento:', res.status, detail);
+        }
+      })
+      .catch((err) => {
+        console.warn('[CRM Bitácora MongoDB] Error de red:', err);
+      });
   };
 
   // Calendar states (dentro de CRM con Kanban, Lista, Gráfica, etc.)
@@ -522,9 +619,9 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
     setModalTagCode(
       cleanName
         ? cleanName
-            .replace(/[^a-zA-Z0-9]/g, '')
-            .slice(0, 3)
-            .toUpperCase()
+          .replace(/[^a-zA-Z0-9]/g, '')
+          .slice(0, 3)
+          .toUpperCase()
         : ''
     );
     setModalContactName('');
@@ -629,6 +726,16 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
     };
     setOpportunities((prev) => [created, ...prev]);
 
+    // Registrar inmediatamente la creación de la nueva promesa en MongoDB (bitacora_crm_promesas y bitacora_general)
+    recordAuditMovement(created.folio, {
+      kind: 'movement',
+      title: 'Creación de nueva promesa comercial',
+      fieldLabel: 'Alta de Oportunidad',
+      oldValue: 'Sin registro',
+      newValue: `${created.stage} (${created.amountFormatted} MXN)`,
+      text: `Nueva promesa creada para ${created.client}: "${created.title}".`,
+    });
+
     // Update or add client stats in registeredClients
     const existingClient = registeredClients.find(
       (c) => c.companyName.toLowerCase() === resolvedClientName.toLowerCase()
@@ -638,10 +745,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
         registeredClients.map((c) =>
           c.id === existingClient.id
             ? {
-                ...c,
-                activeOppsCount: c.activeOppsCount + 1,
-                totalPipelineAmount: c.totalPipelineAmount + numericAmount,
-              }
+              ...c,
+              activeOppsCount: c.activeOppsCount + 1,
+              totalPipelineAmount: c.totalPipelineAmount + numericAmount,
+            }
             : c
         )
       );
@@ -878,15 +985,15 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                   {viewMode === 'contacts'
                     ? 'Contactos y Clientes'
                     : viewMode === 'graph'
-                    ? 'Análisis de Flujo'
-                    : 'Flujo'}
+                      ? 'Análisis de Flujo'
+                      : 'Flujo'}
                 </h1>
                 <span className="hidden lg:inline-flex font-mono text-[11px] bg-surface-container-high text-on-surface-variant px-2 py-0.5 rounded font-medium truncate">
                   {viewMode === 'contacts'
                     ? `${registeredClients.length} empresas registradas`
                     : viewMode === 'calendar'
-                    ? 'Calendario de Promesas y Oportunidades'
-                    : 'Pipeline Industrial Q4-2026'}
+                      ? 'Calendario de Promesas y Oportunidades'
+                      : 'Pipeline Industrial Q4-2026'}
                 </span>
               </div>
             </div>
@@ -936,11 +1043,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 <button
                   type="button"
                   onClick={() => switchView('kanban')}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                    viewMode === 'kanban'
-                      ? 'bg-primary-container text-on-primary shadow-sm'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
-                  }`}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${viewMode === 'kanban'
+                    ? 'bg-primary-container text-on-primary shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
+                    }`}
                   title="Vista Kanban"
                 >
                   <span className="material-symbols-outlined text-[16px]">
@@ -951,11 +1057,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 <button
                   type="button"
                   onClick={() => switchView('list')}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
-                    viewMode === 'list'
-                      ? 'bg-primary-container text-on-primary font-semibold shadow-sm'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
-                  }`}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${viewMode === 'list'
+                    ? 'bg-primary-container text-on-primary font-semibold shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
+                    }`}
                   title="Vista Lista"
                 >
                   <span className="material-symbols-outlined text-[16px]">
@@ -966,11 +1071,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 <button
                   type="button"
                   onClick={() => switchView('calendar')}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
-                    viewMode === 'calendar'
-                      ? 'bg-primary-container text-on-primary font-semibold shadow-sm'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
-                  }`}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${viewMode === 'calendar'
+                    ? 'bg-primary-container text-on-primary font-semibold shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
+                    }`}
                   title="Vista Calendario"
                 >
                   <span className="material-symbols-outlined text-[16px]">
@@ -981,11 +1085,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 <button
                   type="button"
                   onClick={() => switchView('pivot')}
-                  className={`p-1.5 rounded-md transition-all cursor-pointer ${
-                    viewMode === 'pivot'
-                      ? 'bg-primary-container text-on-primary shadow-sm'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
-                  }`}
+                  className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === 'pivot'
+                    ? 'bg-primary-container text-on-primary shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
+                    }`}
                   title="Vista Tabla Dinámica (Pivot)"
                 >
                   <span className="material-symbols-outlined text-[16px]">
@@ -995,11 +1098,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 <button
                   type="button"
                   onClick={() => switchView('graph')}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
-                    viewMode === 'graph'
-                      ? 'bg-primary-container text-on-primary font-semibold shadow-sm'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
-                  }`}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${viewMode === 'graph'
+                    ? 'bg-primary-container text-on-primary font-semibold shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
+                    }`}
                   title="Vista Gráfica"
                 >
                   <span className="material-symbols-outlined text-[16px]">
@@ -1010,11 +1112,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 <button
                   type="button"
                   onClick={() => switchView('map')}
-                  className={`p-1.5 rounded-md transition-all cursor-pointer ${
-                    viewMode === 'map'
-                      ? 'bg-primary-container text-on-primary shadow-sm'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
-                  }`}
+                  className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === 'map'
+                    ? 'bg-primary-container text-on-primary shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
+                    }`}
                   title="Vista Mapa de Ubicaciones"
                 >
                   <span className="material-symbols-outlined text-[16px]">
@@ -1024,11 +1125,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 <button
                   type="button"
                   onClick={() => switchView('activities')}
-                  className={`p-1.5 rounded-md transition-all cursor-pointer ${
-                    viewMode === 'activities'
-                      ? 'bg-primary-container text-on-primary shadow-sm'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
-                  }`}
+                  className={`p-1.5 rounded-md transition-all cursor-pointer ${viewMode === 'activities'
+                    ? 'bg-primary-container text-on-primary shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60'
+                    }`}
                   title="Matriz de Actividades"
                 >
                   <span className="material-symbols-outlined text-[16px]">
@@ -1233,11 +1333,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                       onClick={() =>
                         setActiveQuickTag(isActive ? null : tag)
                       }
-                      className={`text-[11px] font-mono px-2 py-0.5 rounded border transition-colors cursor-pointer ${
-                        isActive
-                          ? 'bg-primary-container text-on-primary border-primary-container font-semibold'
-                          : 'bg-surface-container-low hover:bg-primary-fixed hover:text-on-primary-fixed text-on-surface-variant border-outline-variant/25'
-                      }`}
+                      className={`text-[11px] font-mono px-2 py-0.5 rounded border transition-colors cursor-pointer ${isActive
+                        ? 'bg-primary-container text-on-primary border-primary-container font-semibold'
+                        : 'bg-surface-container-low hover:bg-primary-fixed hover:text-on-primary-fixed text-on-surface-variant border-outline-variant/25'
+                        }`}
                     >
                       {tag}
                     </button>
@@ -1293,39 +1392,35 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 <div
                   key={stage.id}
                   data-kanban-stage={stage.name}
-                  className={`w-[326px] flex flex-col rounded-xl p-3.5 transition-all duration-200 ${
-                    isDropTarget
-                      ? 'bg-primary-fixed/20 border-2 border-primary/60 ring-4 ring-primary/10 shadow-lg'
-                      : 'bg-surface-container-low/85 border border-outline-variant/35 shadow-sm'
-                  }`}
+                  className={`w-[326px] flex flex-col rounded-xl p-3.5 transition-all duration-200 ${isDropTarget
+                    ? 'bg-primary-fixed/20 border-2 border-primary/60 ring-4 ring-primary/10 shadow-lg'
+                    : 'bg-surface-container-low/85 border border-outline-variant/35 shadow-sm'
+                    }`}
                 >
                   {/* Column Header */}
                   <div className="px-1.5 pt-0.5 pb-3 border-b border-outline-variant/25 flex flex-col gap-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span
-                          className={`w-2.5 h-2.5 rounded-full transition-transform ${
-                            isDropTarget ? 'scale-125' : ''
-                          }`}
+                          className={`w-2.5 h-2.5 rounded-full transition-transform ${isDropTarget ? 'scale-125' : ''
+                            }`}
                           style={{ backgroundColor: stage.accentColor }}
                         />
                         <h2
-                          className={`font-semibold text-sm transition-colors ${
-                            isDropTarget
-                              ? 'text-primary font-bold'
-                              : 'text-on-surface'
-                          }`}
+                          className={`font-semibold text-sm transition-colors ${isDropTarget
+                            ? 'text-primary font-bold'
+                            : 'text-on-surface'
+                            }`}
                         >
                           {stage.name}
                         </h2>
                         <span
-                          className={`font-mono text-xs font-semibold px-2 py-0.5 rounded-full transition-colors ${
-                            isDropTarget
-                              ? 'bg-primary text-on-primary'
-                              : stage.isWon
+                          className={`font-mono text-xs font-semibold px-2 py-0.5 rounded-full transition-colors ${isDropTarget
+                            ? 'bg-primary text-on-primary'
+                            : stage.isWon
                               ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                               : 'bg-surface-container-highest text-on-surface-variant'
-                          }`}
+                            }`}
                         >
                           {rawStageOpps.length}
                         </span>
@@ -1362,13 +1457,12 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                         Suma Total:
                       </span>
                       <span
-                        className={`font-mono font-semibold ${
-                          isDropTarget
-                            ? 'text-primary font-bold'
-                            : stage.isWon
+                        className={`font-mono font-semibold ${isDropTarget
+                          ? 'text-primary font-bold'
+                          : stage.isWon
                             ? 'text-emerald-600 dark:text-emerald-400 font-bold'
                             : 'text-on-surface'
-                        }`}
+                          }`}
                       >
                         ${totalAmount.toLocaleString('es-MX')} MXN
                       </span>
@@ -1596,13 +1690,12 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                           <div
                             data-kanban-card={opp.folio}
                             onPointerDown={(e) => handleCardPointerDown(e, opp)}
-                            className={`kanban-card-draggable bg-surface-container-lowest p-4 rounded-xl border cursor-grab active:cursor-grabbing group flex flex-col gap-2.5 touch-none ${
-                              isJustDropped
-                                ? 'kanban-card-landed border-2 border-primary shadow-md'
-                                : stage.isWon
+                            className={`kanban-card-draggable bg-surface-container-lowest p-4 rounded-xl border cursor-grab active:cursor-grabbing group flex flex-col gap-2.5 touch-none ${isJustDropped
+                              ? 'kanban-card-landed border-2 border-primary shadow-md'
+                              : stage.isWon
                                 ? 'border-emerald-500/35 shadow-sm hover:shadow-md hover:border-emerald-500/60'
                                 : 'border-outline-variant/35 shadow-sm hover:shadow-md hover:border-primary/45'
-                            }`}
+                              }`}
                           >
                             {/* Top row: Drag Handle + Folio + Stars/Won Badge + Quick Stage Arrows */}
                             <div className="flex items-center justify-between gap-1">
@@ -1665,11 +1758,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                                     {[1, 2, 3].map((starIdx) => (
                                       <span
                                         key={starIdx}
-                                        className={`material-symbols-outlined text-[15px] ${
-                                          starIdx <= opp.stars
-                                            ? 'text-amber-400'
-                                            : 'text-outline-variant'
-                                        }`}
+                                        className={`material-symbols-outlined text-[15px] ${starIdx <= opp.stars
+                                          ? 'text-amber-400'
+                                          : 'text-outline-variant'
+                                          }`}
                                         style={{
                                           fontVariationSettings:
                                             starIdx <= opp.stars
@@ -1688,11 +1780,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                             {/* Client Row */}
                             <div className="flex items-center gap-1.5">
                               <span
-                                className={`w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center shrink-0 ${
-                                  opp.tagDanger
-                                    ? 'bg-red-500/15 text-red-600 dark:text-red-400'
-                                    : 'bg-surface-container-high text-on-surface-variant'
-                                }`}
+                                className={`w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center shrink-0 ${opp.tagDanger
+                                  ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+                                  : 'bg-surface-container-high text-on-surface-variant'
+                                  }`}
                               >
                                 {opp.tagCode}
                               </span>
@@ -1716,11 +1807,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                                   </span>
                                 </span>
                                 <span
-                                  className={`font-mono text-xs font-semibold ${
-                                    opp.probability === 100
-                                      ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-                                      : 'text-primary'
-                                  }`}
+                                  className={`font-mono text-xs font-semibold ${opp.probability === 100
+                                    ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                                    : 'text-primary'
+                                    }`}
                                 >
                                   {opp.probability}%
                                 </span>
@@ -1763,22 +1853,20 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                             {/* Card Footer: Activity SLA + Owner Avatar */}
                             <div className="pt-2 mt-1 border-t border-outline-variant/25 flex items-center justify-between">
                               <div
-                                className={`flex items-center gap-1.5 text-[11px] font-medium ${
-                                  opp.statusType === 'overdue'
-                                    ? 'text-error font-semibold'
-                                    : opp.statusType === 'today'
+                                className={`flex items-center gap-1.5 text-[11px] font-medium ${opp.statusType === 'overdue'
+                                  ? 'text-error font-semibold'
+                                  : opp.statusType === 'today'
                                     ? 'text-amber-600 dark:text-amber-400'
                                     : 'text-emerald-600 dark:text-emerald-400'
-                                }`}
+                                  }`}
                               >
                                 <span
-                                  className={`w-2 h-2 rounded-full ${
-                                    opp.statusType === 'overdue'
-                                      ? 'bg-error animate-pulse'
-                                      : opp.statusType === 'today'
+                                  className={`w-2 h-2 rounded-full ${opp.statusType === 'overdue'
+                                    ? 'bg-error animate-pulse'
+                                    : opp.statusType === 'today'
                                       ? 'bg-amber-500'
                                       : 'bg-emerald-500'
-                                  }`}
+                                    }`}
                                 />
                                 <span>{opp.statusText}</span>
                               </div>
@@ -1797,11 +1885,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
 
                   {/* Column Footer Weighted Total */}
                   <div
-                    className={`pt-2.5 px-1.5 border-t flex items-center justify-between text-[11px] transition-colors ${
-                      isDropTarget
-                        ? 'border-primary/30 text-primary font-semibold'
-                        : 'border-outline-variant/25 text-outline'
-                    }`}
+                    className={`pt-2.5 px-1.5 border-t flex items-center justify-between text-[11px] transition-colors ${isDropTarget
+                      ? 'border-primary/30 text-primary font-semibold'
+                      : 'border-outline-variant/25 text-outline'
+                      }`}
                   >
                     <span>{stage.weightedLabel}</span>
                     <span className="font-mono font-bold">
@@ -2006,13 +2093,12 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-                            opp.probability === 100
-                              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
-                              : opp.probability >= 60
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${opp.probability === 100
+                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                            : opp.probability >= 60
                               ? 'bg-primary-fixed text-on-primary-fixed'
                               : 'bg-surface-container-high text-on-surface-variant'
-                          }`}
+                            }`}
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-current" />
                           {opp.stage}
@@ -2099,11 +2185,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                     key={sc}
                     type="button"
                     onClick={() => setCalendarScale(sc)}
-                    className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
-                      calendarScale === sc
-                        ? 'bg-primary-container text-on-primary font-semibold'
-                        : 'text-on-surface-variant hover:text-on-surface'
-                    }`}
+                    className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${calendarScale === sc
+                      ? 'bg-primary-container text-on-primary font-semibold'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                      }`}
                   >
                     {sc}
                   </button>
@@ -2147,23 +2232,20 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 ].map((d) => (
                   <div
                     key={d.num}
-                    className={`py-2 px-3 text-center border-r border-outline-variant/20 flex flex-col items-center justify-center ${
-                      d.active ? 'bg-primary-fixed/15' : ''
-                    }`}
+                    className={`py-2 px-3 text-center border-r border-outline-variant/20 flex flex-col items-center justify-center ${d.active ? 'bg-primary-fixed/15' : ''
+                      }`}
                   >
                     <span
-                      className={`text-[10px] font-bold uppercase tracking-wider ${
-                        d.active ? 'text-primary' : 'text-on-surface-variant'
-                      }`}
+                      className={`text-[10px] font-bold uppercase tracking-wider ${d.active ? 'text-primary' : 'text-on-surface-variant'
+                        }`}
                     >
                       {d.label}
                     </span>
                     <span
-                      className={`mt-0.5 w-7 h-7 rounded-full flex items-center justify-center font-mono text-sm font-bold ${
-                        d.active
-                          ? 'bg-error text-on-error shadow-sm'
-                          : 'text-on-surface'
-                      }`}
+                      className={`mt-0.5 w-7 h-7 rounded-full flex items-center justify-center font-mono text-sm font-bold ${d.active
+                        ? 'bg-error text-on-error shadow-sm'
+                        : 'text-on-surface'
+                        }`}
                     >
                       {d.num}
                     </span>
@@ -2208,13 +2290,12 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                     <div
                       key={dayIdx}
                       onClick={() => setShowSchedulePopover(true)}
-                      className={`relative border-r border-outline-variant/20 ${
-                        dayIdx === 2
-                          ? 'bg-primary-fixed/5'
-                          : dayIdx >= 5
+                      className={`relative border-r border-outline-variant/20 ${dayIdx === 2
+                        ? 'bg-primary-fixed/5'
+                        : dayIdx >= 5
                           ? 'bg-surface-container-low/35'
                           : ''
-                      }`}
+                        }`}
                     >
                       {/* Líneas horizontales cada hora */}
                       {Array.from({ length: 13 }).map((_, idx) => (
@@ -2409,13 +2490,12 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                   {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => (
                     <span
                       key={day}
-                      className={`py-1 rounded-full cursor-pointer ${
-                        day === 11
-                          ? 'bg-error text-on-error font-bold'
-                          : day >= 9 && day <= 15
+                      className={`py-1 rounded-full cursor-pointer ${day === 11
+                        ? 'bg-error text-on-error font-bold'
+                        : day >= 9 && day <= 15
                           ? 'bg-primary-fixed text-on-primary-fixed font-semibold'
                           : 'text-on-surface hover:bg-surface-container-high'
-                      }`}
+                        }`}
                     >
                       {day}
                     </span>
@@ -2528,11 +2608,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 <button
                   type="button"
                   onClick={() => setGraphType('bar')}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer ${
-                    graphType === 'bar'
-                      ? 'bg-primary-container text-on-primary font-semibold'
-                      : 'text-on-surface-variant hover:text-on-surface'
-                  }`}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer ${graphType === 'bar'
+                    ? 'bg-primary-container text-on-primary font-semibold'
+                    : 'text-on-surface-variant hover:text-on-surface'
+                    }`}
                 >
                   <span className="material-symbols-outlined text-[16px]">
                     bar_chart
@@ -2542,11 +2621,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 <button
                   type="button"
                   onClick={() => setGraphType('line')}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer ${
-                    graphType === 'line'
-                      ? 'bg-primary-container text-on-primary font-semibold'
-                      : 'text-on-surface-variant hover:text-on-surface'
-                  }`}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer ${graphType === 'line'
+                    ? 'bg-primary-container text-on-primary font-semibold'
+                    : 'text-on-surface-variant hover:text-on-surface'
+                    }`}
                 >
                   <span className="material-symbols-outlined text-[16px]">
                     show_chart
@@ -2556,11 +2634,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                 <button
                   type="button"
                   onClick={() => setGraphType('pie')}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer ${
-                    graphType === 'pie'
-                      ? 'bg-primary-container text-on-primary font-semibold'
-                      : 'text-on-surface-variant hover:text-on-surface'
-                  }`}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer ${graphType === 'pie'
+                    ? 'bg-primary-container text-on-primary font-semibold'
+                    : 'text-on-surface-variant hover:text-on-surface'
+                    }`}
                 >
                   <span className="material-symbols-outlined text-[16px]">
                     pie_chart
@@ -2575,11 +2652,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsStacked((v) => !v)}
-                    className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border cursor-pointer ${
-                      isStacked
-                        ? 'bg-primary-fixed text-on-primary-fixed border-primary/30 font-semibold'
-                        : 'bg-surface-container-low text-on-surface-variant border-outline-variant/30'
-                    }`}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border cursor-pointer ${isStacked
+                      ? 'bg-primary-fixed text-on-primary-fixed border-primary/30 font-semibold'
+                      : 'bg-surface-container-low text-on-surface-variant border-outline-variant/30'
+                      }`}
                   >
                     Apilado
                   </button>
@@ -2587,11 +2663,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsCumulative((v) => !v)}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border cursor-pointer ${
-                        isCumulative
-                          ? 'bg-primary-fixed text-on-primary-fixed border-primary/30 font-semibold'
-                          : 'bg-surface-container-low text-on-surface-variant border-outline-variant/30'
-                      }`}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border cursor-pointer ${isCumulative
+                        ? 'bg-primary-fixed text-on-primary-fixed border-primary/30 font-semibold'
+                        : 'bg-surface-container-low text-on-surface-variant border-outline-variant/30'
+                        }`}
                     >
                       Acumulativo
                     </button>
@@ -2677,9 +2752,8 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                         <div
                           className="w-full bg-primary rounded-b-md transition-all"
                           style={{
-                            height: `${
-                              isStacked ? Math.round(heightPct * 0.65) : heightPct
-                            }%`,
+                            height: `${isStacked ? Math.round(heightPct * 0.65) : heightPct
+                              }%`,
                           }}
                         />
                       </div>
@@ -3341,11 +3415,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                         );
                         setEditDraftProb(String(st.probability));
                       }}
-                      className={`px-3 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                        isCurrent
-                          ? 'bg-primary-container text-on-primary shadow-sm'
-                          : 'text-on-surface-variant hover:text-on-surface'
-                      }`}
+                      className={`px-3 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${isCurrent
+                        ? 'bg-primary-container text-on-primary shadow-sm'
+                        : 'text-on-surface-variant hover:text-on-surface'
+                        }`}
                     >
                       <span>{st.name}</span>
                       {isCurrent && (
@@ -3572,10 +3645,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                       {!registeredClients.some(
                         (c) => c.companyName === selectedOpportunity.client
                       ) && (
-                        <option value={selectedOpportunity.client}>
-                          {selectedOpportunity.client}
-                        </option>
-                      )}
+                          <option value={selectedOpportunity.client}>
+                            {selectedOpportunity.client}
+                          </option>
+                        )}
                       {registeredClients.map((c) => (
                         <option key={c.id} value={c.companyName}>
                           {c.contactName} — {c.companyName}
@@ -3831,11 +3904,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                         onClick={() =>
                           setDetailTab(tb.id as 'notas' | 'info' | 'lead')
                         }
-                        className={`pb-2 font-semibold transition-colors cursor-pointer ${
-                          detailTab === tb.id
-                            ? 'border-b-2 border-primary text-primary'
-                            : 'text-on-surface-variant hover:text-on-surface'
-                        }`}
+                        className={`pb-2 font-semibold transition-colors cursor-pointer ${detailTab === tb.id
+                          ? 'border-b-2 border-primary text-primary'
+                          : 'text-on-surface-variant hover:text-on-surface'
+                          }`}
                       >
                         {tb.label}
                       </button>
@@ -3962,11 +4034,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                       setChatterTab('movimientos');
                       setChatterFilter('movimientos');
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer flex items-center gap-1 ${
-                      chatterTab === 'movimientos'
-                        ? 'bg-primary-container text-on-primary shadow-sm'
-                        : 'bg-surface-container-low text-on-surface-variant'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer flex items-center gap-1 ${chatterTab === 'movimientos'
+                      ? 'bg-primary-container text-on-primary shadow-sm'
+                      : 'bg-surface-container-low text-on-surface-variant'
+                      }`}
                   >
                     <span className="material-symbols-outlined text-[15px]">history</span>
                     <span>Checador de Movimientos</span>
@@ -3977,11 +4048,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                       setChatterTab('nota');
                       setChatterFilter('todos');
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
-                      chatterTab === 'nota'
-                        ? 'bg-primary-container text-on-primary shadow-sm'
-                        : 'bg-surface-container-low text-on-surface-variant'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${chatterTab === 'nota'
+                      ? 'bg-primary-container text-on-primary shadow-sm'
+                      : 'bg-surface-container-low text-on-surface-variant'
+                      }`}
                   >
                     Registrar nota
                   </button>
@@ -3991,11 +4061,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                       setChatterTab('mensaje');
                       setChatterFilter('todos');
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
-                      chatterTab === 'mensaje'
-                        ? 'bg-primary-container text-on-primary shadow-sm'
-                        : 'bg-surface-container-low text-on-surface-variant'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${chatterTab === 'mensaje'
+                      ? 'bg-primary-container text-on-primary shadow-sm'
+                      : 'bg-surface-container-low text-on-surface-variant'
+                      }`}
                   >
                     Mensaje
                   </button>
@@ -4005,11 +4074,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                       setChatterTab('actividad');
                       setChatterFilter('todos');
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
-                      chatterTab === 'actividad'
-                        ? 'bg-primary-container text-on-primary shadow-sm'
-                        : 'bg-surface-container-low text-on-surface-variant'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${chatterTab === 'actividad'
+                      ? 'bg-primary-container text-on-primary shadow-sm'
+                      : 'bg-surface-container-low text-on-surface-variant'
+                      }`}
                   >
                     Actividad
                   </button>
@@ -4030,10 +4098,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                     chatterTab === 'movimientos'
                       ? 'Registrar observación de auditoría o justificación de movimiento...'
                       : chatterTab === 'mensaje'
-                      ? 'Escribe un mensaje para el cliente...'
-                      : chatterTab === 'nota'
-                      ? 'Registrar una nota interna técnica para el equipo SIFYGSA...'
-                      : 'Describir la próxima actividad de seguimiento...'
+                        ? 'Escribe un mensaje para el cliente...'
+                        : chatterTab === 'nota'
+                          ? 'Registrar una nota interna técnica para el equipo SIFYGSA...'
+                          : 'Describir la próxima actividad de seguimiento...'
                   }
                   className="w-full bg-transparent text-xs text-on-surface placeholder:text-outline focus:outline-none resize-none"
                 />
@@ -4044,17 +4112,16 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                         key={flt}
                         type="button"
                         onClick={() => setChatterFilter(flt)}
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase cursor-pointer ${
-                          chatterFilter === flt
-                            ? 'bg-primary-fixed text-on-primary-fixed'
-                            : 'text-on-surface-variant hover:text-on-surface'
-                        }`}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase cursor-pointer ${chatterFilter === flt
+                          ? 'bg-primary-fixed text-on-primary-fixed'
+                          : 'text-on-surface-variant hover:text-on-surface'
+                          }`}
                       >
                         {flt === 'todos'
                           ? 'Todo'
                           : flt === 'movimientos'
-                          ? 'Solo Movimientos'
-                          : 'Notas'}
+                            ? 'Solo Movimientos'
+                            : 'Notas'}
                       </button>
                     ))}
                   </div>
@@ -4067,16 +4134,16 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                           chatterTab === 'movimientos'
                             ? 'movement'
                             : chatterTab === 'mensaje'
-                            ? 'message'
-                            : chatterTab === 'actividad'
-                            ? 'activity'
-                            : 'note',
+                              ? 'message'
+                              : chatterTab === 'actividad'
+                                ? 'activity'
+                                : 'note',
                         title:
                           chatterTab === 'movimientos'
                             ? 'Bitácora de Movimiento Manual'
                             : chatterTab === 'actividad'
-                            ? 'Actividad Programada'
-                            : 'Nota Técnica Registrada',
+                              ? 'Actividad Programada'
+                              : 'Nota Técnica Registrada',
                         text: chatterInput.trim(),
                       });
                       setChatterInput('');
@@ -4128,24 +4195,22 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                   .map((item) => (
                     <div
                       key={item.id}
-                      className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs transition-all ${
-                        item.kind === 'movement'
-                          ? 'bg-primary-fixed/15 border-primary/30'
-                          : item.kind === 'modification'
+                      className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs transition-all ${item.kind === 'movement'
+                        ? 'bg-primary-fixed/15 border-primary/30'
+                        : item.kind === 'modification'
                           ? 'bg-amber-500/10 border-amber-500/30'
                           : 'bg-surface-container-low/60 border-outline-variant/20'
-                      }`}
+                        }`}
                     >
                       <div
-                        className={`w-8 h-8 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0 ${
-                          item.isBot
-                            ? 'bg-secondary text-on-secondary'
-                            : item.kind === 'movement'
+                        className={`w-8 h-8 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0 ${item.isBot
+                          ? 'bg-secondary text-on-secondary'
+                          : item.kind === 'movement'
                             ? 'bg-primary text-on-primary'
                             : item.kind === 'modification'
-                            ? 'bg-amber-600 text-white'
-                            : 'bg-primary-container text-on-primary'
-                        }`}
+                              ? 'bg-amber-600 text-white'
+                              : 'bg-primary-container text-on-primary'
+                          }`}
                       >
                         {item.initials}
                       </div>
@@ -4170,19 +4235,18 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                         {item.title && (
                           <div className="flex items-center gap-1.5">
                             <span
-                              className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${
-                                item.kind === 'movement'
-                                  ? 'bg-primary text-on-primary'
-                                  : item.kind === 'modification'
+                              className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${item.kind === 'movement'
+                                ? 'bg-primary text-on-primary'
+                                : item.kind === 'modification'
                                   ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300'
                                   : 'bg-surface-container-high text-on-surface-variant'
-                              }`}
+                                }`}
                             >
                               {item.kind === 'movement'
                                 ? 'MOVIMIENTO'
                                 : item.kind === 'modification'
-                                ? 'MODIFICACIÓN'
-                                : 'BITÁCORA'}
+                                  ? 'MODIFICACIÓN'
+                                  : 'BITÁCORA'}
                             </span>
                             <span className="font-bold text-on-surface">
                               {item.title}
@@ -4310,11 +4374,10 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
                   key={z}
                   type="button"
                   onClick={() => setContactZoneFilter(z)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                    contactZoneFilter === z
-                      ? 'bg-primary text-on-primary'
-                      : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface'
-                  }`}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${contactZoneFilter === z
+                    ? 'bg-primary text-on-primary'
+                    : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface'
+                    }`}
                 >
                   {z}
                 </button>

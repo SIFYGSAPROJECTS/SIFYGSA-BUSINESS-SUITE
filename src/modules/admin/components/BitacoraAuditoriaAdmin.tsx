@@ -30,6 +30,7 @@ export const BitacoraAuditoriaAdmin: React.FC<PropiedadesBitacoraAuditoriaAdmin>
   const [tipoEvento, setTipoEvento] = useState<TipoEventoAuditoria | 'todos'>('todos');
   const [busqueda, setBusqueda] = useState('');
   const [cargando, setCargando] = useState(false);
+  const [origenDatos, setOrigenDatos] = useState<'mongodb' | 'json'>('mongodb');
 
   const consultarAuditoria = async (opciones: {
     nuevaPagina: number;
@@ -50,10 +51,12 @@ export const BitacoraAuditoriaAdmin: React.FC<PropiedadesBitacoraAuditoriaAdmin>
       const json = (await res.json()) as {
         exito: boolean;
         datos?: EventoAuditoria[];
+        origen?: 'mongodb' | 'json';
         paginacion?: { total: number; totalPaginas: number };
       };
       if (json.exito && json.datos) {
         setEventos(json.datos);
+        if (json.origen) setOrigenDatos(json.origen);
         setTotal(json.paginacion?.total ?? json.datos.length);
         setTotalPaginas(json.paginacion?.totalPaginas ?? 1);
       }
@@ -154,7 +157,9 @@ export const BitacoraAuditoriaAdmin: React.FC<PropiedadesBitacoraAuditoriaAdmin>
         </div>
 
         <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', alignSelf: 'center' }}>
-          {cargando ? 'Actualizando...' : `${total} registros en data/auditoria.json`}
+          {cargando
+            ? 'Actualizando...'
+            : `${total} registros en ${origenDatos === 'mongodb' ? 'MongoDB (bitacora_general)' : 'data/auditoria.json'}`}
         </span>
       </div>
 

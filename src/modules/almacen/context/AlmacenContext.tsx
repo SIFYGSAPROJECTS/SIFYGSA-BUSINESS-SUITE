@@ -1005,10 +1005,32 @@ export const AlmacenProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const registrarArticulo = (art: Articulo) => {
     dispatch({ type: 'REGISTRAR_ARTICULO', payload: art });
+    void fetch('/api/admin/auditoria', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        modulo: 'almacen',
+        tipoEvento: 'creacion',
+        entidad: 'Producto / Artículo de Almacén',
+        entidadId: art.sku,
+        detalle: `Alta de nuevo producto en almacén: ${art.sku} - ${art.descripcionCorta || art.nombre}`,
+      }),
+    }).catch(() => {});
   };
 
   const actualizarArticulo = (art: Articulo) => {
     dispatch({ type: 'ACTUALIZAR_ARTICULO', payload: art });
+    void fetch('/api/admin/auditoria', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        modulo: 'almacen',
+        tipoEvento: 'actualizacion',
+        entidad: 'Producto / Artículo de Almacén',
+        entidadId: art.sku,
+        detalle: `Actualización de datos técnicos del producto: ${art.sku} - ${art.descripcionCorta || art.nombre}`,
+      }),
+    }).catch(() => {});
   };
 
   const toggleEstatusArticulo = (
