@@ -2,10 +2,19 @@
   "name": "sfgbusinessuit",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20.11.0"
+  },
   "scripts": {
+    "setup": "node scripts/setup.mjs",
     "dev": "next dev",
     "dev:backend": "npm run start:dev --prefix backend",
     "dev:all": "node scripts/dev-all.mjs",
+    "docker:up": "docker compose up --build",
+    "docker:up:bg": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "docker:mongo": "docker compose up -d mongo",
+    "docker:logs": "docker compose logs -f",
     "build": "next build",
     "build:backend": "npm run build --prefix backend",
     "build:client": "next build",

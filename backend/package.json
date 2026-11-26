@@ -3,6 +3,9 @@
   "version": "4.0.0",
   "description": "Backend empresarial escalable en NestJS para SIFYGSA Business Suite (Auth, Admin, CRM, Requisiciones, Compras, Almacén, RRHH, MongoDB Atlas & PostgreSQL)",
   "private": true,
+  "engines": {
+    "node": ">=20.11.0"
+  },
   "scripts": {
     "build": "nest build",
     "start": "nest start",

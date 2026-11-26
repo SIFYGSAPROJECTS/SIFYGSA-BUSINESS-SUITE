@@ -50,7 +50,7 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   const port = Number(process.env.BACKEND_PORT || process.env.PORT || 4000);
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   logger.log(`Backend NestJS operativo en http://localhost:${port}/api`);
   logger.log(`Documentación Swagger disponible en http://localhost:${port}/api/docs`);
