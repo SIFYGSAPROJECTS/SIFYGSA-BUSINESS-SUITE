@@ -4,72 +4,176 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAlmacen } from '../context/AlmacenContext';
 import type {
+  AdjuntoMantenimiento,
+  EstatusSemaforoMantenimiento,
+  FrecuenciaMantenimiento,
   MantenimientoArticulo,
   TipoMantenimiento,
 } from '../types';
 import '../almacen.css';
 
-export default function MantenimientoArticulosPage() {
+interface MantenimientoArticulosPageProps {
+  puedeGestionar?: boolean;
+  usuarioActual?: string;
+}
+
+const FRECUENCIAS: FrecuenciaMantenimiento[] = [
+  'Única',
+  'Mensual',
+  'Trimestral',
+  'Semestral',
+  'Anual',
+  'Por horas / uso',
+];
+
+const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+function calcularEstatusSemaforo(
+  m: MantenimientoArticulo,
+  hoyStr: string,
+  limite30Str: string
+): EstatusSemaforoMantenimiento {
+  if (m.estado === 'Baja Definitiva / Irreparable') return 'Baja';
+  if (m.estado === 'Completado / Listo para Reingreso') return 'Al día';
+  const fechaObjetivo = m.fechaProgramada || m.fechaEstimadaRetorno;
+  if (m.estado === 'En Proceso' || m.estado === 'Pendiente / En Diagnóstico') {
+    if (fechaObjetivo && fechaObjetivo < hoyStr) return 'Vencido';
+    return 'En servicio';
+  }
+  if (fechaObjetivo && fechaObjetivo < hoyStr) return 'Vencido';
+  if (fechaObjetivo && fechaObjetivo <= limite30Str) return 'Por vencer';
+  return 'Al día';
+}
+
+function obtenerChipSemaforo(estatus: EstatusSemaforoMantenimiento) {
+  switch (estatus) {
+    case 'Al día':
+      return {
+        bg: 'rgba(16, 185, 129, 0.14)',
+        color: '#10b981',
+        border: 'rgba(16, 185, 129, 0.35)',
+        icon: 'check_circle',
+      };
+    case 'Por vencer':
+      return {
+        bg: 'rgba(245, 158, 11, 0.14)',
+        color: '#f59e0b',
+        border: 'rgba(245, 158, 11, 0.35)',
+        icon: 'schedule',
+      };
+    case 'Vencido':
+      return {
+        bg: 'rgba(239, 68, 68, 0.14)',
+        color: '#ef4444',
+        border: 'rgba(239, 68, 68, 0.35)',
+        icon: 'error',
+      };
+    case 'En servicio':
+      return {
+        bg: 'rgba(139, 92, 246, 0.15)',
+        color: '#a78bfa',
+        border: 'rgba(139, 92, 246, 0.38)',
+        icon: 'build',
+      };
+    default:
+      return {
+        bg: 'rgba(100, 116, 139, 0.15)',
+        color: '#94a3b8',
+        border: 'rgba(100, 116, 139, 0.35)',
+        icon: 'block',
+      };
+  }
+}
+
+export default function MantenimientoArticulosPage({
+  puedeGestionar = true,
+  usuarioActual = 'Ing. Mateo Gómez',
+}: MantenimientoArticulosPageProps) {
   const router = useRouter();
   const {
     mantenimientos,
+    bitacoraMantenimiento,
     articulosActivos,
     articulos,
     enviarAMantenimiento,
     completarMantenimientoReingreso,
+    reprogramarMantenimiento,
     darDeBajaMantenimiento,
     mostrarToast,
   } = useAlmacen();
 
+  // Vista: Tabla o Calendario
+  const [vista, setVista] = useState<'tabla' | 'calendario'>('tabla');
+  const [mesCalendario, setMesCalendario] = useState(() => {
+    const d = new Date();
+    return { year: d.getFullYear(), month: d.getMonth() };
+  });
+
   // Filtros
   const [busqueda, setBusqueda] = useState('');
-  const [filtroEstado, setFiltroEstado] = useState<string>('todos');
+  const [filtroSemaforo, setFiltroSemaforo] = useState<string>('todos');
   const [filtroTipo, setFiltroTipo] = useState<string>('todos');
+  const [filtroCategoria, setFiltroCategoria] = useState<string>('todas');
+  const [filtroUbicacion, setFiltroUbicacion] = useState<string>('todas');
+  const [filtroResponsable, setFiltroResponsable] = useState<string>('todos');
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
 
   // Modales
   const [modalNuevoOpen, setModalNuevoOpen] = useState(false);
-  const [modalReingresoOpen, setModalReingresoOpen] = useState(false);
+  const [modalEjecucionOpen, setModalEjecucionOpen] = useState(false);
+  const [modalReprogramarOpen, setModalReprogramarOpen] = useState(false);
   const [modalBajaOpen, setModalBajaOpen] = useState(false);
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
   const [itemSeleccionado, setItemSeleccionado] = useState<MantenimientoArticulo | null>(null);
 
-  // Formulario de Envío a Mantenimiento
+  // Formulario Programar / Registrar Mantenimiento
   const [nuevoArticuloSku, setNuevoArticuloSku] = useState(articulosActivos[0]?.sku || '');
   const [nuevaCantidad, setNuevaCantidad] = useState(1);
   const [nuevoTipo, setNuevoTipo] = useState<TipoMantenimiento>('Preventivo');
-  const [nuevoResponsable, setNuevoResponsable] = useState('');
-  const [nuevaFechaRetorno, setNuevaFechaRetorno] = useState('');
-  const [nuevoDiagnostico, setNuevoDiagnostico] = useState('');
-  const [nuevoCosto, setNuevoCosto] = useState<number | ''>('');
-
-  // Formulario de Reingreso
-  const [reingresoFechaReal, setReingresoFechaReal] = useState(
+  const [modoRegistro, setModoRegistro] = useState<'programar' | 'iniciar'>('programar');
+  const [nuevaFechaProgramada, setNuevaFechaProgramada] = useState(() =>
     new Date().toISOString().slice(0, 10)
   );
-  const [reingresoCosto, setReingresoCosto] = useState<number>(0);
-  const [reingresoObservaciones, setReingresoObservaciones] = useState('');
+  const [nuevaFrecuencia, setNuevaFrecuencia] = useState<FrecuenciaMantenimiento>('Trimestral');
+  const [nuevoResponsable, setNuevoResponsable] = useState('');
+  const [nuevoCostoEstimado, setNuevoCostoEstimado] = useState<string>('');
+  const [nuevoDiagnostico, setNuevoDiagnostico] = useState('');
+  const [bloquearSalidaCorrectivo, setBloquearSalidaCorrectivo] = useState(true);
+  const [nuevosAdjuntos, setNuevosAdjuntos] = useState<AdjuntoMantenimiento[]>([]);
 
-  // Formulario de Baja
+  // Formulario Registrar Ejecución
+  const [ejecFechaReal, setEjecFechaReal] = useState(() => new Date().toISOString().slice(0, 10));
+  const [ejecTrabajo, setEjecTrabajo] = useState('');
+  const [ejecRefacciones, setEjecRefacciones] = useState('');
+  const [ejecCostoFinal, setEjecCostoFinal] = useState<string>('0');
+  const [ejecObservaciones, setEjecObservaciones] = useState('');
+  const [ejecEstatusResultante, setEjecEstatusResultante] = useState<
+    'Al día' | 'Requiere seguimiento' | 'Baja Definitiva'
+  >('Al día');
+  const [ejecAdjuntos, setEjecAdjuntos] = useState<AdjuntoMantenimiento[]>([]);
+
+  // Formulario Reprogramar / Baja
+  const [reprogramarFecha, setReprogramarFecha] = useState('');
   const [bajaMotivo, setBajaMotivo] = useState('');
 
-  // Obtener artículo seleccionado para envío
-  const articuloSeleccionado = useMemo(() => {
-    return articulos.find((a) => a.sku.toLowerCase() === nuevoArticuloSku.toLowerCase());
-  }, [articulos, nuevoArticuloSku]);
-
-  // Búsqueda en tiempo real y autocompletado en el modal de Enviar a Mantenimiento
+  // Buscador de artículo en modal Programar
   const [busquedaArticuloTexto, setBusquedaArticuloTexto] = useState('');
   const [comboboxAbierto, setComboboxAbierto] = useState(false);
   const comboboxRef = useRef<HTMLDivElement>(null);
 
-  // Sincronizar texto inicial con el artículo seleccionado al abrir el modal
+  const articuloSeleccionado = useMemo(() => {
+    return articulos.find((a) => a.sku.toLowerCase() === nuevoArticuloSku.toLowerCase());
+  }, [articulos, nuevoArticuloSku]);
+
   useEffect(() => {
     if (modalNuevoOpen && articuloSeleccionado) {
-      setBusquedaArticuloTexto(`${articuloSeleccionado.sku} - ${articuloSeleccionado.descripcionCorta || articuloSeleccionado.nombre}`);
+      setBusquedaArticuloTexto(
+        `${articuloSeleccionado.sku} - ${articuloSeleccionado.descripcionCorta || articuloSeleccionado.nombre}`
+      );
     }
   }, [modalNuevoOpen, articuloSeleccionado]);
 
-  // Cerrar lista desplegable al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (comboboxRef.current && !comboboxRef.current.contains(e.target as Node)) {
@@ -80,108 +184,246 @@ export default function MantenimientoArticulosPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filtrado reactivo en tiempo real de artículos según lo que escribe el usuario
   const articulosFiltradosBusqueda = useMemo(() => {
     const q = busquedaArticuloTexto.toLowerCase().trim();
     if (!q) return articulosActivos;
     return articulosActivos.filter((a) => {
-      const matchSku = a.sku.toLowerCase().includes(q);
-      const matchNombre = (a.nombre || '').toLowerCase().includes(q);
-      const matchDesc = (a.descripcionCorta || a.descripcion || '').toLowerCase().includes(q);
-      const matchCat = (a.categoria || '').toLowerCase().includes(q);
-      return matchSku || matchNombre || matchDesc || matchCat;
+      return (
+        a.sku.toLowerCase().includes(q) ||
+        (a.nombre || '').toLowerCase().includes(q) ||
+        (a.descripcionCorta || a.descripcion || '').toLowerCase().includes(q) ||
+        (a.categoria || '').toLowerCase().includes(q)
+      );
     });
   }, [articulosActivos, busquedaArticuloTexto]);
 
-  // KPIs
-  const hoyStr = new Date().toISOString().slice(0, 10);
+  // Fechas de referencia reales
+  const { hoyStr, limite30Str, mesActualPrefix } = useMemo(() => {
+    const hoy = new Date();
+    const hoyIso = hoy.toISOString().slice(0, 10);
+    const l30 = new Date(hoy);
+    l30.setDate(l30.getDate() + 30);
+    return {
+      hoyStr: hoyIso,
+      limite30Str: l30.toISOString().slice(0, 10),
+      mesActualPrefix: hoyIso.slice(0, 7),
+    };
+  }, []);
+
+  // Enriquecer cada registro con datos del catálogo + semáforo
+  const registrosEnriquecidos = useMemo(() => {
+    return mantenimientos.map((m) => {
+      const art = articulos.find(
+        (a) => a.id === m.articuloId || a.sku.toLowerCase() === m.articuloSku.toLowerCase()
+      );
+      const categoria = m.categoria || art?.categoria || 'General';
+      const ubicacion = m.ubicacion || art?.ubicacionNave || art?.almacenId || 'Almacén Principal';
+      const semaforo = calcularEstatusSemaforo(m, hoyStr, limite30Str);
+      const proximaFecha = m.fechaProgramada || m.fechaEstimadaRetorno;
+      return {
+        ...m,
+        categoria,
+        ubicacion,
+        proximaFecha,
+        semaforo,
+        articulo: art,
+      };
+    });
+  }, [mantenimientos, articulos, hoyStr, limite30Str]);
+
+  // Opciones dinámicas de filtros
+  const opcionesFiltros = useMemo(() => {
+    const cats = Array.from(new Set(registrosEnriquecidos.map((r) => r.categoria))).sort();
+    const ubis = Array.from(new Set(registrosEnriquecidos.map((r) => r.ubicacion))).sort();
+    const resps = Array.from(
+      new Set(registrosEnriquecidos.map((r) => r.responsableOProveedor).filter(Boolean))
+    ).sort();
+    return { cats, ubis, resps };
+  }, [registrosEnriquecidos]);
+
+  // KPIs requeridos
   const kpis = useMemo(() => {
-    const enMantenimiento = mantenimientos.filter(
-      (m) =>
-        m.estado === 'Pendiente / En Diagnóstico' || m.estado === 'En Proceso'
+    const enMantenimiento = registrosEnriquecidos.filter((r) => r.semaforo === 'En servicio').length;
+    const programados30Dias = registrosEnriquecidos.filter(
+      (r) =>
+        r.estado === 'Programado' &&
+        r.proximaFecha >= hoyStr &&
+        r.proximaFecha <= limite30Str
+    ).length;
+    const vencidos = registrosEnriquecidos.filter((r) => r.semaforo === 'Vencido').length;
+    const porVencer = registrosEnriquecidos.filter((r) => r.semaforo === 'Por vencer').length;
+    const completadosMes = registrosEnriquecidos.filter(
+      (r) =>
+        r.estado === 'Completado / Listo para Reingreso' &&
+        (r.fechaRetornoReal || '').startsWith(mesActualPrefix)
     ).length;
 
-    const vencidos = mantenimientos.filter(
-      (m) =>
-        (m.estado === 'Pendiente / En Diagnóstico' || m.estado === 'En Proceso') &&
-        m.fechaEstimadaRetorno < hoyStr
-    ).length;
+    return {
+      enMantenimiento,
+      programados30Dias,
+      vencidos,
+      porVencer,
+      completadosMes,
+    };
+  }, [registrosEnriquecidos, hoyStr, limite30Str, mesActualPrefix]);
 
-    const completados = mantenimientos.filter(
-      (m) => m.estado === 'Completado / Listo para Reingreso'
-    ).length;
+  // Filtrado
+  const registrosFiltrados = useMemo(() => {
+    return registrosEnriquecidos.filter((r) => {
+      if (filtroSemaforo !== 'todos' && r.semaforo !== filtroSemaforo) return false;
+      if (filtroTipo !== 'todos' && r.tipoMantenimiento !== filtroTipo) return false;
+      if (filtroCategoria !== 'todas' && r.categoria !== filtroCategoria) return false;
+      if (filtroUbicacion !== 'todas' && r.ubicacion !== filtroUbicacion) return false;
+      if (filtroResponsable !== 'todos' && r.responsableOProveedor !== filtroResponsable) {
+        return false;
+      }
+      if (fechaDesde && r.proximaFecha < fechaDesde) return false;
+      if (fechaHasta && r.proximaFecha > fechaHasta) return false;
 
-    const costoTotal = mantenimientos.reduce(
-      (acc, m) => acc + (m.costoMantenimiento || 0),
+      const q = busqueda.toLowerCase().trim();
+      if (q) {
+        const match =
+          r.folio.toLowerCase().includes(q) ||
+          r.articuloSku.toLowerCase().includes(q) ||
+          r.articuloNombre.toLowerCase().includes(q) ||
+          r.categoria.toLowerCase().includes(q) ||
+          r.ubicacion.toLowerCase().includes(q) ||
+          r.responsableOProveedor.toLowerCase().includes(q);
+        if (!match) return false;
+      }
+      return true;
+    });
+  }, [
+    registrosEnriquecidos,
+    filtroSemaforo,
+    filtroTipo,
+    filtroCategoria,
+    filtroUbicacion,
+    filtroResponsable,
+    fechaDesde,
+    fechaHasta,
+    busqueda,
+  ]);
+
+  // Datos del artículo seleccionado para Detalle (historial, próximos, adjuntos, costos)
+  const detalleArticulo = useMemo(() => {
+    if (!itemSeleccionado) return null;
+    const skuLower = itemSeleccionado.articuloSku.toLowerCase();
+    const art = articulos.find((a) => a.sku.toLowerCase() === skuLower);
+    const serviciosArticulo = registrosEnriquecidos.filter(
+      (r) => r.articuloSku.toLowerCase() === skuLower
+    );
+    const proximos = serviciosArticulo.filter(
+      (r) =>
+        r.estado === 'Programado' ||
+        r.estado === 'En Proceso' ||
+        r.estado === 'Pendiente / En Diagnóstico'
+    );
+    const bitacora = bitacoraMantenimiento
+      .filter((b) => b.articuloSku.toLowerCase() === skuLower)
+      .sort((a, b) => b.fecha.localeCompare(a.fecha));
+    const adjuntos = serviciosArticulo.flatMap((s) => s.adjuntos || []);
+    const costoAcumulado = serviciosArticulo.reduce(
+      (sum, s) => sum + (s.costoMantenimiento ?? s.costoEstimado ?? 0),
       0
     );
 
     return {
-      enMantenimiento,
-      vencidos,
-      completados,
-      costoTotal,
+      art,
+      serviciosArticulo,
+      proximos,
+      bitacora,
+      adjuntos,
+      costoAcumulado,
     };
-  }, [mantenimientos, hoyStr]);
+  }, [itemSeleccionado, articulos, registrosEnriquecidos, bitacoraMantenimiento]);
 
-  // Filtrado de mantenimientos
-  const mantenimientosFiltrados = useMemo(() => {
-    return mantenimientos.filter((m) => {
-      const matchEstado =
-        filtroEstado === 'todos' || m.estado === filtroEstado;
-      const matchTipo =
-        filtroTipo === 'todos' || m.tipoMantenimiento === filtroTipo;
+  // Celdas del calendario mensual
+  const calendarioCeldas = useMemo(() => {
+    const { year, month } = mesCalendario;
+    const primerDia = new Date(year, month, 1);
+    const ultimoDia = new Date(year, month + 1, 0);
+    const offsetInicio = (primerDia.getDay() + 6) % 7; // Lunes = 0
+    const totalDias = ultimoDia.getDate();
 
-      const q = busqueda.toLowerCase().trim();
-      const matchQuery =
-        !q ||
-        m.folio.toLowerCase().includes(q) ||
-        m.articuloSku.toLowerCase().includes(q) ||
-        m.articuloNombre.toLowerCase().includes(q) ||
-        m.responsableOProveedor.toLowerCase().includes(q);
+    const celdas: Array<{
+      fechaStr: string | null;
+      diaNum: number | null;
+      items: typeof registrosFiltrados;
+    }> = [];
 
-      return matchEstado && matchTipo && matchQuery;
+    for (let i = 0; i < offsetInicio; i++) {
+      celdas.push({ fechaStr: null, diaNum: null, items: [] });
+    }
+    for (let d = 1; d <= totalDias; d++) {
+      const f = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const items = registrosFiltrados.filter((r) => r.proximaFecha === f);
+      celdas.push({ fechaStr: f, diaNum: d, items });
+    }
+    return celdas;
+  }, [mesCalendario, registrosFiltrados]);
+
+  const nombreMesCalendario = useMemo(() => {
+    return new Date(mesCalendario.year, mesCalendario.month, 1).toLocaleDateString('es-MX', {
+      month: 'long',
+      year: 'numeric',
     });
-  }, [mantenimientos, filtroEstado, filtroTipo, busqueda]);
+  }, [mesCalendario]);
 
-  // Handler: Enviar a Mantenimiento
+  // Adjuntos helper
+  const handleAgregarAdjuntos = (
+    files: FileList | null,
+    tipoDoc: AdjuntoMantenimiento['tipo'],
+    setter: React.Dispatch<React.SetStateAction<AdjuntoMantenimiento[]>>
+  ) => {
+    if (!files || files.length === 0) return;
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const nuevo: AdjuntoMantenimiento = {
+          id: `adj-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          nombre: file.name,
+          tipo: tipoDoc,
+          tamano: file.size,
+          fecha: new Date().toISOString().slice(0, 10),
+          url: typeof reader.result === 'string' ? reader.result : undefined,
+        };
+        setter((prev) => [...prev, nuevo]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Submit Programar / Iniciar
   const handleConfirmarEnvio = (e: React.FormEvent) => {
     e.preventDefault();
-
+    if (!puedeGestionar) return;
     if (!articuloSeleccionado) {
-      mostrarToast('Selecciona un artículo válido del inventario.', 'error');
+      mostrarToast('Selecciona un artículo válido del catálogo.', 'error');
       return;
     }
-
-    if (nuevaCantidad <= 0) {
-      mostrarToast('La cantidad debe ser mayor a 0.', 'error');
-      return;
-    }
-
-    if (nuevaCantidad > articuloSeleccionado.stockDisponible) {
+    if (modoRegistro === 'iniciar' && nuevaCantidad > articuloSeleccionado.stockDisponible) {
       mostrarToast(
-        `Existencias insuficientes: Solo dispones de ${articuloSeleccionado.stockDisponible} unidades de ${articuloSeleccionado.sku}.`,
+        `Stock insuficiente: Solo hay ${articuloSeleccionado.stockDisponible} unidades disponibles de ${articuloSeleccionado.sku}.`,
         'error'
       );
       return;
     }
-
     if (!nuevoResponsable.trim()) {
-      mostrarToast('Indica el taller técnico, laboratorio o proveedor responsable.', 'error');
+      mostrarToast('Indica el responsable interno o proveedor externo.', 'error');
       return;
     }
-
-    if (!nuevaFechaRetorno) {
-      mostrarToast('Indica la fecha estimada de retorno.', 'error');
+    if (!nuevaFechaProgramada) {
+      mostrarToast('Indica la fecha programada del servicio.', 'error');
       return;
     }
-
     if (!nuevoDiagnostico.trim()) {
-      mostrarToast('Captura el diagnóstico inicial de falla o motivo de servicio.', 'error');
+      mostrarToast('Describe la falla o trabajo a realizar.', 'error');
       return;
     }
 
     const folio = `MNT-2026-${String(mantenimientos.length + 1).padStart(4, '0')}`;
+    const bloquear = nuevoTipo === 'Correctivo' && bloquearSalidaCorrectivo;
 
     const nuevoMantenimiento: MantenimientoArticulo = {
       id: `mnt-${Date.now()}`,
@@ -189,292 +431,464 @@ export default function MantenimientoArticulosPage() {
       articuloId: articuloSeleccionado.id,
       articuloSku: articuloSeleccionado.sku,
       articuloNombre: articuloSeleccionado.descripcionCorta || articuloSeleccionado.nombre,
+      categoria: articuloSeleccionado.categoria,
+      ubicacion: articuloSeleccionado.ubicacionNave || articuloSeleccionado.ubicacionSugerida || 'Almacén Principal',
       cantidad: nuevaCantidad,
       almacenId: articuloSeleccionado.almacenId || 'principal',
       tipoMantenimiento: nuevoTipo,
-      estado: 'En Proceso',
+      estado: modoRegistro === 'programar' ? 'Programado' : 'En Proceso',
+      frecuencia: nuevaFrecuencia,
       fechaEnvio: new Date().toISOString().slice(0, 10),
-      fechaEstimadaRetorno: nuevaFechaRetorno,
+      fechaProgramada: nuevaFechaProgramada,
+      fechaEstimadaRetorno: nuevaFechaProgramada,
       responsableOProveedor: nuevoResponsable.trim(),
-      costoMantenimiento: nuevoCosto !== '' ? Number(nuevoCosto) : undefined,
+      costoEstimado: nuevoCostoEstimado !== '' ? Number(nuevoCostoEstimado) : undefined,
+      costoMantenimiento: nuevoCostoEstimado !== '' ? Number(nuevoCostoEstimado) : undefined,
       diagnosticoFalla: nuevoDiagnostico.trim(),
-      usuarioRegistro: 'Ing. Mateo Gómez (Jefe Almacén)',
+      bloquearDisponibilidad: bloquear,
+      adjuntos: nuevosAdjuntos,
+      usuarioRegistro: usuarioActual,
     };
 
     enviarAMantenimiento(nuevoMantenimiento);
     setModalNuevoOpen(false);
-
-    // Reset fields
     setNuevaCantidad(1);
     setNuevoResponsable('');
-    setNuevaFechaRetorno('');
+    setNuevoCostoEstimado('');
     setNuevoDiagnostico('');
-    setNuevoCosto('');
+    setNuevosAdjuntos([]);
   };
 
-  // Handler: Confirmar Reingreso
-  const handleConfirmarReingreso = (e: React.FormEvent) => {
+  // Submit Registrar Ejecución
+  const handleConfirmarEjecucion = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!itemSeleccionado) return;
-
-    completarMantenimientoReingreso(
-      itemSeleccionado.id,
-      reingresoFechaReal,
-      reingresoCosto,
-      reingresoObservaciones.trim(),
-      'Ing. Mateo Gómez'
-    );
-
-    setModalReingresoOpen(false);
-    setItemSeleccionado(null);
-    setReingresoCosto(0);
-    setReingresoObservaciones('');
-  };
-
-  // Handler: Confirmar Baja
-  const handleConfirmarBaja = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!itemSeleccionado) return;
-
-    if (!bajaMotivo.trim()) {
-      mostrarToast('El motivo de baja irreparable es estrictamente obligatorio para la bitácora.', 'error');
+    if (!puedeGestionar || !itemSeleccionado) return;
+    if (!ejecTrabajo.trim()) {
+      mostrarToast('Describe el trabajo realizado.', 'error');
       return;
     }
 
-    darDeBajaMantenimiento(itemSeleccionado.id, bajaMotivo.trim(), 'Ing. Mateo Gómez');
+    completarMantenimientoReingreso(
+      itemSeleccionado.id,
+      ejecFechaReal,
+      Number(ejecCostoFinal) || 0,
+      ejecObservaciones.trim() || ejecTrabajo.trim(),
+      usuarioActual,
+      {
+        trabajoRealizado: ejecTrabajo.trim(),
+        refaccionesUsadas: ejecRefacciones.trim(),
+        estatusResultante: ejecEstatusResultante,
+        adjuntos: ejecAdjuntos,
+      }
+    );
+
+    setModalEjecucionOpen(false);
+    setItemSeleccionado(null);
+    setEjecTrabajo('');
+    setEjecRefacciones('');
+    setEjecCostoFinal('0');
+    setEjecObservaciones('');
+    setEjecAdjuntos([]);
+  };
+
+  // Submit Reprogramar
+  const handleConfirmarReprogramar = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!puedeGestionar || !itemSeleccionado || !reprogramarFecha) return;
+    reprogramarMantenimiento(itemSeleccionado.id, reprogramarFecha, usuarioActual);
+    setModalReprogramarOpen(false);
+    setItemSeleccionado(null);
+  };
+
+  // Submit Baja
+  const handleConfirmarBaja = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!puedeGestionar || !itemSeleccionado) return;
+    if (!bajaMotivo.trim()) {
+      mostrarToast('El motivo de baja es obligatorio para la bitácora.', 'error');
+      return;
+    }
+    darDeBajaMantenimiento(itemSeleccionado.id, bajaMotivo.trim(), usuarioActual);
     setModalBajaOpen(false);
     setItemSeleccionado(null);
     setBajaMotivo('');
   };
 
+  const filtrosActivos =
+    busqueda ||
+    filtroSemaforo !== 'todos' ||
+    filtroTipo !== 'todos' ||
+    filtroCategoria !== 'todas' ||
+    filtroUbicacion !== 'todas' ||
+    filtroResponsable !== 'todos' ||
+    fechaDesde ||
+    fechaHasta;
+
   return (
-    <div className="almacen-module-container" style={{ minHeight: '100vh', background: 'var(--app-bg)', color: 'var(--text-primary)' }}>
-      <main style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 20px 80px' }}>
-        {/* Cabecera Principal */}
+    <div
+      className="almacen-module-container"
+      style={{ minHeight: '100vh', background: 'var(--app-bg)', color: 'var(--text-primary)' }}
+    >
+      <main style={{ maxWidth: 1360, margin: '0 auto', padding: '24px 20px 80px' }}>
+        {/* Cabecera */}
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: 24,
+            marginBottom: 20,
             padding: '20px 24px',
             background: 'var(--card)',
             borderRadius: 16,
             border: '1px solid var(--border)',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
             flexWrap: 'wrap',
             gap: 16,
           }}
         >
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
-                  background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
-                  color: '#ffffff',
-                }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: 26 }}>build_circle</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 46,
+                height: 46,
+                borderRadius: 12,
+                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                color: '#ffffff',
+                boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)',
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 26 }}>
+                build
               </span>
-              <div>
+            </span>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <h1 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-                  Control de Mantenimiento de Artículos
+                  Mantenimiento de Artículos
                 </h1>
-                <p style={{ margin: '4px 0 0', fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
-                  Gestión del ciclo de vida de herramientas y equipos en taller, calibración y reingreso a kárdex.
-                </p>
+                {!puedeGestionar && (
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      padding: '3px 10px',
+                      borderRadius: 999,
+                      background: 'rgba(100, 116, 139, 0.16)',
+                      color: 'var(--text-secondary)',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    Solo Consulta
+                  </span>
+                )}
               </div>
+              <p style={{ margin: '4px 0 0', fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
+                Programación preventiva, atención correctiva, bitácora cronológica y control de disponibilidad.
+              </p>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
             <button
               type="button"
-              onClick={() => router.push('/almacen')}
+              onClick={() => router.push('/almacen/articulos')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                padding: '9px 16px',
+                padding: '9px 14px',
                 borderRadius: 10,
-                border: '1.5px solid var(--border)',
+                border: '1px solid var(--border)',
                 background: 'var(--surface)',
                 color: 'var(--text-primary)',
-                fontSize: '0.86rem',
+                fontSize: '0.84rem',
                 fontWeight: 700,
                 cursor: 'pointer',
               }}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>arrow_back</span>
-              <span>Menú Almacén</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                arrow_back
+              </span>
+              <span>Artículos</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => setModalNuevoOpen(true)}
+            <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '9px 18px',
+                display: 'inline-flex',
                 borderRadius: 10,
-                border: 'none',
-                background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
-                color: '#ffffff',
-                fontSize: '0.86rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(29, 78, 216, 0.25)',
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                padding: 3,
               }}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>
-              <span>Enviar a Mantenimiento</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => setVista('tabla')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '6px 12px',
+                  borderRadius: 7,
+                  border: 'none',
+                  background: vista === 'tabla' ? '#7c3aed' : 'transparent',
+                  color: vista === 'tabla' ? '#ffffff' : 'var(--text-secondary)',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 17 }}>
+                  table_rows
+                </span>
+                <span>Tabla</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setVista('calendario')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '6px 12px',
+                  borderRadius: 7,
+                  border: 'none',
+                  background: vista === 'calendario' ? '#7c3aed' : 'transparent',
+                  color: vista === 'calendario' ? '#ffffff' : 'var(--text-secondary)',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 17 }}>
+                  calendar_month
+                </span>
+                <span>Calendario</span>
+              </button>
+            </div>
+
+            {puedeGestionar && (
+              <button
+                type="button"
+                onClick={() => router.push('/almacen/mantenimiento/programar')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '9px 18px',
+                  borderRadius: 10,
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                  color: '#ffffff',
+                  fontSize: '0.86rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)',
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                  event_available
+                </span>
+                <span>Programar mantenimiento</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* 4 KPIs de Mantenimiento */}
+        {/* 4 KPIs Superiores */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
             gap: 16,
-            marginBottom: 24,
+            marginBottom: 22,
           }}
         >
-          {/* KPI 1: En Mantenimiento */}
-          <div
+          <button
+            type="button"
+            onClick={() =>
+              setFiltroSemaforo((prev) => (prev === 'En servicio' ? 'todos' : 'En servicio'))
+            }
             style={{
-              padding: 20,
+              textAlign: 'left',
+              padding: 18,
               background: 'var(--card)',
               borderRadius: 14,
-              border: '1px solid var(--border)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              border:
+                filtroSemaforo === 'En servicio'
+                  ? '1.5px solid #8b5cf6'
+                  : '1px solid var(--border)',
+              cursor: 'pointer',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>EN MANTENIMIENTO ACTIVO</span>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                EN MANTENIMIENTO
+              </span>
               <span
                 style={{
                   padding: 6,
                   borderRadius: 8,
-                  background: 'var(--warning-bg)',
-                  color: 'var(--warning-text)',
+                  background: 'rgba(139, 92, 246, 0.16)',
+                  color: '#a78bfa',
                   display: 'inline-flex',
                 }}
               >
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>construction</span>
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                  construction
+                </span>
               </span>
             </div>
-            <div style={{ fontSize: '1.85rem', fontWeight: 900, color: 'var(--text-primary)', margin: '10px 0 2px' }}>
-              {kpis.enMantenimiento} <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>equipos</span>
+            <div style={{ fontSize: '1.85rem', fontWeight: 900, margin: '8px 0 2px', color: 'var(--text-primary)' }}>
+              {kpis.enMantenimiento}
             </div>
-            <span style={{ fontSize: '0.78rem', color: '#d97706', fontWeight: 700 }}>
-              ● En taller o calibración externa
+            <span style={{ fontSize: '0.78rem', color: '#a78bfa', fontWeight: 700 }}>
+              Artículos actualmente en servicio
             </span>
-          </div>
+          </button>
 
-          {/* KPI 2: Mantenimientos Vencidos */}
-          <div
+          <button
+            type="button"
+            onClick={() =>
+              setFiltroSemaforo((prev) => (prev === 'Por vencer' ? 'todos' : 'Por vencer'))
+            }
             style={{
-              padding: 20,
+              textAlign: 'left',
+              padding: 18,
               background: 'var(--card)',
               borderRadius: 14,
-              border: '1px solid var(--border)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              border:
+                filtroSemaforo === 'Por vencer'
+                  ? '1.5px solid #f59e0b'
+                  : '1px solid var(--border)',
+              cursor: 'pointer',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>MANTENIMIENTOS VENCIDOS</span>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                PROGRAMADOS PRÓX. 30 DÍAS
+              </span>
               <span
                 style={{
                   padding: 6,
                   borderRadius: 8,
-                  background: 'var(--danger-bg)',
-                  color: 'var(--danger-text)',
+                  background: 'rgba(245, 158, 11, 0.16)',
+                  color: '#f59e0b',
                   display: 'inline-flex',
                 }}
               >
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>warning</span>
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                  event_upcoming
+                </span>
               </span>
             </div>
-            <div style={{ fontSize: '1.85rem', fontWeight: 900, color: kpis.vencidos > 0 ? 'var(--danger)' : 'var(--text-primary)', margin: '10px 0 2px' }}>
-              {kpis.vencidos} <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>alertas</span>
+            <div style={{ fontSize: '1.85rem', fontWeight: 900, margin: '8px 0 2px', color: 'var(--text-primary)' }}>
+              {kpis.programados30Dias}
             </div>
-            <span style={{ fontSize: '0.78rem', color: kpis.vencidos > 0 ? '#dc2626' : '#16a34a', fontWeight: 700 }}>
-              {kpis.vencidos > 0 ? 'Excedieron fecha de retorno prevista' : 'En tiempo normativo'}
+            <span style={{ fontSize: '0.78rem', color: '#f59e0b', fontWeight: 700 }}>
+              Servicios próximos por atender
             </span>
-          </div>
+          </button>
 
-          {/* KPI 3: Completados */}
-          <div
+          <button
+            type="button"
+            onClick={() =>
+              setFiltroSemaforo((prev) => (prev === 'Vencido' ? 'todos' : 'Vencido'))
+            }
             style={{
-              padding: 20,
+              textAlign: 'left',
+              padding: 18,
               background: 'var(--card)',
               borderRadius: 14,
-              border: '1px solid var(--border)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              border:
+                filtroSemaforo === 'Vencido'
+                  ? '1.5px solid #ef4444'
+                  : '1px solid var(--border)',
+              cursor: 'pointer',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>COMPLETADOS Y REINGRESADOS</span>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                VENCIDOS
+              </span>
               <span
                 style={{
                   padding: 6,
                   borderRadius: 8,
-                  background: 'var(--success-bg)',
-                  color: 'var(--success-text)',
+                  background: 'rgba(239, 68, 68, 0.16)',
+                  color: '#ef4444',
                   display: 'inline-flex',
                 }}
               >
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>check_circle</span>
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                  warning
+                </span>
               </span>
             </div>
-            <div style={{ fontSize: '1.85rem', fontWeight: 900, color: 'var(--text-primary)', margin: '10px 0 2px' }}>
-              {kpis.completados} <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>servicios</span>
+            <div
+              style={{
+                fontSize: '1.85rem',
+                fontWeight: 900,
+                margin: '8px 0 2px',
+                color: kpis.vencidos > 0 ? '#ef4444' : 'var(--text-primary)',
+              }}
+            >
+              {kpis.vencidos}
             </div>
-            <span style={{ fontSize: '0.78rem', color: '#16a34a', fontWeight: 700 }}>
-              Reincorporados a existencias
+            <span
+              style={{
+                fontSize: '0.78rem',
+                color: kpis.vencidos > 0 ? '#ef4444' : '#10b981',
+                fontWeight: 700,
+              }}
+            >
+              {kpis.vencidos > 0 ? 'Requieren atención inmediata' : 'Sin atrasos pendientes'}
             </span>
-          </div>
+          </button>
 
-          {/* KPI 4: Costo Total */}
-          <div
+          <button
+            type="button"
+            onClick={() => setFiltroSemaforo((prev) => (prev === 'Al día' ? 'todos' : 'Al día'))}
             style={{
-              padding: 20,
+              textAlign: 'left',
+              padding: 18,
               background: 'var(--card)',
               borderRadius: 14,
-              border: '1px solid var(--border)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              border:
+                filtroSemaforo === 'Al día'
+                  ? '1.5px solid #10b981'
+                  : '1px solid var(--border)',
+              cursor: 'pointer',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>COSTO ACUMULADO</span>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                COMPLETADOS ESTE MES
+              </span>
               <span
                 style={{
                   padding: 6,
                   borderRadius: 8,
-                  background: 'var(--brand-tonal-bg)',
-                  color: 'var(--primary)',
+                  background: 'rgba(16, 185, 129, 0.16)',
+                  color: '#10b981',
                   display: 'inline-flex',
                 }}
               >
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>payments</span>
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                  verified
+                </span>
               </span>
             </div>
-            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--primary)', margin: '10px 0 2px' }}>
-              ${kpis.costoTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+            <div style={{ fontSize: '1.85rem', fontWeight: 900, margin: '8px 0 2px', color: 'var(--text-primary)' }}>
+              {kpis.completadosMes}
             </div>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-              Gasto en talleres y metrología
+            <span style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: 700 }}>
+              Servicios ejecutados en el mes
             </span>
-          </div>
+          </button>
         </div>
 
         {/* Barra de Filtros y Búsqueda */}
@@ -483,1135 +897,1621 @@ export default function MantenimientoArticulosPage() {
             background: 'var(--card)',
             borderRadius: 14,
             border: '1px solid var(--border)',
-            padding: 18,
+            padding: 16,
             marginBottom: 20,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-            display: 'flex',
-            gap: 14,
-            flexWrap: 'wrap',
-            alignItems: 'center',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+            gap: 12,
+            alignItems: 'end',
           }}
         >
-          <div style={{ flex: '1 1 280px', position: 'relative' }}>
-            <span
-              className="material-symbols-outlined"
-              style={{
-                position: 'absolute',
-                left: 12,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: '#94a3b8',
-                fontSize: 20,
-              }}
-            >
-              search
-            </span>
-            <input
-              type="text"
-              placeholder="Buscar por folio, SKU, nombre de equipo o taller..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '9px 12px 9px 38px',
-                borderRadius: 8,
-                border: '1.5px solid var(--border)',
-                background: 'var(--surface)',
-                color: 'var(--text-primary)',
-                fontSize: '0.88rem',
-                outline: 'none',
-              }}
-            />
+          <div style={{ gridColumn: 'span 2', minWidth: 220 }}>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+              BUSCAR ARTÍCULO / FOLIO
+            </label>
+            <div style={{ position: 'relative' }}>
+              <span
+                className="material-symbols-outlined"
+                style={{
+                  position: 'absolute',
+                  left: 10,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#94a3b8',
+                  fontSize: 19,
+                }}
+              >
+                search
+              </span>
+              <input
+                type="text"
+                placeholder="Código, nombre, folio, responsable..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px 8px 34px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.84rem',
+                  outline: 'none',
+                }}
+              />
+            </div>
           </div>
 
-          <div style={{ width: 220 }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+              ESTATUS
+            </label>
             <select
-              value={filtroEstado}
-              onChange={(e) => setFiltroEstado(e.target.value)}
+              value={filtroSemaforo}
+              onChange={(e) => setFiltroSemaforo(e.target.value)}
               style={{
                 width: '100%',
-                padding: '9px 12px',
+                padding: '8px 10px',
                 borderRadius: 8,
-                border: '1.5px solid var(--border)',
+                border: '1px solid var(--border)',
                 background: 'var(--surface)',
                 color: 'var(--text-primary)',
-                fontSize: '0.88rem',
+                fontSize: '0.84rem',
                 fontWeight: 600,
-                outline: 'none',
               }}
             >
-              <option value="todos">Todos los Estados</option>
-              <option value="Pendiente / En Diagnóstico">Pendiente / En Diagnóstico</option>
-              <option value="En Proceso">En Proceso</option>
-              <option value="Completado / Listo para Reingreso">Completado / Listo para Reingreso</option>
-              <option value="Baja Definitiva / Irreparable">Baja Definitiva / Irreparable</option>
+              <option value="todos">Todos los estatus</option>
+              <option value="Al día">Al día</option>
+              <option value="Por vencer">Por vencer</option>
+              <option value="Vencido">Vencido</option>
+              <option value="En servicio">En servicio</option>
+              <option value="Baja">Baja</option>
             </select>
           </div>
 
-          <div style={{ width: 210 }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+              TIPO
+            </label>
             <select
               value={filtroTipo}
               onChange={(e) => setFiltroTipo(e.target.value)}
               style={{
                 width: '100%',
-                padding: '9px 12px',
+                padding: '8px 10px',
                 borderRadius: 8,
-                border: '1.5px solid var(--border)',
+                border: '1px solid var(--border)',
                 background: 'var(--surface)',
                 color: 'var(--text-primary)',
-                fontSize: '0.88rem',
+                fontSize: '0.84rem',
                 fontWeight: 600,
-                outline: 'none',
               }}
             >
-              <option value="todos">Todos los Tipos</option>
+              <option value="todos">Todos los tipos</option>
               <option value="Preventivo">Preventivo</option>
               <option value="Correctivo">Correctivo</option>
               <option value="Calibración / Revisión">Calibración / Revisión</option>
             </select>
           </div>
 
-          {(busqueda || filtroEstado !== 'todos' || filtroTipo !== 'todos') && (
-            <button
-              type="button"
-              onClick={() => {
-                setBusqueda('');
-                setFiltroEstado('todos');
-                setFiltroTipo('todos');
-              }}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+              CATEGORÍA
+            </label>
+            <select
+              value={filtroCategoria}
+              onChange={(e) => setFiltroCategoria(e.target.value)}
               style={{
-                padding: '9px 14px',
+                width: '100%',
+                padding: '8px 10px',
                 borderRadius: 8,
                 border: '1px solid var(--border)',
-                background: 'var(--surface-alt)',
+                background: 'var(--surface)',
                 color: 'var(--text-primary)',
                 fontSize: '0.84rem',
-                fontWeight: 700,
-                cursor: 'pointer',
+                fontWeight: 600,
               }}
             >
-              Limpiar Filtros
-            </button>
+              <option value="todas">Todas</option>
+              {opcionesFiltros.cats.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+              UBICACIÓN
+            </label>
+            <select
+              value={filtroUbicacion}
+              onChange={(e) => setFiltroUbicacion(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                color: 'var(--text-primary)',
+                fontSize: '0.84rem',
+                fontWeight: 600,
+              }}
+            >
+              <option value="todas">Todas</option>
+              {opcionesFiltros.ubis.map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+              RESPONSABLE / PROVEEDOR
+            </label>
+            <select
+              value={filtroResponsable}
+              onChange={(e) => setFiltroResponsable(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                color: 'var(--text-primary)',
+                fontSize: '0.84rem',
+                fontWeight: 600,
+              }}
+            >
+              <option value="todos">Todos</option>
+              {opcionesFiltros.resps.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+              PRÓX. FECHA DESDE
+            </label>
+            <input
+              type="date"
+              value={fechaDesde}
+              onChange={(e) => setFechaDesde(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '7px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                color: 'var(--text-primary)',
+                fontSize: '0.84rem',
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+              PRÓX. FECHA HASTA
+            </label>
+            <input
+              type="date"
+              value={fechaHasta}
+              onChange={(e) => setFechaHasta(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '7px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                color: 'var(--text-primary)',
+                fontSize: '0.84rem',
+              }}
+            />
+          </div>
+
+          {filtrosActivos && (
+            <div>
+              <button
+                type="button"
+                onClick={() => {
+                  setBusqueda('');
+                  setFiltroSemaforo('todos');
+                  setFiltroTipo('todos');
+                  setFiltroCategoria('todas');
+                  setFiltroUbicacion('todas');
+                  setFiltroResponsable('todos');
+                  setFechaDesde('');
+                  setFechaHasta('');
+                }}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface-alt)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Limpiar filtros
+              </button>
+            </div>
           )}
         </div>
 
-        {/* Tabla Principal */}
-        <div
-          style={{
-            background: 'var(--card)',
-            borderRadius: 16,
-            border: '1px solid var(--border)',
-            overflow: 'hidden',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
-          }}
-        >
-          {mantenimientosFiltrados.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '50px 20px', color: '#94a3b8' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 44, color: '#cbd5e1' }}>
-                build
-              </span>
-              <p style={{ margin: '12px 0 0', fontSize: '0.95rem', fontWeight: 600 }}>
-                No se encontraron registros de mantenimiento con los criterios seleccionados.
-              </p>
-            </div>
-          ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.86rem' }}>
-              <thead>
-                <tr style={{ background: 'var(--surface-alt)', borderBottom: '2px solid var(--border)', color: 'var(--text-secondary)', textAlign: 'left' }}>
-                  <th style={{ padding: '12px 16px' }}>Folio</th>
-                  <th style={{ padding: '12px 16px' }}>Artículo / Equipo</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Cantidad</th>
-                  <th style={{ padding: '12px 16px' }}>Tipo</th>
-                  <th style={{ padding: '12px 16px' }}>Fechas</th>
-                  <th style={{ padding: '12px 16px' }}>Taller / Proveedor</th>
-                  <th style={{ padding: '12px 16px' }}>Costo</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Estado</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mantenimientosFiltrados.map((m) => {
-                  const estaVencido =
-                    (m.estado === 'Pendiente / En Diagnóstico' || m.estado === 'En Proceso') &&
-                    m.fechaEstimadaRetorno < hoyStr;
-
-                  return (
-                    <tr key={m.id} style={{ borderBottom: '1px solid var(--divider)', background: estaVencido ? 'rgba(239, 68, 68, 0.12)' : 'transparent', transition: 'background-color 0.15s ease' }}>
-                      <td style={{ padding: '14px 16px', fontWeight: 800, fontFamily: "'JetBrains Mono', monospace", color: 'var(--link)' }}>
-                        {m.folio}
-                      </td>
-
-                      <td style={{ padding: '14px 16px' }}>
-                        <strong style={{ color: 'var(--text-primary)' }}>{m.articuloNombre}</strong>
-                        <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', fontFamily: "'JetBrains Mono', monospace" }}>
-                          SKU: {m.articuloSku}
-                        </div>
-                      </td>
-
-                      <td style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 800, color: 'var(--text-primary)' }}>
-                        {m.cantidad} uds
-                      </td>
-
-                      <td style={{ padding: '14px 16px' }}>
-                        <span
-                          style={{
-                            padding: '3px 8px',
-                            borderRadius: 6,
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            background:
-                              m.tipoMantenimiento === 'Preventivo'
-                                ? 'var(--info-bg)'
-                                : m.tipoMantenimiento === 'Correctivo'
-                                ? 'var(--danger-bg)'
-                                : 'var(--warning-bg)',
-                            color:
-                              m.tipoMantenimiento === 'Preventivo'
-                                ? 'var(--info-text)'
-                                : m.tipoMantenimiento === 'Correctivo'
-                                ? 'var(--danger-text)'
-                                : 'var(--warning-text)',
-                          }}
-                        >
-                          {m.tipoMantenimiento}
-                        </span>
-                      </td>
-
-                      <td style={{ padding: '14px 16px', fontSize: '0.8rem' }}>
-                        <div>Envío: {m.fechaEnvio}</div>
-                        <div style={{ color: estaVencido ? '#dc2626' : '#64748b', fontWeight: estaVencido ? 700 : 500 }}>
-                          Est.: {m.fechaEstimadaRetorno} {estaVencido && '⚠ Vencido'}
-                        </div>
-                      </td>
-
-                      <td style={{ padding: '14px 16px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                        {m.responsableOProveedor}
-                      </td>
-
-                      <td style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                        {m.costoMantenimiento
-                          ? `$${m.costoMantenimiento.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
-                          : 'Pendiente'}
-                      </td>
-
-                      <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                        <span
-                          style={{
-                            padding: '4px 10px',
-                            borderRadius: 9999,
-                            fontSize: '0.75rem',
-                            fontWeight: 800,
-                            background:
-                              m.estado === 'Completado / Listo para Reingreso'
-                                ? 'var(--success-bg)'
-                                : m.estado === 'Baja Definitiva / Irreparable'
-                                ? 'var(--danger-bg)'
-                                : m.estado === 'En Proceso'
-                                ? 'var(--warning-bg)'
-                                : 'var(--surface-alt)',
-                            color:
-                              m.estado === 'Completado / Listo para Reingreso'
-                                ? 'var(--success-text)'
-                                : m.estado === 'Baja Definitiva / Irreparable'
-                                ? 'var(--danger-text)'
-                                : m.estado === 'En Proceso'
-                                ? 'var(--warning-text)'
-                                : 'var(--text-secondary)',
-                          }}
-                        >
-                          {m.estado}
-                        </span>
-                      </td>
-
-                      <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setItemSeleccionado(m);
-                              setModalDetalleOpen(true);
-                            }}
+        {/* VISTA 1: TABLA DE ARTÍCULOS Y MANTENIMIENTOS */}
+        {vista === 'tabla' ? (
+          <div
+            style={{
+              background: 'var(--card)',
+              borderRadius: 16,
+              border: '1px solid var(--border)',
+              overflowX: 'auto',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+            }}
+          >
+            {registrosFiltrados.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-secondary)' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 44, opacity: 0.5 }}>
+                  build
+                </span>
+                <p style={{ margin: '12px 0 0', fontSize: '0.95rem', fontWeight: 600 }}>
+                  No se encontraron registros de mantenimiento con los filtros seleccionados.
+                </p>
+              </div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem', minWidth: 980 }}>
+                <thead>
+                  <tr
+                    style={{
+                      background: 'var(--surface-alt)',
+                      borderBottom: '1px solid var(--border)',
+                      color: 'var(--text-secondary)',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <th style={{ padding: '12px 14px', fontWeight: 700 }}>Código</th>
+                    <th style={{ padding: '12px 14px', fontWeight: 700 }}>Artículo</th>
+                    <th style={{ padding: '12px 14px', fontWeight: 700 }}>Categoría</th>
+                    <th style={{ padding: '12px 14px', fontWeight: 700 }}>Ubicación</th>
+                    <th style={{ padding: '12px 14px', fontWeight: 700 }}>Tipo</th>
+                    <th style={{ padding: '12px 14px', fontWeight: 700 }}>Última fecha</th>
+                    <th style={{ padding: '12px 14px', fontWeight: 700 }}>Próxima fecha</th>
+                    <th style={{ padding: '12px 14px', fontWeight: 700 }}>Responsable / Proveedor</th>
+                    <th style={{ padding: '12px 14px', fontWeight: 700 }}>Estatus</th>
+                    <th style={{ padding: '12px 14px', fontWeight: 700, textAlign: 'right' }}>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {registrosFiltrados.map((r) => {
+                    const chip = obtenerChipSemaforo(r.semaforo);
+                    const esPendienteEjecucion =
+                      r.estado === 'Programado' ||
+                      r.estado === 'En Proceso' ||
+                      r.estado === 'Pendiente / En Diagnóstico';
+                    return (
+                      <tr
+                        key={r.id}
+                        style={{
+                          borderBottom: '1px solid var(--border)',
+                        }}
+                      >
+                        <td style={{ padding: '12px 14px', fontFamily: 'monospace', fontWeight: 700, color: '#a78bfa' }}>
+                          <div>{r.articuloSku}</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{r.folio}</div>
+                        </td>
+                        <td style={{ padding: '12px 14px', fontWeight: 600 }}>
+                          <div>{r.articuloNombre}</div>
+                          {r.bloquearDisponibilidad && esPendienteEjecucion && (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                marginTop: 4,
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                padding: '1px 7px',
+                                borderRadius: 6,
+                                background: 'rgba(239, 68, 68, 0.14)',
+                                color: '#f87171',
+                              }}
+                            >
+                              Bloqueado en salidas/préstamos
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: '12px 14px', color: 'var(--text-secondary)' }}>{r.categoria}</td>
+                        <td style={{ padding: '12px 14px', color: 'var(--text-secondary)' }}>{r.ubicacion}</td>
+                        <td style={{ padding: '12px 14px' }}>
+                          <span
                             style={{
-                              padding: '5px 8px',
+                              padding: '3px 9px',
                               borderRadius: 6,
-                              border: '1px solid var(--border)',
-                              background: 'var(--surface-alt)',
-                              color: 'var(--text-primary)',
-                              cursor: 'pointer',
-                              fontSize: '0.76rem',
+                              fontSize: '0.75rem',
                               fontWeight: 700,
+                              background:
+                                r.tipoMantenimiento === 'Correctivo'
+                                  ? 'rgba(239, 68, 68, 0.12)'
+                                  : 'rgba(59, 130, 246, 0.12)',
+                              color: r.tipoMantenimiento === 'Correctivo' ? '#f87171' : '#60a5fa',
                             }}
-                            title="Ver detalles del mantenimiento"
                           >
-                            Detalle
-                          </button>
+                            {r.tipoMantenimiento}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 14px', color: 'var(--text-secondary)' }}>
+                          {r.fechaRetornoReal || r.ultimaFecha || '—'}
+                        </td>
+                        <td style={{ padding: '12px 14px', fontWeight: 700 }}>{r.proximaFecha}</td>
+                        <td style={{ padding: '12px 14px', color: 'var(--text-secondary)' }}>
+                          {r.responsableOProveedor}
+                        </td>
+                        <td style={{ padding: '12px 14px' }}>
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              padding: '4px 10px',
+                              borderRadius: 999,
+                              fontSize: '0.74rem',
+                              fontWeight: 700,
+                              background: chip.bg,
+                              color: chip.color,
+                              border: `1px solid ${chip.border}`,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+                              {chip.icon}
+                            </span>
+                            {r.semaforo}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                          <div style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setItemSeleccionado(r);
+                                setModalDetalleOpen(true);
+                              }}
+                              title="Ver ficha, bitácora y costos del artículo"
+                              style={{
+                                padding: '5px 10px',
+                                borderRadius: 7,
+                                border: '1px solid var(--border)',
+                                background: 'var(--surface)',
+                                color: 'var(--text-primary)',
+                                fontSize: '0.76rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Detalle
+                            </button>
 
-                          {m.estado !== 'Completado / Listo para Reingreso' &&
-                            m.estado !== 'Baja Definitiva / Irreparable' && (
+                            {puedeGestionar && esPendienteEjecucion && (
                               <>
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setItemSeleccionado(m);
-                                    setReingresoCosto(m.costoMantenimiento || 0);
-                                    setModalReingresoOpen(true);
+                                    setItemSeleccionado(r);
+                                    setEjecCostoFinal(String(r.costoEstimado ?? r.costoMantenimiento ?? 0));
+                                    setEjecFechaReal(new Date().toISOString().slice(0, 10));
+                                    setModalEjecucionOpen(true);
                                   }}
                                   style={{
-                                    padding: '5px 8px',
-                                    borderRadius: 6,
+                                    padding: '5px 10px',
+                                    borderRadius: 7,
                                     border: 'none',
-                                    background: '#16a34a',
+                                    background: '#10b981',
                                     color: '#ffffff',
-                                    cursor: 'pointer',
                                     fontSize: '0.76rem',
                                     fontWeight: 700,
+                                    cursor: 'pointer',
                                   }}
-                                  title="Reingresar unidades reparadas a inventario disponible"
                                 >
-                                  Reingreso
+                                  Registrar ejecución
                                 </button>
-
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setItemSeleccionado(m);
-                                    setModalBajaOpen(true);
+                                    setItemSeleccionado(r);
+                                    setReprogramarFecha(r.proximaFecha);
+                                    setModalReprogramarOpen(true);
                                   }}
+                                  title="Reprogramar fecha"
                                   style={{
                                     padding: '5px 8px',
-                                    borderRadius: 6,
-                                    border: 'none',
-                                    background: '#dc2626',
-                                    color: '#ffffff',
-                                    cursor: 'pointer',
+                                    borderRadius: 7,
+                                    border: '1px solid var(--border)',
+                                    background: 'var(--surface)',
+                                    color: 'var(--text-secondary)',
                                     fontSize: '0.76rem',
                                     fontWeight: 700,
+                                    cursor: 'pointer',
                                   }}
-                                  title="Dar de baja definitiva por daño irreparable"
                                 >
-                                  Baja
+                                  <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
+                                    edit_calendar
+                                  </span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setItemSeleccionado(r);
+                                    setModalBajaOpen(true);
+                                  }}
+                                  title="Dar de baja irreparable"
+                                  style={{
+                                    padding: '5px 8px',
+                                    borderRadius: 7,
+                                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    color: '#ef4444',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
+                                    delete_forever
+                                  </span>
                                 </button>
                               </>
                             )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        ) : (
+          /* VISTA 2: CALENDARIO MENSUAL */
+          <div
+            style={{
+              background: 'var(--card)',
+              borderRadius: 16,
+              border: '1px solid var(--border)',
+              padding: 20,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 16,
+                flexWrap: 'wrap',
+                gap: 10,
+              }}
+            >
+              <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, textTransform: 'capitalize' }}>
+                {nombreMesCalendario}
+              </h2>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMesCalendario((prev) =>
+                      prev.month === 0
+                        ? { year: prev.year - 1, month: 11 }
+                        : { year: prev.year, month: prev.month - 1 }
+                    )
+                  }
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface)',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                  }}
+                >
+                  ← Anterior
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const d = new Date();
+                    setMesCalendario({ year: d.getFullYear(), month: d.getMonth() });
+                  }}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface)',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                  }}
+                >
+                  Hoy
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMesCalendario((prev) =>
+                      prev.month === 11
+                        ? { year: prev.year + 1, month: 0 }
+                        : { year: prev.year, month: prev.month + 1 }
+                    )
+                  }
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface)',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                  }}
+                >
+                  Siguiente →
+                </button>
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
+                gap: 8,
+              }}
+            >
+              {DIAS_SEMANA.map((dia) => (
+                <div
+                  key={dia}
+                  style={{
+                    textAlign: 'center',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    color: 'var(--text-secondary)',
+                    padding: '6px 0',
+                  }}
+                >
+                  {dia}
+                </div>
+              ))}
+
+              {calendarioCeldas.map((celda, idx) => (
+                <div
+                  key={celda.fechaStr || `empty-${idx}`}
+                  style={{
+                    minHeight: 105,
+                    borderRadius: 10,
+                    padding: 8,
+                    border:
+                      celda.fechaStr === hoyStr
+                        ? '1.5px solid #8b5cf6'
+                        : '1px solid var(--border)',
+                    background: celda.fechaStr ? 'var(--surface)' : 'transparent',
+                    opacity: celda.fechaStr ? 1 : 0.3,
+                  }}
+                >
+                  {celda.diaNum && (
+                    <div
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 800,
+                        marginBottom: 6,
+                        color: celda.fechaStr === hoyStr ? '#a78bfa' : 'var(--text-secondary)',
+                      }}
+                    >
+                      {celda.diaNum}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {celda.items.map((item) => {
+                      const chip = obtenerChipSemaforo(item.semaforo);
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setItemSeleccionado(item);
+                            setModalDetalleOpen(true);
+                          }}
+                          style={{
+                            textAlign: 'left',
+                            padding: '4px 6px',
+                            borderRadius: 6,
+                            border: `1px solid ${chip.border}`,
+                            background: chip.bg,
+                            color: chip.color,
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                          title={`${item.folio} · ${item.articuloSku} · ${item.articuloNombre}`}
+                        >
+                          {item.articuloSku} · {item.tipoMantenimiento}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
 
-      {/* MODAL 1: ENVIAR ARTÍCULO A MANTENIMIENTO */}
-      {modalNuevoOpen && (
+      {/* MODAL 1: PROGRAMAR / REGISTRAR MANTENIMIENTO */}
+      {modalNuevoOpen && puedeGestionar && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(4px)',
-            zIndex: 100,
+            background: 'rgba(2, 6, 23, 0.72)',
+            zIndex: 1000,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: 20,
+            padding: 16,
           }}
         >
-          <div
+          <form
+            onSubmit={handleConfirmarEnvio}
             style={{
-              background: 'var(--surface)',
-              borderRadius: 16,
-              maxWidth: 580,
               width: '100%',
-              padding: 24,
-              boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-              border: '1px solid var(--border)',
+              maxWidth: 680,
               maxHeight: '90vh',
               overflowY: 'auto',
-              color: 'var(--text-primary)',
+              background: 'var(--card)',
+              borderRadius: 16,
+              border: '1px solid var(--border)',
+              padding: 24,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className="material-symbols-outlined" style={{ color: '#d97706', fontSize: 26 }}>
-                  construction
-                </span>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  Enviar Artículo / Equipo a Mantenimiento
-                </h3>
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>
+                Programar / Registrar Mantenimiento
+              </h2>
               <button
                 type="button"
                 onClick={() => setModalNuevoOpen(false)}
-                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                }}
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
 
-            <form onSubmit={handleConfirmarEnvio} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {/* Selector con Campo de Texto y Búsqueda en Tiempo Real */}
-              <div ref={comboboxRef} style={{ position: 'relative' }}>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary, #475569)', marginBottom: 4 }}>
-                  Seleccionar Artículo / Equipo del Inventario:
-                </label>
-
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <span
-                    className="material-symbols-outlined"
-                    style={{
-                      position: 'absolute',
-                      left: 12,
-                      fontSize: 18,
-                      color: 'var(--text-secondary, #94a3b8)',
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    search
-                  </span>
-
-                  <input
-                    type="text"
-                    placeholder="Escribe para buscar por código SKU, nombre o categoría..."
-                    value={busquedaArticuloTexto}
-                    onChange={(e) => {
-                      setBusquedaArticuloTexto(e.target.value);
-                      setComboboxAbierto(true);
-                      if (!e.target.value.trim()) {
-                        setNuevoArticuloSku('');
-                      }
-                    }}
-                    onFocus={() => setComboboxAbierto(true)}
-                    style={{
-                      width: '100%',
-                      padding: '9px 36px 9px 38px',
-                      borderRadius: 'var(--radius-control, 8px)',
-                      border: '1.5px solid var(--border, #cbd5e1)',
-                      backgroundColor: 'var(--surface, #ffffff)',
-                      color: 'var(--text-primary, #0f172a)',
-                      fontSize: '0.88rem',
-                      fontWeight: 600,
-                      outline: 'none',
-                      transition: 'border-color 0.2s, box-shadow 0.2s',
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') setComboboxAbierto(false);
-                      if (e.key === 'Enter' && articulosFiltradosBusqueda.length > 0 && comboboxAbierto) {
-                        e.preventDefault();
-                        const primer = articulosFiltradosBusqueda[0];
-                        setNuevoArticuloSku(primer.sku);
-                        setBusquedaArticuloTexto(`${primer.sku} - ${primer.descripcionCorta || primer.nombre}`);
-                        setComboboxAbierto(false);
-                      }
-                    }}
-                    required
-                  />
-
-                  {busquedaArticuloTexto ? (
+            {/* Buscador de artículo en catálogo */}
+            <div ref={comboboxRef} style={{ position: 'relative' }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                Artículo del Catálogo *
+              </label>
+              <input
+                type="text"
+                value={busquedaArticuloTexto}
+                onFocus={() => setComboboxAbierto(true)}
+                onChange={(e) => {
+                  setBusquedaArticuloTexto(e.target.value);
+                  setComboboxAbierto(true);
+                }}
+                placeholder="Buscar por SKU, nombre o categoría..."
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.88rem',
+                }}
+              />
+              {comboboxAbierto && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    maxHeight: 200,
+                    overflowY: 'auto',
+                    background: 'var(--card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 10,
+                    zIndex: 50,
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.35)',
+                  }}
+                >
+                  {articulosFiltradosBusqueda.map((a) => (
                     <button
+                      key={a.id}
                       type="button"
                       onClick={() => {
-                        setBusquedaArticuloTexto('');
-                        setNuevoArticuloSku('');
-                        setComboboxAbierto(true);
+                        setNuevoArticuloSku(a.sku);
+                        setBusquedaArticuloTexto(`${a.sku} - ${a.descripcionCorta || a.nombre}`);
+                        setComboboxAbierto(false);
                       }}
                       style={{
-                        position: 'absolute',
-                        right: 10,
-                        background: 'none',
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '8px 12px',
+                        background: 'transparent',
                         border: 'none',
-                        color: 'var(--text-secondary, #94a3b8)',
+                        borderBottom: '1px solid var(--border)',
+                        color: 'var(--text-primary)',
                         cursor: 'pointer',
-                        padding: 2,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        fontSize: '0.83rem',
                       }}
-                      title="Limpiar campo"
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: 18 }}>close</span>
+                      <strong>{a.sku}</strong> — {a.descripcionCorta || a.nombre}{' '}
+                      <span style={{ color: 'var(--text-secondary)' }}>
+                        ({a.categoria} · Disp: {a.stockDisponible})
+                      </span>
                     </button>
-                  ) : (
-                    <span
-                      className="material-symbols-outlined"
-                      style={{
-                        position: 'absolute',
-                        right: 10,
-                        fontSize: 20,
-                        color: 'var(--text-secondary, #94a3b8)',
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      arrow_drop_down
-                    </span>
-                  )}
-                </div>
-
-                {/* Panel Flotante de Resultados de Búsqueda */}
-                {comboboxAbierto && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      right: 0,
-                      zIndex: 60,
-                      marginTop: 4,
-                      background: 'var(--surface, #ffffff)',
-                      border: '1px solid var(--border, #e2e8f0)',
-                      borderRadius: 10,
-                      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.15)',
-                      maxHeight: 230,
-                      overflowY: 'auto',
-                    }}
-                  >
-                    {articulosFiltradosBusqueda.length === 0 ? (
-                      <div style={{ padding: '12px 16px', fontSize: '0.8rem', color: 'var(--text-secondary, #64748b)', textAlign: 'center' }}>
-                        No se encontraron artículos con &ldquo;{busquedaArticuloTexto}&rdquo;.
-                      </div>
-                    ) : (
-                      articulosFiltradosBusqueda.map((a) => {
-                        const isSelected = a.sku.toLowerCase() === nuevoArticuloSku.toLowerCase();
-                        return (
-                          <div
-                            key={a.sku}
-                            onClick={() => {
-                              setNuevoArticuloSku(a.sku);
-                              setBusquedaArticuloTexto(`${a.sku} - ${a.descripcionCorta || a.nombre}`);
-                              setComboboxAbierto(false);
-                            }}
-                            style={{
-                              padding: '10px 14px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              gap: 10,
-                              borderBottom: '1px solid var(--divider, #f1f5f9)',
-                              backgroundColor: isSelected ? 'var(--brand-50, #eff6ff)' : 'transparent',
-                              transition: 'background-color 0.15s ease',
-                            }}
-                            onMouseEnter={(e) => {
-                              if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--surface-alt, #f8fafc)';
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
-                            }}
-                          >
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                <span
-                                  style={{
-                                    fontFamily: "'JetBrains Mono', monospace",
-                                    fontWeight: 700,
-                                    fontSize: '0.78rem',
-                                    color: 'var(--primary, #1d4ed8)',
-                                  }}
-                                >
-                                  {a.sku}
-                                </span>
-                                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary, #1e293b)' }}>
-                                  {a.descripcionCorta || a.nombre}
-                                </span>
-                              </div>
-                              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #64748b)' }}>
-                                {a.categoria} • Ubicación: {a.ubicacionSugerida || 'Almacén Principal'}
-                              </span>
-                            </div>
-
-                            <span
-                              style={{
-                                fontSize: '0.72rem',
-                                fontWeight: 700,
-                                padding: '2px 8px',
-                                borderRadius: 9999,
-                                flexShrink: 0,
-                                backgroundColor: a.stockDisponible > 0 ? 'var(--success-bg, #dcfce7)' : 'var(--danger-bg, #fee2e2)',
-                                color: a.stockDisponible > 0 ? 'var(--success-text, #166534)' : 'var(--danger-text, #991b1b)',
-                              }}
-                            >
-                              Disp: {a.stockDisponible} uds
-                            </span>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                )}
-
-                {/* Indicador de stock disponible del artículo seleccionado */}
-                {articuloSeleccionado ? (
-                  <div style={{ marginTop: 6, fontSize: '0.76rem', color: 'var(--success, #16a34a)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: 16 }}>check_circle</span>
-                    <span>Stock disponible actual: <strong>{articuloSeleccionado.stockDisponible} unidades</strong></span>
-                  </div>
-                ) : (
-                  <div style={{ marginTop: 4, fontSize: '0.74rem', color: 'var(--text-muted, #94a3b8)' }}>
-                    Escribe para buscar y seleccionar el equipo del inventario.
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: 4 }}>
-                    Cantidad a Enviar:
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={articuloSeleccionado?.stockDisponible || 1}
-                    value={nuevaCantidad}
-                    onChange={(e) => setNuevaCantidad(Math.max(1, parseInt(e.target.value) || 1))}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      borderRadius: 8,
-                      border: '1.5px solid var(--border)',
-                      background: 'var(--card)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.9rem',
-                      fontWeight: 700,
-                    }}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: 4 }}>
-                    Tipo de Mantenimiento:
-                  </label>
-                  <select
-                    value={nuevoTipo}
-                    onChange={(e) => setNuevoTipo(e.target.value as TipoMantenimiento)}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      borderRadius: 8,
-                      border: '1.5px solid var(--border)',
-                      background: 'var(--card)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.88rem',
-                      fontWeight: 600,
-                    }}
-                  >
-                    <option value="Preventivo">Preventivo (Servicio Periódico)</option>
-                    <option value="Correctivo">Correctivo (Reparación de Falla)</option>
-                    <option value="Calibración / Revisión">Calibración / Metrología NOM</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: 4 }}>
-                    Taller, Laboratorio o Técnico:
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej. Taller Central SIFYGSA / Snap-on"
-                    value={nuevoResponsable}
-                    onChange={(e) => setNuevoResponsable(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      borderRadius: 8,
-                      border: '1.5px solid var(--border)',
-                      background: 'var(--card)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.88rem',
-                    }}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: 4 }}>
-                    Fecha Estimada de Retorno:
-                  </label>
-                  <input
-                    type="date"
-                    value={nuevaFechaRetorno}
-                    onChange={(e) => setNuevaFechaRetorno(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px',
-                      borderRadius: 8,
-                      border: '1.5px solid var(--border)',
-                      background: 'var(--card)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.88rem',
-                    }}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: 4 }}>
-                  Costo Estimado (MXN, Opcional):
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={nuevoCosto}
-                  onChange={(e) => setNuevoCosto(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                  style={{
-                    width: '100%',
-                    padding: '9px 12px',
-                    borderRadius: 8,
-                    border: '1.5px solid var(--border)',
-                    background: 'var(--card)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.88rem',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: 4 }}>
-                  Diagnóstico de Falla / Motivo del Envío:
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Detalla los síntomas, anomalías o requerimientos de calibración..."
-                  value={nuevoDiagnostico}
-                  onChange={(e) => setNuevoDiagnostico(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '9px 12px',
-                    borderRadius: 8,
-                    border: '1.5px solid #cbd5e1',
-                    fontSize: '0.86rem',
-                    resize: 'vertical',
-                  }}
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
-                <button
-                  type="button"
-                  onClick={() => setModalNuevoOpen(false)}
-                  style={{
-                    padding: '9px 16px',
-                    borderRadius: 8,
-                    border: '1px solid var(--border)',
-                    background: 'var(--surface-alt)',
-                    color: 'var(--text-secondary)',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  style={{
-                    padding: '9px 18px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: '#1d4ed8',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Confirmar Envío y Descontar Stock
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 2: REINGRESO A INVENTARIO */}
-      {modalReingresoOpen && itemSeleccionado && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(4px)',
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 20,
-          }}
-        >
-          <div
-            style={{
-              background: 'var(--surface)',
-              borderRadius: 16,
-              maxWidth: 520,
-              width: '100%',
-              padding: 24,
-              boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-primary)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className="material-symbols-outlined" style={{ color: '#16a34a', fontSize: 26 }}>
-                  check_circle
-                </span>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  Reingreso de Artículo a Inventario
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setModalReingresoOpen(false)}
-                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-
-            <div
-              style={{
-                padding: '12px 14px',
-                background: 'var(--success-bg)',
-                color: 'var(--success-text)',
-                borderRadius: 10,
-                border: '1px solid var(--border)',
-                marginBottom: 16,
-                fontSize: '0.84rem',
-              }}
-            >
-              <div><strong>Folio:</strong> {itemSeleccionado.folio}</div>
-              <div><strong>Artículo:</strong> {itemSeleccionado.articuloSku} - {itemSeleccionado.articuloNombre}</div>
-              <div><strong>Cantidad a reintegrar al stock disponible:</strong> {itemSeleccionado.cantidad} uds</div>
-            </div>
-
-            <form onSubmit={handleConfirmarReingreso} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: 4 }}>
-                  Fecha Real de Retorno / Entrega:
-                </label>
-                <input
-                  type="date"
-                  value={reingresoFechaReal}
-                  onChange={(e) => setReingresoFechaReal(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '9px 12px',
-                    borderRadius: 8,
-                    border: '1.5px solid var(--border)',
-                    background: 'var(--card)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.88rem',
-                  }}
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: 4 }}>
-                  Costo Final de Mantenimiento (MXN):
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  value={reingresoCosto}
-                  onChange={(e) => setReingresoCosto(parseFloat(e.target.value) || 0)}
-                  style={{
-                    width: '100%',
-                    padding: '9px 12px',
-                    borderRadius: 8,
-                    border: '1.5px solid #cbd5e1',
-                    fontSize: '0.9rem',
-                    fontWeight: 700,
-                  }}
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: 4 }}>
-                  Dictamen Técnico y Observaciones de Resolución:
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Detalla las pruebas realizadas, refacciones cambiadas o número de certificado de calibración..."
-                  value={reingresoObservaciones}
-                  onChange={(e) => setReingresoObservaciones(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '9px 12px',
-                    borderRadius: 8,
-                    border: '1.5px solid #cbd5e1',
-                    fontSize: '0.86rem',
-                    resize: 'vertical',
-                  }}
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
-                <button
-                  type="button"
-                  onClick={() => setModalReingresoOpen(false)}
-                  style={{
-                    padding: '9px 16px',
-                    borderRadius: 8,
-                    border: '1px solid var(--border)',
-                    background: 'var(--surface-alt)',
-                    color: 'var(--text-secondary)',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  style={{
-                    padding: '9px 18px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: '#16a34a',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Completar Reingreso a Inventario
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 3: DAR DE BAJA DEFINITIVA */}
-      {modalBajaOpen && itemSeleccionado && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(4px)',
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 20,
-          }}
-        >
-          <div
-            style={{
-              background: 'var(--surface)',
-              borderRadius: 16,
-              maxWidth: 500,
-              width: '100%',
-              padding: 24,
-              boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-primary)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className="material-symbols-outlined" style={{ color: '#dc2626', fontSize: 26 }}>
-                  cancel
-                </span>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#dc2626' }}>
-                  Baja Definitiva de Activo / Equipo
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setModalBajaOpen(false)}
-                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-
-            <div
-              style={{
-                padding: '12px 14px',
-                background: 'var(--danger-bg)',
-                borderRadius: 10,
-                border: '1px solid var(--border)',
-                marginBottom: 16,
-                fontSize: '0.84rem',
-                color: 'var(--danger-text)',
-              }}
-            >
-              <p style={{ margin: 0, fontWeight: 700 }}>
-                ¡Atención! Esta acción descontará de forma permanente {itemSeleccionado.cantidad} unidades del inventario total de la empresa por considerarse daño irreparable o merma técnica.
-              </p>
-              <div style={{ marginTop: 6, fontSize: '0.8rem', color: '#7f1d1d' }}>
-                Equipo: {itemSeleccionado.articuloSku} - {itemSeleccionado.articuloNombre}
-              </div>
-            </div>
-
-            <form onSubmit={handleConfirmarBaja} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: 4 }}>
-                  Motivo de Baja Irreparable / Dictamen de Desecho:
-                </label>
-                <textarea
-                  rows={4}
-                  placeholder="Detalla por qué no fue posible la reparación o por qué el equipo no es apto para continuar operando..."
-                  value={bajaMotivo}
-                  onChange={(e) => setBajaMotivo(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '9px 12px',
-                    borderRadius: 8,
-                    border: '1.5px solid #cbd5e1',
-                    fontSize: '0.86rem',
-                    resize: 'vertical',
-                  }}
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
-                <button
-                  type="button"
-                  onClick={() => setModalBajaOpen(false)}
-                  style={{
-                    padding: '9px 16px',
-                    borderRadius: 8,
-                    border: '1px solid var(--border)',
-                    background: 'var(--surface-alt)',
-                    color: 'var(--text-secondary)',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  style={{
-                    padding: '9px 18px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: '#dc2626',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Confirmar Baja Definitiva
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 4: DETALLE DE MANTENIMIENTO */}
-      {modalDetalleOpen && itemSeleccionado && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(4px)',
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 20,
-          }}
-        >
-          <div
-            style={{
-              background: 'var(--surface)',
-              borderRadius: 16,
-              maxWidth: 540,
-              width: '100%',
-              padding: 24,
-              boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-primary)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className="material-symbols-outlined" style={{ color: '#1d4ed8', fontSize: 26 }}>
-                  description
-                </span>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  Expediente de Mantenimiento {itemSeleccionado.folio}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setModalDetalleOpen(false)}
-                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: '0.88rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, background: 'var(--surface-alt)', border: '1px solid var(--border)', padding: 12, borderRadius: 8 }}>
-                <div><strong>SKU:</strong> {itemSeleccionado.articuloSku}</div>
-                <div><strong>Cantidad:</strong> {itemSeleccionado.cantidad} uds</div>
-                <div><strong>Tipo:</strong> {itemSeleccionado.tipoMantenimiento}</div>
-                <div><strong>Estado:</strong> {itemSeleccionado.estado}</div>
-                <div><strong>Fecha Envío:</strong> {itemSeleccionado.fechaEnvio}</div>
-                <div><strong>Fecha Estimada:</strong> {itemSeleccionado.fechaEstimadaRetorno}</div>
-                {itemSeleccionado.fechaRetornoReal && (
-                  <div><strong>Retorno Real:</strong> {itemSeleccionado.fechaRetornoReal}</div>
-                )}
-                <div>
-                  <strong>Costo:</strong>{' '}
-                  {itemSeleccionado.costoMantenimiento
-                    ? `$${itemSeleccionado.costoMantenimiento.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
-                    : 'N/A'}
-                </div>
-              </div>
-
-              <div>
-                <strong>Taller o Proveedor Responsable:</strong>
-                <p style={{ margin: '4px 0 0', color: '#475569' }}>{itemSeleccionado.responsableOProveedor}</p>
-              </div>
-
-              <div>
-                <strong>Diagnóstico Inicial / Motivo:</strong>
-                <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', background: 'var(--card)', border: '1px solid var(--border)', padding: 10, borderRadius: 6 }}>
-                  {itemSeleccionado.diagnosticoFalla}
-                </p>
-              </div>
-
-              {itemSeleccionado.observacionesResolucion && (
-                <div>
-                  <strong>Resolución / Dictamen Final:</strong>
-                  <p style={{ margin: '4px 0 0', color: 'var(--success-text)', background: 'var(--success-bg)', border: '1px solid var(--border)', padding: 10, borderRadius: 6 }}>
-                    {itemSeleccionado.observacionesResolucion}
-                  </p>
+                  ))}
                 </div>
               )}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                  Modalidad
+                </label>
+                <select
+                  value={modoRegistro}
+                  onChange={(e) => setModoRegistro(e.target.value as 'programar' | 'iniciar')}
+                  style={{
+                    width: '100%',
+                    padding: '9px 10px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface)',
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  <option value="programar">Programar a futuro</option>
+                  <option value="iniciar">Enviar a servicio ahora</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                  Tipo *
+                </label>
+                <select
+                  value={nuevoTipo}
+                  onChange={(e) => setNuevoTipo(e.target.value as TipoMantenimiento)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 10px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface)',
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  <option value="Preventivo">Preventivo</option>
+                  <option value="Correctivo">Correctivo</option>
+                  <option value="Calibración / Revisión">Calibración / Revisión</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                  Fecha programada *
+                </label>
+                <input
+                  type="date"
+                  value={nuevaFechaProgramada}
+                  onChange={(e) => setNuevaFechaProgramada(e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                  Frecuencia
+                </label>
+                <select
+                  value={nuevaFrecuencia}
+                  onChange={(e) => setNuevaFrecuencia(e.target.value as FrecuenciaMantenimiento)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 10px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface)',
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  {FRECUENCIAS.map((f) => (
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                  Cantidad
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={nuevaCantidad}
+                  onChange={(e) => setNuevaCantidad(Math.max(1, Number(e.target.value) || 1))}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                  Costo estimado (MXN)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={nuevoCostoEstimado}
+                  onChange={(e) => setNuevoCostoEstimado(e.target.value)}
+                  placeholder="0.00"
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                Responsable o Proveedor *
+              </label>
+              <input
+                type="text"
+                value={nuevoResponsable}
+                onChange={(e) => setNuevoResponsable(e.target.value)}
+                placeholder="Ej. Taller Interno SIFYGSA / Laboratorio EMA"
+                required
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-primary)',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                Descripción de la falla o trabajo *
+              </label>
+              <textarea
+                rows={3}
+                value={nuevoDiagnostico}
+                onChange={(e) => setNuevoDiagnostico(e.target.value)}
+                placeholder="Describe las actividades preventivas, diagnóstico o falla reportada..."
+                required
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-primary)',
+                }}
+              />
+            </div>
+
+            {nuevoTipo === 'Correctivo' && (
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                  cursor: 'pointer',
+                  fontSize: '0.83rem',
+                  fontWeight: 700,
+                  color: '#fca5a5',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={bloquearSalidaCorrectivo}
+                  onChange={(e) => setBloquearSalidaCorrectivo(e.target.checked)}
+                />
+                <span>
+                  Marcar artículo como &quot;No disponible&quot; mientras esté en mantenimiento (bloquea vales de salida y préstamos)
+                </span>
+              </label>
+            )}
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                Adjuntos (Fotos, Órdenes de Servicio, Facturas)
+              </label>
+              <input
+                type="file"
+                multiple
+                accept="image/*,.pdf,.xml"
+                onChange={(e) => handleAgregarAdjuntos(e.target.files, 'Orden de Servicio', setNuevosAdjuntos)}
+                style={{ fontSize: '0.82rem' }}
+              />
+              {nuevosAdjuntos.length > 0 && (
+                <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {nuevosAdjuntos.map((a) => (
+                    <span
+                      key={a.id}
+                      style={{
+                        fontSize: '0.74rem',
+                        padding: '3px 8px',
+                        borderRadius: 6,
+                        background: 'var(--surface)',
+                        border: '1px solid var(--border)',
+                      }}
+                    >
+                      {a.nombre}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 6 }}>
               <button
                 type="button"
-                onClick={() => setModalDetalleOpen(false)}
+                onClick={() => setModalNuevoOpen(false)}
+                style={{
+                  padding: '9px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-primary)',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
                 style={{
                   padding: '9px 18px',
                   borderRadius: 8,
                   border: 'none',
-                  background: '#1d4ed8',
+                  background: '#7c3aed',
                   color: '#ffffff',
                   fontWeight: 700,
                   cursor: 'pointer',
                 }}
               >
-                Cerrar Expediente
+                Guardar registro
               </button>
             </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL 2: REGISTRAR EJECUCIÓN */}
+      {modalEjecucionOpen && itemSeleccionado && puedeGestionar && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(2, 6, 23, 0.72)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <form
+            onSubmit={handleConfirmarEjecucion}
+            style={{
+              width: '100%',
+              maxWidth: 600,
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              background: 'var(--card)',
+              borderRadius: 16,
+              border: '1px solid var(--border)',
+              padding: 24,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
+            }}
+          >
+            <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>
+              Registrar Ejecución · {itemSeleccionado.folio}
+            </h2>
+            <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
+              {itemSeleccionado.articuloSku} — {itemSeleccionado.articuloNombre}
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                  Fecha real *
+                </label>
+                <input
+                  type="date"
+                  value={ejecFechaReal}
+                  onChange={(e) => setEjecFechaReal(e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                  Costo final (MXN) *
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={ejecCostoFinal}
+                  onChange={(e) => setEjecCostoFinal(e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                  Estatus resultante *
+                </label>
+                <select
+                  value={ejecEstatusResultante}
+                  onChange={(e) =>
+                    setEjecEstatusResultante(
+                      e.target.value as 'Al día' | 'Requiere seguimiento' | 'Baja Definitiva'
+                    )
+                  }
+                  style={{
+                    width: '100%',
+                    padding: '9px 10px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface)',
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  <option value="Al día">Al día (Liberar a disponible)</option>
+                  <option value="Requiere seguimiento">Requiere seguimiento</option>
+                  <option value="Baja Definitiva">Baja Definitiva / Irreparable</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                Trabajo realizado *
+              </label>
+              <textarea
+                rows={3}
+                value={ejecTrabajo}
+                onChange={(e) => setEjecTrabajo(e.target.value)}
+                required
+                placeholder="Detalle técnico de las maniobras, pruebas o calibraciones efectuadas..."
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-primary)',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                Refacciones usadas
+              </label>
+              <input
+                type="text"
+                value={ejecRefacciones}
+                onChange={(e) => setEjecRefacciones(e.target.value)}
+                placeholder="Ej. Fusibles 10A, sellos, batería de respaldo..."
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-primary)',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                Observaciones
+              </label>
+              <textarea
+                rows={2}
+                value={ejecObservaciones}
+                onChange={(e) => setEjecObservaciones(e.target.value)}
+                placeholder="Notas de entrega, certificado o recomendaciones..."
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-primary)',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 4 }}>
+                Adjuntar evidencia / factura / certificado
+              </label>
+              <input
+                type="file"
+                multiple
+                accept="image/*,.pdf,.xml"
+                onChange={(e) => handleAgregarAdjuntos(e.target.files, 'Factura', setEjecAdjuntos)}
+                style={{ fontSize: '0.82rem' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => setModalEjecucionOpen(false)}
+                style={{
+                  padding: '9px 16px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-primary)',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                style={{
+                  padding: '9px 18px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: '#10b981',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Confirmar ejecución
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL 3: DETALLE DEL ARTÍCULO, BITÁCORA CRONOLÓGICA, ADJUNTOS Y COSTOS */}
+      {modalDetalleOpen && itemSeleccionado && detalleArticulo && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(2, 6, 23, 0.72)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 780,
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              background: 'var(--card)',
+              borderRadius: 16,
+              border: '1px solid var(--border)',
+              padding: 24,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 18,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+              <div>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#a78bfa' }}>
+                  FICHA TÉCNICA DE MANTENIMIENTO · {itemSeleccionado.articuloSku}
+                </span>
+                <h2 style={{ margin: '4px 0 0', fontSize: '1.2rem', fontWeight: 800 }}>
+                  {itemSeleccionado.articuloNombre}
+                </h2>
+                <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                  Categoría: {itemSeleccionado.categoria || detalleArticulo.art?.categoria || 'General'} · Ubicación:{' '}
+                  {itemSeleccionado.ubicacion || detalleArticulo.art?.ubicacionNave || 'Almacén Principal'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalDetalleOpen(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                }}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Resumen de costos y próximos servicios */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+              <div style={{ padding: 14, borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)' }}>COSTO ACUMULADO</div>
+                <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#a78bfa', marginTop: 4 }}>
+                  ${detalleArticulo.costoAcumulado.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                </div>
+              </div>
+              <div style={{ padding: 14, borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)' }}>SERVICIOS REGISTRADOS</div>
+                <div style={{ fontSize: '1.35rem', fontWeight: 900, marginTop: 4 }}>
+                  {detalleArticulo.serviciosArticulo.length}
+                </div>
+              </div>
+              <div style={{ padding: 14, borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)' }}>PRÓXIMOS SERVICIOS</div>
+                <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#f59e0b', marginTop: 4 }}>
+                  {detalleArticulo.proximos.length}
+                </div>
+              </div>
+            </div>
+
+            {/* Próximos servicios */}
+            <div>
+              <h3 style={{ margin: '0 0 8px', fontSize: '0.9rem', fontWeight: 800 }}>Próximos Servicios</h3>
+              {detalleArticulo.proximos.length === 0 ? (
+                <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                  No hay mantenimientos futuros pendientes para este artículo.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {detalleArticulo.proximos.map((p) => (
+                    <div
+                      key={p.id}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: 10,
+                        background: 'var(--surface)',
+                        border: '1px solid var(--border)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        gap: 10,
+                        flexWrap: 'wrap',
+                        fontSize: '0.82rem',
+                      }}
+                    >
+                      <div>
+                        <strong>{p.folio}</strong> · {p.tipoMantenimiento} ({p.frecuencia || 'Única'}) —{' '}
+                        <span style={{ color: 'var(--text-secondary)' }}>{p.diagnosticoFalla}</span>
+                      </div>
+                      <span style={{ fontWeight: 700, color: '#f59e0b' }}>{p.proximaFecha}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Historial completo (bitácora cronológica) */}
+            <div>
+              <h3 style={{ margin: '0 0 8px', fontSize: '0.9rem', fontWeight: 800 }}>
+                Bitácora Cronológica de Mantenimientos
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {detalleArticulo.bitacora.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                    Sin eventos registrados en bitácora todavía.
+                  </p>
+                ) : (
+                  detalleArticulo.bitacora.map((b) => (
+                    <div
+                      key={b.id}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: 10,
+                        background: 'var(--surface)',
+                        border: '1px solid var(--border)',
+                        fontSize: '0.82rem',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <strong>
+                          {b.fecha} · {b.folio} ({b.tipoMantenimiento})
+                        </strong>
+                        {b.costoFinal !== undefined && (
+                          <span style={{ fontWeight: 700, color: '#10b981' }}>
+                            ${b.costoFinal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ color: 'var(--text-secondary)' }}>{b.descripcion}</div>
+                      {b.trabajoRealizado && (
+                        <div style={{ marginTop: 4 }}>
+                          <strong>Trabajo:</strong> {b.trabajoRealizado}
+                        </div>
+                      )}
+                      {b.refaccionesUsadas && (
+                        <div>
+                          <strong>Refacciones:</strong> {b.refaccionesUsadas}
+                        </div>
+                      )}
+                      <div style={{ marginTop: 4, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        Responsable: {b.responsable} · Registró: {b.usuario}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Documentos adjuntos */}
+            <div>
+              <h3 style={{ margin: '0 0 8px', fontSize: '0.9rem', fontWeight: 800 }}>Documentos Adjuntos</h3>
+              {detalleArticulo.adjuntos.length === 0 ? (
+                <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                  No hay fotos, órdenes de servicio o facturas adjuntas.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {detalleArticulo.adjuntos.map((adj) => (
+                    <a
+                      key={adj.id}
+                      href={adj.url || '#'}
+                      download={adj.nombre}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: 8,
+                        border: '1px solid var(--border)',
+                        background: 'var(--surface)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8rem',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+                        attach_file
+                      </span>
+                      {adj.nombre}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* MODAL 4: REPROGRAMAR */}
+      {modalReprogramarOpen && itemSeleccionado && puedeGestionar && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(2, 6, 23, 0.72)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <form
+            onSubmit={handleConfirmarReprogramar}
+            style={{
+              width: '100%',
+              maxWidth: 420,
+              background: 'var(--card)',
+              borderRadius: 16,
+              border: '1px solid var(--border)',
+              padding: 22,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>
+              Reprogramar {itemSeleccionado.folio}
+            </h3>
+            <input
+              type="date"
+              value={reprogramarFecha}
+              onChange={(e) => setReprogramarFecha(e.target.value)}
+              required
+              style={{
+                padding: '9px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                color: 'var(--text-primary)',
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => setModalReprogramarOpen(false)}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: '#7c3aed',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Guardar fecha
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL 5: BAJA IRREPARABLE */}
+      {modalBajaOpen && itemSeleccionado && puedeGestionar && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(2, 6, 23, 0.72)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <form
+            onSubmit={handleConfirmarBaja}
+            style={{
+              width: '100%',
+              maxWidth: 460,
+              background: 'var(--card)',
+              borderRadius: 16,
+              border: '1px solid var(--border)',
+              padding: 22,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#ef4444' }}>
+              Baja Definitiva · {itemSeleccionado.folio}
+            </h3>
+            <textarea
+              rows={3}
+              value={bajaMotivo}
+              onChange={(e) => setBajaMotivo(e.target.value)}
+              placeholder="Motivo obligatorio de baja irreparable..."
+              required
+              style={{
+                padding: '9px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                color: 'var(--text-primary)',
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => setModalBajaOpen(false)}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Confirmar baja
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

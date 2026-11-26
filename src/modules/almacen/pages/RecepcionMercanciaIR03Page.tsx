@@ -159,23 +159,19 @@ export default function RecepcionMercanciaIR03Page() {
     return true;
   };
 
-  const obtenerEstadoValidacionPaso = (paso: number) => {
+  const estadoPasoActual = useMemo(() => {
     const faltantes: string[] = [];
-    if (paso === 1) {
+    if (currentStep === 1) {
       if (!noOrdenCompra.trim()) faltantes.push('Número de Orden de Compra');
       if (!proveedor.trim()) faltantes.push('Proveedor');
       if (!almacenDestino.trim()) faltantes.push('Almacén Destino');
-    } else if (paso === 2) {
+    } else if (currentStep === 2) {
       const partidasARecibir = partidas.filter((p) => p.recibir && p.cantidadRecibida > 0);
       if (partidasARecibir.length === 0) {
         faltantes.push('Al menos una partida recibida mayor a 0');
       }
     }
     return { valido: faltantes.length === 0, camposFaltantes: faltantes };
-  };
-
-  const estadoPasoActual = useMemo(() => {
-    return obtenerEstadoValidacionPaso(currentStep);
   }, [currentStep, noOrdenCompra, proveedor, almacenDestino, partidas]);
 
   const handleIntentoAvanzarInvalido = () => {

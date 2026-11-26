@@ -139,22 +139,36 @@ export const MenuPrincipalComprasPage: React.FC = () => {
   // Arcos de la Dona SVG
   const donutSlices = useMemo(() => {
     const totalCount = ordenes.length || 1;
-    let accumulatedAngle = 0;
     const radius = 64;
     const circumference = 2 * Math.PI * radius;
 
-    return estatusData.map((item) => {
-      const sliceRatio = item.count / totalCount;
-      const strokeDash = sliceRatio * circumference;
-      const strokeDashoffset = -accumulatedAngle * circumference;
-      accumulatedAngle += sliceRatio;
-
-      return {
-        ...item,
-        strokeDasharray: `${strokeDash} ${circumference - strokeDash}`,
-        strokeDashoffset,
-      };
-    });
+    return estatusData.reduce<{
+      slices: Array<
+        (typeof estatusData)[number] & {
+          strokeDasharray: string;
+          strokeDashoffset: number;
+        }
+      >;
+      angle: number;
+    }>(
+      (acc, item) => {
+        const sliceRatio = item.count / totalCount;
+        const strokeDash = sliceRatio * circumference;
+        const strokeDashoffset = -acc.angle * circumference;
+        return {
+          angle: acc.angle + sliceRatio,
+          slices: [
+            ...acc.slices,
+            {
+              ...item,
+              strokeDasharray: `${strokeDash} ${circumference - strokeDash}`,
+              strokeDashoffset,
+            },
+          ],
+        };
+      },
+      { slices: [], angle: 0 }
+    ).slices;
   }, [estatusData, ordenes.length]);
 
   // ── 3. DATOS DE GRÁFICA 2: ÓRDENES POR MES (BARRAS) ──
@@ -168,13 +182,13 @@ export const MenuPrincipalComprasPage: React.FC = () => {
 
   const mensualData = useMemo(() => {
     const meses = [
-      { key: '2026-05', corto: 'May', largo: 'Mayo 2026' },
-      { key: '2026-06', corto: 'Jun', largo: 'Junio 2026' },
-      { key: '2026-07', corto: 'Jul', largo: 'Julio 2026' },
-      { key: '2026-08', corto: 'Ago', largo: 'Agosto 2026' },
-      { key: '2026-09', corto: 'Sep', largo: 'Septiembre 2026' },
-      { key: '2026-10', corto: 'Oct', largo: 'Octubre 2026' },
-      { key: '2026-11', corto: 'Nov', largo: 'Noviembre 2026' },
+      { key: '2026-05', corto: 'May', largo: 'Mayo 2026', fallbackCant: 3, fallbackMonto: 48500 },
+      { key: '2026-06', corto: 'Jun', largo: 'Junio 2026', fallbackCant: 4, fallbackMonto: 62300 },
+      { key: '2026-07', corto: 'Jul', largo: 'Julio 2026', fallbackCant: 2, fallbackMonto: 41200 },
+      { key: '2026-08', corto: 'Ago', largo: 'Agosto 2026', fallbackCant: 4, fallbackMonto: 71800 },
+      { key: '2026-09', corto: 'Sep', largo: 'Septiembre 2026', fallbackCant: 3, fallbackMonto: 54600 },
+      { key: '2026-10', corto: 'Oct', largo: 'Octubre 2026', fallbackCant: 4, fallbackMonto: 68900 },
+      { key: '2026-11', corto: 'Nov', largo: 'Noviembre 2026', fallbackCant: 3, fallbackMonto: 59400 },
     ];
 
     return meses.map((m) => {
@@ -191,8 +205,8 @@ export const MenuPrincipalComprasPage: React.FC = () => {
         key: m.key,
         mesCorto: m.corto,
         mesLargo: m.largo,
-        cantidad: cantidad > 0 ? cantidad : Math.floor(Math.random() * 3 + 2),
-        monto: monto > 0 ? monto : Math.floor(Math.random() * 45000 + 35000),
+        cantidad: cantidad > 0 ? cantidad : m.fallbackCant,
+        monto: monto > 0 ? monto : m.fallbackMonto,
         aprobadas: aprobadas > 0 ? aprobadas : 2,
       };
     });

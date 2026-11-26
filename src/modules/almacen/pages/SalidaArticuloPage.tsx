@@ -145,28 +145,25 @@ export default function SalidaArticuloPage() {
     return true;
   };
 
-  const obtenerEstadoValidacionPaso = (paso: number) => {
+  const estadoPasoActual = useMemo(() => {
     const faltantes: string[] = [];
-    if (paso === 1) {
+    if (currentStep === 1) {
       if (!folioSalida.trim()) faltantes.push('Folio del Vale de Salida');
       if (!responsableId.trim()) faltantes.push('Responsable del Frente de Obra');
       if (!proyectoDestino.trim()) faltantes.push('Proyecto de Destino');
-    } else if (paso === 2) {
+    } else if (currentStep === 2) {
       if (partidasSalida.length === 0) {
         faltantes.push('Al menos una partida de material o equipo');
       }
       for (const p of partidasSalida) {
-        const disp = getStockDisponible(p.sku);
+        const art = articulos.find((a) => a.sku.toLowerCase() === p.sku.toLowerCase());
+        const disp = art ? art.stockDisponible : 0;
         if (p.cantidad <= 0 || p.cantidad > disp) {
           faltantes.push(`Cantidad válida de partida ${p.sku}`);
         }
       }
     }
     return { valido: faltantes.length === 0, camposFaltantes: faltantes };
-  };
-
-  const estadoPasoActual = useMemo(() => {
-    return obtenerEstadoValidacionPaso(currentStep);
   }, [currentStep, folioSalida, responsableId, proyectoDestino, partidasSalida, articulos]);
 
   const handleIntentoAvanzarInvalido = () => {
@@ -215,6 +212,10 @@ export default function SalidaArticuloPage() {
     const art = articulos.find((a) => a.sku.toLowerCase() === articuloSeleccionadoSku.toLowerCase());
     if (!art) {
       mostrarToast('Selecciona un artículo válido del catálogo.', 'error');
+      return;
+    }
+    if (art.noDisponiblePorMantenimiento) {
+      mostrarToast(`Artículo bloqueado: ${art.sku} está marcado como "No disponible" por mantenimiento correctivo.`, 'error');
       return;
     }
     if (cantidadAgregar <= 0) {
@@ -682,8 +683,11 @@ export default function SalidaArticuloPage() {
                       }}
                     >
                       {articulosActivos.map((a) => (
-                        <option key={a.sku} value={a.sku}>
-                          {a.sku} - {a.descripcionCorta || a.nombre} (Disp: {a.stockDisponible} uds)
+                        <option key={a.sku} value={a.sku} disabled={Boolean(a.noDisponiblePorMantenimiento)}>
+                          {a.sku} - {a.descripcionCorta || a.nombre}{' '}
+                          {a.noDisponiblePorMantenimiento
+                            ? '(No disponible - En mantenimiento)'
+                            : `(Disp: ${a.stockDisponible} uds)`}
                         </option>
                       ))}
                     </select>

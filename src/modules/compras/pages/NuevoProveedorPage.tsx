@@ -123,6 +123,10 @@ export const NuevoProveedorPage: React.FC = () => {
   const [ultimoGuardado, setUltimoGuardado] = useState<string>('Guardado hace 1s');
   const [isSavingDraft, setIsSavingDraft] = useState(false);
 
+  // Modales adicionales
+  const [modalNotificarAdminOpen, setModalNotificarAdminOpen] = useState(false);
+  const [modalConfirmCancelOpen, setModalConfirmCancelOpen] = useState(false);
+
   // Escuchar evento de salida desde Home del sidebar
   React.useEffect(() => {
     const onExitRequest = (e: Event) => {
@@ -301,10 +305,6 @@ export const NuevoProveedorPage: React.FC = () => {
   ]);
   const [declaracionConformidad, setDeclaracionConformidad] = useState(true);
 
-  // Modales adicionales
-  const [modalNotificarAdminOpen, setModalNotificarAdminOpen] = useState(false);
-  const [modalConfirmCancelOpen, setModalConfirmCancelOpen] = useState(false);
-
   // Guardar borrador manual
   const handleGuardarBorrador = () => {
     setIsSavingDraft(true);
@@ -472,11 +472,11 @@ export const NuevoProveedorPage: React.FC = () => {
   };
 
   // ── REGLAS DE VALIDACIÓN POR PASO (TIEMPO REAL) ──
-  const validarPasoActual = (paso: number) => {
+  const estadoPasoActual = useMemo(() => {
     const faltantes: string[] = [];
     const idsFaltantes: string[] = [];
 
-    if (paso === 1) {
+    if (currentStep === 1) {
       if (!tipoEntidad) {
         faltantes.push('Tipo de Entidad Fiscal');
         idsFaltantes.push('tipo-entidad-fiscal');
@@ -497,7 +497,7 @@ export const NuevoProveedorPage: React.FC = () => {
         faltantes.push('Giro Empresarial');
         idsFaltantes.push('giro-empresarial');
       }
-    } else if (paso === 2) {
+    } else if (currentStep === 2) {
       if (!emailPrincipal.trim() || !emailPrincipal.includes('@')) {
         faltantes.push('Correo Electrónico Principal');
         idsFaltantes.push('email-principal');
@@ -522,7 +522,7 @@ export const NuevoProveedorPage: React.FC = () => {
         faltantes.push('Estado');
         idsFaltantes.push('estado');
       }
-    } else if (paso === 3) {
+    } else if (currentStep === 3) {
       if (!rfc.trim() || (tipoEntidad !== 'extranjero' && rfc.trim().length < 12)) {
         faltantes.push(tipoEntidad === 'extranjero' ? 'Tax ID / Identificador Fiscal' : 'RFC Oficial (12 o 13 caracteres)');
         idsFaltantes.push('rfc-fiscal');
@@ -543,7 +543,7 @@ export const NuevoProveedorPage: React.FC = () => {
         faltantes.push('Código Postal Fiscal');
         idsFaltantes.push('cp-fiscal');
       }
-    } else if (paso === 4) {
+    } else if (currentStep === 4) {
       if (!subsidiariaAsignada.trim()) {
         faltantes.push('Subsidiaria Asignada');
         idsFaltantes.push('subsidiaria-asignada');
@@ -560,15 +560,9 @@ export const NuevoProveedorPage: React.FC = () => {
         faltantes.push('Al menos una Cuenta Bancaria registrada');
         idsFaltantes.push('agregar-cuenta-btn');
       }
-    } else if (paso === 5) {
-      // Paso 5: Resumen y expediente digital (listo para confirmación)
     }
 
     return { valido: faltantes.length === 0, camposFaltantes: faltantes, idsFaltantes };
-  };
-
-  const estadoPasoActual = useMemo(() => {
-    return validarPasoActual(currentStep);
   }, [
     currentStep,
     tipoEntidad,
@@ -758,11 +752,10 @@ export const NuevoProveedorPage: React.FC = () => {
                           }
                         }}
                         onBlur={() => marcarCampoTocado('tipo-entidad-fiscal')}
-                        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-semibold transition-all appearance-none cursor-pointer bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${
-                          campoTieneError('tipo-entidad-fiscal')
-                            ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
-                            : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40'
-                        }`}
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-semibold transition-all appearance-none cursor-pointer bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${campoTieneError('tipo-entidad-fiscal')
+                          ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
+                          : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40'
+                          }`}
                       >
                         <option value="" disabled className="text-slate-400">
                           Selecciona el tipo
@@ -795,11 +788,10 @@ export const NuevoProveedorPage: React.FC = () => {
                       }}
                       onBlur={() => marcarCampoTocado('nombre-comercial')}
                       placeholder="Ej. Five Peaks México / YAK Industrial"
-                      className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-semibold transition-all bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${
-                        campoTieneError('nombre-comercial')
-                          ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
-                          : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40'
-                      }`}
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-semibold transition-all bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${campoTieneError('nombre-comercial')
+                        ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
+                        : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40'
+                        }`}
                     />
                     {campoTieneError('nombre-comercial') && (
                       <p className="mt-1 text-xs text-red-500 font-medium">El nombre comercial es obligatorio.</p>
@@ -820,11 +812,10 @@ export const NuevoProveedorPage: React.FC = () => {
                           marcarCampoTocado('categoria-operativa');
                         }}
                         onBlur={() => marcarCampoTocado('categoria-operativa')}
-                        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-semibold transition-all appearance-none cursor-pointer bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${
-                          campoTieneError('categoria-operativa')
-                            ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
-                            : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40'
-                        }`}
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-semibold transition-all appearance-none cursor-pointer bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${campoTieneError('categoria-operativa')
+                          ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
+                          : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40'
+                          }`}
                       >
                         <option value="">Selecciona una categoría...</option>
                         <option value="Servicios Especializados">Servicios Especializados (Mantenimiento, Certificaciones)</option>
@@ -874,11 +865,10 @@ export const NuevoProveedorPage: React.FC = () => {
                         marcarCampoTocado('nombre-representante');
                       }}
                       onBlur={() => marcarCampoTocado('nombre-representante')}
-                      className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-semibold transition-all bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${
-                        campoTieneError('nombre-representante')
-                          ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
-                          : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8] focus:ring-2 focus:ring-blue-100'
-                      }`}
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-semibold transition-all bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${campoTieneError('nombre-representante')
+                        ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
+                        : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8] focus:ring-2 focus:ring-blue-100'
+                        }`}
                     />
                     {campoTieneError('nombre-representante') && (
                       <p className="mt-1 text-xs text-red-500 font-medium">El representante legal es obligatorio.</p>
@@ -911,11 +901,10 @@ export const NuevoProveedorPage: React.FC = () => {
                         marcarCampoTocado('giro-empresarial');
                       }}
                       onBlur={() => marcarCampoTocado('giro-empresarial')}
-                      className={`w-full px-3.5 py-2.5 rounded-xl border text-sm transition-all bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${
-                        campoTieneError('giro-empresarial')
-                          ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
-                          : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8]'
-                      }`}
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-sm transition-all bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${campoTieneError('giro-empresarial')
+                        ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950/40'
+                        : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8]'
+                        }`}
                     />
                     {campoTieneError('giro-empresarial') && (
                       <p className="mt-1 text-xs text-red-500 font-medium">El giro empresarial es obligatorio.</p>
@@ -1149,9 +1138,8 @@ export const NuevoProveedorPage: React.FC = () => {
                 {/* Botón para Adjuntar Constancia de Situación Fiscal (Carga Automática) */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                      csfCargada ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-[#1D4ED8]'
-                    }`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${csfCargada ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-[#1D4ED8]'
+                      }`}>
                       <span className="material-symbols-outlined text-[22px]">
                         {csfCargada ? 'task_alt' : 'description'}
                       </span>
@@ -2014,11 +2002,10 @@ export const NuevoProveedorPage: React.FC = () => {
                   setErrorClabe(null);
                 }}
                 placeholder="012905001234567890"
-                className={`w-full px-3 py-2 rounded-xl border text-sm font-mono font-bold tracking-wider ${
-                  errorClabe
-                    ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950'
-                    : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100'
-                }`}
+                className={`w-full px-3 py-2 rounded-xl border text-sm font-mono font-bold tracking-wider ${errorClabe
+                  ? 'border-red-500 ring-2 ring-red-100 dark:ring-red-950'
+                  : 'border-slate-300 dark:border-slate-700 focus:border-[#1D4ED8] bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100'
+                  }`}
               />
               {errorClabe ? (
                 <p className="text-[11px] text-red-600 font-bold mt-1">{errorClabe}</p>

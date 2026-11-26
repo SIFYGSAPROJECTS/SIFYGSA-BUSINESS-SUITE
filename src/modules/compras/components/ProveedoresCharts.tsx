@@ -112,24 +112,41 @@ export const ProveedoresCharts: React.FC<ProveedoresChartsProps> = ({
     const total = proveedores.length || 1;
     const radio = 60;
     const circunferencia = 2 * Math.PI * radio;
-    let acumuladoPct = 0;
 
     const items = Array.from(conteo.entries())
       .sort((a, b) => b[1] - a[1])
-      .map(([categoria, count], idx) => {
-        const pct = (count / total) * 100;
-        const dasharray = `${(pct / 100) * circunferencia} ${circunferencia}`;
-        const dashoffset = -((acumuladoPct / 100) * circunferencia);
-        acumuladoPct += pct;
-        return {
-          categoria,
-          count,
-          pct,
-          color: PALETA_CATEGORIAS[idx % PALETA_CATEGORIAS.length],
-          dasharray,
-          dashoffset,
-        };
-      });
+      .reduce<{
+        list: Array<{
+          categoria: string;
+          count: number;
+          pct: number;
+          color: string;
+          dasharray: string;
+          dashoffset: number;
+        }>;
+        acumuladoPct: number;
+      }>(
+        (acc, [categoria, count], idx) => {
+          const pct = (count / total) * 100;
+          const dasharray = `${(pct / 100) * circunferencia} ${circunferencia}`;
+          const dashoffset = -((acc.acumuladoPct / 100) * circunferencia);
+          return {
+            acumuladoPct: acc.acumuladoPct + pct,
+            list: [
+              ...acc.list,
+              {
+                categoria,
+                count,
+                pct,
+                color: PALETA_CATEGORIAS[idx % PALETA_CATEGORIAS.length],
+                dasharray,
+                dashoffset,
+              },
+            ],
+          };
+        },
+        { list: [], acumuladoPct: 0 }
+      ).list;
 
     return {
       total,

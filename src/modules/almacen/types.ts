@@ -87,6 +87,7 @@ export interface Articulo {
   estatus?: EstatusArticulo; // 'Activo' | 'Inactivo'
   activo?: boolean; // Compatibilidad: true si estatus === 'Activo'
   enMantenimiento?: boolean; // Compatibilidad: true si stockMantenimiento > 0
+  noDisponiblePorMantenimiento?: boolean; // Bloquea salidas y préstamos durante mantenimiento correctivo
   proyectoId?: string; // ID de proyecto asignado
   stockTotal: number;
   stockDisponible: number;
@@ -118,13 +119,43 @@ export interface Articulo {
 export type TipoMantenimiento =
   | 'Preventivo'
   | 'Correctivo'
+  | 'Predictivo'
+  | 'Calibración'
   | 'Calibración / Revisión';
+
+export type PrioridadMantenimiento = 'Baja' | 'Media' | 'Alta' | 'Crítica';
+export type ProcesoSiguienteMantenimiento = 'Compras' | 'Almacén';
 
 export type EstadoMantenimiento =
   | 'Pendiente / En Diagnóstico'
   | 'En Proceso'
+  | 'Programado'
   | 'Completado / Listo para Reingreso'
   | 'Baja Definitiva / Irreparable';
+
+export type FrecuenciaMantenimiento =
+  | 'Única'
+  | 'Mensual'
+  | 'Trimestral'
+  | 'Semestral'
+  | 'Anual'
+  | 'Por horas / uso';
+
+export type EstatusSemaforoMantenimiento =
+  | 'Al día'
+  | 'Por vencer'
+  | 'Vencido'
+  | 'En servicio'
+  | 'Baja';
+
+export interface AdjuntoMantenimiento {
+  id: string;
+  nombre: string;
+  tipo: 'Foto' | 'Orden de Servicio' | 'Factura' | 'Otro';
+  tamano: number;
+  fecha: string;
+  url?: string;
+}
 
 export interface MantenimientoArticulo {
   id: string;
@@ -132,18 +163,58 @@ export interface MantenimientoArticulo {
   articuloId: string;
   articuloSku: string;
   articuloNombre: string;
+  categoria?: string;
+  ubicacion?: string;
   cantidad: number;
   almacenId: string;
   tipoMantenimiento: TipoMantenimiento;
   estado: EstadoMantenimiento;
+  frecuencia?: FrecuenciaMantenimiento;
+  horasUsoIntervalo?: number;
   fechaEnvio: string;
+  fechaProgramada?: string;
   fechaEstimadaRetorno: string;
+  ultimaFecha?: string;
   fechaRetornoReal?: string;
   responsableOProveedor: string; // Taller técnico o laboratorio externo
+  custodioArticulo?: string;
+  fechaEntrada?: string;
+  fechaInicio?: string;
+  fechaEstimadaTermino?: string;
+  ubicacionActual?: string;
+  ubicacionMantenimiento?: string;
+  prioridad?: PrioridadMantenimiento;
+  procesoSiguiente?: ProcesoSiguienteMantenimiento;
+  comprasReferenciaFolio?: string;
+  costoEstimado?: number;
   costoMantenimiento?: number;
   diagnosticoFalla: string;
+  trabajoRealizado?: string;
+  refaccionesUsadas?: string;
   observacionesResolucion?: string;
+  estatusResultante?: 'Al día' | 'Requiere seguimiento' | 'Baja Definitiva';
+  bloquearDisponibilidad?: boolean;
+  adjuntos?: AdjuntoMantenimiento[];
   usuarioRegistro: string;
+}
+
+export interface BitacoraMantenimientoItem {
+  id: string;
+  mantenimientoId: string;
+  folio: string;
+  articuloId: string;
+  articuloSku: string;
+  articuloNombre: string;
+  fecha: string;
+  tipoEvento: 'programacion' | 'ejecucion' | 'reprogramacion' | 'baja';
+  tipoMantenimiento: TipoMantenimiento;
+  descripcion: string;
+  trabajoRealizado?: string;
+  refaccionesUsadas?: string;
+  costoFinal?: number;
+  responsable: string;
+  usuario: string;
+  estatusResultante?: string;
 }
 
 // ----------------------------------------------------------------------------
@@ -424,4 +495,6 @@ export interface DatosAlmacenBd {
   articulos: Articulo[];
   movimientos: MovimientoAlmacen[];
   ordenCompraPO51: OrdenCompraPO51;
+  mantenimientos?: MantenimientoArticulo[];
+  bitacoraMantenimiento?: BitacoraMantenimientoItem[];
 }

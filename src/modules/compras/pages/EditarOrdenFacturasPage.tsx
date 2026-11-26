@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useCompras } from '../context/ComprasContext';
@@ -54,27 +54,30 @@ export const EditarOrdenFacturasPage: React.FC = () => {
     [ordenes]
   );
 
-  const filtrarOrdenes = (lista: OrdenCompra[]) => {
-    const q = busqueda.trim().toLowerCase();
-    if (!q) return lista;
-    return lista.filter(
-      (o) =>
-        o.folio.toLowerCase().includes(q) ||
-        o.proveedorNombre.toLowerCase().includes(q) ||
-        (o.proveedorRfc || '').toLowerCase().includes(q) ||
-        (o.solicitante || '').toLowerCase().includes(q) ||
-        (o.motivoRechazo || '').toLowerCase().includes(q)
-    );
-  };
+  const filtrarOrdenes = useCallback(
+    (lista: OrdenCompra[]) => {
+      const q = busqueda.trim().toLowerCase();
+      if (!q) return lista;
+      return lista.filter(
+        (o) =>
+          o.folio.toLowerCase().includes(q) ||
+          o.proveedorNombre.toLowerCase().includes(q) ||
+          (o.proveedorRfc || '').toLowerCase().includes(q) ||
+          (o.solicitante || '').toLowerCase().includes(q) ||
+          (o.motivoRechazo || '').toLowerCase().includes(q)
+      );
+    },
+    [busqueda]
+  );
 
   const ordenesVisiblesPorActualizar = useMemo(
     () => filtrarOrdenes(ordenesPorActualizar),
-    [ordenesPorActualizar, busqueda]
+    [filtrarOrdenes, ordenesPorActualizar]
   );
 
   const ordenesVisiblesPendientes = useMemo(
     () => filtrarOrdenes(ordenesPendientes),
-    [ordenesPendientes, busqueda]
+    [filtrarOrdenes, ordenesPendientes]
   );
 
   const facturasVisibles = useMemo(() => {

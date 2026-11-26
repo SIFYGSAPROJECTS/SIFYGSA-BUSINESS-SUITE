@@ -37,7 +37,7 @@ export const SidebarCompras: React.FC<SidebarComprasProps> = ({
   const [openProveedores, setOpenProveedores] = useState(true);
 
   // Manejo de salida segura con confirmación en caso de formulario sucio
-  const handleHomeClick = (_e?: React.MouseEvent) => {
+  const handleHomeClick = () => {
     if (typeof window !== 'undefined') {
       const exitEvent = new CustomEvent('sifygsa:request-exit-compras', {
         cancelable: true,

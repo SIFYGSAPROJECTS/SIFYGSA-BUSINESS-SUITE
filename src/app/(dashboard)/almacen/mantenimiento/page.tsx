@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { obtenerSesionActual } from '@/lib/auth';
-import { puedeAccederModulo } from '@/lib/permissions';
+import { puedeAccederModulo, tienePermiso } from '@/lib/permissions';
 import MantenimientoArticulosPage from '@/modules/almacen/pages/MantenimientoArticulosPage';
 
 export default async function PaginaAlmacenMantenimiento() {
@@ -14,10 +14,16 @@ export default async function PaginaAlmacenMantenimiento() {
     redirect('/sin-acceso?modulo=Almacen');
   }
 
+  const puedeGestionar =
+    tienePermiso(sesion.rol, 'almacen', 'crear', sesion.modulosPermitidos) ||
+    tienePermiso(sesion.rol, 'almacen', 'editar', sesion.modulosPermitidos);
+
   return (
     <Suspense fallback={<div style={{ padding: '1.5rem' }}>Cargando Control de Mantenimiento SIFYGSA...</div>}>
-      <MantenimientoArticulosPage />
+      <MantenimientoArticulosPage
+        puedeGestionar={puedeGestionar}
+        usuarioActual={sesion.nombre}
+      />
     </Suspense>
   );
 }
-

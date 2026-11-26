@@ -110,22 +110,18 @@ export default function AltaServicioNoInventariablePage() {
     return true;
   };
 
-  const obtenerEstadoValidacionPaso = (paso: number) => {
+  const estadoPasoActual = useMemo(() => {
     const faltantes: string[] = [];
-    if (paso === 1) {
+    if (currentStep === 1) {
       if (!codigo.trim()) faltantes.push('Código de Servicio');
       if (!nombre.trim()) faltantes.push('Nombre Oficial del Servicio');
-    } else if (paso === 2) {
+    } else if (currentStep === 2) {
       if (!proveedor.trim()) faltantes.push('Proveedor Sugerido');
       if (!centroCostos.trim()) faltantes.push('Centro de Costos');
-    } else if (paso === 3) {
+    } else if (currentStep === 3) {
       if (!descripcion.trim()) faltantes.push('Alcance y Justificación Técnica');
     }
     return { valido: faltantes.length === 0, camposFaltantes: faltantes };
-  };
-
-  const estadoPasoActual = useMemo(() => {
-    return obtenerEstadoValidacionPaso(currentStep);
   }, [currentStep, codigo, nombre, proveedor, centroCostos, descripcion]);
 
   const handleIntentoAvanzarInvalido = () => {

@@ -23,6 +23,10 @@ interface ArchivoAdjuntoFactura {
   url?: string;
 }
 
+function crearIdTemporalRecepcion(prefijo: string): string {
+  return `${prefijo}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
 export interface GestionFacturasProveedorPageProps {
   modo?: 'nueva' | 'ver' | 'directo';
   ocIdProp?: string;
@@ -285,6 +289,55 @@ export const GestionFacturasProveedorPage: React.FC<GestionFacturasProveedorPage
     }
   }, [ordenActual]);
 
+  // ── ARCHIVOS ADJUNTOS EN LA TRANSACCIÓN (NETSUITE ERP - COMUNICACIÓN EXACTA) ──
+  const [archivosTransaccion, setArchivosTransaccion] = useState<ArchivoAdjuntoFactura[]>([
+    {
+      id: 'arch-1',
+      nombre: 'Captura de pantalla 2026-10-08 170641.png',
+      carpeta: 'HSE',
+      tamano: 132 * 1024,
+      tipo: 'image/png',
+      fechaCarga: '08/10/2026 5:17 PM',
+      usuario: 'HSE',
+    },
+    {
+      id: 'arch-2',
+      nombre: 'Captura de pantalla 2026-10-08 170655.png',
+      carpeta: 'HSE',
+      tamano: 168 * 1024,
+      tipo: 'image/png',
+      fechaCarga: '08/10/2026 5:17 PM',
+      usuario: 'HSE',
+    },
+    {
+      id: 'arch-3',
+      nombre: 'Captura de pantalla 2026-10-08 170708.png',
+      carpeta: 'HSE',
+      tamano: 209 * 1024,
+      tipo: 'image/png',
+      fechaCarga: '08/10/2026 5:18 PM',
+      usuario: 'HSE',
+    },
+    {
+      id: 'arch-4',
+      nombre: 'ubicacion Tenaris Tamsa.png',
+      carpeta: 'HSE',
+      tamano: 862 * 1024,
+      tipo: 'image/png',
+      fechaCarga: '03/08/2025 6:17 PM',
+      usuario: 'HSE',
+    },
+    {
+      id: 'arch-5',
+      nombre: 'FAC_FPM130918MPA_FAC-GMX-99421.xml',
+      carpeta: 'Compras - comprobantes fiscales XML/PDF',
+      tamano: 42 * 1024,
+      tipo: 'text/xml',
+      fechaCarga: '27/10/2026 14:15',
+      usuario: 'M. Torres',
+    },
+  ]);
+
   // ── HIDRATACIÓN AUTOMÁTICA DESDE PRECARGA DE ORDEN DE COMPRA (SESSIONSTORAGE) ──
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -366,55 +419,6 @@ export const GestionFacturasProveedorPage: React.FC<GestionFacturasProveedorPage
       console.error('Error al precargar factura desde sessionStorage:', e);
     }
   }, [odcSeleccionadaFolio, ordenActual]);
-
-  // ── ARCHIVOS ADJUNTOS EN LA TRANSACCIÓN (NETSUITE ERP - COMUNICACIÓN EXACTA) ──
-  const [archivosTransaccion, setArchivosTransaccion] = useState<ArchivoAdjuntoFactura[]>([
-    {
-      id: 'arch-1',
-      nombre: 'Captura de pantalla 2026-10-08 170641.png',
-      carpeta: 'HSE',
-      tamano: 132 * 1024,
-      tipo: 'image/png',
-      fechaCarga: '08/10/2026 5:17 PM',
-      usuario: 'HSE',
-    },
-    {
-      id: 'arch-2',
-      nombre: 'Captura de pantalla 2026-10-08 170655.png',
-      carpeta: 'HSE',
-      tamano: 168 * 1024,
-      tipo: 'image/png',
-      fechaCarga: '08/10/2026 5:17 PM',
-      usuario: 'HSE',
-    },
-    {
-      id: 'arch-3',
-      nombre: 'Captura de pantalla 2026-10-08 170708.png',
-      carpeta: 'HSE',
-      tamano: 209 * 1024,
-      tipo: 'image/png',
-      fechaCarga: '08/10/2026 5:18 PM',
-      usuario: 'HSE',
-    },
-    {
-      id: 'arch-4',
-      nombre: 'ubicacion Tenaris Tamsa.png',
-      carpeta: 'HSE',
-      tamano: 862 * 1024,
-      tipo: 'image/png',
-      fechaCarga: '03/08/2025 6:17 PM',
-      usuario: 'HSE',
-    },
-    {
-      id: 'arch-5',
-      nombre: 'FAC_FPM130918MPA_FAC-GMX-99421.xml',
-      carpeta: 'Compras - comprobantes fiscales XML/PDF',
-      tamano: 42 * 1024,
-      tipo: 'text/xml',
-      fechaCarga: '27/10/2026 14:15',
-      usuario: 'M. Torres',
-    },
-  ]);
 
   // ── MANEJADORES DE COMUNICACIÓN • ARCHIVOS (NETSUITE ERP - IMAGEN 1) ──
   const handleAgregarArchivoComunicacion = () => {
@@ -590,7 +594,7 @@ export const GestionFacturasProveedorPage: React.FC<GestionFacturasProveedorPage
 
     // Agregar archivo a la tabla de archivos de la transacción
     const nuevoArch: ArchivoAdjuntoFactura = {
-      id: `arch-${Date.now()}`,
+      id: crearIdTemporalRecepcion('arch'),
       nombre: nombreArchivo || `${parsed.folio}.xml`,
       carpeta: 'Compras - comprobantes fiscales XML/PDF',
       tamano: Math.round(xmlString.length),
@@ -620,7 +624,7 @@ export const GestionFacturasProveedorPage: React.FC<GestionFacturasProveedorPage
       const ahora = new Date();
       const fechaStr = `${ahora.toLocaleDateString('es-MX')} ${ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`;
       const nuevo: ArchivoAdjuntoFactura = {
-        id: `arch-${Date.now()}`,
+        id: crearIdTemporalRecepcion('arch'),
         nombre: file.name,
         carpeta: 'Compras - facturas proveedor',
         tamano: file.size,
@@ -637,7 +641,7 @@ export const GestionFacturasProveedorPage: React.FC<GestionFacturasProveedorPage
     if (!inlineArticulo.trim() && !inlineDescripcion.trim()) return;
     const importe = inlineCantidad * inlineValorUnitario;
     const nueva: PartidaRecepcion = {
-      id: `part-${Date.now()}`,
+      id: crearIdTemporalRecepcion('part'),
       articulo: inlineArticulo || 'ART-GEN',
       nombreProveedor: '-',
       descripcion: inlineDescripcion || 'Concepto adicional de recepción contra ODC',

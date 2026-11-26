@@ -2,7 +2,9 @@
 
 import React, { createContext, useContext, useReducer, useEffect, useMemo } from 'react';
 import type {
+  AdjuntoMantenimiento,
   Articulo,
+  BitacoraMantenimientoItem,
   RecepcionIR03Documento,
   ValeSalidaSA,
   DevolucionAlmacen,
@@ -30,6 +32,7 @@ interface AlmacenState {
   valesSalida: ValeSalidaSA[];
   devoluciones: DevolucionAlmacen[];
   mantenimientos: MantenimientoArticulo[];
+  bitacoraMantenimiento: BitacoraMantenimientoItem[];
   movimientos: MovimientoAlmacen[];
   bitacora: BitacoraAlmacenItem[];
   toast: { message: string; type: 'success' | 'info' | 'warning' | 'error' } | null;
@@ -45,7 +48,21 @@ type AlmacenAction =
   | { type: 'CREAR_VALE_SALIDA_SA'; payload: ValeSalidaSA }
   | { type: 'REGISTRAR_DEVOLUCION'; payload: DevolucionAlmacen }
   | { type: 'ENVIAR_A_MANTENIMIENTO'; payload: MantenimientoArticulo }
-  | { type: 'COMPLETAR_MANTENIMIENTO_REINGRESO'; payload: { id: string; fechaRetornoReal: string; costoMantenimiento: number; observacionesResolucion: string; usuario: string } }
+  | {
+      type: 'COMPLETAR_MANTENIMIENTO_REINGRESO';
+      payload: {
+        id: string;
+        fechaRetornoReal: string;
+        costoMantenimiento: number;
+        observacionesResolucion: string;
+        usuario: string;
+        trabajoRealizado?: string;
+        refaccionesUsadas?: string;
+        estatusResultante?: 'Al día' | 'Requiere seguimiento' | 'Baja Definitiva';
+        adjuntos?: AdjuntoMantenimiento[];
+      };
+    }
+  | { type: 'REPROGRAMAR_MANTENIMIENTO'; payload: { id: string; nuevaFecha: string; usuario: string } }
   | { type: 'DAR_DE_BAJA_MANTENIMIENTO'; payload: { id: string; motivo: string; usuario: string } }
   | { type: 'REGISTRAR_LOG_AUDITORIA'; payload: BitacoraAlmacenItem }
   | { type: 'SET_TOAST'; payload: { message: string; type: 'success' | 'info' | 'warning' | 'error' } }
@@ -60,13 +77,19 @@ const MANTENIMIENTOS_INICIALES: MantenimientoArticulo[] = [
     articuloId: 'art-3',
     articuloSku: 'FLUKE-87V-IND',
     articuloNombre: 'Multímetro Industrial TRMS de Alta Precisión',
+    categoria: 'Equipos de Medición',
+    ubicacion: 'Nave 2 - Metrología',
     cantidad: 2,
     almacenId: 'nave2',
     tipoMantenimiento: 'Calibración / Revisión',
     estado: 'En Proceso',
+    frecuencia: 'Anual',
     fechaEnvio: '2026-11-08',
+    fechaProgramada: '2026-11-22',
     fechaEstimadaRetorno: '2026-11-22',
+    ultimaFecha: '2025-11-22',
     responsableOProveedor: 'Laboratorio de Metrología Acreditado EMA (CENAM)',
+    costoEstimado: 4850.0,
     costoMantenimiento: 4850.0,
     diagnosticoFalla: 'Calibración anual preventiva y verificación de escala analógica de 4-20mA.',
     observacionesResolucion: 'En proceso de emisión de carta de trazabilidad e incertidumbre.',
@@ -78,15 +101,22 @@ const MANTENIMIENTOS_INICIALES: MantenimientoArticulo[] = [
     articuloId: 'art-6',
     articuloSku: 'TORQ-SNAPON-12',
     articuloNombre: 'Torquímetro Digital de Precisión 1/2" Snap-on',
+    categoria: 'Herramientas',
+    ubicacion: 'Nave 2 - Herramienta Especial',
     cantidad: 1,
     almacenId: 'nave2',
     tipoMantenimiento: 'Correctivo',
     estado: 'Pendiente / En Diagnóstico',
+    frecuencia: 'Única',
     fechaEnvio: '2026-11-10',
+    fechaProgramada: '2026-11-15',
     fechaEstimadaRetorno: '2026-11-15',
+    ultimaFecha: '2026-05-10',
     responsableOProveedor: 'Taller Especializado Snap-on México',
+    costoEstimado: 3200.0,
     costoMantenimiento: 3200.0,
     diagnosticoFalla: 'Desviación en lectura superior al 6% de tolerancia y trinquete trabado.',
+    bloquearDisponibilidad: true,
     usuarioRegistro: 'Ing. Mateo Gómez',
   },
   {
@@ -95,18 +125,70 @@ const MANTENIMIENTOS_INICIALES: MantenimientoArticulo[] = [
     articuloId: 'art-1',
     articuloSku: 'DET-UVIR-FLAME-01',
     articuloNombre: 'Detector Óptico de Flama UV/IR Industrial',
+    categoria: 'Instrumentación',
+    ubicacion: 'Almacén Principal - Estante A1',
     cantidad: 1,
     almacenId: 'principal',
     tipoMantenimiento: 'Preventivo',
     estado: 'Completado / Listo para Reingreso',
+    frecuencia: 'Semestral',
     fechaEnvio: '2026-11-02',
+    fechaProgramada: '2026-11-12',
     fechaEstimadaRetorno: '2026-11-12',
+    ultimaFecha: '2026-11-12',
     fechaRetornoReal: '2026-11-12',
     responsableOProveedor: 'Taller Electrónico SIFYGSA CDMX',
+    costoEstimado: 1500.0,
     costoMantenimiento: 1500.0,
     diagnosticoFalla: 'Limpieza óptica de cristal de zafiro y prueba de disparo con lámpara de prueba.',
+    trabajoRealizado: 'Descontaminación ultrasónica de lente y calibración de sensibilidad UV/IR.',
+    refaccionesUsadas: 'Kit de empaques Viton y gel sílice',
     observacionesResolucion: 'Óptica descontaminada y sensor probado al 100%. Aprobado para reingreso a inventario disponible.',
+    estatusResultante: 'Al día',
     usuarioRegistro: 'Ing. Mateo Gómez',
+  },
+  {
+    id: 'mnt-004',
+    folio: 'MNT-2026-0004',
+    articuloId: 'art-1',
+    articuloSku: 'DET-UVIR-FLAME-01',
+    articuloNombre: 'Detector Óptico de Flama UV/IR Industrial',
+    categoria: 'Instrumentación',
+    ubicacion: 'Almacén Principal - Estante A1',
+    cantidad: 1,
+    almacenId: 'principal',
+    tipoMantenimiento: 'Preventivo',
+    estado: 'Programado',
+    frecuencia: 'Trimestral',
+    fechaEnvio: '2026-11-25',
+    fechaProgramada: '2026-12-10',
+    fechaEstimadaRetorno: '2026-12-10',
+    ultimaFecha: '2026-11-12',
+    responsableOProveedor: 'Taller Electrónico SIFYGSA CDMX',
+    costoEstimado: 1800.0,
+    diagnosticoFalla: 'Verificación trimestral de respuesta UV/IR y prueba funcional en banco.',
+    usuarioRegistro: 'Ing. Mateo Gómez',
+  },
+];
+
+const BITACORA_MANTENIMIENTO_INICIAL: BitacoraMantenimientoItem[] = [
+  {
+    id: 'bm-001',
+    mantenimientoId: 'mnt-003',
+    folio: 'MNT-2026-0003',
+    articuloId: 'art-1',
+    articuloSku: 'DET-UVIR-FLAME-01',
+    articuloNombre: 'Detector Óptico de Flama UV/IR Industrial',
+    fecha: '2026-11-12',
+    tipoEvento: 'ejecucion',
+    tipoMantenimiento: 'Preventivo',
+    descripcion: 'Servicio preventivo completado y reingreso a kárdex.',
+    trabajoRealizado: 'Descontaminación ultrasónica de lente y calibración de sensibilidad UV/IR.',
+    refaccionesUsadas: 'Kit de empaques Viton y gel sílice',
+    costoFinal: 1500.0,
+    responsable: 'Taller Electrónico SIFYGSA CDMX',
+    usuario: 'Ing. Mateo Gómez',
+    estatusResultante: 'Al día',
   },
 ];
 
@@ -479,9 +561,18 @@ function almacenReducer(state: AlmacenState, action: AlmacenAction): AlmacenStat
     case 'CREAR_VALE_SALIDA_SA': {
       const vale = action.payload;
 
-      // Validación estricta de stock disponible para cada partida
+      // Validación estricta de stock disponible y bloqueo por mantenimiento correctivo para cada partida
       for (const partida of vale.partidas) {
         const art = state.articulos.find((a) => a.sku.toLowerCase() === partida.sku.toLowerCase());
+        if (art?.noDisponiblePorMantenimiento) {
+          return {
+            ...state,
+            toast: {
+              message: `Artículo bloqueado: ${art.sku} está marcado como "No disponible" por mantenimiento correctivo.`,
+              type: 'error',
+            },
+          };
+        }
         if (art && art.stockDisponible < partida.cantidad) {
           return {
             ...state,
@@ -557,11 +648,12 @@ function almacenReducer(state: AlmacenState, action: AlmacenAction): AlmacenStat
 
     case 'ENVIAR_A_MANTENIMIENTO': {
       const mant = action.payload;
+      const esSoloProgramado = mant.estado === 'Programado' && mant.procesoSiguiente !== 'Almacén';
       const art = state.articulos.find(
         (a) => a.id === mant.articuloId || a.sku.toLowerCase() === mant.articuloSku.toLowerCase()
       );
 
-      if (art && art.stockDisponible < mant.cantidad) {
+      if (!esSoloProgramado && art && art.stockDisponible < mant.cantidad && mant.procesoSiguiente !== 'Almacén') {
         return {
           ...state,
           toast: {
@@ -573,13 +665,27 @@ function almacenReducer(state: AlmacenState, action: AlmacenAction): AlmacenStat
 
       const articulosActualizados = state.articulos.map((a) => {
         if (a.id === mant.articuloId || a.sku.toLowerCase() === mant.articuloSku.toLowerCase()) {
-          const nuevoDisponible = Math.max(0, a.stockDisponible - mant.cantidad);
-          const nuevoMantenimiento = a.stockMantenimiento + mant.cantidad;
-          const nuevoEstado = nuevoDisponible === 0 ? 'Mantenimiento' : nuevoDisponible <= a.stockMinimo ? 'Stock Bajo' : a.estado;
+          if (esSoloProgramado) {
+            return mant.bloquearDisponibilidad
+              ? { ...a, noDisponiblePorMantenimiento: true }
+              : a;
+          }
+          const cantDeduct = Math.min(a.stockDisponible, mant.cantidad);
+          const nuevoDisponible = Math.max(0, a.stockDisponible - cantDeduct);
+          const nuevoMantenimiento = a.stockMantenimiento + cantDeduct;
+          const bloquear = mant.procesoSiguiente === 'Almacén' || Boolean(mant.bloquearDisponibilidad);
+          const nuevoEstado =
+            nuevoDisponible === 0 || bloquear
+              ? 'Mantenimiento'
+              : nuevoDisponible <= a.stockMinimo
+              ? 'Stock Bajo'
+              : a.estado;
           return {
             ...a,
             stockDisponible: nuevoDisponible,
             stockMantenimiento: nuevoMantenimiento,
+            enMantenimiento: true,
+            noDisponiblePorMantenimiento: bloquear || a.noDisponiblePorMantenimiento,
             estado: nuevoEstado,
           };
         }
@@ -594,11 +700,28 @@ function almacenReducer(state: AlmacenState, action: AlmacenAction): AlmacenStat
         articuloSku: mant.articuloSku,
         articuloNombre: mant.articuloNombre,
         cantidad: mant.cantidad,
-        almacen: mant.almacenId || 'Almacén Principal',
-        ubicacion: mant.responsableOProveedor,
+        almacen: mant.ubicacionActual || mant.almacenId || 'Almacén Principal',
+        ubicacion: mant.ubicacionMantenimiento || mant.responsableOProveedor,
         referenciaDoc: mant.folio,
-        responsable: mant.usuarioRegistro,
-        estado: 'En Tránsito',
+        responsable: mant.responsableOProveedor || mant.usuarioRegistro,
+        estado: esSoloProgramado ? 'Pendiente' : 'En Tránsito',
+      };
+
+      const nuevoBitacoraMant: BitacoraMantenimientoItem = {
+        id: `bm-${Date.now()}`,
+        mantenimientoId: mant.id,
+        folio: mant.folio,
+        articuloId: mant.articuloId,
+        articuloSku: mant.articuloSku,
+        articuloNombre: mant.articuloNombre,
+        fecha: mant.fechaEnvio,
+        tipoEvento: 'programacion',
+        tipoMantenimiento: mant.tipoMantenimiento,
+        descripcion: `${esSoloProgramado ? 'Programación' : 'Envío a servicio'} (${mant.frecuencia || 'Única'}): ${mant.diagnosticoFalla}`,
+        costoFinal: mant.costoEstimado ?? mant.costoMantenimiento,
+        responsable: mant.responsableOProveedor,
+        usuario: mant.usuarioRegistro,
+        estatusResultante: mant.estado,
       };
 
       const nuevoLog: BitacoraAlmacenItem = {
@@ -607,7 +730,7 @@ function almacenReducer(state: AlmacenState, action: AlmacenAction): AlmacenStat
         usuario: mant.usuarioRegistro,
         folioDocumento: mant.folio,
         accion: 'salida',
-        campoModificado: `Envío a Mantenimiento (${mant.tipoMantenimiento})`,
+        campoModificado: `Mantenimiento (${mant.tipoMantenimiento})`,
         valorAnterior: 'Disponible en Almacén',
         valorNuevo: `Taller/Laboratorio: ${mant.responsableOProveedor}`,
         motivo: mant.diagnosticoFalla,
@@ -616,42 +739,132 @@ function almacenReducer(state: AlmacenState, action: AlmacenAction): AlmacenStat
       return {
         ...state,
         mantenimientos: [mant, ...state.mantenimientos],
+        bitacoraMantenimiento: [nuevoBitacoraMant, ...state.bitacoraMantenimiento],
         articulos: articulosActualizados,
-        movimientos: [nuevoMovimiento, ...state.movimientos],
+        movimientos: esSoloProgramado ? state.movimientos : [nuevoMovimiento, ...state.movimientos],
         bitacora: [nuevoLog, ...state.bitacora],
         toast: {
-          message: `Mantenimiento ${mant.folio} registrado. Se enviaron ${mant.cantidad} unidades a ${mant.responsableOProveedor}.`,
+          message: esSoloProgramado
+            ? `Mantenimiento ${mant.folio} programado para ${mant.fechaProgramada || mant.fechaEstimadaRetorno}.`
+            : `Mantenimiento ${mant.folio} registrado. Se enviaron ${mant.cantidad} unidades a ${mant.responsableOProveedor}.`,
           type: 'success',
         },
       };
     }
 
     case 'COMPLETAR_MANTENIMIENTO_REINGRESO': {
-      const { id, fechaRetornoReal, costoMantenimiento, observacionesResolucion, usuario } = action.payload;
+      const {
+        id,
+        fechaRetornoReal,
+        costoMantenimiento,
+        observacionesResolucion,
+        usuario,
+        trabajoRealizado,
+        refaccionesUsadas,
+        estatusResultante = 'Al día',
+        adjuntos = [],
+      } = action.payload;
       const mant = state.mantenimientos.find((m) => m.id === id);
       if (!mant) return state;
 
-      const mantenimientos = state.mantenimientos.map((m) =>
+      const estadoFinal =
+        estatusResultante === 'Baja Definitiva'
+          ? ('Baja Definitiva / Irreparable' as const)
+          : ('Completado / Listo para Reingreso' as const);
+
+      const estabaEnTaller =
+        mant.estado === 'En Proceso' || mant.estado === 'Pendiente / En Diagnóstico';
+
+      const mantenimientosActualizados = state.mantenimientos.map((m) =>
         m.id === id
           ? {
               ...m,
-              estado: 'Completado / Listo para Reingreso' as const,
+              estado: estadoFinal,
               fechaRetornoReal,
+              ultimaFecha: fechaRetornoReal,
               costoMantenimiento,
               observacionesResolucion,
+              trabajoRealizado: trabajoRealizado || m.trabajoRealizado,
+              refaccionesUsadas: refaccionesUsadas || m.refaccionesUsadas,
+              estatusResultante,
+              adjuntos: [...(m.adjuntos ?? []), ...adjuntos],
             }
           : m
       );
 
+      // Si es recurrente, programar automáticamente el siguiente servicio
+      let siguienteProgramado: MantenimientoArticulo | null = null;
+      if (
+        estatusResultante !== 'Baja Definitiva' &&
+        mant.frecuencia &&
+        mant.frecuencia !== 'Única' &&
+        mant.frecuencia !== 'Por horas / uso'
+      ) {
+        const base = new Date(`${fechaRetornoReal}T12:00:00`);
+        if (!Number.isNaN(base.getTime())) {
+          const meses =
+            mant.frecuencia === 'Mensual'
+              ? 1
+              : mant.frecuencia === 'Trimestral'
+              ? 3
+              : mant.frecuencia === 'Semestral'
+              ? 6
+              : 12;
+          base.setMonth(base.getMonth() + meses);
+          const prox = base.toISOString().slice(0, 10);
+          siguienteProgramado = {
+            ...mant,
+            id: `mnt-next-${Date.now()}`,
+            folio: `MNT-2026-${String(mantenimientosActualizados.length + 1).padStart(4, '0')}`,
+            estado: 'Programado',
+            fechaEnvio: fechaRetornoReal,
+            fechaProgramada: prox,
+            fechaEstimadaRetorno: prox,
+            ultimaFecha: fechaRetornoReal,
+            fechaRetornoReal: undefined,
+            bloquearDisponibilidad: false,
+            diagnosticoFalla: `Servicio recurrente (${mant.frecuencia}) programado automáticamente tras ${mant.folio}.`,
+            usuarioRegistro: usuario,
+          };
+        }
+      }
+
+      const mantenimientos = siguienteProgramado
+        ? [siguienteProgramado, ...mantenimientosActualizados]
+        : mantenimientosActualizados;
+
+      const sigueBloqueado = mantenimientos.some(
+        (m) =>
+          m.articuloSku.toLowerCase() === mant.articuloSku.toLowerCase() &&
+          m.bloquearDisponibilidad &&
+          (m.estado === 'En Proceso' || m.estado === 'Pendiente / En Diagnóstico')
+      );
+
       const articulosActualizados = state.articulos.map((a) => {
         if (a.id === mant.articuloId || a.sku.toLowerCase() === mant.articuloSku.toLowerCase()) {
-          const nuevoMantenimiento = Math.max(0, a.stockMantenimiento - mant.cantidad);
-          const nuevoDisponible = a.stockDisponible + mant.cantidad;
+          if (estatusResultante === 'Baja Definitiva') {
+            return {
+              ...a,
+              stockMantenimiento: estabaEnTaller
+                ? Math.max(0, a.stockMantenimiento - mant.cantidad)
+                : a.stockMantenimiento,
+              stockTotal: Math.max(0, a.stockTotal - mant.cantidad),
+              noDisponiblePorMantenimiento: sigueBloqueado,
+            };
+          }
+          const nuevoMantenimiento = estabaEnTaller
+            ? Math.max(0, a.stockMantenimiento - mant.cantidad)
+            : a.stockMantenimiento;
+          const nuevoDisponible = estabaEnTaller
+            ? a.stockDisponible + mant.cantidad
+            : a.stockDisponible;
           return {
             ...a,
             stockMantenimiento: nuevoMantenimiento,
             stockDisponible: nuevoDisponible,
-            estado: 'Disponible' as const,
+            enMantenimiento: nuevoMantenimiento > 0,
+            noDisponiblePorMantenimiento: sigueBloqueado,
+            estado: sigueBloqueado ? ('Mantenimiento' as const) : ('Disponible' as const),
           };
         }
         return a;
@@ -672,27 +885,89 @@ function almacenReducer(state: AlmacenState, action: AlmacenAction): AlmacenStat
         estado: 'Completado',
       };
 
+      const nuevoBitacoraMant: BitacoraMantenimientoItem = {
+        id: `bm-${Date.now()}`,
+        mantenimientoId: mant.id,
+        folio: mant.folio,
+        articuloId: mant.articuloId,
+        articuloSku: mant.articuloSku,
+        articuloNombre: mant.articuloNombre,
+        fecha: fechaRetornoReal,
+        tipoEvento: estatusResultante === 'Baja Definitiva' ? 'baja' : 'ejecucion',
+        tipoMantenimiento: mant.tipoMantenimiento,
+        descripcion: observacionesResolucion || 'Ejecución de mantenimiento registrada.',
+        trabajoRealizado,
+        refaccionesUsadas,
+        costoFinal: costoMantenimiento,
+        responsable: mant.responsableOProveedor,
+        usuario,
+        estatusResultante,
+      };
+
       const nuevoLog: BitacoraAlmacenItem = {
         id: `log-${Date.now()}`,
         fechaHora: new Date().toLocaleString('es-MX'),
         usuario,
         folioDocumento: mant.folio,
         accion: 'recepcion',
-        campoModificado: 'Reingreso de Mantenimiento a Stock',
-        valorAnterior: 'En Mantenimiento',
-        valorNuevo: 'Reintegrado a Disponible',
+        campoModificado: 'Ejecución de Mantenimiento',
+        valorAnterior: mant.estado,
+        valorNuevo: estatusResultante,
         motivo: observacionesResolucion || 'Mantenimiento finalizado exitosamente.',
       };
 
       return {
         ...state,
         mantenimientos,
+        bitacoraMantenimiento: [nuevoBitacoraMant, ...state.bitacoraMantenimiento],
         articulos: articulosActualizados,
         movimientos: [nuevoMovimiento, ...state.movimientos],
         bitacora: [nuevoLog, ...state.bitacora],
         toast: {
-          message: `Mantenimiento ${mant.folio} completado. Se reintegraron ${mant.cantidad} unidades al stock disponible.`,
+          message: `Ejecución ${mant.folio} registrada (${estatusResultante}).${siguienteProgramado ? ` Próximo servicio: ${siguienteProgramado.fechaProgramada}.` : ''}`,
           type: 'success',
+        },
+      };
+    }
+
+    case 'REPROGRAMAR_MANTENIMIENTO': {
+      const { id, nuevaFecha, usuario } = action.payload;
+      const mant = state.mantenimientos.find((m) => m.id === id);
+      if (!mant) return state;
+
+      const mantenimientos = state.mantenimientos.map((m) =>
+        m.id === id
+          ? {
+              ...m,
+              fechaProgramada: nuevaFecha,
+              fechaEstimadaRetorno: nuevaFecha,
+            }
+          : m
+      );
+
+      const nuevoBitacoraMant: BitacoraMantenimientoItem = {
+        id: `bm-${Date.now()}`,
+        mantenimientoId: mant.id,
+        folio: mant.folio,
+        articuloId: mant.articuloId,
+        articuloSku: mant.articuloSku,
+        articuloNombre: mant.articuloNombre,
+        fecha: new Date().toISOString().slice(0, 10),
+        tipoEvento: 'reprogramacion',
+        tipoMantenimiento: mant.tipoMantenimiento,
+        descripcion: `Fecha reprogramada de ${mant.fechaProgramada || mant.fechaEstimadaRetorno} a ${nuevaFecha}.`,
+        responsable: mant.responsableOProveedor,
+        usuario,
+        estatusResultante: mant.estado,
+      };
+
+      return {
+        ...state,
+        mantenimientos,
+        bitacoraMantenimiento: [nuevoBitacoraMant, ...state.bitacoraMantenimiento],
+        toast: {
+          message: `Mantenimiento ${mant.folio} reprogramado para el ${nuevaFecha}.`,
+          type: 'info',
         },
       };
     }
@@ -845,6 +1120,7 @@ interface AlmacenContextType {
   valesSalida: ValeSalidaSA[];
   devoluciones: DevolucionAlmacen[];
   mantenimientos: MantenimientoArticulo[];
+  bitacoraMantenimiento: BitacoraMantenimientoItem[];
   movimientos: MovimientoAlmacen[];
   bitacora: BitacoraAlmacenItem[];
   monitorCalibracion: MonitorCalibracionItem[];
@@ -863,8 +1139,15 @@ interface AlmacenContextType {
     fechaRetornoReal: string,
     costoMantenimiento: number,
     observacionesResolucion: string,
-    usuario: string
+    usuario: string,
+    extra?: {
+      trabajoRealizado?: string;
+      refaccionesUsadas?: string;
+      estatusResultante?: 'Al día' | 'Requiere seguimiento' | 'Baja Definitiva';
+      adjuntos?: AdjuntoMantenimiento[];
+    }
   ) => void;
+  reprogramarMantenimiento: (id: string, nuevaFecha: string, usuario: string) => void;
   darDeBajaMantenimiento: (id: string, motivo: string, usuario: string) => void;
   mostrarToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   cerrarToast: () => void;
@@ -879,12 +1162,13 @@ export const AlmacenProvider: React.FC<{ children: React.ReactNode }> = ({ child
     valesSalida: VALES_SALIDA_INICIALES,
     devoluciones: DEVOLUCIONES_INICIALES,
     mantenimientos: MANTENIMIENTOS_INICIALES,
+    bitacoraMantenimiento: BITACORA_MANTENIMIENTO_INICIAL,
     movimientos: MOCK_MOVIMIENTOS,
     bitacora: BITACORA_INICIAL,
     toast: null,
   });
 
-  // Cargar de localStorage
+  // Cargar de localStorage y sincronizar con API de mantenimiento
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -898,6 +1182,21 @@ export const AlmacenProvider: React.FC<{ children: React.ReactNode }> = ({ child
       } catch (err) {
         console.error('Error al cargar AlmacenContext:', err);
       }
+
+      fetch('/api/almacen/mantenimiento')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
+          if (json?.exito && json.datos) {
+            dispatch({
+              type: 'CARGAR_ESTADO_INICIAL',
+              payload: {
+                mantenimientos: json.datos.mantenimientos,
+                bitacoraMantenimiento: json.datos.bitacoraMantenimiento,
+              },
+            });
+          }
+        })
+        .catch(() => {});
     }
   }, []);
 
@@ -913,6 +1212,7 @@ export const AlmacenProvider: React.FC<{ children: React.ReactNode }> = ({ child
             valesSalida: state.valesSalida,
             devoluciones: state.devoluciones,
             mantenimientos: state.mantenimientos,
+            bitacoraMantenimiento: state.bitacoraMantenimiento,
             movimientos: state.movimientos,
             bitacora: state.bitacora,
           })
@@ -927,6 +1227,7 @@ export const AlmacenProvider: React.FC<{ children: React.ReactNode }> = ({ child
     state.valesSalida,
     state.devoluciones,
     state.mantenimientos,
+    state.bitacoraMantenimiento,
     state.movimientos,
     state.bitacora,
   ]);
@@ -1066,6 +1367,11 @@ export const AlmacenProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const enviarAMantenimiento = (mant: MantenimientoArticulo) => {
     dispatch({ type: 'ENVIAR_A_MANTENIMIENTO', payload: mant });
+    void fetch('/api/almacen/mantenimiento', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(mant),
+    }).catch(() => {});
   };
 
   const completarMantenimientoReingreso = (
@@ -1073,12 +1379,43 @@ export const AlmacenProvider: React.FC<{ children: React.ReactNode }> = ({ child
     fechaRetornoReal: string,
     costoMantenimiento: number,
     observacionesResolucion: string,
-    usuario: string
+    usuario: string,
+    extra?: {
+      trabajoRealizado?: string;
+      refaccionesUsadas?: string;
+      estatusResultante?: 'Al día' | 'Requiere seguimiento' | 'Baja Definitiva';
+      adjuntos?: AdjuntoMantenimiento[];
+    }
   ) => {
     dispatch({
       type: 'COMPLETAR_MANTENIMIENTO_REINGRESO',
-      payload: { id, fechaRetornoReal, costoMantenimiento, observacionesResolucion, usuario },
+      payload: {
+        id,
+        fechaRetornoReal,
+        costoMantenimiento,
+        observacionesResolucion,
+        usuario,
+        ...extra,
+      },
     });
+    void fetch('/api/almacen/mantenimiento', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id,
+        fechaRetornoReal,
+        costoMantenimiento,
+        observacionesResolucion,
+        trabajoRealizado: extra?.trabajoRealizado ?? '',
+        refaccionesUsadas: extra?.refaccionesUsadas ?? '',
+        estatusResultante: extra?.estatusResultante ?? 'Al día',
+        adjuntos: extra?.adjuntos,
+      }),
+    }).catch(() => {});
+  };
+
+  const reprogramarMantenimiento = (id: string, nuevaFecha: string, usuario: string) => {
+    dispatch({ type: 'REPROGRAMAR_MANTENIMIENTO', payload: { id, nuevaFecha, usuario } });
   };
 
   const darDeBajaMantenimiento = (id: string, motivo: string, usuario: string) => {
@@ -1118,6 +1455,7 @@ export const AlmacenProvider: React.FC<{ children: React.ReactNode }> = ({ child
         valesSalida: state.valesSalida,
         devoluciones: state.devoluciones,
         mantenimientos: state.mantenimientos,
+        bitacoraMantenimiento: state.bitacoraMantenimiento,
         movimientos: state.movimientos,
         bitacora: state.bitacora,
         monitorCalibracion,
@@ -1132,6 +1470,7 @@ export const AlmacenProvider: React.FC<{ children: React.ReactNode }> = ({ child
         registrarDevolucion,
         enviarAMantenimiento,
         completarMantenimientoReingreso,
+        reprogramarMantenimiento,
         darDeBajaMantenimiento,
         mostrarToast,
         cerrarToast,

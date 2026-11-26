@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAlmacen } from '../context/AlmacenContext';
 import type { Articulo, CategoriaArticulo } from '../types';
 
@@ -25,6 +26,7 @@ const CATEGORIAS_LISTA: CategoriaArticulo[] = [
 ];
 
 export const DashboardAlmacenMaestro: React.FC = () => {
+  const router = useRouter();
   const {
     articulos,
     mantenimientos,
@@ -53,6 +55,7 @@ export const DashboardAlmacenMaestro: React.FC = () => {
 
   const [modalEditarOpen, setModalEditarOpen] = useState(false);
   const [articuloAEditar, setArticuloAEditar] = useState<Articulo | null>(null);
+  const [editRequiereMantenimiento, setEditRequiereMantenimiento] = useState(false);
   const [editForm, setEditForm] = useState({
     nombre: '',
     descripcionCorta: '',
@@ -259,6 +262,7 @@ export const DashboardAlmacenMaestro: React.FC = () => {
       stockMinimo: art.stockMinimo || 5,
       stockMaximo: art.stockMaximo || 50,
     });
+    setEditRequiereMantenimiento(Boolean(art.enMantenimiento));
     setModalEditarOpen(true);
   };
 
@@ -283,10 +287,14 @@ export const DashboardAlmacenMaestro: React.FC = () => {
       stockMaximo: Number(editForm.stockMaximo) || 50,
     };
 
+    const skuObjetivo = articuloAEditar.sku;
     actualizarArticulo(articuloActualizado);
-    mostrarToast(`Artículo ${articuloAEditar.sku} actualizado correctamente.`, 'success');
+    mostrarToast(`Artículo ${skuObjetivo} actualizado correctamente.`, 'success');
     setModalEditarOpen(false);
     setArticuloAEditar(null);
+    if (editRequiereMantenimiento) {
+      router.push(`/almacen/mantenimiento/programar?sku=${encodeURIComponent(skuObjetivo)}`);
+    }
   };
 
   return (
@@ -1064,6 +1072,17 @@ export const DashboardAlmacenMaestro: React.FC = () => {
                   />
                 </div>
               </div>
+
+              <label className="flex items-center justify-between gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 cursor-pointer">
+                <span className="font-bold text-slate-700 dark:text-slate-200 text-xs">
+                  ¿Requiere mantenimiento? (Ir a programar al guardar)
+                </span>
+                <input
+                  type="checkbox"
+                  checked={editRequiereMantenimiento}
+                  onChange={(e) => setEditRequiereMantenimiento(e.target.checked)}
+                />
+              </label>
 
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <Link

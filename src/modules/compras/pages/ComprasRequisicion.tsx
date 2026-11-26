@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { NOMBRES_ROLES, type RolUsuario } from '@/config/types';
 import { tienePermiso } from '@/lib/permissions';
@@ -146,7 +146,11 @@ export const ComprasRequisicion: React.FC<ComprasRequisicionProps> = ({
     }
   }, [requisiciones]);
 
+  const cargaInicialRealizadaRef = useRef(false);
+
   useEffect(() => {
+    if (cargaInicialRealizadaRef.current) return;
+    cargaInicialRealizadaRef.current = true;
     if (requisicionesState.length === 0) {
       fetch('/api/requisiciones')
         .then((res) => res.json())
@@ -157,7 +161,7 @@ export const ComprasRequisicion: React.FC<ComprasRequisicionProps> = ({
         })
         .catch(() => {});
     }
-  }, []);
+  }, [requisicionesState.length]);
 
   useEffect(() => {
     if (subItemId === 'compras-aprobaciones' || subItemId === 'aprobaciones') {

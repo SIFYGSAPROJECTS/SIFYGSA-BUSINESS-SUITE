@@ -324,13 +324,13 @@ export const RegistroFacturaProveedorPage: React.FC<RegistroFacturaProveedorPage
   }, [ordenes, busquedaOrden]);
 
   // ── MANEJADORES DE NAVEGACIÓN Y VALIDACIÓN DEL STEPPER ──
-  const obtenerEstadoValidacionPaso = (paso: number): { valido: boolean; camposFaltantes: string[] } => {
+  const estadoPasoActual = useMemo((): { valido: boolean; camposFaltantes: string[] } => {
     const faltantes: string[] = [];
-    if (paso === 1) {
+    if (currentStep === 1) {
       if (!ordenSeleccionada) {
         faltantes.push('Orden de Compra vinculada');
       }
-    } else if (paso === 2) {
+    } else if (currentStep === 2) {
       if (!referenciaNo.trim()) {
         faltantes.push('Referencia No. de Factura');
       }
@@ -340,7 +340,7 @@ export const RegistroFacturaProveedorPage: React.FC<RegistroFacturaProveedorPage
       if (!cuentaContable.trim()) {
         faltantes.push('Cuenta Contable');
       }
-    } else if (paso === 3) {
+    } else if (currentStep === 3) {
       if (!carpetaSeleccionada.trim()) {
         faltantes.push('Carpeta de destino');
       }
@@ -349,10 +349,6 @@ export const RegistroFacturaProveedorPage: React.FC<RegistroFacturaProveedorPage
       }
     }
     return { valido: faltantes.length === 0, camposFaltantes: faltantes };
-  };
-
-  const estadoPasoActual = useMemo(() => {
-    return obtenerEstadoValidacionPaso(currentStep);
   }, [currentStep, ordenSeleccionada, referenciaNo, fechaVencimiento, cuentaContable, carpetaSeleccionada, archivosLista]);
 
   const handleContinuar = () => {
@@ -1250,7 +1246,7 @@ export const RegistroFacturaProveedorPage: React.FC<RegistroFacturaProveedorPage
                       className="cp-btn cp-btn-primary text-xs"
                     >
                       <span className="material-symbols-outlined text-[16px]">add_circle</span>
-                      Agregar "{archivoPendiente.name}"
+                      Agregar &quot;{archivoPendiente.name}&quot;
                     </button>
                   )}
                 </div>
@@ -1835,7 +1831,7 @@ export const RegistroFacturaProveedorPage: React.FC<RegistroFacturaProveedorPage
                 <strong>{facturaAAnular.ordenCompraFolio}</strong>?
               </p>
               <div className="p-3 mt-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-[11px] text-red-700 dark:text-red-300 text-left">
-                Esta acción cancelará los asientos en la cuenta por pagar y el estado pasará a <strong>"Anulada"</strong>.
+                Esta acción cancelará los asientos en la cuenta por pagar y el estado pasará a <strong>&quot;Anulada&quot;</strong>.
               </div>
             </div>
 

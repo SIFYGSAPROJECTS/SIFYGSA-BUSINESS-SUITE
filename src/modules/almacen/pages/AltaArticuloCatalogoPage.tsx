@@ -187,6 +187,7 @@ export default function AltaArticuloCatalogoPage() {
   // Marca y Control Operativo
   const [marcaFabricante, setMarcaFabricante] = useState('Belden');
   const [controlOperativo, setControlOperativo] = useState('Estándar: Serie individual habilitada (Sin calibración / mant.)');
+  const [requiereMantenimiento, setRequiereMantenimiento] = useState(false);
 
   // Unidades de Medida
   const [unidadBase, setUnidadBase] = useState('Metro');
@@ -428,10 +429,10 @@ export default function AltaArticuloCatalogoPage() {
     return true;
   };
 
-  const obtenerEstadoValidacionPaso = (paso: number) => {
+  const estadoPasoActual = useMemo(() => {
     const faltantes: string[] = [];
     const idsFaltantes: string[] = [];
-    if (paso === 1) {
+    if (currentStep === 1) {
       if (!codigoArticulo.trim()) {
         faltantes.push('Código de Artículo (SKU)');
         idsFaltantes.push('codigoArticulo');
@@ -456,7 +457,7 @@ export default function AltaArticuloCatalogoPage() {
         faltantes.push('Unidades de Medida (Base, Compra, Ventas)');
         idsFaltantes.push('unidadBase');
       }
-    } else if (paso === 2) {
+    } else if (currentStep === 2) {
       if (!subsidiaria.trim()) {
         faltantes.push('Subsidiaria');
         idsFaltantes.push('subsidiaria');
@@ -469,17 +470,13 @@ export default function AltaArticuloCatalogoPage() {
         faltantes.push('Ubicación Sugerida');
         idsFaltantes.push('ubicacionSugerida');
       }
-    } else if (paso === 3) {
+    } else if (currentStep === 3) {
       if (!satClave.trim()) {
         faltantes.push('Clave SAT CFDI 4.0');
         idsFaltantes.push('satClave');
       }
     }
     return { valido: faltantes.length === 0, camposFaltantes: faltantes, idsFaltantes };
-  };
-
-  const estadoPasoActual = useMemo(() => {
-    return obtenerEstadoValidacionPaso(currentStep);
   }, [
     currentStep,
     codigoArticulo,
@@ -645,6 +642,11 @@ export default function AltaArticuloCatalogoPage() {
     };
 
     registrarArticulo(nuevo);
+    if (requiereMantenimiento) {
+      mostrarToast(`Artículo #${codigoArticulo} registrado. Redirigiendo a programación de mantenimiento...`, 'success');
+      router.push(`/almacen/mantenimiento/programar?sku=${encodeURIComponent(nuevo.sku)}`);
+      return;
+    }
     setModalConfirmacionOpen(true);
     mostrarToast(`Artículo #${codigoArticulo} registrado exitosamente en el Catálogo de SIFYGSA.`, 'success');
   };
@@ -872,126 +874,113 @@ export default function AltaArticuloCatalogoPage() {
               )}
             </div>
 
-            {/* Tipo de Artículo (Combobox desplegable enriquecido e interactivo) */}
-            <div className="alta-articulo-field" style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.125rem' }}>
-                <label className="alta-articulo-label" style={{ marginBottom: 0 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span>TIPO DE ARTÍCULO</span>
-                    <span className="alta-articulo-req">*</span>
-                    <span className="alta-articulo-card-header-tag primary" style={{ fontSize: '0.625rem' }}>
-                      4 Categorías
-                    </span>
+            {/* Tipo de Artículo, Marca / Fabricante & Control Operativo en una sola fila */}
+            <div className="alta-articulo-grid-3">
+              {/* Tipo de Artículo (Combobox desplegable enriquecido e interactivo) */}
+              <div className="alta-articulo-field" style={{ position: 'relative' }}>
+                <label className="alta-articulo-label" title="Determina kárdex y política de custodia">
+                  <span>
+                    TIPO DE ARTÍCULO <span className="alta-articulo-req">*</span>
                   </span>
                 </label>
-                <span style={{ fontFamily: 'var(--font-family-label)', fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                  Determina kárdex y política de custodia
-                </span>
-              </div>
 
-              <div style={{ position: 'relative', width: '100%' }}>
-                <button
-                  type="button"
-                  aria-expanded={tipoDropdownOpen}
-                  onClick={() => setTipoDropdownOpen(!tipoDropdownOpen)}
-                  className="alta-articulo-combobox-trigger"
-                >
-                  <div className="alta-articulo-combobox-left">
-                    <span className="material-symbols-outlined alta-articulo-combobox-icon">
-                      {tipoSeleccionado.icono}
-                    </span>
-                    <span className="alta-articulo-combobox-text">
-                      {tipoSeleccionado.titulo}
-                    </span>
-                  </div>
-
-                  <div className="alta-articulo-combobox-right">
-                    <span className="alta-articulo-combobox-tag">
-                      {tipoSeleccionado.badge}
-                    </span>
-                    <div style={{ width: '1px', height: '1rem', backgroundColor: 'var(--border)' }} />
-                    <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--text-muted)' }}>
-                      {tipoDropdownOpen ? 'expand_less' : 'expand_more'}
-                    </span>
-                  </div>
-                </button>
-
-                {/* Menú desplegable con buscador para Tipo de Artículo */}
-                {tipoDropdownOpen && (
-                  <div className="alta-articulo-combobox-menu">
-                    <div className="alta-articulo-combobox-search-box">
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--text-muted)' }}>
-                        search
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <button
+                    type="button"
+                    aria-expanded={tipoDropdownOpen}
+                    onClick={() => setTipoDropdownOpen(!tipoDropdownOpen)}
+                    className="alta-articulo-combobox-trigger"
+                  >
+                    <div className="alta-articulo-combobox-left" style={{ minWidth: 0 }}>
+                      <span className="material-symbols-outlined alta-articulo-combobox-icon">
+                        {tipoSeleccionado.icono}
                       </span>
-                      <input
-                        type="text"
-                        value={tipoSearchQuery}
-                        onChange={(e) => setTipoSearchQuery(e.target.value)}
-                        placeholder="Buscar categoría de artículo..."
-                        className="alta-articulo-combobox-search-input"
-                        autoFocus
-                      />
-                      {tipoSearchQuery && (
-                        <button
-                          type="button"
-                          onClick={() => setTipoSearchQuery('')}
-                          style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
-                        </button>
-                      )}
+                      <span className="alta-articulo-combobox-text" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {tipoSeleccionado.titulo}
+                      </span>
                     </div>
 
-                    <div className="alta-articulo-combobox-menu-scroll" role="listbox">
-                      {tiposFiltrados.length > 0 ? (
-                        tiposFiltrados.map((opc) => {
-                          const esActivo = opc.id === tipoSeleccionado.id;
-                          return (
-                            <button
-                              key={opc.id}
-                              type="button"
-                              onClick={() => {
-                                setTipoSeleccionado(opc);
-                                setTipoDropdownOpen(false);
-                                setTipoSearchQuery('');
-                              }}
-                              className={`alta-articulo-combobox-option ${esActivo ? 'selected' : ''}`}
-                            >
-                              <div className="alta-articulo-option-content">
-                                <span className="material-symbols-outlined alta-articulo-combobox-icon">
-                                  {opc.icono}
-                                </span>
-                                <div className="alta-articulo-option-details">
-                                  <span className="alta-articulo-option-title">{opc.titulo}</span>
-                                  <span className="alta-articulo-option-desc">{opc.descripcion}</span>
-                                </div>
-                              </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span className="alta-articulo-combobox-tag">
-                                  {opc.badge}
-                                </span>
-                                {esActivo && (
-                                  <span className="material-symbols-outlined" style={{ color: 'var(--success)', fontSize: '18px' }}>
-                                    check
+                    <div className="alta-articulo-combobox-right">
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--text-muted)' }}>
+                        {tipoDropdownOpen ? 'expand_less' : 'expand_more'}
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Menú desplegable con buscador para Tipo de Artículo */}
+                  {tipoDropdownOpen && (
+                    <div className="alta-articulo-combobox-menu">
+                      <div className="alta-articulo-combobox-search-box">
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--text-muted)' }}>
+                          search
+                        </span>
+                        <input
+                          type="text"
+                          value={tipoSearchQuery}
+                          onChange={(e) => setTipoSearchQuery(e.target.value)}
+                          placeholder="Buscar categoría de artículo..."
+                          className="alta-articulo-combobox-search-input"
+                          autoFocus
+                        />
+                        {tipoSearchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setTipoSearchQuery('')}
+                            style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="alta-articulo-combobox-menu-scroll" role="listbox">
+                        {tiposFiltrados.length > 0 ? (
+                          tiposFiltrados.map((opc) => {
+                            const esActivo = opc.id === tipoSeleccionado.id;
+                            return (
+                              <button
+                                key={opc.id}
+                                type="button"
+                                onClick={() => {
+                                  setTipoSeleccionado(opc);
+                                  setTipoDropdownOpen(false);
+                                  setTipoSearchQuery('');
+                                }}
+                                className={`alta-articulo-combobox-option ${esActivo ? 'selected' : ''}`}
+                              >
+                                <div className="alta-articulo-option-content">
+                                  <span className="material-symbols-outlined alta-articulo-combobox-icon">
+                                    {opc.icono}
                                   </span>
-                                )}
-                              </div>
-                            </button>
-                          );
-                        })
-                      ) : (
-                        <div className="alta-articulo-combobox-empty">
-                          No se encontraron categorías
-                        </div>
-                      )}
+                                  <div className="alta-articulo-option-details">
+                                    <span className="alta-articulo-option-title">{opc.titulo}</span>
+                                    <span className="alta-articulo-option-desc">{opc.descripcion}</span>
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <span className="alta-articulo-combobox-tag">
+                                    {opc.badge}
+                                  </span>
+                                  {esActivo && (
+                                    <span className="material-symbols-outlined" style={{ color: 'var(--success)', fontSize: '18px' }}>
+                                      check
+                                    </span>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <div className="alta-articulo-combobox-empty">
+                            No se encontraron categorías
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Marca / Fabricante & Control Operativo */}
-            <div className="alta-articulo-grid-2">
               <div className="alta-articulo-field">
                 <label className="alta-articulo-label">
                   <span>
@@ -1109,6 +1098,76 @@ export default function AltaArticuloCatalogoPage() {
                 searchPlaceholder="Escriba código o texto (ej. cables, válvulas)..."
                 error={touched.satClave ? errores.satClave : undefined}
               />
+            </div>
+
+            {/* Interruptor: ¿Requiere mantenimiento? */}
+            <div
+              style={{
+                marginTop: '0.5rem',
+                padding: '0.9rem 1.1rem',
+                borderRadius: '12px',
+                border: requiereMantenimiento
+                  ? '1px solid rgba(139, 92, 246, 0.5)'
+                  : '1px solid var(--border)',
+                background: requiereMantenimiento
+                  ? 'rgba(139, 92, 246, 0.08)'
+                  : 'var(--surface)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '1rem',
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span
+                  className="material-symbols-outlined"
+                  style={{
+                    fontSize: 22,
+                    color: requiereMantenimiento ? '#a78bfa' : 'var(--text-muted)',
+                  }}
+                >
+                  build
+                </span>
+                <div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    ¿Requiere mantenimiento?
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Al guardar el artículo, se abrirá el asistente para programar su mantenimiento.
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={requiereMantenimiento}
+                onClick={() => setRequiereMantenimiento((prev) => !prev)}
+                style={{
+                  width: 48,
+                  height: 26,
+                  borderRadius: 999,
+                  border: 'none',
+                  padding: 3,
+                  background: requiereMantenimiento ? '#7c3aed' : 'rgba(148, 163, 184, 0.35)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: requiereMantenimiento ? 'flex-end' : 'flex-start',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <span
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    background: '#ffffff',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                  }}
+                />
+              </button>
             </div>
           </div>
         </div>

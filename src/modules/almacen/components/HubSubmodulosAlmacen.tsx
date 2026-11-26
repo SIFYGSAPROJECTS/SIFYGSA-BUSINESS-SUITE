@@ -10,8 +10,9 @@ export interface SubmoduloCardItem {
   title: string;
   description: string;
   icon: string;
-  colorClass: 'brand' | 'emerald' | 'amber';
+  colorClass: 'brand' | 'emerald' | 'amber' | 'violet';
   tag: string;
+  badge?: number;
 }
 
 export interface HubSubmodulosAlmacenProps {
@@ -102,15 +103,30 @@ export const HubSubmodulosAlmacen: React.FC<HubSubmodulosAlmacenProps> = ({
         </div>
       </div>
 
-      {/* ── CUADRÍCULA DE SUBMÓDULOS (3 TARJETAS GRANDES) ── */}
+      {/* ── CUADRÍCULA DE SUBMÓDULOS ── */}
       <section aria-label={`Submódulos de ${titulo}`} className="cp-ventas-launcher-bar p-6 rounded-2xl mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 max-w-5xl mx-auto gap-6">
+        <div
+          className={`grid grid-cols-1 mx-auto gap-6 ${
+            items.length >= 4
+              ? 'sm:grid-cols-2 lg:grid-cols-4 max-w-7xl'
+              : 'md:grid-cols-3 max-w-5xl'
+          }`}
+        >
           {items.map((item) => (
             <Link
               key={item.id}
               href={item.href}
               className="group relative flex flex-col items-center text-center p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 no-underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50"
             >
+              {typeof item.badge === 'number' && item.badge > 0 && (
+                <span
+                  className="absolute top-4 right-4 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30"
+                  title="Artículos con mantenimiento vencido o por vencer"
+                >
+                  {item.badge}
+                </span>
+              )}
+
               {/* Ícono grande con gradiente */}
               <div
                 className={`w-20 h-20 rounded-2xl flex items-center justify-center text-white mb-5 group-hover:scale-110 transition-transform duration-200 shadow-md ${
@@ -118,6 +134,8 @@ export const HubSubmodulosAlmacen: React.FC<HubSubmodulosAlmacenProps> = ({
                     ? 'bg-gradient-to-br from-blue-600 to-blue-700 shadow-blue-500/25'
                     : item.colorClass === 'emerald'
                     ? 'bg-gradient-to-br from-emerald-600 to-emerald-700 shadow-emerald-500/25'
+                    : item.colorClass === 'violet'
+                    ? 'bg-gradient-to-br from-violet-600 to-purple-700 shadow-violet-500/25'
                     : 'bg-gradient-to-br from-amber-500 to-amber-600 shadow-amber-500/25'
                 }`}
               >

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCompras } from '../context/ComprasContext';
@@ -465,57 +465,72 @@ export const NuevaOrdenCompraPage: React.FC<NuevaOrdenCompraPageProps> = ({
   const [isDragging, setIsDragging] = useState(false);
 
   // ── VALIDACIONES POR PASO ──
-  const validarPaso = (stepNum: number): { valido: boolean; errores: string[] } => {
-    const errs: string[] = [];
+  const validarPaso = useCallback(
+    (stepNum: number): { valido: boolean; errores: string[] } => {
+      const errs: string[] = [];
 
-    if (stepNum === 1) {
-      if (!subsidiaria.trim()) errs.push('La subsidiaria es obligatoria.');
-      if (!proveedorSeleccionado || !proveedorBusqueda.trim()) {
-        errs.push('Debe seleccionar un proveedor adjudicado.');
+      if (stepNum === 1) {
+        if (!subsidiaria.trim()) errs.push('La subsidiaria es obligatoria.');
+        if (!proveedorSeleccionado || !proveedorBusqueda.trim()) {
+          errs.push('Debe seleccionar un proveedor adjudicado.');
+        }
+        if (!moneda) errs.push('Debe especificar la moneda.');
+      } else if (stepNum === 2) {
+        if (!recibidoPor) errs.push('La fecha de arribo "Recibido por" es obligatoria.');
+        if (!reqContrato.trim()) errs.push('El campo "Req. contrato" es obligatorio.');
+        if (!ubicacion.trim()) errs.push('La ubicación de entrega es obligatoria.');
+        if (!noOrdenCompra.trim()) errs.push('El número de orden de compra es obligatorio.');
+        if (!estadoAprobacion.trim()) errs.push('El estado de aprobación es obligatorio.');
+        if (!proximoAprobador.trim()) errs.push('El próximo aprobador es obligatorio.');
+      } else if (stepNum === 3) {
+        if (partidas.length === 0) {
+          errs.push('Debe tener al menos una partida en la orden de compra.');
+        }
+
+        partidas.forEach((it, idx) => {
+          const qty = Number(it.q) || 0;
+          const maxQ = Number(it.maxCantidad);
+          const p = Number(it.p) || 0;
+
+          if (!it.c?.trim()) {
+            errs.push(`Fila ${idx + 1}: Debe seleccionar un Artículo.`);
+          }
+          if (!it.d?.trim()) {
+            errs.push(`Fila ${idx + 1}: La Descripción es obligatoria.`);
+          }
+          if (qty <= 0) {
+            errs.push(`Fila ${idx + 1} (${it.c}): La Cantidad debe ser mayor a 0.`);
+          }
+          if (maxQ && qty > maxQ) {
+            errs.push(
+              `Fila ${idx + 1} (${it.c}): No se puede incrementar la cantidad solicitada (Máximo: ${maxQ} ${it.unidad}).`
+            );
+          }
+          if (p <= 0) {
+            errs.push(`Fila ${idx + 1} (${it.c}): El V. unitario es obligatorio y debe ser mayor a 0.`);
+          }
+          if (!it.fechaReciboPrevista) {
+            errs.push(`Fila ${idx + 1} (${it.c}): La Fecha de recibo prevista es obligatoria.`);
+          }
+        });
       }
-      if (!moneda) errs.push('Debe especificar la moneda.');
-    } else if (stepNum === 2) {
-      if (!recibidoPor) errs.push('La fecha de arribo "Recibido por" es obligatoria.');
-      if (!reqContrato.trim()) errs.push('El campo "Req. contrato" es obligatorio.');
-      if (!ubicacion.trim()) errs.push('La ubicación de entrega es obligatoria.');
-      if (!noOrdenCompra.trim()) errs.push('El número de orden de compra es obligatorio.');
-      if (!estadoAprobacion.trim()) errs.push('El estado de aprobación es obligatorio.');
-      if (!proximoAprobador.trim()) errs.push('El próximo aprobador es obligatorio.');
-    } else if (stepNum === 3) {
-      if (partidas.length === 0) {
-        errs.push('Debe tener al menos una partida en la orden de compra.');
-      }
 
-      partidas.forEach((it, idx) => {
-        const qty = Number(it.q) || 0;
-        const maxQ = Number(it.maxCantidad);
-        const p = Number(it.p) || 0;
-
-        if (!it.c?.trim()) {
-          errs.push(`Fila ${idx + 1}: Debe seleccionar un Artículo.`);
-        }
-        if (!it.d?.trim()) {
-          errs.push(`Fila ${idx + 1}: La Descripción es obligatoria.`);
-        }
-        if (qty <= 0) {
-          errs.push(`Fila ${idx + 1} (${it.c}): La Cantidad debe ser mayor a 0.`);
-        }
-        if (maxQ && qty > maxQ) {
-          errs.push(
-            `Fila ${idx + 1} (${it.c}): No se puede incrementar la cantidad solicitada (Máximo: ${maxQ} ${it.unidad}).`
-          );
-        }
-        if (p <= 0) {
-          errs.push(`Fila ${idx + 1} (${it.c}): El V. unitario es obligatorio y debe ser mayor a 0.`);
-        }
-        if (!it.fechaReciboPrevista) {
-          errs.push(`Fila ${idx + 1} (${it.c}): La Fecha de recibo prevista es obligatoria.`);
-        }
-      });
-    }
-
-    return { valido: errs.length === 0, errores: errs };
-  };
+      return { valido: errs.length === 0, errores: errs };
+    },
+    [
+      subsidiaria,
+      proveedorSeleccionado,
+      proveedorBusqueda,
+      moneda,
+      recibidoPor,
+      reqContrato,
+      ubicacion,
+      noOrdenCompra,
+      estadoAprobacion,
+      proximoAprobador,
+      partidas,
+    ]
+  );
 
   const errorSteps = useMemo(() => {
     const errList: number[] = [];
@@ -529,38 +544,11 @@ export const NuevaOrdenCompraPage: React.FC<NuevaOrdenCompraPageProps> = ({
       if (!validarPaso(3).valido) errList.push(3);
     }
     return errList;
-  }, [
-    completedSteps,
-    currentStep,
-    subsidiaria,
-    proveedorSeleccionado,
-    proveedorBusqueda,
-    moneda,
-    recibidoPor,
-    reqContrato,
-    ubicacion,
-    noOrdenCompra,
-    estadoAprobacion,
-    proximoAprobador,
-    partidas,
-  ]);
+  }, [completedSteps, currentStep, validarPaso]);
 
   const estadoPasoActual = useMemo(() => {
     return validarPaso(currentStep);
-  }, [
-    currentStep,
-    subsidiaria,
-    proveedorSeleccionado,
-    proveedorBusqueda,
-    moneda,
-    recibidoPor,
-    reqContrato,
-    ubicacion,
-    noOrdenCompra,
-    estadoAprobacion,
-    proximoAprobador,
-    partidas,
-  ]);
+  }, [currentStep, validarPaso]);
 
   // Manejo de avance de paso
   const handleContinuar = () => {

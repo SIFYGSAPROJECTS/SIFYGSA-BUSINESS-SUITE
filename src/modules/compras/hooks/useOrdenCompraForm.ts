@@ -406,7 +406,7 @@ export function useOrdenCompraForm(): UseOrdenCompraFormReturn {
           'receipt_long'
         );
         return true;
-      } catch (err) {
+      } catch {
         showToast('Error al parsear el XML de la factura.', 'error');
         return false;
       }
