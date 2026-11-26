@@ -50,6 +50,20 @@ export interface RegistroBitacoraPromesa {
   esBot?: boolean;
 }
 
+export interface ResumenFolioMovimientos {
+  folio: string;
+  movimientos: number;
+  clientePromesa?: string;
+  nombrePromesa?: string;
+  ultimoMovimiento?: string;
+}
+
+export interface ResumenMovimientosPromesas {
+  porFolio: ResumenFolioMovimientos[];
+  totalMovimientos: number;
+  origen: 'mongodb' | 'json';
+}
+
 export interface FiltrosAuditoria {
   busqueda?: string;
   modulo?: IdModulo | 'auth' | 'todos';
@@ -322,5 +336,85 @@ export class AuditService {
       (actual) => [registro, ...actual].slice(0, 2000)
     );
     return { registro, origen: 'json' };
+  }
+
+  async obtenerResumenMovimientosPromesas(): Promise<ResumenMovimientosPromesas> {
+    let registros: Array<
+      Pick<
+        RegistroBitacoraPromesa,
+        'folio' | 'clientePromesa' | 'nombrePromesa' | 'fecha' | 'fechaLegible'
+      >
+    > = [];
+    let origen: 'mongodb' | 'json' = 'json';
+
+    if (this.mongo.estaConfigurado()) {
+      try {
+        const db = await this.mongo.obtenerBdBitacoras();
+        registros = await db
+          .collection<RegistroBitacoraPromesa>(COLECCION_BITACORA_CRM_PROMESAS)
+          .find(
+            {},
+            {
+              projection: {
+                _id: 0,
+                folio: 1,
+                clientePromesa: 1,
+                nombrePromesa: 1,
+                fecha: 1,
+                fechaLegible: 1,
+              },
+            }
+          )
+          .sort({ fecha: -1 })
+          .limit(2000)
+          .toArray();
+        origen = 'mongodb';
+      } catch (err) {
+        this.logger.warn(
+          `Error consultando resumen de MongoDB (bitacora_crm_promesas): ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
+    }
+
+    if (origen === 'json') {
+      registros = await this.jsonStorage.leerJson<RegistroBitacoraPromesa[]>(
+        'bitacora-crm-promesas.json',
+        []
+      );
+    }
+
+    const mapaFolios = new Map<string, ResumenFolioMovimientos>();
+    for (const reg of registros) {
+      const folio = (reg.folio || '').trim();
+      if (!folio) continue;
+      const existente = mapaFolios.get(folio);
+      if (!existente) {
+        mapaFolios.set(folio, {
+          folio,
+          movimientos: 1,
+          clientePromesa: reg.clientePromesa,
+          nombrePromesa: reg.nombrePromesa,
+          ultimoMovimiento: reg.fechaLegible || reg.fecha,
+        });
+      } else {
+        existente.movimientos += 1;
+        if (!existente.clientePromesa && reg.clientePromesa) {
+          existente.clientePromesa = reg.clientePromesa;
+        }
+        if (!existente.nombrePromesa && reg.nombrePromesa) {
+          existente.nombrePromesa = reg.nombrePromesa;
+        }
+      }
+    }
+
+    const porFolio = Array.from(mapaFolios.values()).sort(
+      (a, b) => b.movimientos - a.movimientos
+    );
+
+    return {
+      porFolio,
+      totalMovimientos: registros.length,
+      origen,
+    };
   }
 }

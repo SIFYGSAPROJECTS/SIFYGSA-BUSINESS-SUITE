@@ -146,6 +146,20 @@ export class CrmController {
     return { exito: true, datos: actualizada };
   }
 
+  @Get('ranking-clientes')
+  @ApiOperation({
+    summary:
+      'Obtiene resumen de movimientos por folio en bitacora_crm_promesas para el ranking de clientes del dashboard',
+  })
+  async obtenerRankingClientes() {
+    const resumen = await this.auditService.obtenerResumenMovimientosPromesas();
+    return {
+      exito: true,
+      datos: resumen,
+      origen: resumen.origen,
+    };
+  }
+
   @Get('bitacora-promesas')
   @ApiOperation({ summary: 'Obtiene el checador de movimientos por folio desde MongoDB Atlas' })
   async listarBitacoraPromesas(@Query('folio') folio?: string) {

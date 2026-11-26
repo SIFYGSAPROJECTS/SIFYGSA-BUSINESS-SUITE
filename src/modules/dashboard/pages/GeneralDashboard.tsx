@@ -1,12 +1,89 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { RolUsuario } from '@/config/types';
 import { tienePermiso } from '@/lib/permissions';
+import {
+  INITIAL_CRM_CLIENTS,
+  INITIAL_STITCH_OPPORTUNITIES,
+  type CrmClientContact,
+  type StitchOpportunity,
+} from '@/modules/crm/components/stitchCrmData';
 import '../dashboard.css';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useTheme } from '../../../context/ThemeContext';
+
+const CLIENTES_STORAGE_KEY = 'sfg_crm_registered_clients_v1';
+
+interface ResumenFolioApi {
+  folio: string;
+  movimientos: number;
+  clientePromesa?: string;
+  nombrePromesa?: string;
+  ultimoMovimiento?: string;
+}
+
+interface PromesaDashboardItem extends StitchOpportunity {
+  movimientosBitacora: number;
+  ultimoMovimiento?: string;
+}
+
+interface RankingClienteItem {
+  id: string;
+  tagCode: string;
+  tagDanger?: boolean;
+  companyName: string;
+  shortName: string;
+  sector: string;
+  zone: string;
+  promesasCount: number;
+  movimientosBitacora: number;
+  movimientosTotales: number;
+  pipelineAmount: number;
+  topFolio?: string;
+  ultimoMovimiento?: string;
+}
+
+function normalizarTexto(valor: string): string {
+  return valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+}
+
+function acortarNombreCliente(nombre: string): string {
+  const mapaCorto: Record<string, string> = {
+    'CFE Generación VI': 'CFE Gen. VI',
+    'Braskem Idesa Nanchital': 'Braskem Idesa',
+    'Pemex Exploración y Prod.': 'Pemex PEP',
+    'Ternium Planta Pesquería': 'Ternium',
+    'ICA Fluor Daniel S.A.': 'ICA Fluor',
+    'Pemex Logística Tanques': 'Pemex Logíst.',
+    'Techint Ingeniería & Const.': 'Techint Ing.',
+    'Pemex Transformación Industrial': 'Pemex Transf.',
+    'ASIPONA Coatzacoalcos': 'ASIPONA',
+    'CENAGAS Estación Compresora': 'CENAGAS',
+  };
+  if (mapaCorto[nombre]) return mapaCorto[nombre];
+  return nombre.length > 13 ? `${nombre.slice(0, 12).trim()}…` : nombre;
+}
+
+function formatearMontoCompacto(monto: number): string {
+  if (monto >= 1_000_000) return `$${(monto / 1_000_000).toFixed(1)}M`;
+  if (monto >= 1_000) return `$${Math.round(monto / 1_000)}k`;
+  return `$${monto.toLocaleString('es-MX')}`;
+}
+
+function obtenerEtapaVisual(stage: string): { label: string; tone: string } {
+  const s = stage.toLowerCase();
+  if (s.includes('ganada') || s.includes('adjudicada')) return { label: 'Ganada', tone: 'green' };
+  if (s.includes('negociaci')) return { label: 'Negociación', tone: 'amber' };
+  if (s.includes('propuesta')) return { label: 'Propuesta', tone: 'indigo' };
+  if (s.includes('calificaci')) return { label: 'Calificación', tone: 'cyan' };
+  return { label: 'Prospección', tone: 'blue' };
+}
 
 interface GeneralDashboardProps {
   onNavigateModule?: (moduleId: string, subItemId?: string) => void;
@@ -19,6 +96,185 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
 }) => {
   const puedeAutorizarOrdenes = tienePermiso(rolUsuario, 'autorizacion-ordenes', 'aprobar');
   const router = useRouter();
+  const [vistaListaCrm, setVistaListaCrm] = useState<'promesas' | 'clientes'>('promesas');
+  const [clientesCatalogo, setClientesCatalogo] = useState<CrmClientContact[]>(INITIAL_CRM_CLIENTS);
+  const [movimientosPorFolio, setMovimientosPorFolio] = useState<Record<string, ResumenFolioApi>>({});
+  const [origenBitacora, setOrigenBitacora] = useState<'mongodb' | 'json' | null>(null);
+  const [totalMovimientosBitacora, setTotalMovimientosBitacora] = useState<number>(0);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(CLIENTES_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as CrmClientContact[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const ids = new Set(INITIAL_CRM_CLIENTS.map((c) => c.id));
+          const extras = parsed.filter((c) => c && c.id && !ids.has(c.id));
+          if (extras.length > 0) {
+            setClientesCatalogo([...extras, ...INITIAL_CRM_CLIENTS]);
+          }
+        }
+      }
+    } catch {
+      // Ignorar localStorage corrupto o restringido
+    }
+
+    let activo = true;
+    fetch('/api/crm/ranking-clientes', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!activo || !json?.exito || !json?.datos) return;
+        const mapa: Record<string, ResumenFolioApi> = {};
+        const lista = Array.isArray(json.datos.porFolio)
+          ? (json.datos.porFolio as ResumenFolioApi[])
+          : [];
+        for (const item of lista) {
+          if (item?.folio) mapa[item.folio] = item;
+        }
+        setMovimientosPorFolio(mapa);
+        setOrigenBitacora(json.datos.origen ?? json.origen ?? null);
+        setTotalMovimientosBitacora(Number(json.datos.totalMovimientos ?? 0));
+      })
+      .catch(() => {
+        // Si el backend no responde todavía, continuar con métricas base de CRM
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  const promesasEnriquecidas = useMemo<PromesaDashboardItem[]>(() => {
+    return INITIAL_STITCH_OPPORTUNITIES.map((opp) => {
+      const stats = movimientosPorFolio[opp.folio];
+      return {
+        ...opp,
+        movimientosBitacora: stats?.movimientos ?? 0,
+        ultimoMovimiento: stats?.ultimoMovimiento,
+      };
+    }).sort((a, b) => {
+      if (b.movimientosBitacora !== a.movimientosBitacora) {
+        return b.movimientosBitacora - a.movimientosBitacora;
+      }
+      return b.amount - a.amount;
+    });
+  }, [movimientosPorFolio]);
+
+  const rankingClientes = useMemo<RankingClienteItem[]>(() => {
+    const mapaOppsPorFolio = new Map<string, StitchOpportunity>();
+    for (const opp of INITIAL_STITCH_OPPORTUNITIES) {
+      mapaOppsPorFolio.set(opp.folio, opp);
+    }
+
+    // Mapeo de movimientos reales de bitácora por cliente normalizado
+    const bitacoraPorCliente = new Map<
+      string,
+      { movimientos: number; topFolio?: string; topFolioMovs: number; ultimoMovimiento?: string }
+    >();
+
+    for (const item of Object.values(movimientosPorFolio)) {
+      const opp = mapaOppsPorFolio.get(item.folio);
+      const nombreCliente = opp?.client || item.clientePromesa;
+      if (!nombreCliente) continue;
+      const clave = normalizarTexto(nombreCliente);
+      const actual = bitacoraPorCliente.get(clave) ?? {
+        movimientos: 0,
+        topFolioMovs: -1,
+      };
+      actual.movimientos += item.movimientos;
+      if (item.movimientos > actual.topFolioMovs) {
+        actual.topFolioMovs = item.movimientos;
+        actual.topFolio = item.folio;
+      }
+      if (!actual.ultimoMovimiento && item.ultimoMovimiento) {
+        actual.ultimoMovimiento = item.ultimoMovimiento;
+      }
+      bitacoraPorCliente.set(clave, actual);
+    }
+
+    return clientesCatalogo
+      .map((cli) => {
+        const claveCli = normalizarTexto(cli.companyName);
+        const oppsCliente = INITIAL_STITCH_OPPORTUNITIES.filter((opp) => {
+          const claveOpp = normalizarTexto(opp.client);
+          return (
+            claveOpp === claveCli ||
+            (cli.tagCode === 'TCH' && claveOpp.includes('techint') && claveCli.includes('techint'))
+          );
+        });
+
+        let movBitacora = bitacoraPorCliente.get(claveCli)?.movimientos ?? 0;
+        let topFolio = bitacoraPorCliente.get(claveCli)?.topFolio;
+        let ultimoMovimiento = bitacoraPorCliente.get(claveCli)?.ultimoMovimiento;
+
+        // También sumar folios vinculados si el nombre de la oportunidad difiere levemente (ej. Techint)
+        for (const opp of oppsCliente) {
+          const claveOpp = normalizarTexto(opp.client);
+          if (claveOpp !== claveCli) {
+            const extra = bitacoraPorCliente.get(claveOpp);
+            if (extra) {
+              movBitacora += extra.movimientos;
+              if (!topFolio) topFolio = extra.topFolio;
+              if (!ultimoMovimiento) ultimoMovimiento = extra.ultimoMovimiento;
+            }
+          }
+        }
+
+        if (!topFolio && oppsCliente.length > 0) {
+          topFolio = oppsCliente[0].folio;
+        }
+
+        const promesasCount = Math.max(cli.activeOppsCount, oppsCliente.length);
+        const movimientosTotales = movBitacora + promesasCount;
+        const pipelineCalculado =
+          oppsCliente.reduce((acc, o) => acc + o.amount, 0) || cli.totalPipelineAmount;
+
+        return {
+          id: cli.id,
+          tagCode: cli.tagCode,
+          tagDanger: oppsCliente.some((o) => o.tagDanger),
+          companyName: cli.companyName,
+          shortName: acortarNombreCliente(cli.companyName),
+          sector: cli.sector,
+          zone: cli.zone,
+          promesasCount,
+          movimientosBitacora: movBitacora,
+          movimientosTotales,
+          pipelineAmount: Math.max(cli.totalPipelineAmount, pipelineCalculado),
+          topFolio,
+          ultimoMovimiento,
+        };
+      })
+      .sort((a, b) => {
+        if (b.movimientosTotales !== a.movimientosTotales) {
+          return b.movimientosTotales - a.movimientosTotales;
+        }
+        if (b.movimientosBitacora !== a.movimientosBitacora) {
+          return b.movimientosBitacora - a.movimientosBitacora;
+        }
+        return b.pipelineAmount - a.pipelineAmount;
+      });
+  }, [clientesCatalogo, movimientosPorFolio]);
+
+  const totalCarteraPromesas = useMemo(
+    () => promesasEnriquecidas.reduce((acc, p) => acc + p.amount, 0),
+    [promesasEnriquecidas]
+  );
+
+  const top1Cliente = rankingClientes[0];
+  const top2Cliente = rankingClientes[1];
+  const top3Cliente = rankingClientes[2];
+  const clientesSecundarios = rankingClientes.slice(3, 5);
+  const maxMovimientosRanking = Math.max(top1Cliente?.movimientosTotales ?? 1, 1);
+
+  const abrirPromesaDetalle = (folio?: string) => {
+    if (folio) {
+      router.push(`/crm?sub=crm-opportunity-detail&folio=${encodeURIComponent(folio)}`);
+    } else {
+      onNavigateModule('crm', 'crm-clientes');
+    }
+  };
+
   const onNavigateModule = (moduleId: string, subItemId?: string) => {
     if (onNavigateProp) {
       onNavigateProp(moduleId, subItemId);
@@ -336,67 +592,133 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
         </div>
       </section>
 
-      {/* SECTION C: BOTTOM ROW KANBAN, CATEGORY SPLIT & PODIUM */}
+      {/* SECTION C: BOTTOM ROW CRM PROMISES/CLIENTS LIST, CATEGORY SPLIT & CLIENT MOVEMENT RANKING */}
       <section className="bottom-charts-grid">
-        {/* Status Board (Sprint Current) */}
-        <div className="dashboard-portlet-card span-5" onClick={() => onNavigateModule('crm', 'crm-kanban')} style={{ cursor: 'pointer' }} title={t('dashboard.tooltip_kanban')}>
+        {/* Lista de Promesas y Clientes CRM */}
+        <div className="dashboard-portlet-card span-5">
           <div className="portlet-card-header">
             <h3 className="portlet-title-text">{t('dashboard.status_board_title')}</h3>
-            <span className="portlet-tag-mono">{t('dashboard.status_board_tag')}</span>
+            <div className="crm-segmented-tabs" role="tablist" aria-label="Vista CRM">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={vistaListaCrm === 'promesas'}
+                className={`crm-seg-btn ${vistaListaCrm === 'promesas' ? 'active' : ''}`}
+                onClick={() => setVistaListaCrm('promesas')}
+              >
+                <span>{t('dashboard.crm_tab_promises')}</span>
+                <span className="crm-seg-count">{promesasEnriquecidas.length}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={vistaListaCrm === 'clientes'}
+                className={`crm-seg-btn ${vistaListaCrm === 'clientes' ? 'active' : ''}`}
+                onClick={() => setVistaListaCrm('clientes')}
+              >
+                <span>{t('dashboard.crm_tab_clients')}</span>
+                <span className="crm-seg-count">{rankingClientes.length}</span>
+              </button>
+            </div>
           </div>
 
-          <div className="status-board-columns">
-            {/* TO DO */}
-            <div className="mini-column">
-              <span className="mini-col-title">{t('dashboard.kanban_todo')}</span>
-              <div className="mini-task-card">
-                <p className="mini-task-name">Devehris a place task</p>
-                <span className="mini-task-tag orange">Task #1</span>
-              </div>
-              <div className="mini-task-card">
-                <p className="mini-task-name">Deonnitso ftad dating each task</p>
-                <span className="mini-task-tag gray">Task #2</span>
-              </div>
-            </div>
+          <div className="crm-dash-list">
+            {vistaListaCrm === 'promesas'
+              ? promesasEnriquecidas.map((opp) => {
+                  const etapa = obtenerEtapaVisual(opp.stage);
+                  return (
+                    <button
+                      key={opp.folio}
+                      type="button"
+                      className="crm-dash-row"
+                      onClick={() => abrirPromesaDetalle(opp.folio)}
+                      title={`${opp.folio} · ${opp.client} — ${opp.title}`}
+                    >
+                      <div className="crm-dash-row-left">
+                        <span className={`crm-dash-tag ${opp.tagDanger ? 'danger' : ''}`}>
+                          {opp.tagCode}
+                        </span>
+                        <div className="crm-dash-info">
+                          <span className="crm-dash-title">{opp.title}</span>
+                          <div className="crm-dash-meta">
+                            <span className="crm-dash-folio">{opp.folio}</span>
+                            <span>•</span>
+                            <span>{opp.client}</span>
+                            <span className={`crm-stage-pill ${etapa.tone}`}>{etapa.label}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="crm-dash-row-right">
+                        <span className="crm-dash-amount">{opp.amountFormatted}</span>
+                        <span
+                          className={`crm-mov-badge ${opp.movimientosBitacora > 0 ? 'active' : ''}`}
+                        >
+                          {opp.movimientosBitacora > 0
+                            ? `${opp.movimientosBitacora} ${t('dashboard.movements_short')}`
+                            : `${opp.probability}% prob.`}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })
+              : rankingClientes.map((cli) => (
+                  <button
+                    key={cli.id}
+                    type="button"
+                    className="crm-dash-row"
+                    onClick={() => onNavigateModule('crm', 'crm-clientes')}
+                    title={`${cli.companyName} · ${cli.sector} (${cli.zone})`}
+                  >
+                    <div className="crm-dash-row-left">
+                      <span className={`crm-dash-tag ${cli.tagDanger ? 'danger' : ''}`}>
+                        {cli.tagCode}
+                      </span>
+                      <div className="crm-dash-info">
+                        <span className="crm-dash-title">{cli.companyName}</span>
+                        <div className="crm-dash-meta">
+                          <span>{cli.sector}</span>
+                          <span>•</span>
+                          <span>Zona {cli.zone}</span>
+                          <span className="crm-stage-pill blue">
+                            {cli.promesasCount}{' '}
+                            {cli.promesasCount === 1 ? 'promesa' : 'promesas'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="crm-dash-row-right">
+                      <span className="crm-dash-amount">
+                        {formatearMontoCompacto(cli.pipelineAmount)}
+                      </span>
+                      <span
+                        className={`crm-mov-badge ${cli.movimientosBitacora > 0 ? 'active' : ''}`}
+                      >
+                        {cli.movimientosTotales} {t('dashboard.movements_short')}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+          </div>
 
-            {/* IN PROGRESS */}
-            <div className="mini-column">
-              <span className="mini-col-title cyan">{t('dashboard.kanban_inprogress')}</span>
-              <div className="mini-task-card">
-                <p className="mini-task-name">Task for ncaeting for process</p>
-                <span className="mini-task-tag cyan">Task #2</span>
-              </div>
-              <div className="mini-task-card">
-                <p className="mini-task-name">Task qusttto task</p>
-                <span className="mini-task-tag gray">Task #3</span>
-              </div>
-            </div>
-
-            {/* REVIEW */}
-            <div className="mini-column">
-              <span className="mini-col-title amber">{t('dashboard.kanban_review')}</span>
-              <div className="mini-task-card">
-                <p className="mini-task-name">Decourarise a Review</p>
-                <span className="mini-task-tag amber">Task #3</span>
-              </div>
-              <div className="mini-task-card">
-                <p className="mini-task-name">Stomplete brarest</p>
-                <span className="mini-task-tag gray">Task 64</span>
-              </div>
-            </div>
-
-            {/* DONE */}
-            <div className="mini-column">
-              <span className="mini-col-title green">{t('dashboard.kanban_done')}</span>
-              <div className="mini-task-card">
-                <p className="mini-task-name">Monthly Revenue shrtewn</p>
-                <span className="mini-task-tag green">Task #0</span>
-              </div>
-              <div className="mini-task-card">
-                <p className="mini-task-name">Commitss ftad dating each task</p>
-                <span className="mini-task-tag green">Task #5</span>
-              </div>
-            </div>
+          <div className="crm-dash-footer">
+            <span>
+              {vistaListaCrm === 'promesas'
+                ? `${promesasEnriquecidas.length} promesas · ${formatearMontoCompacto(totalCarteraPromesas)} MXN`
+                : `${rankingClientes.length} clientes registrados en cartera`}
+            </span>
+            <button
+              type="button"
+              className="crm-dash-view-all"
+              onClick={() =>
+                onNavigateModule(
+                  'crm',
+                  vistaListaCrm === 'promesas' ? 'crm-opportunities' : 'crm-clientes'
+                )
+              }
+            >
+              <span>{t('dashboard.crm_view_all')}</span>
+              <span>→</span>
+            </button>
           </div>
         </div>
 
@@ -436,7 +758,7 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
           </div>
         </div>
 
-        {/* Team Leaders (Podium) */}
+        {/* Ranking de Clientes con Más Movimiento */}
         <div className="dashboard-portlet-card span-4">
           <div className="portlet-card-header">
             <h3 className="portlet-title-text">{t('dashboard.team_leaders_title')}</h3>
@@ -444,38 +766,119 @@ export const GeneralDashboard: React.FC<GeneralDashboardProps> = ({
           </div>
 
           <div className="team-podium-stack">
-            {/* Rank 2: User 2 */}
-            <div className="podium-pillar-col">
-              <div className="podium-avatar-circle u2">U2</div>
-              <div className="podium-block step-2">
-                <span className="rank-num">2</span>
-                <span className="user-podium-name">User 2</span>
+            {/* Rank 2 */}
+            {top2Cliente && (
+              <div
+                className="podium-pillar-col interactive"
+                role="button"
+                tabIndex={0}
+                onClick={() => abrirPromesaDetalle(top2Cliente.topFolio)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') abrirPromesaDetalle(top2Cliente.topFolio);
+                }}
+                title={`${top2Cliente.companyName}: ${top2Cliente.movimientosBitacora} en bitácora + ${top2Cliente.promesasCount} promesas activas (${formatearMontoCompacto(top2Cliente.pipelineAmount)})`}
+              >
+                <div className="podium-avatar-circle u2">{top2Cliente.tagCode}</div>
+                <div className="podium-block step-2">
+                  <span className="rank-num">2</span>
+                  <span className="podium-client-name">{top2Cliente.shortName}</span>
+                  <span className="podium-mov-sub">
+                    {top2Cliente.movimientosTotales} {t('dashboard.movements_short')}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Rank 1: Jared S. */}
-            <div className="podium-pillar-col highest">
-              <div className="podium-crown-badge">👑</div>
-              <div className="podium-avatar-circle js-leader">JS</div>
-              <div className="podium-block step-1">
-                <span className="rank-num orange">1</span>
-                <span className="user-podium-name white">Jared S.</span>
-                <span className="podium-kpi-val">98% KPI</span>
+            {/* Rank 1 */}
+            {top1Cliente && (
+              <div
+                className="podium-pillar-col highest interactive"
+                role="button"
+                tabIndex={0}
+                onClick={() => abrirPromesaDetalle(top1Cliente.topFolio)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') abrirPromesaDetalle(top1Cliente.topFolio);
+                }}
+                title={`${top1Cliente.companyName}: ${top1Cliente.movimientosBitacora} en bitácora + ${top1Cliente.promesasCount} promesas activas (${formatearMontoCompacto(top1Cliente.pipelineAmount)})`}
+              >
+                <div className="podium-crown-badge">👑</div>
+                <div className="podium-avatar-circle js-leader">{top1Cliente.tagCode}</div>
+                <div className="podium-block step-1">
+                  <span className="rank-num orange">1</span>
+                  <span className="podium-client-name">{top1Cliente.shortName}</span>
+                  <span className="podium-mov-sub primary">
+                    {top1Cliente.movimientosTotales} {t('dashboard.movements_short')}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Rank 3: User 3 */}
-            <div className="podium-pillar-col">
-              <div className="podium-avatar-circle u3">U3</div>
-              <div className="podium-block step-3">
-                <span className="rank-num">3</span>
-                <span className="user-podium-name">User 3</span>
+            {/* Rank 3 */}
+            {top3Cliente && (
+              <div
+                className="podium-pillar-col interactive"
+                role="button"
+                tabIndex={0}
+                onClick={() => abrirPromesaDetalle(top3Cliente.topFolio)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') abrirPromesaDetalle(top3Cliente.topFolio);
+                }}
+                title={`${top3Cliente.companyName}: ${top3Cliente.movimientosBitacora} en bitácora + ${top3Cliente.promesasCount} promesas activas (${formatearMontoCompacto(top3Cliente.pipelineAmount)})`}
+              >
+                <div className="podium-avatar-circle u3">{top3Cliente.tagCode}</div>
+                <div className="podium-block step-3">
+                  <span className="rank-num">3</span>
+                  <span className="podium-client-name">{top3Cliente.shortName}</span>
+                  <span className="podium-mov-sub">
+                    {top3Cliente.movimientosTotales} {t('dashboard.movements_short')}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
+          {clientesSecundarios.length > 0 && (
+            <div className="client-ranking-mini-list">
+              {clientesSecundarios.map((cli, idx) => {
+                const porcentaje = Math.max(
+                  18,
+                  Math.round((cli.movimientosTotales / maxMovimientosRanking) * 100)
+                );
+                return (
+                  <button
+                    key={cli.id}
+                    type="button"
+                    className="client-ranking-mini-row"
+                    onClick={() => abrirPromesaDetalle(cli.topFolio)}
+                    title={`${cli.companyName}: ${cli.movimientosBitacora} en bitácora + ${cli.promesasCount} promesas`}
+                  >
+                    <span className="ranking-mini-pos">#{idx + 4}</span>
+                    <span className="ranking-mini-name">{cli.companyName}</span>
+                    <span className="ranking-mini-bar-track">
+                      <span
+                        className="ranking-mini-bar-fill"
+                        style={{ width: `${porcentaje}%` }}
+                      />
+                    </span>
+                    <span className="ranking-mini-movs">
+                      {cli.movimientosTotales} {t('dashboard.movements_short')}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <div className="podium-footer-note">
-            <span>{t('dashboard.leaderboard_updated')}</span>
+            {origenBitacora === 'mongodb' ? (
+              <span>
+                <span className="podium-live-dot" />
+                {t('dashboard.leaderboard_synced_mongo')}
+                {totalMovimientosBitacora > 0 ? ` · ${totalMovimientosBitacora} reg.` : ''}
+              </span>
+            ) : (
+              <span>{t('dashboard.leaderboard_updated')}</span>
+            )}
           </div>
         </div>
       </section>
