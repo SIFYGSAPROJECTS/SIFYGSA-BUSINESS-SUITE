@@ -4,11 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:backend": "npm run start:dev --prefix backend",
+    "dev:all": "node scripts/dev-all.mjs",
     "build": "next build",
+    "build:backend": "npm run build --prefix backend",
     "build:client": "next build",
     "start": "next start",
+    "start:backend": "npm run start:prod --prefix backend",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
+    "typecheck:backend": "npm run typecheck --prefix backend",
     "crear-usuario": "tsx scripts/crear-usuario.ts",
     "init:mongo-bitacoras": "tsx scripts/inicializar-mongo-bitacoras.ts",
     "seed:mongo-bitacoras": "tsx scripts/poblar-mongo-bitacoras.ts"

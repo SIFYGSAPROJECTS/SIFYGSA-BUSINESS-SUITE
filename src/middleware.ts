@@ -14,11 +14,10 @@ import {
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
-  // Ignorar archivos estáticos, recursos públicos y rutas de API de autenticación
+  // Ignorar archivos estáticos, recursos públicos y delegar /api/* directamente al backend NestJS
   if (
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/api/auth') ||
-    pathname.startsWith('/api/health') ||
+    pathname.startsWith('/api/') ||
     pathname.includes('.')
   ) {
     return NextResponse.next();
