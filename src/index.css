@@ -51,16 +51,37 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--divider);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--neutral-400);
+  background: rgba(100, 116, 139, 0.38);
   border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.28);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--link);
+}
+
+::selection {
+  background-color: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Quitar completamente la barra de scroll del menú lateral desplegable */
@@ -218,25 +239,25 @@ svg {
 }
 
 [data-theme="dark"] {
-  --stitch-surface: 11 15 25;
-  --stitch-surface-bright: 30 41 59;
-  --stitch-surface-dim: 8 11 18;
-  --stitch-surface-container-lowest: 17 24 39;
-  --stitch-surface-container-low: 15 23 42;
-  --stitch-surface-container: 30 41 59;
-  --stitch-surface-container-high: 38 51 77;
-  --stitch-surface-container-highest: 51 65 85;
-  --stitch-surface-variant: 30 41 59;
-  --stitch-background: 11 15 25;
+  --stitch-surface: 12 18 34;
+  --stitch-surface-bright: 35 48 76;
+  --stitch-surface-dim: 9 14 26;
+  --stitch-surface-container-lowest: 18 26 45;
+  --stitch-surface-container-low: 23 33 54;
+  --stitch-surface-container: 27 37 59;
+  --stitch-surface-container-high: 35 48 76;
+  --stitch-surface-container-highest: 46 63 96;
+  --stitch-surface-variant: 27 37 59;
+  --stitch-background: 12 18 34;
   --stitch-on-background: 241 245 249;
   --stitch-on-surface: 241 245 249;
-  --stitch-on-surface-variant: 148 163 184;
-  --stitch-outline: 100 116 139;
-  --stitch-outline-variant: 51 65 85;
+  --stitch-on-surface-variant: 180 194 217;
+  --stitch-outline: 100 120 152;
+  --stitch-outline-variant: 44 61 91;
   --stitch-primary: 96 165 250;
   --stitch-on-primary: 255 255 255;
-  --stitch-primary-container: 29 78 216;
-  --stitch-on-primary-container: 219 234 254;
+  --stitch-primary-container: 37 99 235;
+  --stitch-on-primary-container: 239 246 255;
   --stitch-primary-fixed: 30 58 138;
   --stitch-primary-fixed-dim: 37 99 235;
   --stitch-on-primary-fixed: 219 234 254;
@@ -263,8 +284,8 @@ svg {
   --stitch-on-error-container: 254 202 202;
   --stitch-inverse-surface: 226 232 240;
   --stitch-inverse-on-surface: 15 23 42;
-  --stitch-inverse-primary: 29 78 216;
-  --stitch-surface-tint: 59 130 246;
+  --stitch-inverse-primary: 37 99 235;
+  --stitch-surface-tint: 96 165 250;
 }
 
 :where(.sifygsa-crm-container, .sifygsa-tailwind-scope) *,

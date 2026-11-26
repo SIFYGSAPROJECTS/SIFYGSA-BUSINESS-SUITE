@@ -6,7 +6,8 @@
 .login-split-page {
   display: flex;
   min-height: 100vh;
-  width: 100vw;
+  min-height: 100dvh;
+  width: 100%;
   background-color: var(--app-bg);
   overflow-x: hidden;
 }
@@ -329,9 +330,15 @@
 }
 
 .account-card.active-compras {
-  border-color: #1D4ED8;
+  border-color: var(--primary);
   background-color: rgba(29, 78, 216, 0.08);
   box-shadow: 0 4px 12px rgba(29, 78, 216, 0.18);
+}
+
+[data-theme="dark"] .account-card.active-compras {
+  border-color: var(--link);
+  background-color: rgba(59, 130, 246, 0.18);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
 }
 
 .account-card-icon-box.almacen-icon {
@@ -344,6 +351,12 @@
   color: #d97706;
 }
 
+[data-theme="dark"] .account-card-icon-box.almacen-icon,
+[data-theme="dark"] .account-badge.almacen-badge {
+  background-color: rgba(245, 158, 11, 0.18);
+  color: #fcd34d;
+}
+
 .account-card-icon-box.compras-icon {
   background-color: rgba(29, 78, 216, 0.15);
   color: #1D4ED8;
@@ -354,16 +367,34 @@
   color: #1D4ED8;
 }
 
+[data-theme="dark"] .account-card-icon-box.compras-icon,
+[data-theme="dark"] .account-badge.compras-badge {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
 .input-role-tag.almacen-tag {
   background-color: rgba(217, 119, 6, 0.1);
   color: #b45309;
   border-color: rgba(217, 119, 6, 0.3);
 }
 
+[data-theme="dark"] .input-role-tag.almacen-tag {
+  background-color: rgba(245, 158, 11, 0.18);
+  color: #fde68a;
+  border-color: rgba(245, 158, 11, 0.36);
+}
+
 .input-role-tag.compras-tag {
   background-color: rgba(29, 78, 216, 0.1);
   color: #1D4ED8;
   border-color: rgba(29, 78, 216, 0.3);
+}
+
+[data-theme="dark"] .input-role-tag.compras-tag {
+  background-color: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+  border-color: rgba(96, 165, 250, 0.35);
 }
 
 .btn-submit.btn-submit-almacen {

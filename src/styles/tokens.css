@@ -214,7 +214,8 @@
 
 /* ==========================================================================
    TEMA OSCURO ([data-theme="dark"] & .dark)
-   Respeta 3 niveles de profundidad: Fondo #0B1120 -> Superficie #111827 -> Tarjetas #1F2937
+   Paleta Midnight Slate calibrada para baja fatiga visual y WCAG 2.2 AA/AAA:
+   Canvas #0C1222 -> Chrome #121A2D -> Recesivo #172136 -> Tarjetas #1B253B
    ========================================================================== */
 
 [data-theme="dark"],
@@ -222,62 +223,72 @@
 html.dark {
   color-scheme: dark;
 
-  /* Superficies y bordes — tema oscuro */
-  --app-bg: #0B1120;
-  --surface: #111827;
-  --surface-alt: #151E2E;
-  --card: #1F2937;
-  --card-hover: #273449;
-  --border: #374151;
-  --divider: #334155;
-  --field-border: #6B7280;
+  /* Superficies y bordes — tema oscuro Midnight Slate */
+  --app-bg: #0C1222;
+  --surface: #121A2D;
+  --surface-alt: #172136;
+  --card: #1B253B;
+  --card-hover: #23304C;
+  --border: #2C3D5B;
+  --divider: #23314B;
+  --field-border: #43577A;
 
-  /* Texto — tema oscuro */
-  --text-primary: #F9FAFB;
-  --text-secondary: #CBD5E1;
-  --text-secondary-on-bg: #CBD5E1;
-  --text-muted: #9CA3AF;
-  --text-disabled: #6B7280;       /* SOLO deshabilitado */
+  /* Texto — alto contraste sin deslumbramiento */
+  --text-primary: #F1F5F9;
+  --text-secondary: #B4C2D9;
+  --text-secondary-on-bg: #B4C2D9;
+  --text-muted: #8A9CB8;
+  --text-disabled: #556682;       /* SOLO deshabilitado */
 
   /* Navegación */
-  --nav-text: #CBD5E1;
-  --nav-active-bg: #1D4ED8;
-  --nav-active-text: #FFFFFF;
+  --nav-text: #C5D1E4;
+  --nav-active-bg: rgba(59, 130, 246, 0.18);
+  --nav-active-text: #93C5FD;
 
-  /* Acción primaria */
-  --primary: #1D4ED8;
-  --primary-hover: #2563EB;
-  --primary-pressed: #1E40AF;
-  --link: #93C5FD;                /* #60A5FA aceptable para íconos pequeños */
-  --focus: #93C5FD;
+  /* Acción primaria — azul cobalto luminoso con contraste >= 5.1:1 con texto blanco */
+  --primary: #2563EB;
+  --primary-hover: #3B82F6;
+  --primary-pressed: #1D4ED8;
+  --link: #60A5FA;
+  --focus: #60A5FA;
 
-  /* --- Tokens tonales de marca según Manual UI/UX v1.1 --- */
-  --brand-tonal-bg: #1E3A8A;
-  --brand-tonal-text: #BFDBFE;
-  --brand-tonal-border: #1E40AF;
+  /* Escala brand adaptable en oscuro (evita parches pastel claros en dark mode) */
+  --brand-50: rgba(59, 130, 246, 0.12);
+  --brand-100: rgba(59, 130, 246, 0.20);
+  --brand-200: rgba(96, 165, 250, 0.30);
+  --brand-300: rgba(96, 165, 250, 0.48);
 
-  /* Semánticos — tema oscuro */
-  --success-bg: #14532D;
-  --success-text: #BBF7D0;
+  /* --- Tokens tonales de marca (translúcidos modernos) --- */
+  --brand-tonal-bg: rgba(59, 130, 246, 0.16);
+  --brand-tonal-text: #93C5FD;
+  --brand-tonal-border: rgba(96, 165, 250, 0.32);
 
-  --warning-bg: #78350F;
+  /* Semánticos — fondos translúcidos limpios y texto luminoso legible */
+  --success: #22C55E;
+  --success-bg: rgba(34, 197, 94, 0.15);
+  --success-text: #86EFAC;
+
+  --warning: #F59E0B;
+  --warning-bg: rgba(245, 158, 11, 0.16);
   --warning-text: #FDE68A;
 
-  --danger-bg: #7F1D1D;
-  --danger-text: #FECACA;
+  --danger: #EF4444;
+  --danger-bg: rgba(239, 68, 68, 0.16);
+  --danger-text: #FCA5A5;
 
-  --info-bg: #164E63;
-  --info-text: #A5F3FC;
-  --info-icon: #22D3EE;
+  --info: #38BDF8;
+  --info-bg: rgba(56, 189, 248, 0.15);
+  --info-text: #BAE6FD;
+  --info-icon: #38BDF8;
 
-  --selection-bg: #1D4ED8;
-  --selection-text: #FFFFFF;
+  --selection-bg: rgba(59, 130, 246, 0.28);
+  --selection-text: #EFF6FF;
 
-  /* Sombras oscuras discretas basadas en luminancia */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  /* Sombras oscuras refinadas con profundidad realista */
+  --shadow-sm: 0 1px 3px rgba(2, 6, 23, 0.45);
+  --shadow-md: 0 6px 14px -2px rgba(2, 6, 23, 0.55), 0 2px 4px -2px rgba(2, 6, 23, 0.35);
+  --shadow-lg: 0 12px 24px -4px rgba(2, 6, 23, 0.65), 0 4px 8px -4px rgba(2, 6, 23, 0.42);
+  --shadow-xl: 0 22px 34px -6px rgba(2, 6, 23, 0.72), 0 8px 14px -6px rgba(2, 6, 23, 0.5);
 
   /* Retrocompatibilidad tema oscuro */
   --card-bg: var(--card);

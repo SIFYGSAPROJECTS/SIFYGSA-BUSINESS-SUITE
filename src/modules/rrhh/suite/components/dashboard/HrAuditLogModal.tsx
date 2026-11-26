@@ -881,7 +881,7 @@ export const HrAuditLogModal: React.FC<HrAuditLogModalProps> = ({ isOpen, onClos
                         fontSize: '12px',
                         transition: 'background-color 0.15s ease'
                       }}
-                      className="hover:bg-slate-50"
+                      className="hover:bg-slate-50 dark:hover:bg-slate-800/60"
                     >
                       {/* 1. FECHA Y HORA (Con segundos exactos y folio formal) */}
                       <td style={{ padding: '12px 8px', verticalAlign: 'middle' }}>

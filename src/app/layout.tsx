@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { FavoritesProvider } from '@/context/FavoritesContext';
@@ -17,6 +17,16 @@ export const metadata: Metadata = {
   title: 'SIFYGSA Enterprise ERP Suite',
   description:
     'Plataforma ERP modular para SIFYGSA: Administración, CRM & Ventas, Requisiciones y Recursos Humanos.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
+    { media: '(prefers-color-scheme: dark)', color: '#0C1222' },
+  ],
 };
 
 export default function RootLayout({

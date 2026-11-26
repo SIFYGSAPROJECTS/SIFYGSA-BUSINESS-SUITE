@@ -9,6 +9,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
   background-color: var(--app-bg);
   color: var(--text-primary);
@@ -22,6 +23,7 @@
   display: flex;
   flex: 1;
   min-height: calc(100vh - var(--header-height));
+  min-height: calc(100dvh - var(--header-height));
   width: 100%;
   position: relative;
   align-items: stretch;
@@ -3431,4 +3433,40 @@
 
 .floating-bubble-primary-wrap:hover .floating-bubble-dismiss {
   display: flex;
+}
+
+@media (max-width: 640px) {
+  .floating-chat-dock {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    right: 10px;
+    gap: 0.5rem;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+  }
+
+  .floating-chat-window {
+    width: calc(100vw - 20px);
+    max-width: calc(100vw - 20px);
+    height: min(440px, calc(100dvh - 130px));
+    max-height: calc(100dvh - 130px);
+  }
+
+  .floating-bubbles-column {
+    flex-direction: row-reverse;
+    gap: 0.45rem;
+  }
+
+  .floating-bubble-primary {
+    width: 42px;
+    height: 42px;
+    font-size: 0.82rem;
+    border-width: 2px;
+  }
+
+  .floating-bubble-unread {
+    min-width: 17px;
+    height: 17px;
+    font-size: 0.6rem;
+    padding: 0 4px;
+  }
 }
