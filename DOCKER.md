@@ -39,12 +39,10 @@ docker compose down -v
 ```
 
 ### ¿Cómo conectar Docker a MongoDB Atlas en vez del Mongo local?
-Por defecto `docker-compose.yml` conecta al contenedor `mongo` para que funcione incluso en redes con firewall o sin configurar IP en Atlas.  
-Si quieres que el contenedor de NestJS apunte a **MongoDB Atlas**, crea un archivo `.env` en la raíz con:
-
-```env
-DOCKER_MONGODB_URI="mongodb+srv://<usuario>:<password>@clustersify.xxxxx.mongodb.net/?retryWrites=true&w=majority"
-```
+`docker-compose.yml` carga automáticamente tu archivo `.env.local` (si existe):
+- **Si tienes `.env.local` con `MONGODB_URI` real (MongoDB Atlas):** Docker se conecta directo a **MongoDB Atlas** compartido por el equipo.
+- **Si NO tienes `.env.local`:** Docker usa automáticamente el contenedor local `sifygsa-mongo` (`mongodb://mongo:27017/BitacoraSifigsa`) sin bloqueos de red ni whitelist de IP.
+- *(Opcional)* Si quieres forzar una URI distinta solo para Docker, puedes definir `DOCKER_MONGODB_URI` en `.env.local` o `.env`.
 
 ---
 

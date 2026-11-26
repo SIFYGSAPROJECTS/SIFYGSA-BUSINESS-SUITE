@@ -12,7 +12,7 @@ RUN npm ci
 FROM base AS development
 ENV NODE_ENV=development
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json package-lock.json nest-cli.json tsconfig.json ./
+COPY package.json package-lock.json nest-cli.json tsconfig.json tsconfig.build.json ./
 COPY src ./src
 EXPOSE 4000
 CMD ["npm", "run", "start:dev"]
@@ -21,7 +21,7 @@ CMD ["npm", "run", "start:dev"]
 FROM base AS builder
 ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json package-lock.json nest-cli.json tsconfig.json ./
+COPY package.json package-lock.json nest-cli.json tsconfig.json tsconfig.build.json ./
 COPY src ./src
 RUN npm run build
 

@@ -92,7 +92,23 @@ export class MongoService implements OnModuleInit, OnModuleDestroy {
   private conectado = false;
 
   get uri(): string {
-    return (process.env.MONGODB_URI || '').trim();
+    const candidatos = [
+      process.env.DOCKER_MONGODB_URI,
+      process.env.MONGODB_URI,
+      process.env.DOCKER_FALLBACK_MONGODB_URI,
+    ];
+    for (const raw of candidatos) {
+      const u = (raw || '').trim();
+      if (
+        u &&
+        (u.startsWith('mongodb://') || u.startsWith('mongodb+srv://')) &&
+        !u.includes('<password>') &&
+        !u.includes('TU_PASSWORD')
+      ) {
+        return u;
+      }
+    }
+    return '';
   }
 
   get nombreBdBitacoras(): string {

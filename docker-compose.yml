@@ -3,6 +3,7 @@ services:
     image: mongo:7
     container_name: sifygsa-mongo
     restart: unless-stopped
+    command: ["mongod", "--quiet"]
     ports:
       - "27017:27017"
     environment:
@@ -12,7 +13,7 @@ services:
       - ./docker/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
       retries: 5
       start_period: 15s
@@ -29,20 +30,18 @@ services:
         condition: service_healthy
     ports:
       - "4000:4000"
+    env_file:
+      - path: .env.local
+        required: false
     environment:
       NODE_ENV: development
       TZ: America/Mexico_City
       BACKEND_PORT: 4000
       DATA_DIR: /data
       CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
-      AUTH_SECRET: ${AUTH_SECRET:-sifygsa_erp_super_secret_jwt_key_2026_production_grade_min32chars}
-      SESSION_DURATION_SECONDS: ${SESSION_DURATION_SECONDS:-28800}
-      SESSION_INACTIVITY_MINUTES: ${SESSION_INACTIVITY_MINUTES:-30}
-      # Por defecto usa el MongoDB incluido en Docker (sin bloqueos de Wi-Fi ni whitelist IP).
-      # Si deseas apuntar Docker a MongoDB Atlas, define DOCKER_MONGODB_URI en tu .env
-      MONGODB_URI: ${DOCKER_MONGODB_URI:-mongodb://mongo:27017/BitacoraSifigsa}
-      MONGODB_BITACORAS_DB: ${MONGODB_BITACORAS_DB:-BitacoraSifigsa}
-      MONGODB_IMAGENES_DB: ${MONGODB_IMAGENES_DB:-ImagenesSifigsa}
+      # Si .env.local trae MONGODB_URI real (Atlas), NestJS la usa automaticamente.
+      # Si no existe .env.local o no tiene URI valida, cae automaticamente al MongoDB local de Docker:
+      DOCKER_FALLBACK_MONGODB_URI: mongodb://mongo:27017/BitacoraSifigsa
       CHOKIDAR_USEPOLLING: "true"
     volumes:
       - ./backend/src:/app/src
@@ -56,7 +55,7 @@ services:
           "-e",
           "fetch('http://127.0.0.1:4000/api/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
         ]
-      interval: 10s
+      interval: 15s
       timeout: 5s
       retries: 8
       start_period: 20s
@@ -73,16 +72,14 @@ services:
         condition: service_healthy
     ports:
       - "3000:3000"
+    env_file:
+      - path: .env.local
+        required: false
     environment:
       NODE_ENV: development
       TZ: America/Mexico_City
+      # Sobreescribe BACKEND_API_URL de .env.local para enrutar internamente hacia el contenedor backend
       BACKEND_API_URL: http://backend:4000
-      AUTH_SECRET: ${AUTH_SECRET:-sifygsa_erp_super_secret_jwt_key_2026_production_grade_min32chars}
-      SESSION_DURATION_SECONDS: ${SESSION_DURATION_SECONDS:-28800}
-      SESSION_INACTIVITY_MINUTES: ${SESSION_INACTIVITY_MINUTES:-30}
-      MONGODB_URI: ${DOCKER_MONGODB_URI:-mongodb://mongo:27017/BitacoraSifigsa}
-      MONGODB_BITACORAS_DB: ${MONGODB_BITACORAS_DB:-BitacoraSifigsa}
-      MONGODB_IMAGENES_DB: ${MONGODB_IMAGENES_DB:-ImagenesSifigsa}
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
     volumes:
