@@ -64,7 +64,7 @@ async function main(): Promise<void> {
 
     const validacion = esquemaUsuario.safeParse(nuevoUsuario);
     if (!validacion.success) {
-      const errores = validacion.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join('\n');
+      const errores = validacion.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join('\n');
       throw new Error(`Datos inválidos:\n${errores}`);
     }
 

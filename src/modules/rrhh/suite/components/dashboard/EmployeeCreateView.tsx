@@ -245,18 +245,19 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
   const [empId, setEmpId] = useState(() => getNextEmployeeFolio(loadPersistedEmployees(EMPLOYEES)));
 
   // Estado de Toast Notification (Éxito / Advertencia de 1 a 3 palabras) y Campo con Error
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning'; durationMs?: number } | null>(null);
   const [errorField, setErrorField] = useState<string | null>(null);
-  const toastTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => {
+      setToast(null);
+    }, toast.durationMs ?? 2600);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   const triggerToast = (message: string, type: 'success' | 'warning' = 'warning', durationMs = 2600) => {
-    if (toastTimerRef.current) {
-      window.clearTimeout(toastTimerRef.current);
-    }
-    setToast({ message, type });
-    toastTimerRef.current = window.setTimeout(() => {
-      setToast(null);
-    }, durationMs);
+    setToast({ message, type, durationMs });
   };
 
   const getFieldStyle = (fieldName: string, extraStyle: React.CSSProperties = {}): React.CSSProperties => {
@@ -367,22 +368,7 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
     if (firstInputRef.current) {
       firstInputRef.current.focus({ preventScroll: true });
     }
-    return () => {
-      if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-    };
   }, []);
-
-  // Atajo global Ctrl+S para guardar inmediatamente desde cualquier campo
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
-        e.preventDefault();
-        handleSubmit();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  });
 
   // Salto al siguiente campo con la tecla Enter
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
@@ -700,6 +686,18 @@ export const EmployeeCreateView: React.FC<EmployeeCreateViewProps> = ({
     resetAllFields(nextFolio);
     triggerToast('¡Guardado!', 'success', 2800);
   };
+
+  // Atajo global Ctrl+S para guardar inmediatamente desde cualquier campo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleSubmit();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  });
 
   const handleLimpiar = () => {
     resetAllFields();

@@ -18,7 +18,7 @@
       "compras"
     ],
     "fechaCreacion": "2026-01-15T08:00:00.000Z",
-    "ultimoAcceso": "2026-11-18T01:08:00.261Z"
+    "ultimoAcceso": "2026-11-26T21:22:13.910Z"
   },
   {
     "id": "usr_gerente",
@@ -73,7 +73,7 @@
       "requisiciones"
     ],
     "fechaCreacion": "2026-01-20T08:30:00.000Z",
-    "ultimoAcceso": "2026-11-18T20:25:12.187Z"
+    "ultimoAcceso": "2026-11-25T15:13:30.940Z"
   },
   {
     "id": "usr_requisiciones",
@@ -92,7 +92,7 @@
       "almacen"
     ],
     "fechaCreacion": "2026-04-12T08:00:00.000Z",
-    "ultimoAcceso": "2026-11-20T16:55:03.230Z"
+    "ultimoAcceso": "2026-11-26T21:13:04.533Z"
   },
   {
     "id": "usr_almacen",
@@ -109,6 +109,6 @@
       "requisiciones"
     ],
     "fechaCreacion": "2026-05-01T08:00:00.000Z",
-    "ultimoAcceso": "2026-11-20T16:00:53.410Z"
+    "ultimoAcceso": "2026-11-26T21:21:58.677Z"
   }
 ]

@@ -1,8 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import crypto from 'node:crypto';
-import { promises as fs } from 'node:fs';
+import fsSync, { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+
+function resolverDirectorioDataPorDefecto(): string {
+  if (process.env.DATA_DIR) {
+    return path.resolve(process.env.DATA_DIR);
+  }
+  const raizLocal = path.resolve(process.cwd(), 'data');
+  if (fsSync.existsSync(raizLocal)) {
+    return raizLocal;
+  }
+  return path.resolve(process.cwd(), '..', 'data');
+}
 
 @Injectable()
 export class JsonStorageService {
@@ -13,10 +24,7 @@ export class JsonStorageService {
   private directorioEscrituraActual: string;
 
   constructor() {
-    // Compartir el directorio ../data con el repositorio raíz de SIFYGSA
-    this.directorioSemilla = process.env.DATA_DIR
-      ? path.resolve(process.env.DATA_DIR)
-      : path.resolve(process.cwd(), '..', 'data');
+    this.directorioSemilla = resolverDirectorioDataPorDefecto();
     this.directorioEscrituraActual = this.directorioSemilla;
   }
 

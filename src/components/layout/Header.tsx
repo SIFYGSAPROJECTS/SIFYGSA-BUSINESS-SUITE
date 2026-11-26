@@ -59,7 +59,6 @@ export const Header: React.FC<HeaderProps> = ({
   activeSubItemId = 'crm-kanban',
   onBackToMenu,
   onToggleSidebar,
-  isSidebarOpen = false,
   onLogout,
   onSelectModule,
   isChatCenterOpen = false,
@@ -131,21 +130,8 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sifygsa-header">
-      {/* Left: Mobile drawer toggle (<=520px) + Selected Menu Icon */}
+      {/* Left: Selected Menu Icon (only enabled to return with "<" when inside a selected module, disabled on the icon selection menu itself) */}
       <div className="header-brand-group">
-        {onToggleSidebar && (
-          <button
-            type="button"
-            className="header-mobile-menu-btn"
-            onClick={onToggleSidebar}
-            aria-label={isSidebarOpen ? 'Cerrar menú lateral' : 'Abrir menú lateral'}
-            title="Menú lateral"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" width="20" height="20">
-              <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        )}
         <button
           type="button"
           disabled={isInIconSelectionMenu}

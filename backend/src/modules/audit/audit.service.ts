@@ -113,8 +113,12 @@ export class AuditService {
         await db.collection(COLECCION_BITACORA_GENERAL).insertOne({ ...evento });
         return evento;
       } catch (err) {
+        const errInfo =
+          err && typeof err === 'object' && 'errInfo' in err
+            ? ` | errInfo=${JSON.stringify((err as { errInfo: unknown }).errInfo)}`
+            : '';
         this.logger.warn(
-          `Error insertando en MongoDB (bitacora_general), usando respaldo JSON: ${err instanceof Error ? err.message : String(err)}`
+          `Error insertando en MongoDB (bitacora_general), usando respaldo JSON: ${err instanceof Error ? err.message : String(err)}${errInfo}`
         );
       }
     }
@@ -324,8 +328,12 @@ export class AuditService {
         await db.collection(COLECCION_BITACORA_CRM_PROMESAS).insertOne({ ...registro });
         return { registro, origen: 'mongodb' };
       } catch (err) {
+        const errInfo =
+          err && typeof err === 'object' && 'errInfo' in err
+            ? ` | errInfo=${JSON.stringify((err as { errInfo: unknown }).errInfo)}`
+            : '';
         this.logger.warn(
-          `Error insertando en MongoDB (bitacora_crm_promesas): ${err instanceof Error ? err.message : String(err)}`
+          `Error insertando en MongoDB (bitacora_crm_promesas): ${err instanceof Error ? err.message : String(err)}${errInfo}`
         );
       }
     }

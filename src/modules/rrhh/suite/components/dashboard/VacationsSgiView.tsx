@@ -2221,7 +2221,7 @@ export const VacationsSgiView: React.FC<VacationsSgiViewProps> = ({ employees })
 
               {/* Leyenda Legal LFT */}
               <div style={{ fontSize: '10px', fontStyle: 'italic', textAlign: 'center', margin: '14px 0', color: '#4B5563' }}>
-                "POR MEDIO DE LA PRESENTE EXPRESO MI CONFORMIDAD DE SOLICITAR Y GOZAR MIS VACACIONES DE ACUERDO CON LO QUE ESTABLECE EL ARTÍCULO 76 DE LA LEY FEDERAL DEL TRABAJO."
+                &quot;POR MEDIO DE LA PRESENTE EXPRESO MI CONFORMIDAD DE SOLICITAR Y GOZAR MIS VACACIONES DE ACUERDO CON LO QUE ESTABLECE EL ARTÍCULO 76 DE LA LEY FEDERAL DEL TRABAJO.&quot;
               </div>
 
               {/* Firmas de Autorización */}

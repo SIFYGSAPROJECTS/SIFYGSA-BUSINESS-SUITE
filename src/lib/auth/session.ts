@@ -28,10 +28,18 @@ export const esquemaPayloadSesion = z.object({
 export type PayloadSesion = z.infer<typeof esquemaPayloadSesion>;
 
 function obtenerSecretoJwt(): Uint8Array {
-  const secreto =
-    process.env.AUTH_SECRET ??
-    'sifygsa_erp_super_secret_jwt_key_2026_production_grade_min32chars';
-  return new TextEncoder().encode(secreto);
+  const secretoEnv = process.env.AUTH_SECRET?.trim();
+  if (secretoEnv && secretoEnv.length >= 32) {
+    return new TextEncoder().encode(secretoEnv);
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'Configuración insegura: define la variable de entorno AUTH_SECRET (mínimo 32 caracteres) en producción.'
+    );
+  }
+  const devFallback =
+    secretoEnv || 'sifygsa_erp_super_secret_jwt_key_2026_production_grade_min32chars';
+  return new TextEncoder().encode(devFallback);
 }
 
 export async function firmarTokenSesion(

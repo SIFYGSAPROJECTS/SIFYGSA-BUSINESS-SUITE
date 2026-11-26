@@ -77,7 +77,7 @@ export function manejarErrorApi(error: unknown): NextResponse<RespuestaApi<never
   }
 
   if (error instanceof z.ZodError) {
-    const detalles = error.errors.map((e) => `${e.path.join('.')}: ${e.message}`);
+    const detalles = error.issues.map((e) => `${e.path.join('.')}: ${e.message}`);
     return NextResponse.json(
       {
         exito: false,

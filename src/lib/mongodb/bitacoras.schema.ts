@@ -50,7 +50,7 @@ export const VALIDADOR_BITACORA_GENERAL: Document = {
       },
       modulo: {
         bsonType: 'string',
-        enum: ['auth', 'admin', 'crm', 'requisiciones', 'compras', 'rrhh', 'almacen'],
+        enum: ['auth', 'admin', 'crm', 'requisiciones', 'compras', 'rrhh', 'almacen', 'autorizacion-ordenes'],
         description: 'Módulo donde se originó la acción',
       },
       tipoEvento: {

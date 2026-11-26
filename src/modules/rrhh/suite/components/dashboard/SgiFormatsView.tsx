@@ -14,7 +14,7 @@ interface SgiFormatsViewProps {
   employees: Employee[];
 }
 
-export const SgiFormatsView: React.FC<SgiFormatsViewProps> = ({ employees: _employees }) => {
+export const SgiFormatsView: React.FC<SgiFormatsViewProps> = () => {
   const [selectedFormat, setSelectedFormat] = useState<'SGI-FR-RH-01' | 'SGI-FR-RH-02' | 'SGI-FR-RH-15'>('SGI-FR-RH-01');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 

@@ -90,6 +90,9 @@ export class MongoService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(MongoService.name);
   private client: MongoClient | null = null;
   private conectado = false;
+  private conectarPromesa: Promise<MongoClient> | null = null;
+  private coleccionesAseguradas = false;
+  private ultimoError: string | null = null;
 
   get uri(): string {
     return (process.env.MONGODB_URI || '').trim();
@@ -108,15 +111,19 @@ export class MongoService implements OnModuleInit, OnModuleDestroy {
     return Boolean(
       u &&
         (u.startsWith('mongodb://') || u.startsWith('mongodb+srv://')) &&
+        !u.includes('<usuario>') &&
         !u.includes('<password>') &&
-        !u.includes('TU_PASSWORD')
+        !u.includes('TU_PASSWORD') &&
+        !u.includes('.xxxxx.')
     );
   }
 
   async onModuleInit(): Promise<void> {
     if (!this.estaConfigurado()) {
+      this.ultimoError =
+        'Falta configurar MONGODB_URI real en .env.local (raíz del proyecto o backend/).';
       this.logger.warn(
-        'MONGODB_URI no configurada; la auditoría utilizará respaldo local JSON hasta configurarla.'
+        'MONGODB_URI no configurada con credenciales reales; bitácoras y auditoría usarán respaldo local JSON (data/auditoria.json y data/bitacora-crm-promesas.json) hasta configurar Atlas.'
       );
       return;
     }
@@ -125,17 +132,86 @@ export class MongoService implements OnModuleInit, OnModuleDestroy {
       await this.conectar();
       this.logger.log(`MongoDB Atlas conectado (BD Bitácoras: ${this.nombreBdBitacoras})`);
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.ultimoError = msg;
       this.logger.warn(
-        `No se pudo conectar inicialmente a MongoDB Atlas: ${err instanceof Error ? err.message : String(err)}`
+        `No se pudo conectar inicialmente a MongoDB Atlas (verifica red/IP Access List en Atlas y contraseña): ${msg}`
       );
     }
   }
 
   async onModuleDestroy(): Promise<void> {
     if (this.client) {
-      await this.client.close();
+      await this.client.close().catch(() => undefined);
       this.client = null;
       this.conectado = false;
+      this.conectarPromesa = null;
+      this.coleccionesAseguradas = false;
+    }
+  }
+
+  private async asegurarColeccionesBitacoras(db: Db): Promise<void> {
+    if (this.coleccionesAseguradas) return;
+    try {
+      const existentes = await db.listCollections({}, { nameOnly: true }).toArray();
+      const nombres = new Set(existentes.map((c) => c.name));
+
+      if (!nombres.has(COLECCION_BITACORA_GENERAL)) {
+        await db.createCollection(COLECCION_BITACORA_GENERAL, {
+          validator: VALIDADOR_BITACORA_GENERAL,
+          validationLevel: 'strict',
+          validationAction: 'error',
+        });
+      } else {
+        await db
+          .command({
+            collMod: COLECCION_BITACORA_GENERAL,
+            validator: VALIDADOR_BITACORA_GENERAL,
+            validationLevel: 'strict',
+            validationAction: 'error',
+          })
+          .catch(() => undefined);
+      }
+
+      await db.collection(COLECCION_BITACORA_GENERAL).createIndexes([
+        { key: { fecha: -1 }, name: 'idx_fecha_desc' },
+        { key: { modulo: 1, fecha: -1 }, name: 'idx_modulo_fecha' },
+        { key: { tipoEvento: 1, fecha: -1 }, name: 'idx_tipoEvento_fecha' },
+        { key: { usuarioId: 1, fecha: -1 }, name: 'idx_usuarioId_fecha' },
+        { key: { id: 1 }, name: 'idx_id_unico', unique: true },
+      ]);
+
+      if (!nombres.has(COLECCION_BITACORA_CRM_PROMESAS)) {
+        await db.createCollection(COLECCION_BITACORA_CRM_PROMESAS, {
+          validator: VALIDADOR_BITACORA_CRM_PROMESAS,
+          validationLevel: 'strict',
+          validationAction: 'error',
+        });
+      } else {
+        await db
+          .command({
+            collMod: COLECCION_BITACORA_CRM_PROMESAS,
+            validator: VALIDADOR_BITACORA_CRM_PROMESAS,
+            validationLevel: 'strict',
+            validationAction: 'error',
+          })
+          .catch(() => undefined);
+      }
+
+      await db.collection(COLECCION_BITACORA_CRM_PROMESAS).createIndexes([
+        { key: { folio: 1, fecha: -1 }, name: 'idx_folio_fecha_desc' },
+        { key: { folio: 1, tipo: 1, fecha: -1 }, name: 'idx_folio_tipo_fecha' },
+        { key: { usuarioId: 1, fecha: -1 }, name: 'idx_promesa_usuario_fecha' },
+        { key: { id: 1 }, name: 'idx_promesa_id_unico', unique: true },
+      ]);
+
+      this.coleccionesAseguradas = true;
+    } catch (err) {
+      // No impedir operación si el usuario de Atlas tiene solo permisos de lectura/escritura
+      this.logger.warn(
+        `Aviso al asegurar índices/esquemas en MongoDB Atlas: ${err instanceof Error ? err.message : String(err)}`
+      );
+      this.coleccionesAseguradas = true;
     }
   }
 
@@ -143,13 +219,35 @@ export class MongoService implements OnModuleInit, OnModuleDestroy {
     if (this.client && this.conectado) {
       return this.client;
     }
-    this.client = new MongoClient(this.uri, {
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 6000,
-    });
-    await this.client.connect();
-    this.conectado = true;
-    return this.client;
+    if (this.conectarPromesa) {
+      return this.conectarPromesa;
+    }
+
+    this.conectarPromesa = (async () => {
+      const nuevoCliente = new MongoClient(this.uri, {
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 10000,
+        connectTimeoutMS: 10000,
+      });
+      try {
+        await nuevoCliente.connect();
+        this.client = nuevoCliente;
+        this.conectado = true;
+        this.ultimoError = null;
+        await this.asegurarColeccionesBitacoras(nuevoCliente.db(this.nombreBdBitacoras));
+        return nuevoCliente;
+      } catch (err) {
+        this.conectado = false;
+        this.client = null;
+        this.ultimoError = err instanceof Error ? err.message : String(err);
+        await nuevoCliente.close().catch(() => undefined);
+        throw err;
+      } finally {
+        this.conectarPromesa = null;
+      }
+    })();
+
+    return this.conectarPromesa;
   }
 
   async obtenerBdBitacoras(): Promise<Db> {
@@ -166,12 +264,15 @@ export class MongoService implements OnModuleInit, OnModuleDestroy {
     estado: 'conectado' | 'desconectado' | 'pendiente_configuracion';
     baseDatosBitacoras: string;
     baseDatosImagenes: string;
+    detalle?: string;
   }> {
     if (!this.estaConfigurado()) {
       return {
         estado: 'pendiente_configuracion',
         baseDatosBitacoras: this.nombreBdBitacoras,
         baseDatosImagenes: this.nombreBdImagenes,
+        detalle:
+          'Define MONGODB_URI real en .env.local para escribir en MongoDB Atlas en lugar del respaldo JSON.',
       };
     }
 
@@ -183,11 +284,14 @@ export class MongoService implements OnModuleInit, OnModuleDestroy {
         baseDatosBitacoras: this.nombreBdBitacoras,
         baseDatosImagenes: this.nombreBdImagenes,
       };
-    } catch {
+    } catch (err) {
+      const detalle = err instanceof Error ? err.message : String(err);
+      this.ultimoError = detalle;
       return {
         estado: 'desconectado',
         baseDatosBitacoras: this.nombreBdBitacoras,
         baseDatosImagenes: this.nombreBdImagenes,
+        detalle,
       };
     }
   }

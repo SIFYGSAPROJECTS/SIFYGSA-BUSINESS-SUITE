@@ -144,7 +144,7 @@ export const esquemaCrearRequisicion = z
     const duplicados = codigos.filter((c, idx) => codigos.indexOf(c) !== idx);
     if (duplicados.length > 0) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         path: ['partidas'],
         message: `Partidas duplicadas detectadas con el código: ${duplicados[0]}`,
       });
@@ -156,7 +156,7 @@ export const esquemaCrearRequisicion = z
 
     if (totalConIva > limiteArea) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         path: ['area'],
         message: `El total ($${totalConIva.toLocaleString('es-MX')} MXN) excede el presupuesto máximo autorizado para ${datos.area} ($${limiteArea.toLocaleString('es-MX')} MXN).`,
       });

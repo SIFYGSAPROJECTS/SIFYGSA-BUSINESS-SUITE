@@ -19,6 +19,10 @@ export interface FlujoKanbanCrmProps {
   extraOpportunities?: StitchOpportunity[];
 }
 
+function generarIdMovimientoAudit(): string {
+  return `audit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
 interface CalendarEventItem {
   id: string;
   dayCol: number; // 0=Lun 9 ... 6=Dom 15
@@ -392,7 +396,7 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
       hour: '2-digit',
       minute: '2-digit',
     });
-    const generatedId = `audit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const generatedId = generarIdMovimientoAudit();
     const newEntry: AuditLogEntry = {
       id: generatedId,
       author: entry.author || 'Ing. Carlos Rodríguez',
@@ -561,7 +565,7 @@ export const FlujoKanbanCrm: React.FC<FlujoKanbanCrmProps> = ({
     setEditDraftClose(selectedOpportunity.expectedClose);
     setEditDraftPhone(selectedOpportunity.phone);
     setEditDraftNotes(selectedOpportunity.notes);
-  }, [selectedOpportunity?.folio]);
+  }, [selectedOpportunity]);
 
   // Actualizar cualquier campo de la oportunidad seleccionada y registrar en el Checador de Movimientos
   const updateSelectedOpportunityField = (

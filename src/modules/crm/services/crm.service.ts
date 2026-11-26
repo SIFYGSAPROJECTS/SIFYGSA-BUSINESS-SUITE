@@ -200,7 +200,7 @@ export async function importarOportunidadesMasivasCrm(
     const resultado = esquemaCrearOportunidad.safeParse(fila);
     if (!resultado.success) {
       errores.push(
-        `Fila ${idx + 1}: ${resultado.error.errors.map((e) => e.message).join(', ')}`
+        `Fila ${idx + 1}: ${resultado.error.issues.map((e) => e.message).join(', ')}`
       );
       return;
     }
