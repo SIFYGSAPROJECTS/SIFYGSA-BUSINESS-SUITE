@@ -1,128 +1,129 @@
-# SIFYGSA-PLATFORM / SFG Business Suite
+# SIFYGSA Enterprise ERP Suite (Next.js 16 + TypeScript Estricto)
 
-Plataforma integral de gestión y servicios para **SIFYGSA**.
-Suite Empresarial Modular y Escalable desarrollada con arquitectura moderna:
-- **Frontend**: React 19 + TypeScript + Vite + Vanilla CSS (Módulos interactivos en versión de desarrollo / standalone)
-- **Backend**: API Monolítica Modular con Node.js + Express + TypeScript
-- **Infraestructura**: Contenedores Docker multi-etapa con Nginx y Docker Compose
+Plataforma ERP modular para **SIFYGSA**, construida sobre **Next.js 16 (App Router)**, **React 19**, **TypeScript estricto (`strict: true`)**, **Zod**, **bcryptjs** y **jose (JWT en cookie `httpOnly`)**.
 
 ---
 
-## 📌 Flujo de Trabajo y Gestión de Ramas
+## 📁 Estructura de Carpetas
 
-Para garantizar la estabilidad del software, la trazabilidad del código y despliegues seguros, este repositorio utiliza un flujo basado en entornos escalonados:
-
-$$\mathbf{feature} \longrightarrow \mathbf{dev} \longrightarrow \mathbf{test} \longrightarrow \mathbf{main}$$
-
----
-
-### 🗺️ Mapa de Ramas y Entornos
-
-| Rama | Entorno | Propósito | Acceso / Modificación |
-| :--- | :--- | :--- | :--- |
-| **`main`** | **Producción** | Código 100% estable, auditado y listo para usuarios finales. | 🔒 **Solo PR** desde `test` o `hotfix/*`. Push directo bloqueado. |
-| **`test`** | **QA / Pruebas** | Entorno de validación funcional, pruebas de integración y control de calidad. | 🔒 **Solo PR** desde `dev`. Push directo bloqueado. |
-| **`dev`** | **Desarrollo** | Integración continua de nuevas características del equipo de desarrollo. | 🔒 **Solo PR** desde ramas de trabajo (`feature/*`, `fix/*`). |
-| **`feature/*`** | Local / Remoto | Desarrollo de nuevas funcionalidades o módulos individuales. | Creada por cada colaborador desde `dev`. |
-| **`fix/*`** | Local / Remoto | Corrección de incidencias detectadas en `dev` o `test`. | Creada por cada colaborador desde `dev`. |
-| **`hotfix/*`** | Local / Remoto | Corrección crítica urgente sobre errores en producción (`main`). | Creada desde `main`. |
-
----
-
-## 🚀 Comandos Rápidos de Desarrollo
-
-### 1. Instalación de Dependencias
-```bash
-# Instalar dependencias del frontend
-npm install
-
-# Instalar dependencias del backend
-npm install --prefix server
-```
-
-### 2. Ejecución en Modo Desarrollo
-```bash
-# Iniciar Frontend y Backend simultáneamente
-npm run dev
-
-# Iniciar solo Frontend (Vite en http://localhost:5173)
-npm run dev:client
-
-# Iniciar solo Backend (Express en http://localhost:5000)
-npm run dev:server
-```
-
-### 3. Compilación para Producción
-```bash
-# Compilar todo (Frontend + Backend)
-npm run build
-
-# Compilar solo Frontend
-npm run build:client
-
-# Compilar solo Backend
-npm run build:server
-```
-
----
-
-## 🐳 Despliegue y Ejecución con Docker
-
-El proyecto cuenta con imágenes Docker multi-stage optimizadas para alto rendimiento, bajo peso y máxima seguridad (ejecución sin privilegios root, compresión Gzip, healthchecks y proxy inverso Nginx).
-
-### 1. Iniciar con Docker Compose (Producción)
-```bash
-# Construir e iniciar contenedores en segundo plano
-docker compose up -d --build
-
-# O usando los scripts de package.json:
-npm run docker:up
-```
-
-- **Frontend (Nginx + SPA)**: `http://localhost:80`
-- **Backend API**: `http://localhost:5000/api`
-- **Healthcheck**: `http://localhost:5000/api/health`
-
-### 2. Monitorear Logs y Estado
-```bash
-# Ver logs en tiempo real
-npm run docker:logs
-# o directamente:
-docker compose logs -f
-
-# Ver estado de los contenedores
-docker compose ps
-```
-
-### 3. Detener Contenedores
-```bash
-npm run docker:down
-# o:
-docker compose down
-```
-
-### 4. Entorno de Desarrollo con Docker (Hot-Reload)
-Si deseas desarrollar dentro de contenedores con recarga en vivo de código:
-```bash
-docker compose -f docker-compose.dev.yml up --build
-```
-
----
-
-## 📈 Escalabilidad Horizontal
-
-Para escalar las instancias del servidor backend según la demanda de tráfico:
-
-```bash
-# Escalar el backend a 3 instancias
-docker compose up -d --scale server=3
+```text
+├── data/                           # Persistencia JSON exclusiva en servidor (nunca expuesta al cliente)
+│   ├── usuarios.json               # Cuentas de usuario con passwordHash (bcryptjs) y roles
+│   ├── roles-permisos.json         # Matriz RBAC editable desde el Panel de Administración
+│   ├── auditoria.json              # Bitácora de actividad y seguridad
+│   ├── crm.json                    # Oportunidades, clientes con interacciones y actividades CRM
+│   ├── requisiciones.json          # Requisiciones multinivel e historial de trazabilidad
+│   └── rrhh.json                   # Expedientes, puestos, asistencias, vacaciones, incidencias y nómina
+├── scripts/
+│   └── crear-usuario.ts            # CLI interactivo en TypeScript (tsx) para alta de usuarios con bcrypt
+├── src/
+│   ├── app/                        # App Router de Next.js (páginas delgadas y Route Handlers)
+│   │   ├── (auth)/login/           # Pantalla de inicio de sesión
+│   │   ├── (dashboard)/            # Layout autenticado con monitoreo de inactividad
+│   │   │   ├── admin/              # Panel de Administración General
+│   │   │   ├── crm/                # Módulo CRM & Ventas
+│   │   │   ├── requisiciones/      # Módulo de Requisiciones y Control Presupuestal
+│   │   │   ├── rrhh/               # Módulo de Recursos Humanos y Cumplimiento STPS
+│   │   │   └── sin-acceso/         # Vista de bloqueo RBAC por permisos insuficientes
+│   │   └── api/                    # Route Handlers delgados que delegan a los servicios
+│   ├── components/
+│   │   ├── layout/                 # Header, Sidebar dinámico y Footer corporativo
+│   │   └── ui/                     # Componentes compartidos (Badge, Button, Icons, Logo, ModalUniversal)
+│   ├── config/
+│   │   └── types.ts                # Tipos compartidos centralizados (roles, módulos, acciones, estados)
+│   ├── context/                    # ThemeContext (Light/Dark) y LanguageContext (ES/EN)
+│   ├── lib/
+│   │   ├── auth/                   # Sesión JWT (jose), hash (bcryptjs), bloqueo por intentos e inactividad
+│   │   ├── permissions/            # Matriz tipada Rol → Módulo → Acciones (cliente/Edge + servidor)
+│   │   ├── audit/                  # Servicio de auditoría sobre data/auditoria.json
+│   │   └── storage/                # Lectura/escritura atómica con archivo temporal + mutex en memoria
+│   ├── modules/
+│   │   ├── registry.ts             # Registro central de módulos (genera menú lateral y rutas permitidas)
+│   │   ├── admin/                  # Módulo de Administración (components, services, repository, schemas)
+│   │   ├── crm/                    # Módulo CRM (Kanban @dnd-kit, clientes, actividades, reportes Excel/PDF)
+│   │   ├── requisiciones/          # Módulo Requisiciones (flujo 5 etapas, niveles por monto, alertas)
+│   │   └── rrhh/                   # Módulo RRHH (expedientes con redacción de datos sensibles en servidor)
+│   └── middleware.ts               # Protección de rutas, verificación JWT e inactividad
+├── .env.example                    # Plantilla de variables de entorno documentada
+└── package.json
 ```
 
 ---
 
 ## ⚙️ Variables de Entorno
 
-Copie los archivos `.env.example` para personalizar la configuración:
+Copia `.env.example` a `.env.local` en la raíz del proyecto:
 
-- En la raíz: `.env` (puertos y variables globales)
-- En `/server`: `server/.env` (puerto del API, JWT secret, orígenes CORS)
+```env
+# Secreto criptográfico (mínimo 32 caracteres) para firmar y verificar JWT con jose
+AUTH_SECRET="sifygsa_erp_super_secret_jwt_key_2026_production_grade_min32chars"
+
+# Duración total del token JWT en segundos (28800 = 8 horas)
+SESSION_DURATION_SECONDS="28800"
+
+# Tiempo máximo de inactividad en minutos antes de expirar la sesión (por defecto 30)
+SESSION_INACTIVITY_MINUTES="30"
+
+NODE_ENV="development"
+```
+
+---
+
+## 🚀 Cómo Ejecutar el Proyecto
+
+```bash
+# 1. Instalar dependencias
+npm install
+
+# 2. Iniciar servidor de desarrollo (Next.js en http://localhost:3000)
+npm run dev
+
+# 3. Verificar tipos de TypeScript (strict)
+npx tsc --noEmit
+
+# 4. Ejecutar linter
+npm run lint
+
+# 5. Compilar para producción
+npm run build
+npm run start
+```
+
+---
+
+## 🔐 Cuentas de Prueba (Solo para Desarrollo)
+
+Todas las contraseñas en `data/usuarios.json` están almacenadas con hash `bcryptjs` (factor de costo 10):
+
+| Rol | Usuario | Correo | Contraseña (Desarrollo) | Módulos Permitidos |
+| :--- | :--- | :--- | :--- | :--- |
+| **Administrador** | `admin` | `admin@sifygsa.com` | `AdminSify2026!` | `admin`, `crm`, `requisiciones`, `rrhh` |
+| **Gerente** | `gerente` | `gerente@sifygsa.com` | `GerenteSify2026!` | `crm`, `requisiciones`, `rrhh` (sin datos sensibles) |
+| **Vendedor** | `vendedor` | `vendedor@sifygsa.com` | `VentasSify2026!` | `crm`, `requisiciones` |
+| **RRHH** | `rrhh` | `rrhh@sifygsa.com` | `RrhhSify2026!` | `rrhh` (con datos sensibles y nómina), `requisiciones` |
+| **Requisiciones** | `requisiciones` | `compras@sifygsa.com` | `ComprasSify2026!` | `requisiciones`, `crm` |
+
+---
+
+## 👤 Cómo Crear Usuarios y Gestionar Roles/Permisos
+
+### Opción 1: Desde la terminal (CLI con `tsx`)
+```bash
+npm run crear-usuario
+```
+El script solicita nombre, usuario, correo, contraseña, rol y zona, valida con Zod, genera el hash `bcryptjs` y guarda de forma atómica en `data/usuarios.json`.
+
+### Opción 2: Desde el Panel de Administración (`/admin`)
+1. Inicia sesión con la cuenta `admin`.
+2. En la pestaña **Usuarios**, crea, edita, activa/desactiva cuentas o restablece contraseñas.
+3. En la pestaña **Matriz de Roles y Permisos**, marca o desmarca las acciones (`ver`, `crear`, `editar`, `eliminar`, `aprobar`, `exportar`) por rol y módulo; los cambios se guardan en `data/roles-permisos.json`.
+
+---
+
+## 🧩 Cómo Agregar un Módulo Nuevo
+
+1. Agrega el identificador del módulo en `IDS_MODULOS` dentro de `src/config/types.ts`.
+2. Define sus permisos iniciales por rol en `MATRIZ_PERMISOS_POR_DEFECTO` (`src/lib/permissions/matrix.ts`).
+3. Crea la carpeta `src/modules/<nuevo-modulo>/` con sus capas: `constants/`, `schemas/`, `types/`, `repository/`, `services/`, `components/` y `README.md`.
+4. Registra el módulo en `REGISTRO_MODULOS` dentro de `src/modules/registry.ts`. El menú lateral (`Sidebar.tsx`) y el protector de rutas (`src/middleware.ts`) lo incorporarán automáticamente.
+5. Crea la página delgada en `src/app/(dashboard)/<nuevo-modulo>/page.tsx` y sus Route Handlers en `src/app/api/<nuevo-modulo>/route.ts`.

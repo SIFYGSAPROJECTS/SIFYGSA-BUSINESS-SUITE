@@ -1,63 +1,98 @@
 services:
-  # -------------------------------------------------------------
-  # Backend API Monolítico Modular (Node.js + Express)
-  # -------------------------------------------------------------
-  server:
-    build:
-      context: .
-      dockerfile: Dockerfile.server
-    container_name: sfg-business-server
+  mongo:
+    image: mongo:7
+    container_name: sifygsa-mongo
     restart: unless-stopped
+    command: ["mongod", "--quiet"]
     ports:
-      - "${SERVER_PORT:-5000}:5000"
+      - "27017:27017"
     environment:
-      - PORT=5000
-      - NODE_ENV=production
-      - JWT_SECRET=${JWT_SECRET:-sfg_business_suite_jwt_secret_key_change_me_in_production}
-      - CORS_ORIGIN=${CORS_ORIGIN:-*}
-    networks:
-      - sfg-network
+      TZ: America/Mexico_City
+    volumes:
+      - sifygsa_mongo_data:/data/db
+      - ./docker/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/api/health"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: sifygsa-backend
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+    env_file:
+      - path: .env.local
+        required: false
+    environment:
+      NODE_ENV: development
+      TZ: America/Mexico_City
+      BACKEND_PORT: 4000
+      DATA_DIR: /data
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      # Si .env.local trae MONGODB_URI real (Atlas), NestJS la usa automaticamente.
+      # Si no existe .env.local o no tiene URI valida, cae automaticamente al MongoDB local de Docker:
+      DOCKER_FALLBACK_MONGODB_URI: mongodb://mongo:27017/BitacoraSifigsa
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./backend/src:/app/src
+      - ./data:/data
+      - sifygsa_backend_node_modules:/app/node_modules
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/api/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+        ]
       interval: 15s
       timeout: 5s
-      retries: 3
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 128M
+      retries: 8
+      start_period: 20s
 
-  # -------------------------------------------------------------
-  # Frontend Cliente (React + Vite + Nginx)
-  # -------------------------------------------------------------
-  client:
+  frontend:
     build:
       context: .
-      dockerfile: Dockerfile.client
-    container_name: sfg-business-client
+      dockerfile: Dockerfile
+      target: development
+    container_name: sifygsa-frontend
     restart: unless-stopped
-    ports:
-      - "${CLIENT_PORT:-80}:80"
     depends_on:
-      server:
+      backend:
         condition: service_healthy
-    networks:
-      - sfg-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 64M
+    ports:
+      - "3000:3000"
+    env_file:
+      - path: .env.local
+        required: false
+    environment:
+      NODE_ENV: development
+      TZ: America/Mexico_City
+      # Sobreescribe BACKEND_API_URL de .env.local para enrutar internamente hacia el contenedor backend
+      BACKEND_API_URL: http://backend:4000
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./data:/app/data
+      - ./next.config.ts:/app/next.config.ts
+      - ./tsconfig.json:/app/tsconfig.json
+      - sifygsa_frontend_node_modules:/app/node_modules
+      - sifygsa_frontend_next:/app/.next
 
-networks:
-  sfg-network:
-    name: sfg-network
-    driver: bridge
+volumes:
+  sifygsa_mongo_data:
+  sifygsa_backend_node_modules:
+  sifygsa_frontend_node_modules:
+  sifygsa_frontend_next:

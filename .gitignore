@@ -22,3 +22,20 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Next.js build output
+.next/
+out/
+build/
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env*.local
+
+# Nested backups / standalone projects
+SIFYGSA-BUSINESS-SUITE2 almacen/
+.agents/
+*.zip

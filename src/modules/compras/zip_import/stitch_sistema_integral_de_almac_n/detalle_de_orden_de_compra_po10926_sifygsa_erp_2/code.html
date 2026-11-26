@@ -1,0 +1,664 @@
+<!DOCTYPE html><html class="light" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>SIFYGSA Fire &amp; Gas ERP - PO10926 Five Peaks México SA de CV</title>
+<!-- Tailwind CSS CDN con plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#1d4ed8',
+              700: '#1e40af',
+              800: '#1e3a8a',
+              900: '#172554',
+            },
+            industrial: {
+              950: '#0f172a',
+              900: '#1e293b',
+              850: '#334155',
+              800: '#475569',
+              750: '#64748b',
+              700: '#94a3b8',
+              600: '#cbd5e1',
+              500: '#e2e8f0',
+              400: '#f1f5f9',
+              300: '#f8fafc',
+              200: '#ffffff',
+              100: '#ffffff',
+              50: '#ffffff',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style data-purpose="custom-scrollbars">
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+<style data-purpose="erp-typography">
+    .label-meta {
+      font-size: 0.6875rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: #64748b;
+    }
+    .value-display {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+  </style>
+</head>
+<body class="bg-[#F7F9FB] text-slate-800 antialiased min-h-screen flex flex-col font-sans selection:bg-brand-600 selection:text-white">
+<!-- BEGIN: TopGlobalHeader -->
+<header class="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 sticky top-0 z-50 shadow-sm">
+<!-- Brand & Workspace context -->
+<div class="flex items-center space-x-4">
+<div class="flex items-center space-x-2.5">
+<div class="h-8 w-8 rounded-lg bg-gradient-to-br from-red-600 via-brand-600 to-brand-800 flex items-center justify-center shadow-md shadow-brand-500/20">
+<i class="fa-solid fa-fire-flame-curved text-white text-base"></i>
+</div>
+<div>
+<span class="font-extrabold text-slate-900 tracking-tight text-base font-mono">SIFYGSA</span>
+<span class="text-[10px] uppercase font-bold tracking-widest text-brand-600 block -mt-1">Fire &amp; Gas ERP</span>
+</div>
+</div>
+
+<!-- Quick Location Badge -->
+
+</div>
+<!-- Center Search Bar -->
+<div class="flex-1 max-w-xl mx-4 hidden lg:block">
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+<i class="fa-solid fa-magnifying-glass text-xs"></i>
+</div>
+<input class="w-full pl-9 pr-14 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:bg-white transition-all font-sans" placeholder="Buscar pedidos, facturas, productos, proveedores... (Shift + S)" type="text">
+<div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+<kbd class="px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 bg-slate-100 border border-slate-200 rounded">Shift+S</kbd>
+</div>
+</div>
+</div>
+<!-- Right Controls and User Profile -->
+<div class="flex items-center space-x-2">
+<!-- Theme Switcher Toggle -->
+<button class="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-md transition" id="btn-theme-toggle" onclick="window.toggleDarkMode()" title="Alternar Modo Claro / Oscuro">
+<i class="fa-solid fa-moon text-slate-600 text-xs" id="theme-toggle-icon"></i>
+<span class="hidden sm:inline text-xs" id="theme-toggle-label">Modo Oscuro</span>
+</button>
+<!-- Quick utility icons -->
+<button class="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition" title="Historial reciente">
+<i class="fa-solid fa-clock-rotate-left text-xs"></i>
+</button>
+<button class="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition" title="Favoritos">
+<i class="fa-solid fa-star text-xs"></i>
+</button>
+<button class="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md relative transition" title="Notificaciones de compras">
+<i class="fa-regular fa-bell text-xs"></i>
+<span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-brand-600 ring-2 ring-white"></span>
+</button>
+<button class="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition" title="Ayuda del sistema">
+<i class="fa-regular fa-circle-question text-xs"></i>
+</button>
+<div class="h-5 w-px bg-slate-200"></div>
+<!-- User Info Badge -->
+<div class="flex items-center space-x-2 pl-1 cursor-pointer group">
+<div class="h-7 w-7 rounded-full bg-brand-100 border border-brand-300 text-brand-700 flex items-center justify-center font-bold text-xs ring-1 ring-slate-200 group-hover:border-brand-500">
+          JM
+        </div>
+<div class="hidden xl:flex flex-col text-left">
+<span class="text-xs font-semibold text-slate-900 leading-tight">Jeannete Ivonne Macías Ovando</span>
+<span class="text-[10px] text-brand-600 font-mono leading-none font-medium">SIFYGSA - Comprador</span>
+</div>
+<i class="fa-solid fa-angle-down text-[10px] text-slate-400 hidden xl:block"></i>
+</div>
+</div>
+</header>
+<!-- END: TopGlobalHeader -->
+<div class="flex-1 flex overflow-hidden">
+<!-- BEGIN: LeftSidebarNav -->
+<aside class="w-60 bg-white border-r border-slate-200 hidden md:flex flex-col justify-between shrink-0 select-none shadow-[1px_0_3px_rgba(0,0,0,0.02)]">
+<div class="py-3 overflow-y-auto">
+<!-- ERP Modules Navigation -->
+<div class="px-3 mb-2">
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">Operaciones &amp; Suministro</p>
+</div>
+<nav class="space-y-0.5 px-2">
+<a class="flex items-center px-2.5 py-1.5 text-xs rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition" href="#">
+<i class="fa-solid fa-chart-pie w-5 text-slate-400"></i>
+<span class="">Tablero General</span>
+</a>
+<a class="flex items-center px-2.5 py-1.5 text-xs rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition" href="#">
+<i class="fa-solid fa-boxes-stacked w-5 text-slate-400"></i>
+<span class="">Almacén e Inventario</span>
+</a>
+<!-- Active Compras Group -->
+<div class="pt-1 pb-1">
+<div class="flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold rounded-md bg-brand-50 text-brand-700 border border-brand-200">
+<div class="flex items-center">
+<i class="fa-solid fa-cart-flatbed w-5 text-brand-600"></i>
+<span class="text-brand-900">Compras</span>
+</div>
+<i class="fa-solid fa-chevron-down text-[10px] text-brand-600"></i>
+</div>
+<div class="ml-4 pl-3 border-l border-brand-200 mt-1 space-y-1">
+<a class="flex items-center justify-between py-1 text-xs text-brand-700 font-semibold" href="#">
+<span class="flex items-center"><i class="fa-solid fa-file-invoice text-[10px] mr-2 text-brand-600"></i>Órdenes de Compra</span>
+<span class="bg-brand-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono">1</span>
+</a>
+<a class="flex items-center py-1 text-xs text-slate-600 hover:text-slate-900 transition" href="#">
+<span class="">Requisiciones (REQ)</span>
+</a>
+<a class="flex items-center py-1 text-xs text-slate-600 hover:text-slate-900 transition" href="#">
+<span class="">Recepción de Materiales</span>
+</a>
+<a class="flex items-center py-1 text-xs text-slate-600 hover:text-slate-900 transition" href="#">
+<span class="">Facturas de Proveedor</span>
+</a>
+</div>
+</div>
+<a class="flex items-center px-2.5 py-1.5 text-xs rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition" href="#">
+<i class="fa-solid fa-handshake w-5 text-slate-400"></i>
+<span class="">Proveedores</span>
+</a>
+<a class="flex items-center px-2.5 py-1.5 text-xs rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition" href="#">
+<i class="fa-solid fa-scale-balanced w-5 text-slate-400"></i>
+<span class="">Finanzas y Facturación</span>
+</a>
+<a class="flex items-center px-2.5 py-1.5 text-xs rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition" href="#">
+<i class="fa-solid fa-folder-tree w-5 text-slate-400"></i>
+<span class="">Documentos Técnicos</span>
+</a>
+<a class="flex items-center px-2.5 py-1.5 text-xs rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition" href="#">
+<i class="fa-solid fa-gears w-5 text-slate-400"></i>
+<span class="">Configuración</span>
+</a>
+</nav>
+</div>
+<!-- Quick System Status Bottom -->
+<div class="p-3 bg-slate-50 border-t border-slate-200 m-2 rounded-lg text-[11px] text-slate-500 space-y-1 font-mono">
+<div class="flex items-center justify-between">
+<span class="">Servidor ERP:</span>
+<span class="text-emerald-600 flex items-center font-medium"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block mr-1"></span>En Línea</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="">Sincronización:</span>
+<span class="text-slate-700">09/10/2026 14:32</span>
+</div>
+</div>
+</aside>
+<!-- END: LeftSidebarNav -->
+<!-- BEGIN: MainContentArea -->
+<main class="flex-1 overflow-y-auto bg-[#F7F9FB] flex flex-col">
+<!-- Sub-header Breadcrumb & Records Paging Navigation -->
+<div class="bg-white border-b border-slate-200 px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+<div class="flex items-center space-x-2 text-slate-500">
+<a class="hover:text-brand-600 transition" href="#">Compras</a>
+<i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
+<a class="hover:text-brand-600 transition" href="#">Órdenes de compra</a>
+<i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
+<span class="text-slate-900 font-mono font-semibold">PO10926</span>
+</div>
+<!-- NetSuite-style Record Navigation -->
+<div class="flex items-center space-x-3 text-slate-600">
+<div class="flex items-center border border-slate-200 rounded bg-slate-50 overflow-hidden shadow-sm">
+<button class="px-2.5 py-1 hover:bg-slate-100 hover:text-slate-900 border-r border-slate-200 transition" title="Registro anterior">
+<i class="fa-solid fa-arrow-left text-[11px]"></i>
+</button>
+<button class="px-2.5 py-1 hover:bg-slate-100 hover:text-slate-900 transition" title="Siguiente registro">
+<i class="fa-solid fa-arrow-right text-[11px]"></i>
+</button>
+</div>
+<a class="hover:text-brand-600 hover:underline flex items-center gap-1 font-medium" href="#"><i class="fa-solid fa-list-ul text-[10px]"></i> Lista</a>
+<span class="text-slate-300">|</span>
+<a class="hover:text-brand-600 hover:underline flex items-center gap-1 font-medium" href="#"><i class="fa-solid fa-magnifying-glass text-[10px]"></i> Buscar</a>
+<span class="text-slate-300">|</span>
+<a class="hover:text-brand-600 hover:underline flex items-center gap-1 font-medium" href="#"><i class="fa-solid fa-sliders text-[10px]"></i> Personalizar</a>
+</div>
+</div>
+<!-- BEGIN: DocumentHeaderBanner -->
+<div class="p-6 bg-white border-b border-slate-200 shadow-sm">
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+<!-- Title & Identifiers -->
+<div>
+<div class="flex items-center space-x-2.5 mb-1.5">
+<div class="p-1.5 bg-emerald-50 border border-emerald-200 rounded text-emerald-700 shadow-sm">
+<i class="fa-regular fa-file-lines text-base"></i>
+</div>
+<h1 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                Orden de compra
+                <button class="text-slate-400 hover:text-brand-600 transition" title="Búsqueda rápida de Orden">
+<i class="fa-solid fa-magnifying-glass text-xs"></i>
+</button>
+</h1>
+</div>
+<div class="flex flex-wrap items-center gap-3">
+<span class="font-mono text-lg font-bold text-slate-900 tracking-wide">PO10926</span>
+<span class="text-slate-700 text-base font-semibold">Five Peaks México SA de CV</span>
+<!-- Approval Badge -->
+<div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 shadow-sm">
+<span class="h-1.5 w-1.5 rounded-full bg-amber-500 mr-1.5 animate-pulse"></span>
+                APROBADO POR EL SUPERVISOR / FACTURA PENDIENTE
+              </div>
+</div><div class="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-slate-100"><button class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded text-xs font-semibold shadow-sm flex items-center gap-1.5 transition active:scale-95" onclick="window.enablePrimaryEditMode()"><i class="fa-regular fa-pen-to-square"></i><span class="">Editar</span></button><button class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded text-xs font-medium transition shadow-sm">Atrás</button><button class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded text-xs font-medium flex items-center gap-1.5 transition shadow-sm"><i class="fa-solid fa-file-circle-plus text-emerald-600"></i><span class="">Registrar factura proveedor</span></button><button class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded text-xs font-medium flex items-center gap-1.5 transition shadow-sm"><i class="fa-solid fa-print text-slate-500"></i><span class="">Imprimir</span></button><button class="px-2.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded text-xs font-medium flex items-center gap-1 transition shadow-sm"><i class="fa-solid fa-ellipsis-vertical text-slate-500"></i><span class="">Acciones</span></button><div class="h-5 w-px bg-slate-200 mx-1 hidden sm:block"></div><div class="relative flex items-center space-x-1.5 bg-amber-50/60 px-2 py-1 rounded border border-amber-200 text-xs shadow-sm"><button class="flex items-center gap-1 text-slate-800 hover:text-slate-950 font-medium transition" id="btn-stickynotes-menu" onclick="const o=document.getElementById('stickynote-overlay'); if(o){o.classList.remove('hidden');} if(window.setStickyTheme) window.setStickyTheme('yellow');"><i class="fa-regular fa-note-sticky text-amber-600 text-xs"></i><span class="">StickyNotes</span><span class="bg-amber-200 text-amber-900 text-[10px] px-1.5 rounded-full font-mono font-semibold ml-0.5" id="sticky-badge-count">1</span><i class="fa-solid fa-caret-down text-[10px] text-slate-500"></i></button><span class="text-slate-400 text-[10px] ml-1 select-none">New:</span><button class="h-3.5 w-3.5 rounded-sm bg-rose-200 border border-rose-300 hover:scale-125 transition active:scale-95 shadow-sm" id="sticky-swatch-rose" onclick="const o=document.getElementById('stickynote-overlay'); if(o){o.classList.remove('hidden');} if(window.setStickyTheme) window.setStickyTheme('rose');" title="Nueva Nota Rosa"></button><button class="h-3.5 w-3.5 rounded-sm bg-amber-200 border border-amber-300 hover:scale-125 transition active:scale-95 shadow-sm" id="sticky-swatch-yellow" onclick="const o=document.getElementById('stickynote-overlay'); if(o){o.classList.remove('hidden');} if(window.setStickyTheme) window.setStickyTheme('yellow');" title="Nueva Nota Crema / Amarilla"></button><button class="h-3.5 w-3.5 rounded-sm bg-pink-500 border border-pink-600 hover:scale-125 transition active:scale-95 shadow-sm" id="sticky-swatch-magenta" onclick="const o=document.getElementById('stickynote-overlay'); if(o){o.classList.remove('hidden');} if(window.setStickyTheme) window.setStickyTheme('magenta');" title="Nueva Nota Magenta"></button></div></div>
+</div>
+</div>
+<!-- END: DocumentHeaderBanner -->
+<!-- Main Body Container -->
+<div class="p-6 space-y-6">
+<!-- Workflow Banners -->
+<div class="hidden mb-4 p-4 rounded-lg bg-emerald-50 border border-emerald-300 text-slate-900 shadow-sm transition-all animate-fadeIn" id="workflow-cotizacion-banner"><div class="flex flex-col md:flex-row md:items-center justify-between gap-3"><div class="flex items-start gap-3"><div class="p-2 rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200"><i class="fa-solid fa-circle-check text-lg"></i></div><div><div class="flex items-center gap-2"><h4 class="text-xs font-bold text-emerald-950 uppercase tracking-wider">Cotización Registrada con Éxito</h4><span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-100 text-emerald-800 border border-emerald-300 font-semibold">SFG-ORD-OK</span></div><p class="text-xs text-slate-700 mt-0.5">Se ha completado el registro de cotización con éxito para el proveedor: <strong class="text-emerald-900 font-semibold" id="workflow-supplier-name">Five Peaks México SA de CV</strong></p><p class="text-[11px] text-slate-500 mt-1 font-mono">Haga clic en <strong class="text-slate-800">Actualizar</strong> para sincronizar la orden pendiente y validar aprobación.</p></div></div><div class="flex items-center gap-2 shrink-0"><button class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded shadow-sm flex items-center gap-1.5 transition active:scale-95" id="btn-actualizar-workflow" onclick="window.triggerActualizarWorkflow()" type="button"><i class="fa-solid fa-arrows-rotate text-xs"></i><span class="">Actualizar</span></button><button class="text-slate-400 hover:text-slate-700 p-1 rounded" onclick="document.getElementById('workflow-cotizacion-banner').classList.add('hidden')" type="button"><i class="fa-solid fa-xmark text-sm"></i></button></div></div></div><div class="hidden mb-4 p-4 rounded-lg bg-white border border-brand-300 shadow-sm transition-all" id="workflow-updated-banner"><div class="flex flex-col md:flex-row md:items-center justify-between gap-3"><div><div class="flex items-center gap-2"><span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300"><i class="fa-solid fa-check-double mr-1 text-[10px]"></i> ESTADO: APROBADO / GENERADA</span><span class="text-xs text-slate-500 font-mono">Orden Sincronizada</span></div><p class="text-xs text-slate-700 mt-1.5">Nueva orden pendiente generada. Haga clic en el identificador para cargarla y habilitar edición: <button class="font-mono font-bold text-white bg-brand-600 hover:bg-brand-700 px-2.5 py-0.5 rounded text-xs ml-1 inline-flex items-center gap-1 shadow-sm transition" id="link-po3926-interactive" onclick="window.activatePO3926()" type="button"><i class="fa-solid fa-file-invoice text-[10px]"></i> PO3926 (Pending Order)</button></p></div><div class="flex items-center gap-2"><span class="text-[11px] text-brand-700 font-mono hidden md:inline font-medium">Click en PO3926 para activar edición</span></div></div></div>
+<!-- BEGIN: PrimaryInformationCollapsibleSection -->
+<section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden" data-purpose="primary-order-information">
+<!-- Accordion Header -->
+<div class="bg-slate-50 border-b border-slate-200 px-4 py-2.5 flex items-center justify-between cursor-pointer select-none">
+<div class="flex items-center space-x-2 text-slate-900 font-semibold text-xs tracking-wide">
+<i class="fa-solid fa-chevron-down text-brand-600 text-[10px]"></i>
+<span class="">INFORMACIÓN PRIMARIA</span>
+</div>
+<span class="text-[11px] text-slate-500 font-mono">ID Contrato: SFG-C259-LVT-RQ-127/26</span>
+</div>
+<!-- Section Content Grid -->
+<div class="p-5 grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Left Data Fields (8 Cols) -->
+<div class="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6">
+<!-- Column 1 -->
+<div class="space-y-4"><div class="flex items-center space-x-2 border-b border-slate-100 pb-2 mb-3"><i class="fa-solid fa-location-dot text-brand-600 text-xs"></i><h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Clasificación</h3></div><div class="space-y-3"><div><label class="label-meta block mb-1 flex items-center justify-between" for="select-ubicacion-almacen"><span class="">Ubicación (Almacén del Contrato)</span><span class="text-[9px] font-mono text-brand-600 font-normal">Activa</span></label><div class="relative"><select id="select-ubicacion-almacen" class="w-full bg-white border border-slate-300 hover:border-slate-400 focus:border-brand-600 rounded px-2.5 py-1.5 text-xs font-mono font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-brand-600 transition-all cursor-pointer appearance-none pr-7 shadow-sm"><option value="SFG-C259-LVT" selected="">SFG-C259-LVT (Tenaris Tamsa - Veracruz)</option><option value="SFG-C157-RRN">SFG-C157-RRN (Rockwell / Toluca)</option><option value="SFG-C194-VME">SFG-C194-VME (Almacén Central CDMX)</option><option value="SFG-C191-PLC">SFG-C191-PLC (Terminal Marítima Carmen)</option></select><div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-slate-400"><i class="fa-solid fa-chevron-down text-[10px]"></i></div></div><p class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1"><i class="fa-solid fa-circle-info text-[10px] text-brand-600"></i> Proyecto Tenaris Tamsa - Veracruz</p></div></div></div>
+<!-- Column 2 -->
+<div class="space-y-4">
+<div><span class="label-meta block mb-1">No. de Orden de Compra / OC</span><div class="relative"><input type="text" id="input-edit-numpedido" value="SFG-C259-LVT-OC-127/26" class="w-full bg-white border border-slate-300 hover:border-slate-400 focus:border-brand-600 rounded px-2.5 py-1 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-brand-600 transition shadow-sm" title="N.º de Orden de Compra / OC"></div></div>
+<div><span class="label-meta block mb-1">Subsidiaria</span><div class="relative"><select class="w-full bg-white border border-slate-300 hover:border-slate-400 focus:border-brand-600 rounded px-2.5 py-1 text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-brand-600 transition-all cursor-pointer appearance-none pr-7 shadow-sm" id="select-subsidiaria-erp"><option selected="" value="SIFYGSA">SIFYGSA</option><option value="SIFYGSA Fire &amp; Gas S.A. de C.V.">SIFYGSA Fire &amp; Gas S.A. de C.V.</option></select><div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-slate-400"><i class="fa-solid fa-chevron-down text-[10px]"></i></div></div></div>
+</div>
+<!-- Column 3 -->
+<div class="space-y-4"><div class="flex items-center space-x-2 border-b border-slate-100 pb-2 mb-3"><i class="fa-solid fa-shield-halved text-brand-600 text-xs"></i><h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Aprobación (Approval)</h3></div><div class="space-y-3"><div><label class="label-meta block mb-1" for="select-estado-aprobacion">Estado de Aprobación</label><div class="relative"><select id="select-estado-aprobacion" class="w-full bg-emerald-50 border border-emerald-300 rounded px-2.5 py-1 text-xs font-semibold text-emerald-800 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition cursor-pointer appearance-none pr-7 shadow-sm"><option value="aprobado" selected="">✓ Aprobado</option><option value="pendiente">Pendiente de Aprobación</option><option value="revision">En Revisión Técnica</option><option value="rechazado">Rechazado</option></select><div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-emerald-600"><i class="fa-solid fa-chevron-down text-[10px]"></i></div></div></div><div><label class="label-meta block mb-1" for="select-proximo-aprobador">Próximo Aprobador</label><div class="relative"><select id="select-proximo-aprobador" class="w-full bg-white border border-slate-300 hover:border-slate-400 focus:border-brand-600 rounded px-2.5 py-1 text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-600 transition cursor-pointer appearance-none pr-7 shadow-sm"><option value="carlos_mendoza" selected="">Ing. Carlos Mendoza Estrada — Gerente de Compras</option><option value="aurelio_palacios">Lic. Aurelio Palacios Xolo — Director de Operaciones</option><option value="direccion_general">Dirección General</option></select><div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-slate-400"><i class="fa-solid fa-chevron-down text-[10px]"></i></div></div></div><div><span class="label-meta block">Empleado Comprador</span><p class="value-display text-slate-900 text-xs mt-0.5 font-semibold">Jeannete Ivonne Macías Ovando</p></div></div></div>
+<!-- Full Width Row: Nota -->
+<div class="md:col-span-3 pt-2 border-t border-slate-100"><div class="flex items-center justify-between mb-1"><label class="label-meta block" for="textarea-nota-orden">Nota de la Orden</label><span class="text-[10px] text-slate-400 font-mono">Editable • PO10926</span></div><div class="relative"><textarea class="w-full bg-slate-50/70 border border-slate-300 hover:border-slate-400 focus:border-brand-600 rounded p-2.5 text-xs text-slate-900 font-sans leading-relaxed focus:outline-none focus:ring-1 focus:ring-brand-600 placeholder-slate-400 transition-all resize-none shadow-inner" id="textarea-nota-orden" name="nota_orden" placeholder="Ingrese observaciones o condiciones de la orden..." rows="2">P010926 - Condiciones de pago: de contado - Servicio de baño portátil para Tenaris Tamsa (Ampliación - noviembre).</textarea></div></div>
+</div>
+<!-- Right Financial Summary Card (4 Cols) -->
+<div class="lg:col-span-4 bg-slate-50 border border-slate-200 rounded-lg p-4 flex flex-col justify-between shadow-sm">
+<div class="border-b border-slate-200 pb-2 mb-3 flex items-center justify-between">
+<span class="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
+<i class="fa-solid fa-calculator text-brand-600"></i>
+                  Resumen de Importes
+                </span>
+<span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200 font-semibold">MXN</span>
+</div><div class="mb-3 px-2 py-1.5 rounded bg-emerald-50 border border-emerald-200 flex items-center justify-between text-[11px]"><span class="flex items-center gap-1.5 text-emerald-900 font-semibold"><i class="fa-solid fa-check-double text-emerald-600 text-xs"></i> Cálculo Vinculado</span><span class="text-[10px] font-mono text-emerald-700 bg-emerald-100 border border-emerald-300 px-1 rounded">Cotización OK</span></div>
+<div class="space-y-2.5 text-xs">
+<div class="flex items-center justify-between text-slate-600">
+<span class="font-medium">SUBTOTAL</span>
+<span class="font-mono font-semibold text-slate-900">$2,700.00</span>
+</div>
+<div class="flex items-center justify-between text-slate-600">
+<span class="font-medium">TAX TOTAL (Impuestos)</span>
+<span class="font-mono font-semibold text-slate-900">$432.00</span>
+</div>
+<div class="flex items-center justify-between text-slate-500 pl-2 text-[11px]">
+<span class="">IVA POR ACREDITAR 16%</span>
+<span class="font-mono font-medium">$432.00</span>
+</div>
+<div class="pt-3 border-t border-slate-200 flex items-center justify-between">
+<span class="text-xs font-bold text-slate-900 uppercase tracking-wider">TOTAL A PAGAR</span>
+<span class="text-base font-extrabold font-mono text-emerald-700 tracking-tight">$3,132.00 <span class="text-[10px] text-emerald-600 font-sans">MXN</span></span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-200 text-[11px] text-slate-500 flex items-center justify-between">
+<span class="">Estado de pago:</span>
+<span class="text-amber-800 font-semibold flex items-center"><i class="fa-regular fa-clock mr-1 text-amber-600"></i>Pendiente de factura</span>
+</div>
+</div>
+</div>
+</section>
+<!-- END: PrimaryInformationCollapsibleSection -->
+<!-- BEGIN: MetadataClassificationGrid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Clasificación -->
+<div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm"><div class="flex items-center space-x-2 border-b border-slate-100 pb-2 mb-3"><i class="fa-solid fa-location-dot text-brand-600 text-xs"></i><h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Clasificación</h3></div><div class="space-y-3"><div><label class="label-meta block mb-1 flex items-center justify-between" for="select-ubicacion-almacen"><span class="">Ubicación (Almacén del Contrato)</span><span class="text-[9px] font-mono text-brand-600 font-normal">Activa</span></label><div class="relative"><select id="select-ubicacion-almacen" class="w-full bg-white border border-slate-300 hover:border-slate-400 focus:border-brand-600 rounded px-2.5 py-1.5 text-xs font-mono font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-brand-600 transition-all cursor-pointer appearance-none pr-7 shadow-sm"><option value="SFG-C259-LVT" selected="">SFG-C259-LVT (Tenaris Tamsa - Veracruz)</option><option value="SFG-C157-RRN">SFG-C157-RRN (Rockwell / Toluca)</option><option value="SFG-C194-VME">SFG-C194-VME (Almacén Central CDMX)</option><option value="SFG-C191-PLC">SFG-C191-PLC (Terminal Marítima Carmen)</option></select><div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-slate-400"><i class="fa-solid fa-chevron-down text-[10px]"></i></div></div><p class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1"><i class="fa-solid fa-circle-info text-[10px] text-brand-600"></i> Proyecto Tenaris Tamsa - Veracruz</p></div></div></div>
+<!-- Gestión entre empresas -->
+<div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+<div class="flex items-center space-x-2 border-b border-slate-100 pb-2 mb-3">
+<i class="fa-solid fa-money-bill-transfer text-brand-600 text-xs"></i>
+<h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Gestión entre empresas</h3>
+</div>
+<div class="space-y-3"><div class="grid grid-cols-2 gap-3"><div><label class="label-meta block mb-1 flex items-center justify-between" for="select-moneda-erp"><span class="">Moneda</span><span class="text-[9px] font-mono text-brand-600 font-normal">Divisa activa</span></label><div class="relative"><select class="w-full bg-white border border-slate-300 hover:border-slate-400 focus:border-brand-600 rounded px-2.5 py-1.5 text-xs font-mono font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-brand-600 transition-all cursor-pointer appearance-none pr-7 shadow-sm" id="select-moneda-erp" onchange="const rates={'MXN': '1.0000', 'USD': '18.2500', 'EUR': '19.8500', 'CAD': '13.4000'}; const tc=document.getElementById('tipo-cambio-display'); if(tc) tc.textContent = rates[this.value] || '1.0000';"><option selected="" value="MXN">MXN - Peso Mexicano</option><option value="USD">USD - Dólar Estadounidense</option><option value="EUR">EUR - Euro</option><option value="CAD">CAD - Dólar Canadiense</option></select><div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-slate-400"><i class="fa-solid fa-chevron-down text-[10px]"></i></div></div></div><div><span class="label-meta block mb-1">Tipo de Cambio</span><div class="h-[34px] flex items-center px-2.5 bg-slate-50 border border-slate-200 rounded"><p class="value-display font-mono text-slate-900 font-bold" id="tipo-cambio-display">1.0000</p></div></div></div></div>
+</div>
+<!-- Approval -->
+<div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm"><div class="flex items-center space-x-2 border-b border-slate-100 pb-2 mb-3"><i class="fa-solid fa-shield-halved text-brand-600 text-xs"></i><h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Aprobación (Approval)</h3></div><div class="space-y-3"><div><label class="label-meta block mb-1" for="select-estado-aprobacion">Estado de Aprobación</label><div class="relative"><select id="select-estado-aprobacion" class="w-full bg-emerald-50 border border-emerald-300 rounded px-2.5 py-1 text-xs font-semibold text-emerald-800 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition cursor-pointer appearance-none pr-7 shadow-sm"><option value="aprobado" selected="">✓ Aprobado</option><option value="pendiente">Pendiente de Aprobación</option><option value="revision">En Revisión Técnica</option><option value="rechazado">Rechazado</option></select><div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-emerald-600"><i class="fa-solid fa-chevron-down text-[10px]"></i></div></div></div><div><label class="label-meta block mb-1" for="select-proximo-aprobador">Próximo Aprobador</label><div class="relative"><select id="select-proximo-aprobador" class="w-full bg-white border border-slate-300 hover:border-slate-400 focus:border-brand-600 rounded px-2.5 py-1 text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-600 transition cursor-pointer appearance-none pr-7 shadow-sm"><option value="carlos_mendoza" selected="">Ing. Carlos Mendoza Estrada — Gerente de Compras</option><option value="aurelio_palacios">Lic. Aurelio Palacios Xolo — Director de Operaciones</option><option value="direccion_general">Dirección General</option></select><div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-slate-400"><i class="fa-solid fa-chevron-down text-[10px]"></i></div></div></div><div><span class="label-meta block">Empleado Comprador</span><p class="value-display text-slate-900 text-xs mt-0.5 font-semibold">Jeannete Ivonne Macías Ovando</p></div></div></div>
+</div>
+<!-- END: MetadataClassificationGrid -->
+<!-- BEGIN: ApprovalAccordionSection -->
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+<button class="w-full bg-slate-50 px-4 py-2.5 flex items-center justify-between text-left text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition">
+<span class="flex items-center gap-2">
+<i class="fa-solid fa-chevron-right text-[10px] text-brand-600"></i>
+<strong class="text-slate-900">Información de aprobación</strong>
+<span class="text-slate-500 font-mono text-[11px]">(Fecha: 09/10/2026 11:24 por Gerencia de Adquisiciones)</span>
+</span>
+<span class="text-[11px] text-brand-700 font-medium hover:underline">Ver registro de firmas digitales</span>
+</button>
+</div>
+<!-- END: ApprovalAccordionSection -->
+<!-- BEGIN: OrderDetailsTabContainer -->
+<section class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm" data-purpose="items-and-tabs">
+<!-- Horizontal Tabs Navigation -->
+<div class="border-b border-slate-200 bg-slate-50 px-3 flex space-x-1 overflow-x-auto text-xs font-medium">
+<button class="px-4 py-3 border-b-2 border-brand-600 text-brand-700 font-bold flex items-center gap-2 whitespace-nowrap bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+<i class="fa-solid fa-cubes-stacked text-brand-600"></i>
+<span class="">Artículos / Servicios</span>
+<span class="bg-brand-100 text-brand-800 text-[10px] px-1.5 py-0.2 rounded font-mono font-semibold">4</span>
+</button>
+<button class="px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300 whitespace-nowrap transition">
+              Facturación
+            </button>
+<button class="px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300 whitespace-nowrap transition">
+              Envío &amp; Logística
+            </button>
+<button class="px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300 whitespace-nowrap transition">
+              Contabilidad
+            </button>
+<button class="px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300 whitespace-nowrap transition">
+              Relaciones
+            </button>
+<button class="px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300 whitespace-nowrap transition">
+              Comunicación
+            </button>
+<button class="px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300 whitespace-nowrap transition">
+              Información del sistema
+            </button>
+<button class="px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300 whitespace-nowrap transition">
+              Registros relacionados
+            </button>
+</div>
+<!-- Tab Content Panel: Artículos -->
+<div class="p-4">
+<div class="flex items-center justify-between mb-3">
+<div class="text-xs text-slate-500 font-mono font-medium">
+                Partidas asignadas a la Orden PO10926
+              </div>
+<div class="flex items-center space-x-2"><button type="button" onclick="document.getElementById('modal-vista-previa-impuesto').classList.remove('hidden')" class="px-3 py-1 bg-brand-600 hover:bg-brand-700 text-white rounded text-xs transition shadow-sm font-semibold flex items-center gap-1.5 active:scale-95"><i class="fa-solid fa-calculator text-white text-xs"></i><span class="">Vista previa de impuesto</span><span class="bg-white/20 text-white text-[10px] px-1.5 py-0.2 rounded font-mono font-medium">16%</span></button>
+<button class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded text-xs transition shadow-sm font-medium">
+<i class="fa-solid fa-file-export mr-1 text-slate-500"></i> Exportar CSV
+                </button>
+<button class="px-2.5 py-1 bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 rounded text-xs transition shadow-sm font-semibold">
+<i class="fa-solid fa-plus mr-1 text-brand-600"></i> Añadir partida
+                </button>
+</div>
+</div>
+<!-- Items Table -->
+<div class="overflow-x-auto rounded border border-slate-200 shadow-sm"><table class="w-full text-left text-xs border-collapse"><thead class="bg-slate-100 text-slate-700 uppercase text-[10px] tracking-wider border-b border-slate-200"><tr><th class="py-2.5 px-3 text-center w-10"><input checked="" class="rounded bg-white border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer" id="chk-select-all-items" onchange="document.querySelectorAll('.chk-item-row').forEach(c =&gt; c.checked = this.checked); if(window.recalculateTotals) window.recalculateTotals();" type="checkbox"></th><th class="py-2.5 px-2 font-semibold text-center w-8">#</th><th class="py-2.5 px-3 font-semibold w-28">Código</th><th class="py-2.5 px-4 font-semibold min-w-[280px]">Descripción</th><th class="py-2.5 px-3 font-semibold text-center w-16">Cant.</th><th class="py-2.5 px-3 font-semibold text-center w-20">Unidad</th><th class="py-2.5 px-4 font-semibold text-right w-24">Precio Unit.</th><th class="py-2.5 px-4 font-semibold text-right w-24">Tasa Imp.</th><th class="py-2.5 px-4 font-semibold text-right w-28">Importe</th><th class="py-2.5 px-3 font-semibold text-center w-14">Acciones</th></tr></thead><tbody class="divide-y divide-slate-200 bg-white"><tr class="hover:bg-slate-50 transition" id="row-item-1"><td class="py-3 px-3 text-center"><input checked="" class="chk-item-row rounded bg-white border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer" data-price="2700" onchange="if(window.recalculateTotals) window.recalculateTotals();" type="checkbox"></td><td class="py-3 px-2 text-center font-mono text-slate-500">1</td><td class="py-3 px-3 font-mono font-semibold text-brand-700">SRV-SAN-001</td><td class="py-3 px-4"><div class="flex items-center gap-2 mb-1"><div class="font-semibold text-slate-900">Servicio de baño portátil para Tenaris Tamsa</div><span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200 inline-flex items-center gap-1"><i class="fa-solid fa-lock text-[8px] text-slate-400"></i> Protegida</span></div><div class="mt-1.5"><label class="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Aclaración / Nota de partida (Compras):</label><input type="text" value="Ampliación operativa correspondiente al mes de noviembre. Incluye mantenimiento y sanitización periódica." class="w-full bg-white border border-slate-300 hover:border-slate-400 focus:border-brand-600 focus:ring-1 focus:ring-brand-600 rounded px-2 py-1 text-xs text-slate-800 transition shadow-sm font-sans"></div><div class="flex items-center gap-2 mt-1.5 text-[10px] font-mono text-slate-500"><span class="">CC: SFG-C259</span><span class="">•</span><span class="">Ref: SFG-C259-LVT-RQ-127/26</span></div></td><td class="py-3 px-3 text-center font-mono font-bold text-slate-900"><div class="flex flex-col items-center gap-1"><input type="number" step="0.01" max="1.00" value="1.00" class="w-16 bg-white border border-slate-300 hover:border-slate-400 focus:border-brand-600 focus:ring-1 focus:ring-brand-600 rounded px-1.5 py-0.5 text-center font-mono font-bold text-xs text-slate-900 shadow-sm"><span class="text-[9px] font-mono text-brand-700 bg-brand-50 border border-brand-200 px-1 py-0.2 rounded font-semibold whitespace-nowrap">Tope Requisición: 1.00</span><span class="text-[8px] text-amber-700 font-medium leading-none whitespace-nowrap" title="No incrementar cantidad autorizada - máximo requisitado">Máximo requisitado</span></div></td><td class="py-3 px-3 text-center text-slate-600 font-medium">SERVICIO</td><td class="py-3 px-4 text-right font-mono text-slate-800 font-semibold"><div class="flex flex-col items-end gap-0.5"><div class="relative"><span class="absolute inset-y-0 left-0 pl-1.5 flex items-center pointer-events-none text-slate-400 text-xs font-mono">$</span><input type="number" step="0.01" value="2700.00" class="w-24 pl-4 pr-1.5 py-0.5 bg-white border border-slate-300 hover:border-slate-400 focus:border-brand-600 focus:ring-1 focus:ring-brand-600 rounded text-right font-mono font-bold text-xs text-slate-900 shadow-sm" title="Precio acordado con proveedor"></div><span class="text-[9px] font-mono text-slate-400">Acordado Five Peaks</span></div></td><td class="py-3 px-4 text-right font-mono text-slate-600">IVA 16% ($432.00)</td><td class="py-3 px-4 text-right font-mono font-bold text-slate-900">$2,700.00</td><td class="py-3 px-3 text-center"><button class="text-slate-400 hover:text-brand-600 p-1 transition" title="Ver detalles"><i class="fa-solid fa-eye"></i></button></td></tr><tr class="hover:bg-slate-50 transition" id="row-item-2"><td class="py-3 px-3 text-center"><input class="chk-item-row rounded bg-white border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer" data-price="1850" onchange="if(window.recalculateTotals) window.recalculateTotals();" type="checkbox"></td><td class="py-3 px-2 text-center font-mono text-slate-500">2</td><td class="py-3 px-3 font-mono font-semibold text-brand-700">SRV-MON-004</td><td class="py-3 px-4"><div class="font-semibold text-slate-900">Monitoreo ambiental y sanitización móvil</div><div class="text-[11px] text-slate-600 font-sans mt-0.5">Revisión semanal de puntos críticos e inspección de olores en patio de maniobras.</div><div class="flex items-center gap-2 mt-1.5 text-[10px] font-mono text-slate-500"><span class="">CC: SFG-C259</span><span class="">•</span><span class="">Ref: SFG-C259-LVT-RQ-127/26</span></div></td><td class="py-3 px-3 text-center font-mono font-bold text-slate-900">1.00</td><td class="py-3 px-3 text-center text-slate-600 font-medium">SERVICIO</td><td class="py-3 px-4 text-right font-mono text-slate-800 font-semibold">$1,850.00</td><td class="py-3 px-4 text-right font-mono text-slate-600">IVA 16% ($296.00)</td><td class="py-3 px-4 text-right font-mono font-bold text-slate-900">$1,850.00</td><td class="py-3 px-3 text-center"><button class="text-slate-400 hover:text-brand-600 p-1 transition" title="Ver detalles"><i class="fa-solid fa-eye"></i></button></td></tr><tr class="hover:bg-slate-50 transition" id="row-item-3"><td class="py-3 px-3 text-center"><input class="chk-item-row rounded bg-white border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer" data-price="1200" onchange="if(window.recalculateTotals) window.recalculateTotals();" type="checkbox"></td><td class="py-3 px-2 text-center font-mono text-slate-500">3</td><td class="py-3 px-3 font-mono font-semibold text-brand-700">SRV-MAN-002</td><td class="py-3 px-4"><div class="font-semibold text-slate-900">Mantenimiento preventivo de cabina</div><div class="text-[11px] text-slate-600 font-sans mt-0.5">Sustitución de consumibles, desinfección química de depósito y sellado hermético.</div><div class="flex items-center gap-2 mt-1.5 text-[10px] font-mono text-slate-500"><span class="">CC: SFG-C259</span><span class="">•</span><span class="">Ref: SFG-C259-LVT-RQ-127/26</span></div></td><td class="py-3 px-3 text-center font-mono font-bold text-slate-900">1.00</td><td class="py-3 px-3 text-center text-slate-600 font-medium">SERVICIO</td><td class="py-3 px-4 text-right font-mono text-slate-800 font-semibold">$1,200.00</td><td class="py-3 px-4 text-right font-mono text-slate-600">IVA 16% ($192.00)</td><td class="py-3 px-4 text-right font-mono font-bold text-slate-900">$1,200.00</td><td class="py-3 px-3 text-center"><button class="text-slate-400 hover:text-brand-600 p-1 transition" title="Ver detalles"><i class="fa-solid fa-eye"></i></button></td></tr><tr class="bg-brand-50/50 border-2 border-brand-500 shadow-sm transition relative" id="row-item-new-embarque"><td class="py-3 px-3 text-center align-top"><div class="flex flex-col items-center gap-1"><input checked="" class="chk-item-row rounded bg-white border-brand-500 text-brand-600 focus:ring-brand-500 cursor-pointer" data-price="850" id="chk-new-embarque" type="checkbox"><span class="text-[9px] font-bold text-brand-700 bg-brand-100 px-1 py-0.2 rounded font-mono">NUEVA</span></div></td><td class="py-3 px-2 text-center font-mono text-brand-700 font-bold align-top">4</td><td class="py-3 px-3 font-mono font-semibold align-top"><div class="space-y-1"><span class="inline-block px-2 py-0.5 rounded bg-brand-600 text-white text-xs font-mono font-bold shadow-sm">SRV-EMB-001</span><div class="text-[9px] font-mono text-brand-800 font-semibold flex items-center gap-1"><i class="fa-solid fa-cart-flatbed text-[9px]"></i> Flete / Envío</div></div></td><td class="py-3 px-4 align-top"><div class="space-y-2"><div class="flex flex-wrap items-center gap-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-brand-100 text-brand-800 border border-brand-300 inline-flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-cart-flatbed text-brand-600"></i> Partida de Envío / Embarque (según cotización del proveedor)</span><span class="text-[10px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-semibold"><i class="fa-solid fa-check mr-0.5"></i> Cotización Five Peaks</span></div><div class="relative"><div class="flex items-center gap-1.5"><div class="relative flex-1"><div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-brand-600"><i class="fa-solid fa-magnifying-glass text-xs"></i></div><input type="text" value="EMBARQUE" class="w-full pl-8 pr-7 py-1.5 bg-white border-2 border-brand-600 rounded text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm" placeholder="Buscar artículo o servicio..."><div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-brand-600"><i class="fa-solid fa-chevron-down text-[10px]"></i></div></div><button type="button" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded text-xs text-slate-700 transition flex items-center gap-1 shadow-sm font-medium"><i class="fa-solid fa-sliders text-slate-500 text-[10px]"></i> Catálogo</button></div><div class="mt-1.5 p-2 bg-white rounded border border-brand-300 shadow-lg text-xs space-y-1.5 ring-1 ring-black/5"><div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1 flex items-center justify-between"><span class="">Coincidencia encontrada para "EMBARQUE":</span><span class="text-brand-600 font-mono">1 resultado</span></div><div class="p-2 rounded bg-brand-50 border border-brand-200 text-slate-900 flex items-start justify-between cursor-pointer hover:bg-brand-100 transition"><div class="space-y-0.5"><div class="flex items-center gap-2"><strong class="font-mono text-brand-700 font-bold">SRV-EMB-001</strong><span class="text-slate-400">•</span><span class="font-bold text-slate-900">Flete y Servicio de Envío / Embarque Especializado</span></div><p class="text-[11px] text-slate-600">Transporte, entrega de unidad y maniobra en sitio Tenaris Tamsa Veracruz.</p></div><span class="text-[10px] font-bold text-white bg-brand-600 px-2 py-1 rounded shadow-sm shrink-0 ml-2">Seleccionado</span></div></div></div><div class="flex items-center gap-2 text-[10px] font-mono text-slate-500 pt-1"><span class="">CC: SFG-C259</span><span class="">•</span><span class="">Ref: SFG-C259-LVT-RQ-127/26</span><span class="">•</span><span class="text-brand-700 font-semibold">Adición de flete acordada con Five Peaks</span></div></div></td></tr></tbody><tfoot class="bg-slate-50 font-semibold border-t border-slate-200 text-xs text-slate-800"><tr><td class="py-2.5 px-4 text-right text-slate-500" colspan="8">Subtotal de partidas seleccionadas:</td><td class="py-2.5 px-4 text-right font-mono font-bold text-slate-900" id="table-subtotal-val">$2,700.00</td><td></td></tr><tr><td class="py-1 px-4 text-right text-slate-500" colspan="8">IVA Trasladado (16%):</td><td class="py-1 px-4 text-right font-mono text-slate-700" id="table-iva-val">$432.00</td><td></td></tr><tr class="text-sm bg-slate-100 font-bold border-t border-slate-200"><td class="py-2.5 px-4 text-right text-slate-900" colspan="8">Total Orden de Compra:</td><td class="py-2.5 px-4 text-right font-mono text-emerald-700 font-extrabold" id="table-total-val">$3,132.00 MXN</td><td></td></tr></tfoot></table></div>
+<!-- Table Footnotes -->
+<div class="mt-3 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-2">
+<div class="flex items-center gap-1.5">
+<i class="fa-solid fa-circle-info text-brand-600"></i>
+<span class="">Las partidas reflejan el importe acordado con Five Peaks México SA de CV según cotización técnica vigente.</span>
+</div>
+<div class="font-mono">
+                Página 1 de 1 (1 registro)
+              </div>
+</div>
+</div>
+</section>
+<!-- END: OrderDetailsTabContainer -->
+</div>
+</div></main>
+<!-- StickyNote Overlay Modal -->
+<div aria-modal="true" class="fixed inset-0 z-50 flex items-start justify-end p-4 md:pt-20 md:pr-12 pointer-events-none transition-all duration-200 hidden" id="stickynote-overlay" role="dialog"><div class="pointer-events-auto w-full max-w-sm rounded-lg shadow-2xl border transition-all duration-200 overflow-hidden transform relative bg-amber-100 text-slate-900 border-amber-300 ring-1 ring-black/10" id="stickynote-card"><div class="absolute -top-2 left-1/2 -translate-x-1/2 w-20 h-4 bg-white/50 backdrop-blur-sm border-x border-b border-black/10 rounded-sm shadow-sm z-10"></div><div class="px-3.5 pt-3 pb-2 flex items-center justify-between border-b bg-amber-200/80 border-amber-300/70" id="stickynote-header"><div class="flex items-center gap-1.5"><i class="fa-solid fa-thumbtack text-amber-800 text-xs"></i><span class="text-xs font-bold font-mono tracking-tight text-amber-950" id="stickynote-title">PO10926 • Nota rápida</span><span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-amber-300/90 text-amber-900 ml-1" id="stickynote-color-badge">Amarillo</span></div><div class="flex items-center gap-1"><button class="text-slate-600 hover:text-black hover:bg-black/10 rounded p-1 text-xs leading-none transition" onclick="document.getElementById('stickynote-overlay').classList.add('hidden')" title="Minimizar / Cerrar" type="button"><i class="fa-solid fa-xmark"></i></button></div></div><div class="px-3.5 py-1.5 text-[10px] text-slate-700 border-b border-black/5 flex items-center justify-between bg-black/[0.03]"><span class="flex items-center gap-1"><i class="fa-solid fa-user-pen text-[9px]"></i>Jeannete Macías (Comprador)</span><span class="font-mono font-medium text-slate-600" id="stickynote-timestamp">Hoy, 14:35</span></div><div class="p-3.5 space-y-2.5"><div class="flex items-center justify-between gap-1"><div class="flex items-center gap-1.5"><span class="text-[10px] font-bold text-slate-700 uppercase tracking-wide">Tono:</span><button class="h-4 w-4 rounded-full bg-rose-200 border border-rose-400 hover:scale-125 transition shadow-sm ring-1 ring-black/10" onclick="window.setStickyTheme('rose')" title="Rosa pastel" type="button"></button><button class="h-4 w-4 rounded-full bg-amber-200 border border-amber-400 hover:scale-125 transition shadow-sm ring-1 ring-black/10" onclick="window.setStickyTheme('yellow')" title="Amarillo clásico" type="button"></button><button class="h-4 w-4 rounded-full bg-pink-500 border border-pink-600 hover:scale-125 transition shadow-sm ring-1 ring-black/10" onclick="window.setStickyTheme('magenta')" title="Magenta vivo" type="button"></button></div><div class="flex items-center gap-1 border border-black/10 rounded px-1 py-0.5 bg-white/60"><button class="px-1.5 py-0.5 rounded text-[10px] font-bold hover:bg-black/10 text-slate-800 transition" onclick="window.formatStickyText('bold')" title="Negrita" type="button">B</button><button class="px-1.5 py-0.5 rounded text-[10px] italic hover:bg-black/10 text-slate-800 transition" onclick="window.formatStickyText('italic')" title="Cursiva" type="button">I</button><button class="px-1.5 py-0.5 rounded text-[10px] hover:bg-black/10 text-slate-800 transition" onclick="window.formatStickyText('bullet')" title="Lista" type="button"><i class="fa-solid fa-list-ul text-[9px]"></i></button></div></div><div><textarea class="w-full text-xs p-2.5 rounded border shadow-inner focus:outline-none transition font-sans resize-none leading-relaxed bg-white/80 border-amber-300/80 text-slate-900 placeholder-slate-500" id="stickynote-textarea" placeholder="Escribe aquí tu nota adhesiva u observación para PO10926..." rows="4">Verificar factura de Five Peaks antes de dar Vo.Bo. Confirmar con almacén la hoja de servicio del baño portátil en Tenaris Tamsa.</textarea></div><div class="flex items-center justify-between text-[10px]"><span class="flex items-center gap-1 text-slate-700 font-medium"><i class="fa-solid fa-lock text-[9px]"></i>Visible para Compras</span><div class="flex items-center gap-1"><button class="px-2 py-1 rounded text-slate-700 hover:text-red-700 hover:bg-black/5 transition font-semibold" onclick="document.getElementById('stickynote-textarea').value=''" type="button">Borrar</button><button class="px-3 py-1 rounded font-bold text-white shadow-sm transition active:scale-95 flex items-center gap-1 bg-amber-600 hover:bg-amber-700" id="btn-save-sticky" onclick="window.saveCurrentStickyNote()" type="button"><i class="fa-solid fa-floppy-disk text-[10px]"></i><span class="">Guardar Nota</span></button></div></div><div class="pt-2 border-t border-black/10"><div class="text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1 flex items-center justify-between"><span class="">Notas fijadas (<span class="" id="notes-count-val">1</span>)</span><span class="text-[9px] lowercase text-slate-500 font-normal">en este pedido</span></div><div class="space-y-1.5 max-h-28 overflow-y-auto pr-0.5" id="stickynotes-tray"><div class="p-2 rounded border text-[11px] shadow-sm bg-amber-50/90 border-amber-300 text-slate-800"><div class="flex items-center justify-between mb-0.5"><span class="font-bold text-[10px] text-amber-900 flex items-center gap-1"><i class="fa-solid fa-thumbtack text-[8px] text-amber-700"></i> Roberto Velázquez • 09/10</span><span class="text-[9px] uppercase font-semibold text-amber-800 bg-amber-200/80 px-1 rounded">Urgente</span></div><p class="leading-tight text-slate-700">Verificar factura de Five Peaks antes de pago. Se requiere desglose técnico.</p></div></div></div></div></div></div>
+<!-- END: MainContentArea -->
+</div>
+<!-- BEGIN: BottomPersistentStatusBar -->
+<footer class="h-8 bg-white border-t border-slate-200 px-4 flex items-center justify-between text-[11px] text-slate-500 z-40 select-none shadow-[0_-1px_2px_rgba(0,0,0,0.02)]">
+<div class="flex items-center space-x-4">
+<span class="flex items-center gap-1.5">
+<i class="fa-solid fa-network-wired text-brand-600"></i>
+<span class="">Ambiente: <strong class="text-slate-800 font-medium">Producción Principal</strong></span>
+</span>
+<span class="text-slate-300">|</span>
+<span class="">Base de datos: <strong class="text-slate-800 font-medium">SIFYGSA_ERP_CORP</strong></span>
+<span class="text-slate-300 hidden sm:inline">|</span>
+<span class="hidden sm:inline">Subsidiaria activa: <strong class="text-slate-900 font-semibold">SIFYGSA</strong></span>
+</div>
+<div class="flex items-center space-x-3 font-mono">
+<span class="">Versión: 2026.4-LTS</span>
+<span class="text-slate-300">|</span>
+<span class="text-emerald-700 font-medium flex items-center"><i class="fa-solid fa-lock text-[10px] mr-1 text-emerald-600"></i> Sesión Segura SSL</span>
+</div>
+</footer>
+<!-- Proveedor Modal Search -->
+<div aria-modal="true" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm hidden" id="modal-buscar-proveedor" role="dialog"><div class="bg-white border border-slate-200 rounded-lg shadow-2xl w-full max-w-lg overflow-hidden flex flex-col"><div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between"><div class="flex items-center gap-2 text-slate-900 font-bold text-sm"><i class="fa-solid fa-handshake text-brand-600"></i><span class="">Seleccionar Proveedor</span></div><button class="text-slate-400 hover:text-slate-700 p-1 rounded transition" onclick="document.getElementById('modal-buscar-proveedor').classList.add('hidden')" type="button"><i class="fa-solid fa-xmark text-sm"></i></button></div><div class="p-4 border-b border-slate-200 bg-white"><div class="flex gap-2"><div class="relative flex-1"><div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"><i class="fa-solid fa-magnifying-glass text-xs"></i></div><input class="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-brand-600 font-sans" id="input-search-proveedor" oninput="const val=this.value.toLowerCase(); document.querySelectorAll('.proveedor-item-row').forEach(row =&gt; { row.style.display = row.innerText.toLowerCase().includes(val) ? '' : 'none'; });" placeholder="Escriba el nombre o RFC del proveedor..." type="text"></div><button class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm" onclick="const inp=document.getElementById('input-search-proveedor'); const val=inp?inp.value.toLowerCase():''; document.querySelectorAll('.proveedor-item-row').forEach(row =&gt; { row.style.display = row.innerText.toLowerCase().includes(val) ? '' : 'none'; });" type="button"><i class="fa-solid fa-magnifying-glass"></i><span class="">Buscar</span></button></div></div><div class="max-h-72 overflow-y-auto divide-y divide-slate-100 p-2"><button class="proveedor-item-row w-full text-left p-2.5 rounded hover:bg-slate-50 transition flex items-center justify-between group" onclick="window.selectProveedor('Five Peaks México SA de CV')" type="button"><div class="space-y-0.5"><div class="text-xs font-bold text-slate-900 group-hover:text-brand-700">Five Peaks México SA de CV</div><div class="text-[11px] font-mono text-slate-500">RFC: FPM180512AB3 • Veracruz, Ver.</div></div><span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-50 text-brand-700 border border-brand-200 font-medium">Actual</span></button><button class="proveedor-item-row w-full text-left p-2.5 rounded hover:bg-slate-50 transition flex items-center justify-between group" onclick="window.selectProveedor('Grupo Mexicano de Seguros S.A. de C.V.')" type="button"><div class="space-y-0.5"><div class="text-xs font-bold text-slate-900 group-hover:text-brand-700">Grupo Mexicano de Seguros S.A. de C.V.</div><div class="text-[11px] font-mono text-slate-500">RFC: GMS950101QW1 • CDMX</div></div><i class="fa-solid fa-chevron-right text-xs text-slate-400 group-hover:text-brand-600"></i></button><button class="proveedor-item-row w-full text-left p-2.5 rounded hover:bg-slate-50 transition flex items-center justify-between group" onclick="window.selectProveedor('Corporativo SOS SA de CV')" type="button"><div class="space-y-0.5"><div class="text-xs font-bold text-slate-900 group-hover:text-brand-700">Corporativo SOS SA de CV</div><div class="text-[11px] font-mono text-slate-500">RFC: CSO090823HY5 • Querétaro, Qro.</div></div><i class="fa-solid fa-chevron-right text-xs text-slate-400 group-hover:text-brand-600"></i></button><button class="proveedor-item-row w-full text-left p-2.5 rounded hover:bg-slate-50 transition flex items-center justify-between group" onclick="window.selectProveedor('Equipos &amp; Maniobras del Sureste')" type="button"><div class="space-y-0.5"><div class="text-xs font-bold text-slate-900 group-hover:text-brand-700">Equipos &amp; Maniobras del Sureste</div><div class="text-[11px] font-mono text-slate-500">RFC: EMS120404MN9 • Coatzacoalcos, Ver.</div></div><i class="fa-solid fa-chevron-right text-xs text-slate-400 group-hover:text-brand-600"></i></button></div><div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end"><button class="px-3 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded text-xs transition shadow-sm" onclick="document.getElementById('modal-buscar-proveedor').classList.add('hidden')" type="button">Cerrar</button></div></div></div><div aria-modal="true" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm hidden" id="modal-vista-previa-impuesto" role="dialog"><div class="bg-white border border-slate-200 rounded-lg shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-fadeIn"><div class="px-4 py-3 bg-brand-600 text-white flex items-center justify-between shadow-sm"><div class="flex items-center gap-2"><i class="fa-solid fa-calculator text-sm text-white"></i><h3 class="text-sm font-bold tracking-tight text-white">Vista previa de impuesto y desglose fiscal</h3></div><button type="button" onclick="document.getElementById('modal-vista-previa-impuesto').classList.add('hidden')" class="text-white/80 hover:text-white p-1 rounded transition"><i class="fa-solid fa-xmark text-sm"></i></button></div><div class="p-4 space-y-4 bg-slate-50/50"><div class="p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-950 flex items-start gap-2.5 shadow-sm"><i class="fa-solid fa-circle-info text-amber-600 mt-0.5 text-sm"></i><div><p class="text-xs font-bold uppercase tracking-wide text-amber-900">Cotejo contra cotización del proveedor</p><p class="text-xs text-amber-800 mt-0.5">Debe coincidir exactamente con la cotización recibida de <strong class="font-semibold text-amber-950">Five Peaks México SA de CV</strong> (Ref: SFG-C259-LVT-RQ-127/26).</p></div></div><div class="bg-white border border-slate-200 rounded-lg p-3 space-y-2.5 shadow-sm"><div class="flex items-center justify-between text-xs text-slate-600"><span class="font-medium">Subtotal Gravable (Base 16%):</span><span class="font-mono font-bold text-slate-900 text-sm">$2,700.00</span></div><div class="flex items-center justify-between text-xs text-slate-600"><span class="font-medium">IVA Trasladado (16.00%):</span><span class="font-mono font-bold text-slate-900 text-sm">$432.00</span></div><div class="flex items-center justify-between text-[11px] text-slate-500 pl-2 border-l-2 border-slate-200"><span class="">Retenciones aplicables:</span><span class="font-mono font-medium text-slate-600">$0.00</span></div><div class="pt-2 border-t border-slate-200 flex items-center justify-between"><span class="text-xs font-bold uppercase tracking-wider text-slate-900">Total Determinado:</span><span class="text-base font-extrabold font-mono text-emerald-700">$3,132.00 <span class="text-[11px] text-emerald-600 font-sans">MXN</span></span></div></div><div class="flex items-center gap-2 p-2.5 rounded bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-900 font-medium"><i class="fa-solid fa-circle-check text-emerald-600 text-xs"></i><span class="">Validación automática: Los cálculos coinciden con el importe del proveedor.</span></div></div><div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2"><button type="button" onclick="document.getElementById('modal-vista-previa-impuesto').classList.add('hidden')" class="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded text-xs font-medium transition shadow-sm">Guardar</button><button type="button" onclick="document.getElementById('modal-vista-previa-impuesto').classList.add('hidden')" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm"><i class="fa-solid fa-check text-xs"></i><span class="">Confirmar y Aplicar a Información Primaria</span></button></div></div></div>
+<script>
+window.toggleDarkMode = function() {
+  const html = document.documentElement;
+  const isDark = html.classList.toggle('dark');
+  const icon = document.getElementById('theme-toggle-icon');
+  const label = document.getElementById('theme-toggle-label');
+  if (isDark) {
+    if (icon) { icon.className = 'fa-solid fa-sun text-amber-400 text-xs'; }
+    if (label) { label.textContent = 'Modo Claro'; }
+  } else {
+    if (icon) { icon.className = 'fa-solid fa-moon text-slate-600 text-xs'; }
+    if (label) { label.textContent = 'Modo Oscuro'; }
+  }
+};
+
+window.setStickyTheme = function(theme) {
+  const card = document.getElementById('stickynote-card');
+  const badge = document.getElementById('stickynote-color-badge');
+  const header = document.getElementById('stickynote-header');
+  const btnSave = document.getElementById('btn-save-sticky');
+  if (!card) return;
+  if (theme === 'rose') {
+    card.className = card.className.replace(/bg-\w+-\d+/g, 'bg-rose-100').replace(/border-\w+-\d+/g, 'border-rose-300');
+    if (header) header.className = header.className.replace(/bg-\w+-\d+\/\d+/g, 'bg-rose-200/80').replace(/border-\w+-\d+\/\d+/g, 'border-rose-300/70');
+    if (badge) { badge.textContent = 'Rosa'; badge.className = 'text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-rose-200 text-rose-900 ml-1'; }
+    if (btnSave) btnSave.className = btnSave.className.replace(/bg-\w+-\d+/g, 'bg-rose-600 hover:bg-rose-700');
+  } else if (theme === 'magenta') {
+    card.className = card.className.replace(/bg-\w+-\d+/g, 'bg-pink-100').replace(/border-\w+-\d+/g, 'border-pink-300');
+    if (header) header.className = header.className.replace(/bg-\w+-\d+\/\d+/g, 'bg-pink-200/80').replace(/border-\w+-\d+\/\d+/g, 'border-pink-300/70');
+    if (badge) { badge.textContent = 'Magenta'; badge.className = 'text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-pink-200 text-pink-900 ml-1'; }
+    if (btnSave) btnSave.className = btnSave.className.replace(/bg-\w+-\d+/g, 'bg-pink-600 hover:bg-pink-700');
+  } else {
+    card.className = card.className.replace(/bg-\w+-\d+/g, 'bg-amber-100').replace(/border-\w+-\d+/g, 'border-amber-300');
+    if (header) header.className = header.className.replace(/bg-\w+-\d+\/\d+/g, 'bg-amber-200/80').replace(/border-\w+-\d+\/\d+/g, 'border-amber-300/70');
+    if (badge) { badge.textContent = 'Amarillo'; badge.className = 'text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-amber-300/90 text-amber-900 ml-1'; }
+    if (btnSave) btnSave.className = btnSave.className.replace(/bg-\w+-\d+/g, 'bg-amber-600 hover:bg-amber-700');
+  }
+};
+
+window.saveCurrentStickyNote = function() {
+  const ta = document.getElementById('stickynote-textarea');
+  if (!ta) return;
+  const val = ta.value.trim();
+  if (!val) return;
+  const tray = document.getElementById('stickynotes-tray');
+  if (tray) {
+    const item = document.createElement('div');
+    item.className = 'p-2 rounded border text-[11px] shadow-sm bg-white/90 border-slate-300 text-slate-800';
+    item.innerHTML = `<div class="flex items-center justify-between mb-0.5"><span class="font-bold text-[10px] text-slate-900 flex items-center gap-1"><i class="fa-solid fa-thumbtack text-[8px] text-amber-600"></i> Jeannete Macías • Hoy</span><span class="text-[9px] uppercase font-semibold text-brand-800 bg-brand-100 px-1 rounded">Nota</span></div><p class="leading-tight text-slate-700">${val}</p>`;
+    tray.prepend(item);
+  }
+  const countSpan = document.getElementById('notes-count-val');
+  if (countSpan) countSpan.textContent = parseInt(countSpan.textContent || '1') + 1;
+  const countBadge = document.getElementById('sticky-badge-count');
+  if (countBadge) countBadge.textContent = parseInt(countBadge.textContent || '1') + 1;
+  const o = document.getElementById('stickynote-overlay');
+  if (o) o.classList.add('hidden');
+};
+
+window.formatStickyText = function(cmd) {
+  const ta = document.getElementById('stickynote-textarea');
+  if (!ta) return;
+  if (cmd === 'bullet') {
+    ta.value = '• ' + ta.value;
+  } else if (cmd === 'bold') {
+    ta.value = '**' + ta.value + '**';
+  } else if (cmd === 'italic') {
+    ta.value = '*' + ta.value + '*';
+  }
+};
+
+window.selectProveedor = function(name) { 
+  const link = document.getElementById('display-nombre-proveedor'); 
+  if (link) { link.innerHTML = name + ' <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>'; } 
+  const banner = document.querySelector('h1 + div span.text-slate-700'); 
+  if (banner) { banner.textContent = name; } 
+  const modal = document.getElementById('modal-buscar-proveedor'); 
+  if (modal) { modal.classList.add('hidden'); } 
+};
+
+window.recalculateTotals = function() { 
+  let subtotal = 0; 
+  document.querySelectorAll('.chk-item-row:checked').forEach(chk => { 
+    subtotal += parseFloat(chk.getAttribute('data-price') || 0); 
+  }); 
+  const iva = subtotal * 0.16; 
+  const total = subtotal + iva; 
+  const fmt = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); 
+  const subStr = fmt(subtotal); 
+  const ivaStr = fmt(iva); 
+  const totStr = fmt(total); 
+  const tSub = document.getElementById('table-subtotal-val'); 
+  if(tSub) tSub.textContent = subStr; 
+  const tIva = document.getElementById('table-iva-val'); 
+  if(tIva) tIva.textContent = ivaStr; 
+  const tTot = document.getElementById('table-total-val'); 
+  if(tTot) tTot.textContent = totStr + ' MXN'; 
+  const rSub = document.querySelector('.lg\\:col-span-4 .space-y-2\\.5 > div:nth-child(1) span.font-mono'); 
+  if(rSub) rSub.textContent = subStr; 
+  const rTax = document.querySelector('.lg\\:col-span-4 .space-y-2\\.5 > div:nth-child(2) span.font-mono'); 
+  if(rTax) rTax.textContent = ivaStr; 
+  const rIvaAcred = document.querySelector('.lg\\:col-span-4 .space-y-2\\.5 > div:nth-child(3) span.font-mono'); 
+  if(rIvaAcred) rIvaAcred.textContent = ivaStr; 
+  const rTot = document.querySelector('.lg\\:col-span-4 .space-y-2\\.5 > div:nth-child(4) span.text-base'); 
+  if(rTot) rTot.innerHTML = totStr + ' <span class="text-[10px] text-emerald-600 font-sans">MXN</span>'; 
+};
+</script>
+<script id="script-workflow-po3926">
+window.triggerEnviarCotizacion = function() { 
+  const dispProv = document.getElementById('display-nombre-proveedor'); 
+  const provName = dispProv ? dispProv.innerText.trim() : 'Five Peaks México SA de CV'; 
+  const targetSpan = document.getElementById('workflow-supplier-name'); 
+  if (targetSpan) targetSpan.textContent = provName; 
+  const banner = document.getElementById('workflow-cotizacion-banner'); 
+  if (banner) banner.classList.remove('hidden'); 
+  banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); 
+};
+
+window.triggerActualizarWorkflow = function() { 
+  const cotBanner = document.getElementById('workflow-cotizacion-banner'); 
+  if (cotBanner) cotBanner.classList.add('hidden'); 
+  const updBanner = document.getElementById('workflow-updated-banner'); 
+  if (updBanner) updBanner.classList.remove('hidden'); 
+  const badge = document.querySelector('.inline-flex.items-center.px-2\\.5.py-0\\.5.rounded-full'); 
+  if (badge) { 
+    badge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm'; 
+    badge.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5"></span> APROBADO / GENERADA'; 
+  } 
+};
+
+window.activatePO3926 = function() { 
+  const idHeader = document.querySelector('h1 + div span.font-mono'); 
+  if (idHeader) idHeader.textContent = 'PO3926'; 
+  const subHeader = document.querySelector('h1 + div span.text-slate-700'); 
+  if (subHeader) subHeader.textContent = 'Five Peaks México SA de CV'; 
+  const titleH1 = document.querySelector('h1.text-xl'); 
+  if (titleH1) { 
+    titleH1.innerHTML = 'Orden de compra <span class="text-brand-600 font-mono text-sm ml-2 font-normal">PO3926 - Five Peaks México SA de CV</span>'; 
+  } 
+  const badge = document.querySelector('.inline-flex.items-center.px-2\\.5.py-0\\.5.rounded-full'); 
+  if (badge) { 
+    badge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm'; 
+    badge.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5"></span> APROBADO / GENERADA'; 
+  } 
+  const numPedidoCol = document.querySelector('.lg\\:col-span-8 > div:nth-child(2) p.value-display'); 
+  if (numPedidoCol) numPedidoCol.textContent = 'PO3926'; 
+  const breadcrumbLast = document.querySelector('header + div .bg-white span.font-mono'); 
+  if (breadcrumbLast) breadcrumbLast.textContent = 'PO3926'; 
+  const editBtn = document.querySelector('button.bg-brand-600'); 
+  if (editBtn) { 
+    editBtn.classList.add('ring-2', 'ring-brand-400'); 
+    editBtn.onclick = function() { window.enablePrimaryEditMode(); }; 
+  } 
+  window.enablePrimaryEditMode(); 
+};
+
+window.enablePrimaryEditMode = function() { 
+  const section = document.querySelector('section[data-purpose="primary-order-information"]'); 
+  if (!section) return; 
+  section.classList.add('ring-2', 'ring-brand-500', 'border-brand-500'); 
+  let editBar = document.getElementById('primary-edit-actions-bar'); 
+  if (!editBar) { 
+    editBar = document.createElement('div'); 
+    editBar.id = 'primary-edit-actions-bar'; 
+    editBar.className = 'bg-brand-50 border-b border-brand-200 px-4 py-2 flex items-center justify-between text-xs animate-fadeIn'; 
+    editBar.innerHTML = '<div class="flex items-center gap-2 text-brand-900 font-medium"><i class="fa-solid fa-pen-to-square text-brand-600"></i><span class="font-semibold">Modo de Edición Activo</span><span>• Modifique los campos y guarde los cambios de PO3926</span></div><div class="flex items-center gap-2"><button type="button" onclick="window.cancelPrimaryEdit()" class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded text-xs transition">Cancelar</button><button type="button" onclick="window.savePrimaryEdit()" class="px-3.5 py-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded text-xs shadow-sm flex items-center gap-1 transition active:scale-95"><i class="fa-solid fa-floppy-disk text-[11px]"></i> Guardar Cambios</button></div>'; 
+    section.insertBefore(editBar, section.firstChild); 
+  } 
+  const numPedidoCol = document.querySelector('.lg\\:col-span-8 > div:nth-child(2) > div:first-child'); 
+  if (numPedidoCol && !document.getElementById('input-edit-numpedido')) { 
+    numPedidoCol.innerHTML = '<span class="label-meta block mb-1">N.º de Pedido</span><input id="input-edit-numpedido" type="text" value="PO3926" class="w-full bg-white border border-brand-500 rounded px-2.5 py-1 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-brand-500 shadow-sm">'; 
+  } 
+  section.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); 
+};
+
+window.savePrimaryEdit = function() { 
+  const bar = document.getElementById('primary-edit-actions-bar'); 
+  if (bar) { 
+    bar.innerHTML = '<div class="text-emerald-700 font-semibold flex items-center gap-2 text-xs"><i class="fa-solid fa-check"></i> Cambios guardados correctamente en la Orden PO3926.</div><button type="button" onclick="this.parentElement.remove(); document.querySelector(\'section[data-purpose=\"primary-order-information\"]\').classList.remove(\'ring-2\', \'ring-brand-500\', \'border-brand-500\');" class="px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 rounded text-xs">Listo</button>'; 
+  } 
+};
+
+window.cancelPrimaryEdit = function() { 
+  const bar = document.getElementById('primary-edit-actions-bar'); 
+  if (bar) bar.remove(); 
+  const section = document.querySelector('section[data-purpose="primary-order-information"]'); 
+  if (section) section.classList.remove('ring-2', 'ring-brand-500', 'border-brand-500'); 
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('keydown', (e) => {
+    if (e.shiftKey && (e.key === 'S' || e.key === 's')) {
+      e.preventDefault();
+      const searchInput = document.querySelector('input[placeholder*="Shift + S"]');
+      if (searchInput) searchInput.focus();
+    }
+  });
+});
+</script>
+
+
+
+
+
+
+</body></html>

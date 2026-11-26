@@ -1,24 +1,27 @@
+# Dependencias y compilaciones locales
 node_modules
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-dist
-dist-ssr
+backend/node_modules
+.next
+out
 build
+dist
+backend/dist
+*.tsbuildinfo
+
+# Git y editor
 .git
 .gitignore
-.env
-.env.local
-.env.*.local
 .vscode
 .idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-Dockerfile*
-docker-compose*.yml
-.oxlintrc.json
-README.md
+.DS_Store
+
+# Variables de entorno sensibles (nunca copiar en la imagen)
+.env
+.env.*
+!.env.example
+
+# Respaldos, logs y archivos temporales
+*.log
+*.zip
+.agents
+SIFYGSA-BUSINESS-SUITE2 almacen

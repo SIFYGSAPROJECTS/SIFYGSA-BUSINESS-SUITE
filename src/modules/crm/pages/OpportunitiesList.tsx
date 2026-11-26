@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { IconFilter, IconDownload, IconPlus } from '../../../components/ui/Icons';
 

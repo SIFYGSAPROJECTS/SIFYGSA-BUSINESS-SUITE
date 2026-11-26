@@ -1,85 +1,204 @@
+'use client';
+
 import React, { useState, useRef, useEffect } from 'react';
-import { IconMenu, IconSearch, IconBell, IconLogOut, IconSettings, IconUser } from '../ui/Icons';
+import {
+  IconSearch,
+  IconBell,
+  IconLogOut,
+  IconSettings,
+  IconUser,
+  IconChevronDown,
+  IconCheck,
+} from '../ui/Icons';
 import { SfgLogoSymbol } from '../ui/Logo';
+import { getSelectedMenuIconMeta } from './MenuSelectivoModulo';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
+
+interface HeaderComboOption {
+  label: string;
+  subItemId: string;
+}
+
+const VENTAS_COMBO_OPTIONS: readonly HeaderComboOption[] = [
+  { label: 'Mi flujo', subItemId: 'crm-kanban' },
+  { label: 'Mis actividades', subItemId: 'crm-calendar' },
+  { label: 'Equipos', subItemId: 'crm-opportunities' },
+  { label: 'Clientes', subItemId: 'crm-opportunities' },
+];
+
+const REPORTES_COMBO_OPTIONS: readonly HeaderComboOption[] = [
+  { label: 'Pronóstico', subItemId: 'crm-reportes' },
+  { label: 'Flujo', subItemId: 'crm-kanban' },
+  { label: 'Leads', subItemId: 'crm-leads' },
+  { label: 'Actividades', subItemId: 'crm-calendar' },
+];
 
 interface HeaderProps {
   currentModuleTitle?: string;
+  activeModuleId?: string;
+  activeSubItemId?: string;
+  onBackToMenu?: () => void;
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
   onLogout: () => void;
+  onSelectModule?: (moduleId: string, subItemId?: string) => void;
+  isChatCenterOpen?: boolean;
+  onToggleChatCenter?: () => void;
+  unreadChatCount?: number;
   user?: {
     name: string;
     email: string;
     role: string;
+    portal?: 'crm' | 'rh' | 'almacen' | 'compras';
   };
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  activeModuleId = 'crm',
+  activeSubItemId = 'crm-kanban',
+  onBackToMenu,
   onToggleSidebar,
   isSidebarOpen = false,
   onLogout,
+  onSelectModule,
+  isChatCenterOpen = false,
+  onToggleChatCenter,
+  unreadChatCount = 3,
   user = {
-    name: 'Jared S.',
-    email: 'jared.s@sifygsa.com',
-    role: 'Safety Director',
+    name: 'Carlos Mendoza',
+    email: 'crm@sifygsa.com',
+    role: 'Director Comercial & CRM',
+    portal: 'crm',
   },
 }) => {
   const { t } = useLanguage();
+  const { isDarkMode, toggleTheme } = useTheme();
+  const selectedMenuMeta = getSelectedMenuIconMeta(activeModuleId, activeSubItemId);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    return localStorage.getItem('sfg_theme') === 'dark';
-  });
+  const [openCombo, setOpenCombo] = useState<'ventas' | 'reportes' | null>(null);
+  const [selectedVentas, setSelectedVentas] = useState<string | null>(null);
+  const [selectedReportes, setSelectedReportes] = useState<string | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const combosRef = useRef<HTMLDivElement>(null);
 
-  // Sincronizar tema con el DOM y localStorage
-  useEffect(() => {
-    document.body.removeAttribute('data-theme');
-    if (isDarkMode) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      document.body.classList.remove('light-mode');
-      localStorage.setItem('sfg_theme', 'dark');
-    } else {
-      document.documentElement.setAttribute('data-theme', 'light');
-      document.body.classList.add('light-mode');
-      localStorage.setItem('sfg_theme', 'light');
-    }
-  }, [isDarkMode]);
+  const esPortalCrm = user?.portal !== 'rh' && user?.portal !== 'almacen';
+  const isInIconSelectionMenu = activeSubItemId === '__menu__';
 
-  const toggleTheme = () => {
-    setIsDarkMode((prev) => !prev);
+  const getInitials = (name?: string) => {
+    if (!name) return 'SF';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.slice(0, 2).toUpperCase();
   };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (userMenuRef.current && !userMenuRef.current.contains(target)) {
+        setIsUserMenuOpen(false);
+      }
+      if (combosRef.current && !combosRef.current.contains(target)) {
+        setOpenCombo(null);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpenCombo(null);
         setIsUserMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
+
+  const handleSelectComboOption = (
+    combo: 'ventas' | 'reportes',
+    option: HeaderComboOption
+  ) => {
+    if (combo === 'ventas') {
+      setSelectedVentas(option.label);
+    } else {
+      setSelectedReportes(option.label);
+    }
+    setOpenCombo(null);
+    onSelectModule?.('crm', option.subItemId);
+  };
 
   return (
     <header className="sifygsa-header">
-      {/* Left: 3-line menu button + Brand Logo Identity (Flama SIFYGSA) */}
+      {/* Left: Mobile drawer toggle (<=520px) + Selected Menu Icon */}
       <div className="header-brand-group">
         {onToggleSidebar && (
           <button
             type="button"
-            className={`header-toggle-btn ${isSidebarOpen ? 'is-active' : ''}`}
+            className="header-mobile-menu-btn"
             onClick={onToggleSidebar}
-            aria-label={isSidebarOpen ? 'Plegar menú lateral' : 'Desplegar menú lateral'}
-            title={isSidebarOpen ? 'Plegar menú lateral' : 'Desplegar menú lateral'}
-            aria-expanded={isSidebarOpen}
+            aria-label={isSidebarOpen ? 'Cerrar menú lateral' : 'Abrir menú lateral'}
+            title="Menú lateral"
           >
-            <span className="hamburger-animated-box" aria-hidden="true">
-              <span className="hamburger-line line-top" />
-              <span className="hamburger-line line-middle" />
-              <span className="hamburger-line line-bottom" />
-            </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" width="20" height="20">
+              <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
         )}
+        <button
+          type="button"
+          disabled={isInIconSelectionMenu}
+          className={`header-selected-menu-btn tile-color-${selectedMenuMeta.colorClass} ${
+            isInIconSelectionMenu ? 'is-selection-menu-disabled' : ''
+          }`}
+          onClick={() => {
+            if (isInIconSelectionMenu) return;
+            if (onBackToMenu) {
+              onBackToMenu();
+            } else if (onSelectModule) {
+              onSelectModule(
+                activeModuleId === 'compras' || activeModuleId === 'admin'
+                  ? activeModuleId
+                  : 'crm',
+                '__menu__'
+              );
+            } else if (onToggleSidebar) {
+              onToggleSidebar();
+            }
+          }}
+          aria-label={
+            isInIconSelectionMenu
+              ? selectedMenuMeta.title
+              : `Menú actual: ${selectedMenuMeta.title}. Clic para regresar al selector de módulos`
+          }
+          title={
+            isInIconSelectionMenu
+              ? selectedMenuMeta.title
+              : `${selectedMenuMeta.title} — Regresar al menú de módulos`
+          }
+        >
+          {/* Icono del menú seleccionado por defecto */}
+          <span className="header-selected-icon-front" aria-hidden="true">
+            {selectedMenuMeta.isCalendarTile ? (
+              <span className="header-mini-calendar-tile">
+                <span className="header-mini-calendar-month">NOV</span>
+                <span className="header-mini-calendar-day">11</span>
+              </span>
+            ) : (
+              selectedMenuMeta.icon
+            )}
+          </span>
+
+          {/* Flecha "<" animada al pasar el cursor por encima (solo habilitada dentro de un módulo seleccionado) */}
+          {!isInIconSelectionMenu && (
+            <span className="header-selected-icon-back" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8">
+                <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+          )}
+        </button>
         <div className="brand-suite-identity" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <div className="flame-logo-wrapper" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
             <SfgLogoSymbol size={38} className="header-flame-logo" />
@@ -92,44 +211,190 @@ export const Header: React.FC<HeaderProps> = ({
                   fontSize: '1.18rem',
                   fontWeight: 900,
                   letterSpacing: '0.05em',
-                  color: isDarkMode ? '#FFFFFF' : '#0F172A',
+                  color: 'var(--text-primary)',
                   transition: 'color 0.2s ease',
                 }}
               >
                 SIFYGSA
               </span>
               <span
-                className="brand-tag-enterprise"
+                className={`brand-tag-enterprise ${user?.portal === 'rh' ? 'brand-tag-rh' : user?.portal === 'almacen' ? 'brand-tag-almacen' : ''}`}
                 style={{
                   fontSize: '0.68rem',
                   fontWeight: 800,
-                  color: '#FFFFFF',
-                  backgroundColor: '#EA580C',
+                  color: 'var(--on-primary)',
+                  backgroundColor: 'var(--primary)',
                   padding: '0.15rem 0.45rem',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--radius-control)',
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  boxShadow: '0 1px 3px rgba(234, 88, 12, 0.35)',
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
-                SUITE
+                {user?.portal === 'rh' ? 'RH SUITE' : user?.portal === 'almacen' ? 'ALMACÉN SGA' : 'SUITE'}
               </span>
             </div>
             <span
-              className="brand-subtitle-text"
+              className={`brand-subtitle-text ${user?.portal === 'rh' ? 'rh-subtitle' : user?.portal === 'almacen' ? 'almacen-subtitle' : ''}`}
               style={{
                 fontSize: '0.62rem',
                 fontWeight: 700,
-                color: isDarkMode ? '#94A3B8' : '#475569',
+                color: 'var(--text-secondary)',
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 transition: 'color 0.2s ease',
               }}
             >
-              Business Platform
+              {user?.portal === 'rh' ? 'Talento Humano' : user?.portal === 'almacen' ? 'Gestión de Almacén' : 'Business Platform'}
             </span>
           </div>
         </div>
+
+        {/* Menús contextuales en el lado izquierdo del Header (Ocultos en el Menú Principal y en el módulo independiente de Calendario) */}
+        {esPortalCrm &&
+          activeSubItemId !== '__menu__' &&
+          activeSubItemId !== 'crm-calendar' && (
+          <div className="header-crm-combos" ref={combosRef}>
+            <span className="header-combos-divider" aria-hidden="true" />
+
+            {activeSubItemId === 'crm-clientes' ? (
+              <>
+                <span
+                  style={{
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    color: 'var(--text-primary)',
+                    marginRight: '0.35rem',
+                  }}
+                >
+                  Contactos
+                </span>
+                <button
+                  type="button"
+                  className="header-combo-trigger has-value"
+                  onClick={() => onSelectModule?.('crm', 'crm-clientes')}
+                >
+                  <span className="header-combo-text">
+                    <span className="header-combo-value">Contactos</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="header-combo-trigger"
+                  onClick={() => onSelectModule?.('crm', 'crm-clientes')}
+                >
+                  <span className="header-combo-text">
+                    <span className="header-combo-value">Configuración</span>
+                  </span>
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Combo Box 1: Ventas */}
+                <div className="header-combo-box">
+                  <button
+                    type="button"
+                    className={`header-combo-trigger ${openCombo === 'ventas' ? 'is-open' : ''} ${selectedVentas ? 'has-value' : ''}`}
+                    aria-haspopup="listbox"
+                    aria-expanded={openCombo === 'ventas'}
+                    aria-label="Ventas"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      setOpenCombo((prev) => (prev === 'ventas' ? null : 'ventas'));
+                    }}
+                  >
+                    <span className="header-combo-text">
+                      {selectedVentas ? (
+                        <>
+                          <span className="header-combo-prefix">Ventas:</span>
+                          <span className="header-combo-value">{selectedVentas}</span>
+                        </>
+                      ) : (
+                        <span className="header-combo-value">Ventas</span>
+                      )}
+                    </span>
+                    <IconChevronDown
+                      size={14}
+                      className={`header-combo-chevron ${openCombo === 'ventas' ? 'rotated' : ''}`}
+                    />
+                  </button>
+
+                  {openCombo === 'ventas' && (
+                    <div className="header-combo-menu" role="listbox" aria-label="Opciones de Ventas">
+                      {VENTAS_COMBO_OPTIONS.map((option) => {
+                        const isSelected = selectedVentas === option.label;
+                        return (
+                          <button
+                            key={option.label}
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            className={`header-combo-option ${isSelected ? 'is-selected' : ''}`}
+                            onClick={() => handleSelectComboOption('ventas', option)}
+                          >
+                            <span>{option.label}</span>
+                            {isSelected && <IconCheck size={14} className="header-combo-check" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Combo Box 2: Reportes */}
+                <div className="header-combo-box">
+                  <button
+                    type="button"
+                    className={`header-combo-trigger ${openCombo === 'reportes' ? 'is-open' : ''} ${selectedReportes ? 'has-value' : ''}`}
+                    aria-haspopup="listbox"
+                    aria-expanded={openCombo === 'reportes'}
+                    aria-label="Reportes"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      setOpenCombo((prev) => (prev === 'reportes' ? null : 'reportes'));
+                    }}
+                  >
+                    <span className="header-combo-text">
+                      {selectedReportes ? (
+                        <>
+                          <span className="header-combo-prefix">Reportes:</span>
+                          <span className="header-combo-value">{selectedReportes}</span>
+                        </>
+                      ) : (
+                        <span className="header-combo-value">Reportes</span>
+                      )}
+                    </span>
+                    <IconChevronDown
+                      size={14}
+                      className={`header-combo-chevron ${openCombo === 'reportes' ? 'rotated' : ''}`}
+                    />
+                  </button>
+
+                  {openCombo === 'reportes' && (
+                    <div className="header-combo-menu" role="listbox" aria-label="Opciones de Reportes">
+                      {REPORTES_COMBO_OPTIONS.map((option) => {
+                        const isSelected = selectedReportes === option.label;
+                        return (
+                          <button
+                            key={option.label}
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            className={`header-combo-option ${isSelected ? 'is-selected' : ''}`}
+                            onClick={() => handleSelectComboOption('reportes', option)}
+                          >
+                            <span>{option.label}</span>
+                            {isSelected && <IconCheck size={14} className="header-combo-check" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Center: Search Input */}
@@ -151,11 +416,12 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           className="header-tool-btn"
           aria-label={isDarkMode ? t('header.change_to_light') : t('header.change_to_dark')}
+          aria-pressed={isDarkMode}
           title={isDarkMode ? t('header.change_to_light') : t('header.change_to_dark')}
           onClick={toggleTheme}
+          suppressHydrationWarning
         >
           {isDarkMode ? (
-            /* Icono Sol (para pasar a Modo Claro) */
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
@@ -179,7 +445,6 @@ export const Header: React.FC<HeaderProps> = ({
               <path d="M12 20v2" />
             </svg>
           ) : (
-            /* Icono Luna (para pasar a Modo Oscuro) */
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
@@ -199,16 +464,44 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </button>
 
-        {/* Notificaciones */}
-        <button
-          type="button"
-          className="header-tool-btn"
-          aria-label={t('header.notifications')}
-          title={t('header.notifications')}
-        >
-          <IconBell size={20} />
-          <span className="notification-number-badge">9</span>
-        </button>
+        {/* Centro de Conversaciones (CRM) o Notificaciones (RH / Almacén) */}
+        {esPortalCrm ? (
+          <button
+            type="button"
+            data-chat-trigger="true"
+            className={`header-tool-btn header-chat-trigger-btn ${isChatCenterOpen ? 'is-open' : ''}`}
+            aria-label="Centro de Conversaciones"
+            aria-expanded={isChatCenterOpen}
+            title="Centro de Conversaciones"
+            onClick={onToggleChatCenter}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            {unreadChatCount > 0 && (
+              <span className="notification-number-badge">{unreadChatCount}</span>
+            )}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="header-tool-btn"
+            aria-label={t('header.notifications')}
+            title={t('header.notifications')}
+          >
+            <IconBell size={20} />
+            <span className="notification-number-badge">9</span>
+          </button>
+        )}
 
         <div className="header-separator-line" />
 
@@ -219,8 +512,8 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
             aria-expanded={isUserMenuOpen}
           >
-            <div className="user-avatar-podium-ring">
-              <div className="user-avatar-inner">JS</div>
+            <div className={`user-avatar-podium-ring ${user?.portal === 'rh' ? 'rh-podium' : ''}`}>
+              <div className="user-avatar-inner">{getInitials(user?.name)}</div>
             </div>
             <div className="user-meta-info">
               <span className="user-display-name">{user.name}</span>
@@ -240,7 +533,10 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 className="dialog-menu-item"
-                onClick={() => setIsUserMenuOpen(false)}
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  onSelectModule?.('settings');
+                }}
               >
                 <IconUser size={15} />
                 <span>Perfil</span>
@@ -249,7 +545,10 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 className="dialog-menu-item"
-                onClick={() => setIsUserMenuOpen(false)}
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  onSelectModule?.('settings');
+                }}
               >
                 <IconSettings size={15} />
                 <span>{t('nav.settings')}</span>
